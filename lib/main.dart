@@ -70,7 +70,6 @@ class RainWeatherApp extends StatelessWidget {
         900: const Color(0xFF0D47A1),
       }),
       brightness: Brightness.light,
-      fontFamily: 'JetBrainsMono',
       scaffoldBackgroundColor: const Color(0xFFF0F8FF), // 浅蓝背景
       appBarTheme: const AppBarTheme(
         backgroundColor: Color(0xFFF0F8FF),
@@ -106,7 +105,6 @@ class RainWeatherApp extends StatelessWidget {
         900: const Color(0xFF0D47A1),
       }),
       brightness: Brightness.dark,
-      fontFamily: 'JetBrainsMono',
       scaffoldBackgroundColor: const Color(0xFF0A1B3D), // 基于#012d78的深背景
       appBarTheme: const AppBarTheme(
         backgroundColor: Color(0xFF0A1B3D),
@@ -1059,7 +1057,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                               fontSize: 32,
                               fontWeight: FontWeight.bold,
                               color: AppColors.textPrimary,
-                              fontFamily: 'JetBrainsMono',
                             ),
                           ),
                           const SizedBox(height: 10),
@@ -1068,7 +1065,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                             style: TextStyle(
                               fontSize: 16,
                               color: AppColors.textSecondary,
-                              fontFamily: 'JetBrainsMono',
                             ),
                           ),
                         ],
@@ -1091,7 +1087,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                   style: TextStyle(
                     fontSize: 16,
                     color: AppColors.textSecondary,
-                    fontFamily: 'JetBrainsMono',
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -1125,7 +1120,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: AppColors.textPrimary,
-                          fontFamily: 'JetBrainsMono',
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -1134,7 +1128,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                         style: TextStyle(
                           fontSize: 14,
                           color: AppColors.textSecondary,
-                          fontFamily: 'JetBrainsMono',
                         ),
                         textAlign: TextAlign.center,
                       ),

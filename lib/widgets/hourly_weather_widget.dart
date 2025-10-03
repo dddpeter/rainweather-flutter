@@ -42,13 +42,28 @@ class HourlyWeatherWidget extends StatelessWidget {
             children: [
               Padding(
                 padding: const EdgeInsets.all(16),
-                child: Text(
-                  '24小时预报',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '24小时预报',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      '更多',
+                      style: TextStyle(
+                        color: themeProvider.isLightTheme 
+                            ? AppColors.primaryBlue  // 亮色主题使用深蓝色
+                            : AppColors.accentBlue,   // 暗色主题使用亮蓝色
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               SizedBox(
@@ -78,7 +93,7 @@ class HourlyWeatherWidget extends StatelessWidget {
 
     return Container(
       width: 80,
-      margin: const EdgeInsets.only(right: 12),
+      margin: const EdgeInsets.only(right: 4),
       child: Column(
         children: [
           Text(

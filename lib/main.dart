@@ -549,10 +549,10 @@ class MainCitiesScreen extends StatelessWidget {
           const SizedBox(width: 8),
           // 温度
           Text(
-            '${current.temperature ?? '--'}°',
+            '${current.temperature ?? '--'}℃',
             style: TextStyle(
               color: AppColors.textPrimary,
-              fontSize: 16,
+              fontSize: 20,
               fontWeight: FontWeight.w500,
             ),
           ),

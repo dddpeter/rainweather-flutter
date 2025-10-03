@@ -325,10 +325,10 @@ class _Forecast15dScreenState extends State<Forecast15dScreen> {
             const SizedBox(width: 4),
             // Temperature
             Text(
-              '$temperature°',
+              '$temperature℃',
               style: TextStyle(
                 color: AppColors.textPrimary,
-                fontSize: 14,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
             ),

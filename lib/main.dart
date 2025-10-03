@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'providers/weather_provider.dart';
 import 'screens/today_screen.dart';
 import 'screens/hourly_screen.dart';
+import 'screens/forecast15d_screen.dart';
 import 'screens/city_weather_screen.dart';
 import 'models/city_model.dart';
 import 'constants/app_colors.dart';
@@ -79,6 +80,7 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = [
     const TodayScreen(),
     const HourlyScreen(),
+    const Forecast15dScreen(),
     const MainCitiesScreen(),
   ];
 
@@ -120,6 +122,10 @@ class _MainScreenState extends State<MainScreen> {
               label: '24小时',
             ),
             BottomNavigationBarItem(
+              icon: Icon(Icons.calendar_today),
+              label: '15日预报',
+            ),
+            BottomNavigationBarItem(
               icon: Icon(Icons.location_city),
               label: '主要城市',
             ),
@@ -140,7 +146,14 @@ class MainCitiesScreen extends StatelessWidget {
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
-          gradient: AppColors.primaryGradient,
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF0A0E27),
+              Color(0xFF1A1F3A),
+            ],
+          ),
         ),
         child: SafeArea(
           child: Column(
@@ -408,19 +421,12 @@ class MainCitiesScreen extends StatelessWidget {
                             key: Key(city.id),
                             margin: const EdgeInsets.only(bottom: 12),
                             decoration: BoxDecoration(
-                              color: AppColors.cardBackground,
+                              color: Colors.white.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: AppColors.borderColor,
+                                color: Colors.white.withOpacity(0.2),
                                 width: 1,
                               ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.cardShadow,
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
                             ),
                             child: ListTile(
                               contentPadding: const EdgeInsets.symmetric(

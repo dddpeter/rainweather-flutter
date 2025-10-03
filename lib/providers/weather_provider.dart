@@ -3,6 +3,7 @@ import '../models/weather_model.dart';
 import '../models/location_model.dart';
 import '../models/city_model.dart';
 import '../services/weather_service.dart';
+import '../services/forecast15d_service.dart';
 import '../services/location_service.dart';
 import '../services/database_service.dart';
 import '../services/city_service.dart';
@@ -10,6 +11,7 @@ import '../constants/app_constants.dart';
 
 class WeatherProvider extends ChangeNotifier {
   final WeatherService _weatherService = WeatherService.getInstance();
+  final Forecast15dService _forecast15dService = Forecast15dService.getInstance();
   final LocationService _locationService = LocationService.getInstance();
   final DatabaseService _databaseService = DatabaseService.getInstance();
   final CityService _cityService = CityService.getInstance();
@@ -18,6 +20,7 @@ class WeatherProvider extends ChangeNotifier {
   LocationModel? _currentLocation;
   List<HourlyWeather>? _hourlyForecast;
   List<DailyWeather>? _dailyForecast;
+  List<DailyWeather>? _forecast15d;
   bool _isLoading = false;
   String? _error;
   
@@ -38,6 +41,7 @@ class WeatherProvider extends ChangeNotifier {
   LocationModel? get currentLocation => _currentLocation;
   List<HourlyWeather>? get hourlyForecast => _hourlyForecast;
   List<DailyWeather>? get dailyForecast => _dailyForecast;
+  List<DailyWeather>? get forecast15d => _forecast15d;
   bool get isLoading => _isLoading;
   String? get error => _error;
   Map<String, WeatherModel> get mainCitiesWeather => _mainCitiesWeather;
@@ -77,6 +81,8 @@ class WeatherProvider extends ChangeNotifier {
         await loadMainCities();
         
         await refreshWeatherData();
+        // 异步加载15日预报数据
+        refresh15DayForecast();
       } else {
         // 如果没有获得真实位置，使用北京作为默认位置
         print('No real location available, using Beijing as default');
@@ -86,6 +92,8 @@ class WeatherProvider extends ChangeNotifier {
         await loadMainCities();
         
         await refreshWeatherData();
+        // 异步加载15日预报数据
+        refresh15DayForecast();
       }
       
       // 异步加载主要城市天气数据
@@ -148,16 +156,17 @@ class WeatherProvider extends ChangeNotifier {
       final weatherKey = '${location.district}:${AppConstants.weatherAllKey}';
       WeatherModel? cachedWeather = await _databaseService.getWeatherData(weatherKey);
       
-      if (cachedWeather != null) {
-        // Use cached data
-        _currentWeather = cachedWeather;
-        _currentLocationWeather = cachedWeather; // 保存当前定位天气数据
-        _originalLocation = location; // 保存原始位置
-        _hourlyForecast = cachedWeather.forecast24h;
-        _dailyForecast = cachedWeather.forecast15d?.take(7).toList();
-        _locationService.setCachedLocation(location);
-        print('Using cached weather data for ${location.district}');
-      } else {
+        if (cachedWeather != null) {
+          // Use cached data
+          _currentWeather = cachedWeather;
+          _currentLocationWeather = cachedWeather; // 保存当前定位天气数据
+          _originalLocation = location; // 保存原始位置
+          _hourlyForecast = cachedWeather.forecast24h;
+          _dailyForecast = cachedWeather.forecast15d?.take(7).toList();
+          _forecast15d = cachedWeather.forecast15d; // 保存15日预报数据
+          _locationService.setCachedLocation(location);
+          print('Using cached weather data for ${location.district}');
+        } else {
         // Fetch fresh data from API
         print('No valid cache found, fetching fresh weather data for ${location.district}');
         WeatherModel? weather = await _weatherService.getWeatherDataForLocation(location);
@@ -168,6 +177,7 @@ class WeatherProvider extends ChangeNotifier {
           _originalLocation = location; // 保存原始位置
           _hourlyForecast = weather.forecast24h;
           _dailyForecast = weather.forecast15d?.take(7).toList();
+          _forecast15d = weather.forecast15d; // 保存15日预报数据
           
           // Save weather data to cache
           await _databaseService.putWeatherData(weatherKey, weather);
@@ -653,8 +663,50 @@ class WeatherProvider extends ChangeNotifier {
       _currentLocation = _originalLocation;
       _hourlyForecast = _currentLocationWeather!.forecast24h;
       _dailyForecast = _currentLocationWeather!.forecast15d?.take(7).toList();
+      _forecast15d = _currentLocationWeather!.forecast15d;
       notifyListeners();
       print('Restored to current location weather: ${_originalLocation!.district}');
+    }
+  }
+
+  /// 刷新15日预报数据
+  Future<void> refresh15DayForecast() async {
+    if (_currentLocation == null) return;
+    
+    _setLoading(true);
+    _error = null;
+    
+    try {
+      print('Refreshing 15-day forecast for: ${_currentLocation!.district}');
+      
+      // 检查缓存
+      final forecastKey = '${_currentLocation!.district}:${AppConstants.weather15dKey}';
+      WeatherModel? cachedForecast = await _databaseService.getWeatherData(forecastKey);
+      
+      if (cachedForecast != null) {
+        // 使用缓存数据
+        _forecast15d = cachedForecast.forecast15d;
+        print('Using cached 15-day forecast data for ${_currentLocation!.district}');
+      } else {
+        // 从API获取新数据
+        print('No valid cache found, fetching fresh 15-day forecast data for ${_currentLocation!.district}');
+        WeatherModel? forecast = await _forecast15dService.get15DayForecastForLocation(_currentLocation!);
+        
+        if (forecast != null) {
+          _forecast15d = forecast.forecast15d;
+          
+          // 保存到缓存
+          await _databaseService.putWeatherData(forecastKey, forecast);
+          print('15-day forecast data cached for ${_currentLocation!.district}');
+        } else {
+          _error = 'Failed to fetch 15-day forecast data';
+        }
+      }
+    } catch (e) {
+      _error = 'Error refreshing 15-day forecast: $e';
+      print('15-day forecast refresh error: $e');
+    } finally {
+      _setLoading(false);
     }
   }
 }

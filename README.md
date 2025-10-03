@@ -1,199 +1,227 @@
-# Rain Weather Flutter
+# 雨天气 Flutter
 
-A Flutter weather application refactored from the original Android project. This app provides real-time weather information with location services, weather forecasts, and beautiful UI components.
+从原始Android项目重构的Flutter天气应用程序。该应用提供实时天气信息，包括定位服务、天气预报和美观的UI组件。
 
-## Features
+> **English Documentation**: [README_EN.md](README_EN.md) | **中文文档**: 本文件
 
-### Core Functionality
-- **Real-time Weather Data**: Fetches current weather conditions from weatherol.cn API
-- **Location Services**: Uses GPS to automatically detect user location
-- **Weather Forecasts**: 24-hour hourly forecast and 7-day daily forecast
-- **Temperature Charts**: Interactive charts showing temperature trends
-- **Air Quality**: Displays air quality index (AQI) with color-coded levels
-- **Main Cities**: Quick access to weather for major Chinese cities
+## 功能特性
 
-### UI/UX Features
-- **Dark Theme**: Modern dark theme with blue accent colors
-- **Responsive Design**: Adapts to different screen sizes
-- **Pull-to-Refresh**: Easy data refresh with pull gesture
-- **Loading States**: Smooth loading indicators and error handling
-- **Weather Icons**: Custom weather icons for different conditions
-- **Gradient Backgrounds**: Dynamic backgrounds based on weather conditions
+### 核心功能
+- **实时天气数据**：从weatherol.cn API获取当前天气状况
+- **定位服务**：使用GPS自动检测用户位置
+- **天气预报**：24小时逐时预报和15天每日预报
+- **温度图表**：显示温度趋势的交互式图表
+- **空气质量**：显示空气质量指数(AQI)和颜色编码等级
+- **主要城市**：快速访问中国主要城市的天气
 
-### Technical Features
-- **State Management**: Provider pattern for reactive UI updates
-- **Local Caching**: SQLite database for offline data storage
-- **Background Updates**: Periodic weather data refresh
-- **Error Handling**: Comprehensive error handling and fallback states
-- **JSON Serialization**: Automatic model serialization/deserialization
+### UI/UX特性
+- **深色主题**：现代深色主题配蓝色强调色
+- **响应式设计**：适配不同屏幕尺寸
+- **下拉刷新**：通过下拉手势轻松刷新数据
+- **加载状态**：流畅的加载指示器和错误处理
+- **天气图标**：不同天气条件的自定义图标
+- **渐变背景**：基于天气条件的动态背景
 
-## Project Structure
+### 技术特性
+- **状态管理**：使用Provider模式进行响应式UI更新
+- **本地缓存**：SQLite数据库用于离线数据存储
+- **后台更新**：定期刷新天气数据
+- **错误处理**：全面的错误处理和回退状态
+- **JSON序列化**：自动模型序列化/反序列化
+
+## 项目结构
 
 ```
 lib/
-├── constants/          # App constants and configuration
-├── models/            # Data models with JSON serialization
-├── providers/         # State management with Provider
-├── screens/           # Main UI screens
-├── services/          # Business logic and API services
-├── widgets/           # Reusable UI components
-└── utils/             # Utility functions
+├── constants/          # 应用常量和配置
+├── models/            # 带有JSON序列化的数据模型
+├── providers/         # 使用Provider的状态管理
+├── screens/           # 主要UI屏幕
+├── services/          # 业务逻辑和API服务
+├── widgets/           # 可重用的UI组件
+└── utils/             # 工具函数
 ```
 
-## Dependencies
+## 依赖项
 
-### Core Dependencies
-- **provider**: State management
-- **dio**: HTTP client for API requests
-- **geolocator**: Location services
-- **sqflite**: Local database storage
-- **fl_chart**: Interactive charts
+### 核心依赖
+- **provider**: 状态管理
+- **dio**: API请求的HTTP客户端
+- **geolocator**: 定位服务
+- **sqflite**: 本地数据库存储
+- **fl_chart**: 交互式图表
 
-### UI Dependencies
-- **cached_network_image**: Image caching
-- **flutter_svg**: SVG support
-- **lottie**: Animation support
+### UI依赖
+- **cached_network_image**: 图片缓存
+- **flutter_svg**: SVG支持
+- **lottie**: 动画支持
 
-### Development Dependencies
-- **json_serializable**: JSON model generation
-- **build_runner**: Code generation
+### 开发依赖
+- **json_serializable**: JSON模型生成
+- **build_runner**: 代码生成
 
-## Getting Started
+## 开始使用
 
-### Prerequisites
-- Flutter SDK (3.9.2 or higher)
+### 前置条件
+- Flutter SDK (3.9.2或更高版本)
 - Dart SDK
 - Android Studio / VS Code
-- Android device or emulator
+- Android设备或模拟器
 
-### Installation
+### 安装
 
-1. **Clone the repository**
+1. **克隆仓库**
    ```bash
    git clone <repository-url>
    cd rainweather_flutter
    ```
 
-2. **Install dependencies**
+2. **安装依赖**
    ```bash
    flutter pub get
    ```
 
-3. **Generate code**
+3. **生成代码**
    ```bash
    flutter packages pub run build_runner build
    ```
 
-4. **Run the app**
+4. **运行应用**
    ```bash
    flutter run
    ```
 
-### Configuration
+### 配置
 
-The app uses the following API endpoints:
-- **Weather API**: `https://www.weatherol.cn/api/home/getCurrAnd15dAnd24h?cityid=`
-- **City Data**: Local `city.json` file with city mappings
+应用使用以下API端点：
+- **天气API**: `https://www.weatherol.cn/api/home/getCurrAnd15dAnd24h?cityid=`
+- **城市数据**: 本地`city.json`文件，包含城市映射
 
-## Architecture
+## 架构
 
-### State Management
-The app uses the Provider pattern for state management:
+### 状态管理
+应用使用Provider模式进行状态管理：
 
-- **WeatherProvider**: Manages weather data, location, and UI state
-- **Reactive Updates**: UI automatically updates when data changes
-- **Error Handling**: Centralized error state management
+- **WeatherProvider**: 管理天气数据、位置和UI状态
+- **响应式更新**: 数据变化时UI自动更新
+- **错误处理**: 集中式错误状态管理
 
-### Data Flow
-1. **Location Service**: Gets current GPS location
-2. **Weather Service**: Fetches weather data from API
-3. **Database Service**: Caches data locally
-4. **Provider**: Manages state and notifies UI
-5. **UI**: Displays data reactively
+### 数据流
+1. **定位服务**: 获取当前GPS位置
+2. **天气服务**: 从API获取天气数据
+3. **数据库服务**: 本地缓存数据
+4. **Provider**: 管理状态并通知UI
+5. **UI**: 响应式显示数据
 
-### Services
-- **LocationService**: GPS location detection and permission handling
-- **WeatherService**: API communication and data parsing
-- **DatabaseService**: Local storage and caching
+### 服务
+- **LocationService**: GPS定位检测和权限处理
+- **WeatherService**: API通信和数据解析
+- **DatabaseService**: 本地存储和缓存
 
-## API Integration
+## API集成
 
-The app integrates with the weatherol.cn weather API:
+应用与weatherol.cn天气API集成：
 
-### Endpoints
-- **Current Weather**: `/getCurrAnd15dAnd24h?cityid={cityId}`
-- **Response Format**: JSON with current, forecast24h, and forecast15d data
+### 端点
+- **当前天气**: `/getCurrAnd15dAnd24h?cityid={cityId}`
+- **响应格式**: 包含当前、24小时预报和15天预报数据的JSON
 
-### Data Models
-- **WeatherModel**: Complete weather data structure
-- **CurrentWeather**: Current conditions
-- **HourlyWeather**: 24-hour forecast
-- **DailyWeather**: 7-day forecast
-- **AirQuality**: Air quality information
+### 数据模型
+- **WeatherModel**: 完整的天气数据结构
+- **CurrentWeather**: 当前天气状况
+- **HourlyWeather**: 24小时预报
+- **DailyWeather**: 15天预报
+- **AirQuality**: 空气质量信息
 
-## Permissions
+## 权限
 
-### Android Permissions
-- `ACCESS_FINE_LOCATION`: GPS location access
-- `ACCESS_COARSE_LOCATION`: Network location access
-- `ACCESS_BACKGROUND_LOCATION`: Background location updates
-- `INTERNET`: Network access for API calls
-- `WAKE_LOCK`: Background task execution
+### Android权限
+- `ACCESS_FINE_LOCATION`: GPS定位访问
+- `ACCESS_COARSE_LOCATION`: 网络定位访问
+- `ACCESS_BACKGROUND_LOCATION`: 后台定位更新
+- `INTERNET`: API调用的网络访问
+- `WAKE_LOCK`: 后台任务执行
 
-## Development
+## 开发
 
-### Code Generation
-Run code generation after model changes:
+### 代码生成
+模型更改后运行代码生成：
 ```bash
 flutter packages pub run build_runner build --delete-conflicting-outputs
 ```
 
-### Testing
+### 测试
 ```bash
 flutter test
 ```
 
-### Building
+### 构建
 ```bash
-# Debug build
+# 调试构建
 flutter build apk --debug
 
-# Release build
+# 发布构建
 flutter build apk --release
 ```
 
-## Migration from Android
+## 从Android迁移
 
-This Flutter app is a complete refactor of the original Android weather app with the following improvements:
+这个Flutter应用是对原始Android天气应用的完全重构，具有以下改进：
 
-### Enhanced Features
-- **Modern UI**: Material Design 3 with dark theme
-- **Better State Management**: Provider pattern vs manual state handling
-- **Improved Error Handling**: Comprehensive error states and fallbacks
-- **Cross-Platform**: Runs on both Android and iOS
-- **Better Performance**: Flutter's efficient rendering engine
+### 增强功能
+- **现代UI**: Material Design 3深色主题
+- **更好的状态管理**: Provider模式vs手动状态处理
+- **改进的错误处理**: 全面的错误状态和回退
+- **跨平台**: 同时支持Android和iOS
+- **更好的性能**: Flutter的高效渲染引擎
 
-### Preserved Functionality
-- **Same API**: Uses identical weather API endpoints
-- **Same Data Structure**: Maintains compatibility with existing data
-- **Same Features**: All original features preserved and enhanced
-- **Same City Support**: Supports all original Chinese cities
+### 保留功能
+- **相同API**: 使用相同的天气API端点
+- **相同数据结构**: 与现有数据保持兼容
+- **相同功能**: 所有原始功能都保留并增强
+- **相同城市支持**: 支持所有原始中国城市
 
-## Contributing
+## 页面功能
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+### 今日天气
+- 当前天气状况显示
+- 温度、湿度、风力等详细信息
+- 空气质量指数
+- 日出日落时间
+- 体感温度
 
-## License
+### 24小时预报
+- 逐小时天气变化
+- 温度趋势图表
+- 天气图标和描述
+- 风力风向信息
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+### 15日预报
+- 15天天气预报
+- 温度趋势图表
+- 上午/下午天气对比
+- 日出日落时间
 
-## Acknowledgments
+### 主要城市
+- 中国主要城市天气
+- 快速切换城市
+- 城市天气对比
 
-- Original Android weather app for inspiration and API integration
-- weatherol.cn for providing weather data API
-- Flutter team for the excellent framework
-- Open source community for various packages used
+## 贡献
+
+1. Fork仓库
+2. 创建功能分支
+3. 进行更改
+4. 如适用，添加测试
+5. 提交拉取请求
+
+## 许可证
+
+本项目采用MIT许可证 - 详见LICENSE文件。
+
+## 致谢
+
+- 原始Android天气应用提供灵感和API集成
+- weatherol.cn提供天气数据API
+- Flutter团队提供优秀的框架
+- 开源社区提供各种包

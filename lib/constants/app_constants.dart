@@ -7,6 +7,7 @@ class AppConstants {
   static const String currentLocationKey = 'CURRENT_LOCATION';
   static const String weatherAllKey = 'WEATHER_ALL';
   static const String weather7dKey = 'WEATHER_7D';
+  static const String weather15dKey = 'WEATHER_15D';
   static const String historyKey = 'HISTORY';
   
   // Broadcast Actions

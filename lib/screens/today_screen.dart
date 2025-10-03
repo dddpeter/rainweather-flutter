@@ -201,12 +201,6 @@ class _TodayScreenState extends State<TodayScreen> {
 
     return Container(
       width: double.infinity,
-      decoration: const BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage('assets/images/backgroud.png'),
-          fit: BoxFit.cover,
-        ),
-      ),
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -216,22 +210,10 @@ class _TodayScreenState extends State<TodayScreen> {
               Center(
                 child: Text(
                   _getDisplayCity(location),
-                  style: TextStyle(
-                    color: Colors.white,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    shadows: [
-                      Shadow(
-                        color: Colors.white.withOpacity(0.8),
-                        blurRadius: 10,
-                        offset: const Offset(0, 0),
-                      ),
-                      Shadow(
-                        color: Colors.blue.withOpacity(0.6),
-                        blurRadius: 20,
-                        offset: const Offset(0, 0),
-                      ),
-                    ],
                   ),
                 ),
               ),
@@ -245,14 +227,14 @@ class _TodayScreenState extends State<TodayScreen> {
                     weatherProvider.getWeatherIcon(current?.weather ?? '晴'),
                     style: const TextStyle(
                       fontSize: 50,
-                      color: Colors.white,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(width: 16),
                   Text(
                     '${current?.temperature ?? '--'}°',
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: AppColors.textPrimary,
                       fontSize: 48,
                       fontWeight: FontWeight.bold,
                     ),
@@ -265,7 +247,7 @@ class _TodayScreenState extends State<TodayScreen> {
               Text(
                 current?.weather ?? '晴',
                 style: const TextStyle(
-                  color: Colors.white70,
+                  color: AppColors.textSecondary,
                   fontSize: 20,
                   fontWeight: FontWeight.w500,
                 ),
@@ -281,7 +263,7 @@ class _TodayScreenState extends State<TodayScreen> {
                         Icons.water_drop,
                         '湿度',
                         '${current.humidity ?? '--'}%',
-                        AppColors.accentGreen, // 绿色
+                        const Color(0xFF66BB6A), // 绿色
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -290,7 +272,7 @@ class _TodayScreenState extends State<TodayScreen> {
                         Icons.air,
                         '风力',
                         '${current.winddir ?? '--'}${current.windpower ?? ''}',
-                        AppColors.accentGreen, // 绿色
+                        const Color(0xFF4FC3F7), // 蓝色
                       ),
                     ),
                   ],
@@ -303,7 +285,7 @@ class _TodayScreenState extends State<TodayScreen> {
                         Icons.compress,
                         '气压',
                         '${current.airpressure ?? '--'}hpa',
-                        AppColors.accentGreen, // 绿色
+                        const Color(0xFF4FC3F7), // 蓝色
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -312,7 +294,7 @@ class _TodayScreenState extends State<TodayScreen> {
                         Icons.visibility,
                         '能见度',
                         '${current.visibility ?? '--'}km',
-                        AppColors.accentGreen, // 绿色
+                        const Color(0xFF66BB6A), // 绿色
                       ),
                     ),
                   ],
@@ -325,7 +307,7 @@ class _TodayScreenState extends State<TodayScreen> {
                         Icons.thermostat,
                         '体感温度',
                         '${current.feelstemperature ?? '--'}°',
-                        AppColors.accentGreen, // 绿色
+                        const Color(0xFF66BB6A), // 绿色
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -334,7 +316,7 @@ class _TodayScreenState extends State<TodayScreen> {
                         Icons.eco,
                         '空气指数',
                         '${weather?.current?.air?.AQI ?? '--'}',
-                        _getAirQualityColor(weather?.current?.air?.AQI),
+                        const Color(0xFF4FC3F7), // 蓝色
                       ),
                     ),
                   ],
@@ -348,97 +330,39 @@ class _TodayScreenState extends State<TodayScreen> {
   }
 
   Widget _buildCompactWeatherDetail(IconData icon, String label, String value, Color color) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.4),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.2),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Icon(
-                icon, 
-                color: color, 
-                size: 18,
-                shadows: [
-                  Shadow(
-                    color: color.withOpacity(0.8),
-                    blurRadius: 6,
-                    offset: const Offset(0, 0),
-                  ),
-                  Shadow(
-                    color: color.withOpacity(0.4),
-                    blurRadius: 12,
-                    offset: const Offset(0, 0),
-                  ),
-                ],
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      label,
-                      style: TextStyle(
-                        color: color.withOpacity(0.9),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        shadows: [
-                          Shadow(
-                            color: color.withOpacity(0.6),
-                            blurRadius: 4,
-                            offset: const Offset(0, 0),
-                          ),
-                          Shadow(
-                            color: Colors.black.withOpacity(0.8),
-                            blurRadius: 1,
-                            offset: const Offset(0, 1),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Text(
-                      value,
-                      style: TextStyle(
-                        color: color,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        shadows: [
-                          Shadow(
-                            color: color.withOpacity(0.8),
-                            blurRadius: 6,
-                            offset: const Offset(0, 0),
-                          ),
-                          Shadow(
-                            color: Colors.black.withOpacity(0.8),
-                            blurRadius: 1,
-                            offset: const Offset(0, 1),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withOpacity(0.3),
+          width: 1,
         ),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              color: color,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
       ),
     );
   }

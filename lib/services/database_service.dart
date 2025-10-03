@@ -1,0 +1,726 @@
+import 'dart:convert';
+import 'package:flutter/services.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart';
+import '../models/weather_model.dart';
+import '../models/location_model.dart';
+import '../models/city_model.dart';
+import '../constants/app_constants.dart';
+
+class DatabaseService {
+  static DatabaseService? _instance;
+  Database? _database;
+  
+  DatabaseService._();
+  
+  static DatabaseService getInstance() {
+    _instance ??= DatabaseService._();
+    return _instance!;
+  }
+  
+  /// Initialize database
+  Future<void> initDatabase() async {
+    if (_database != null) return;
+    
+    try {
+        String path = join(await getDatabasesPath(), 'weather.db');
+        _database = await openDatabase(
+          path,
+          version: 4,
+        onCreate: (db, version) async {
+          await db.execute('''
+            CREATE TABLE weather_cache (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              key TEXT UNIQUE NOT NULL,
+              data TEXT NOT NULL,
+              type TEXT NOT NULL,
+              created_at INTEGER NOT NULL,
+              expires_at INTEGER NOT NULL
+            )
+          ''');
+          
+          await db.execute('''
+            CREATE TABLE location_cache (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              key TEXT UNIQUE NOT NULL,
+              data TEXT NOT NULL,
+              created_at INTEGER NOT NULL
+            )
+          ''');
+          
+          await db.execute('''
+            CREATE TABLE cities (
+              id TEXT PRIMARY KEY,
+              name TEXT NOT NULL,
+              isMainCity INTEGER NOT NULL DEFAULT 0,
+              createdAt INTEGER NOT NULL,
+              sortOrder INTEGER NOT NULL DEFAULT 9999
+            )
+          ''');
+          
+          await db.execute('''
+            CREATE TABLE city_search (
+              id TEXT PRIMARY KEY,
+              name TEXT NOT NULL,
+              createdAt INTEGER NOT NULL
+            )
+          ''');
+        },
+        onUpgrade: (db, oldVersion, newVersion) async {
+          if (oldVersion < 2) {
+            // 添加cities表
+            await db.execute('''
+              CREATE TABLE cities (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                isMainCity INTEGER NOT NULL DEFAULT 0,
+                createdAt INTEGER NOT NULL
+              )
+            ''');
+            print('Database upgraded to version 2: Added cities table');
+          }
+          if (oldVersion < 3) {
+            // 添加city_search表
+            await db.execute('''
+              CREATE TABLE city_search (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                createdAt INTEGER NOT NULL
+              )
+            ''');
+            print('Database upgraded to version 3: Added city_search table');
+          }
+          if (oldVersion < 4) {
+            // 添加sortOrder字段到cities表
+            await db.execute('''
+              ALTER TABLE cities ADD COLUMN sortOrder INTEGER NOT NULL DEFAULT 9999
+            ''');
+            print('Database upgraded to version 4: Added sortOrder column to cities table');
+          }
+        },
+      );
+    } catch (e) {
+      print('Database initialization failed: $e');
+      // Continue without database for web platform
+    }
+  }
+  
+  /// Get database instance
+  Future<Database> get database async {
+    if (_database == null) {
+      await initDatabase();
+    }
+    return _database!;
+  }
+  
+  /// Store string data
+  Future<void> putString(String key, String value) async {
+    final db = await database;
+    await db.insert(
+      'weather_cache',
+      {
+        'key': key,
+        'data': value,
+        'type': 'String',
+        'created_at': DateTime.now().millisecondsSinceEpoch,
+        'expires_at': DateTime.now().add(AppConstants.cacheExpiration).millisecondsSinceEpoch,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+  
+  /// Get string data
+  Future<String?> getString(String key) async {
+    final db = await database;
+    final result = await db.query(
+      'weather_cache',
+      where: 'key = ? AND expires_at > ?',
+      whereArgs: [key, DateTime.now().millisecondsSinceEpoch],
+    );
+    
+    if (result.isNotEmpty) {
+      return result.first['data'] as String?;
+    }
+    return null;
+  }
+  
+  /// Store boolean data
+  Future<void> putBoolean(String key, bool value) async {
+    await putString(key, value.toString());
+  }
+  
+  /// Get boolean data
+  Future<bool> getBoolean(String key, bool defaultValue) async {
+    final value = await getString(key);
+    if (value != null) {
+      return value.toLowerCase() == 'true';
+    }
+    return defaultValue;
+  }
+  
+  /// Store integer data
+  Future<void> putInt(String key, int value) async {
+    await putString(key, value.toString());
+  }
+  
+  /// Get integer data
+  Future<int> getInt(String key, int defaultValue) async {
+    final value = await getString(key);
+    if (value != null) {
+      return int.tryParse(value) ?? defaultValue;
+    }
+    return defaultValue;
+  }
+  
+  /// Store weather data
+  Future<void> putWeatherData(String key, WeatherModel weatherData) async {
+    final db = await database;
+    await db.insert(
+      'weather_cache',
+      {
+        'key': key,
+        'data': jsonEncode(weatherData.toJson()),
+        'type': 'WeatherModel',
+        'created_at': DateTime.now().millisecondsSinceEpoch,
+        'expires_at': DateTime.now().add(AppConstants.cacheExpiration).millisecondsSinceEpoch,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+  
+  /// Get weather data
+  Future<WeatherModel?> getWeatherData(String key) async {
+    final db = await database;
+    final result = await db.query(
+      'weather_cache',
+      where: 'key = ? AND expires_at > ?',
+      whereArgs: [key, DateTime.now().millisecondsSinceEpoch],
+    );
+    
+    if (result.isNotEmpty) {
+      final data = result.first['data'] as String;
+      try {
+        final json = jsonDecode(data) as Map<String, dynamic>;
+        return WeatherModel.fromJson(json);
+      } catch (e) {
+        print('Error parsing weather data: $e');
+      }
+    }
+    return null;
+  }
+  
+  /// Store location data
+  Future<void> putLocationData(String key, LocationModel locationData) async {
+    final db = await database;
+    await db.insert(
+      'location_cache',
+      {
+        'key': key,
+        'data': jsonEncode(locationData.toJson()),
+        'created_at': DateTime.now().millisecondsSinceEpoch,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+  
+  /// Get location data
+  Future<LocationModel?> getLocationData(String key) async {
+    final db = await database;
+    final result = await db.query(
+      'location_cache',
+      where: 'key = ?',
+      whereArgs: [key],
+    );
+    
+    if (result.isNotEmpty) {
+      final data = result.first['data'] as String;
+      try {
+        final json = jsonDecode(data) as Map<String, dynamic>;
+        return LocationModel.fromJson(json);
+      } catch (e) {
+        print('Error parsing location data: $e');
+      }
+    }
+    return null;
+  }
+  
+  /// Delete expired data
+  Future<int> cleanExpiredData() async {
+    final db = await database;
+    return await db.delete(
+      'weather_cache',
+      where: 'expires_at < ?',
+      whereArgs: [DateTime.now().millisecondsSinceEpoch],
+    );
+  }
+  
+  /// Clear all data
+  Future<void> clearAllData() async {
+    final db = await database;
+    await db.delete('weather_cache');
+    await db.delete('location_cache');
+    await db.delete('cities');
+  }
+
+  // ========== City Management Methods ==========
+
+  /// Ensure cities table exists
+  Future<void> _ensureCitiesTableExists() async {
+    final db = await database;
+    try {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS cities (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          isMainCity INTEGER NOT NULL DEFAULT 0,
+          createdAt INTEGER NOT NULL
+        )
+      ''');
+    } catch (e) {
+      print('Failed to ensure cities table exists: $e');
+    }
+  }
+
+  /// Save a city to database
+  Future<void> saveCity(CityModel city) async {
+    final db = await database;
+    try {
+      await _ensureCitiesTableExists();
+      await db.insert(
+        'cities',
+        city.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      print('City saved: ${city.name}');
+    } catch (e) {
+      print('Failed to save city: $e');
+    }
+  }
+
+  /// Get all cities from database
+  Future<List<CityModel>> getAllCities() async {
+    final db = await database;
+    try {
+      final List<Map<String, dynamic>> maps = await db.query(
+        'cities',
+        orderBy: 'createdAt DESC',
+      );
+      
+      return maps.map((map) => CityModel.fromMap(map)).toList();
+    } catch (e) {
+      print('Failed to get cities: $e');
+      return [];
+    }
+  }
+
+  /// Get main cities from database
+  Future<List<CityModel>> getMainCities() async {
+    final db = await database;
+    try {
+      await _ensureCitiesTableExists();
+      final List<Map<String, dynamic>> maps = await db.query(
+        'cities',
+        where: 'isMainCity = ?',
+        whereArgs: [1],
+        orderBy: 'createdAt DESC',
+      );
+      
+      return maps.map((map) => CityModel.fromMap(map)).toList();
+    } catch (e) {
+      print('Failed to get main cities: $e');
+      return [];
+    }
+  }
+
+  /// Get main cities with current location first
+  Future<List<CityModel>> getMainCitiesWithCurrentLocationFirst(String? currentLocationName) async {
+    final db = await database;
+    try {
+      await _ensureCitiesTableExists();
+      
+      // First, ensure current location is in main cities if provided
+      if (currentLocationName != null) {
+        await _ensureCurrentLocationInMainCities(currentLocationName);
+      }
+      
+      // Then get all main cities, sorted by sortOrder
+      final List<Map<String, dynamic>> maps = await db.query(
+        'cities',
+        where: 'isMainCity = ?',
+        whereArgs: [1],
+        orderBy: 'sortOrder ASC, createdAt ASC',
+      );
+      
+      List<CityModel> cities = maps.map((map) => CityModel.fromMap(map)).toList();
+      
+      // If we have a current location, move it to the front (sortOrder = 0)
+      if (currentLocationName != null && cities.isNotEmpty) {
+        final currentLocationIndex = cities.indexWhere((city) => city.name == currentLocationName);
+        if (currentLocationIndex >= 0) {
+          final currentLocation = cities.removeAt(currentLocationIndex);
+          // Set sortOrder to 0 to ensure it's always first
+          final updatedCurrentLocation = currentLocation.copyWith(sortOrder: 0);
+          cities.insert(0, updatedCurrentLocation);
+          // Update the database with the new sortOrder
+          await updateCitySortOrder(currentLocation.id, 0);
+        }
+      }
+      
+      return cities;
+    } catch (e) {
+      print('Failed to get main cities with current location first: $e');
+      return [];
+    }
+  }
+
+  /// Ensure current location is in main cities
+  Future<void> _ensureCurrentLocationInMainCities(String cityName) async {
+    try {
+      final db = await database;
+      
+      // Check if city already exists as a main city
+      final existingMainCities = await db.query(
+        'cities',
+        where: 'name = ? AND isMainCity = ?',
+        whereArgs: [cityName, 1],
+        limit: 1,
+      );
+      
+      if (existingMainCities.isNotEmpty) {
+        // City already exists as main city, no need to add
+        print('City already exists as main city: $cityName');
+        return;
+      }
+      
+      // Check if city exists in database but is not a main city
+      final existingCity = await getCityByName(cityName);
+      if (existingCity != null) {
+        // If city exists but is not a main city, add it
+        await updateCityMainStatus(existingCity.id, true);
+        print('Added existing city to main cities: $cityName');
+      } else {
+        // If city doesn't exist in database, create it
+        final newCity = CityModel(
+          id: 'current_location_${DateTime.now().millisecondsSinceEpoch}',
+          name: cityName,
+          isMainCity: true,
+          createdAt: DateTime.now(),
+        );
+        await saveCity(newCity);
+        print('Created and added current location to main cities: $cityName');
+      }
+    } catch (e) {
+      print('Error ensuring current location in main cities: $e');
+    }
+  }
+
+  /// Get city by name
+  Future<CityModel?> getCityByName(String name) async {
+    final db = await database;
+    try {
+      final List<Map<String, dynamic>> maps = await db.query(
+        'cities',
+        where: 'name = ?',
+        whereArgs: [name],
+        limit: 1,
+      );
+      
+      if (maps.isNotEmpty) {
+        return CityModel.fromMap(maps.first);
+      }
+      return null;
+    } catch (e) {
+      print('Failed to get city by name: $e');
+      return null;
+    }
+  }
+
+  /// Get city by ID
+  Future<CityModel?> getCityById(String id) async {
+    final db = await database;
+    try {
+      final List<Map<String, dynamic>> maps = await db.query(
+        'cities',
+        where: 'id = ?',
+        whereArgs: [id],
+        limit: 1,
+      );
+      
+      if (maps.isNotEmpty) {
+        return CityModel.fromMap(maps.first);
+      }
+      return null;
+    } catch (e) {
+      print('Failed to get city by ID: $e');
+      return null;
+    }
+  }
+
+  /// Delete a city from database
+  Future<void> deleteCity(String cityId) async {
+    final db = await database;
+    try {
+      await db.delete(
+        'cities',
+        where: 'id = ?',
+        whereArgs: [cityId],
+      );
+      print('City deleted: $cityId');
+    } catch (e) {
+      print('Failed to delete city: $e');
+    }
+  }
+
+  /// Delete city by name
+  Future<void> deleteCityByName(String name) async {
+    final db = await database;
+    try {
+      await db.delete(
+        'cities',
+        where: 'name = ?',
+        whereArgs: [name],
+      );
+      print('City deleted: $name');
+    } catch (e) {
+      print('Failed to delete city: $e');
+    }
+  }
+
+  /// Delete weather data by key
+  Future<void> deleteWeatherData(String key) async {
+    final db = await database;
+    try {
+      await db.delete(
+        'weather_cache',
+        where: 'key = ?',
+        whereArgs: [key],
+      );
+      print('Weather data deleted: $key');
+    } catch (e) {
+      print('Failed to delete weather data: $e');
+    }
+  }
+
+  /// Delete location data by key
+  Future<void> deleteLocationData(String key) async {
+    final db = await database;
+    try {
+      await db.delete(
+        'location_cache',
+        where: 'key = ?',
+        whereArgs: [key],
+      );
+      print('Location data deleted: $key');
+    } catch (e) {
+      print('Failed to delete location data: $e');
+    }
+  }
+
+  /// Update city main status
+  Future<void> updateCityMainStatus(String cityId, bool isMainCity) async {
+    final db = await database;
+    try {
+      await db.update(
+        'cities',
+        {'isMainCity': isMainCity ? 1 : 0},
+        where: 'id = ?',
+        whereArgs: [cityId],
+      );
+      print('City main status updated: $cityId -> $isMainCity');
+    } catch (e) {
+      print('Failed to update city main status: $e');
+    }
+  }
+
+  /// Update city sort order
+  Future<void> updateCitySortOrder(String cityId, int sortOrder) async {
+    final db = await database;
+    try {
+      await db.update(
+        'cities',
+        {'sortOrder': sortOrder},
+        where: 'id = ?',
+        whereArgs: [cityId],
+      );
+      print('City sort order updated: $cityId -> $sortOrder');
+    } catch (e) {
+      print('Failed to update city sort order: $e');
+    }
+  }
+
+  /// Update multiple cities sort order
+  Future<void> updateCitiesSortOrder(List<Map<String, dynamic>> citySortOrders) async {
+    final db = await database;
+    try {
+      await db.transaction((txn) async {
+        for (final citySort in citySortOrders) {
+          await txn.update(
+            'cities',
+            {'sortOrder': citySort['sortOrder']},
+            where: 'id = ?',
+            whereArgs: [citySort['cityId']],
+          );
+        }
+      });
+      print('Cities sort order updated: ${citySortOrders.length} cities');
+    } catch (e) {
+      print('Failed to update cities sort order: $e');
+    }
+  }
+
+  /// Check if cities table is initialized
+  Future<bool> isCitiesTableInitialized() async {
+    final db = await database;
+    try {
+      final List<Map<String, dynamic>> result = await db.query(
+        'cities',
+        limit: 1,
+      );
+      return result.isNotEmpty;
+    } catch (e) {
+      print('Failed to check cities table: $e');
+      return false;
+    }
+  }
+
+  /// Clear all cities
+  Future<void> clearAllCities() async {
+    final db = await database;
+    try {
+      await db.delete('cities');
+      print('All cities cleared');
+    } catch (e) {
+      print('Failed to clear cities: $e');
+    }
+  }
+
+  /// Save city to search table
+  Future<void> saveCityToSearch(String id, String name) async {
+    final db = await database;
+    try {
+      await db.insert(
+        'city_search',
+        {
+          'id': id,
+          'name': name,
+          'createdAt': DateTime.now().millisecondsSinceEpoch,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    } catch (e) {
+      print('Failed to save city to search: $e');
+    }
+  }
+
+  /// Search cities by name from search table
+  Future<List<Map<String, dynamic>>> searchCitiesFromDatabase(String query) async {
+    final db = await database;
+    try {
+      await _ensureCitiesTableExists();
+      final List<Map<String, dynamic>> maps = await db.query(
+        'city_search',
+        where: 'name LIKE ?',
+        whereArgs: ['%$query%'],
+        orderBy: 'name ASC',
+        limit: 50,
+      );
+      return maps;
+    } catch (e) {
+      print('Failed to search cities from database: $e');
+      return [];
+    }
+  }
+
+  /// Initialize city search data from JSON
+  Future<void> initializeCitySearchData() async {
+    final db = await database;
+    try {
+      // Check if search data already exists
+      final existingCount = await db.rawQuery('SELECT COUNT(*) as count FROM city_search');
+      if (existingCount.first['count'] as int > 0) {
+        print('City search data already initialized');
+        return;
+      }
+
+      // Load cities from city.json file
+      final String jsonString = await rootBundle.loadString('assets/data/city.json');
+      final List<dynamic> jsonList = json.decode(jsonString);
+      
+      // Save all cities to search table
+      int savedCount = 0;
+      for (final json in jsonList) {
+        final Map<String, dynamic> cityJson = json as Map<String, dynamic>;
+        await saveCityToSearch(
+          cityJson['id'] as String,
+          cityJson['name'] as String,
+        );
+        savedCount++;
+      }
+
+      print('Initialized $savedCount cities to search table');
+    } catch (e) {
+      print('Failed to initialize city search data: $e');
+    }
+  }
+
+  /// Clear city search data
+  Future<void> clearCitySearchData() async {
+    final db = await database;
+    try {
+      await db.delete('city_search');
+      print('City search data cleared');
+    } catch (e) {
+      print('Failed to clear city search data: $e');
+    }
+  }
+
+  /// Remove duplicate cities with the same name
+  Future<void> removeDuplicateCities() async {
+    final db = await database;
+    try {
+      // Find duplicate cities by name
+      final duplicates = await db.rawQuery('''
+        SELECT name, COUNT(*) as count 
+        FROM cities 
+        WHERE isMainCity = 1 
+        GROUP BY name 
+        HAVING COUNT(*) > 1
+      ''');
+      
+      for (final duplicate in duplicates) {
+        final cityName = duplicate['name'] as String;
+        final count = duplicate['count'] as int;
+        
+        if (count > 1) {
+          // Get all cities with this name, ordered by creation time
+          final cities = await db.query(
+            'cities',
+            where: 'name = ? AND isMainCity = ?',
+            whereArgs: [cityName, 1],
+            orderBy: 'createdAt ASC',
+          );
+          
+          // Keep the first one, delete the rest
+          for (int i = 1; i < cities.length; i++) {
+            await db.delete(
+              'cities',
+              where: 'id = ?',
+              whereArgs: [cities[i]['id']],
+            );
+            print('Removed duplicate city: ${cityName} (${cities[i]['id']})');
+          }
+        }
+      }
+    } catch (e) {
+      print('Failed to remove duplicate cities: $e');
+    }
+  }
+  
+  /// Close database
+  Future<void> close() async {
+    if (_database != null) {
+      await _database!.close();
+      _database = null;
+    }
+  }
+}

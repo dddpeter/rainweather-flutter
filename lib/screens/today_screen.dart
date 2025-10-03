@@ -93,7 +93,7 @@ class _TodayScreenState extends State<TodayScreen> {
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: () => weatherProvider.refreshWeatherData(),
+                    onPressed: () => weatherProvider.forceRefreshWithLocation(),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.accentBlue,
                       foregroundColor: AppColors.textPrimary,
@@ -166,7 +166,7 @@ class _TodayScreenState extends State<TodayScreen> {
                       borderRadius: BorderRadius.circular(28),
                       onTap: weatherProvider.isLoading
                           ? null
-                          : () => weatherProvider.refreshWeatherData(),
+                          : () => weatherProvider.forceRefreshWithLocation(),
                       child: Center(
                         child: weatherProvider.isLoading
                             ? const SizedBox(

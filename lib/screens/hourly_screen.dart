@@ -80,7 +80,7 @@ class _HourlyScreenState extends State<HourlyScreen> {
                       ),
                       const SizedBox(height: 24),
                       ElevatedButton(
-                        onPressed: () => weatherProvider.refreshWeatherData(),
+                        onPressed: () => weatherProvider.forceRefreshWithLocation(),
                         child: const Text('重试'),
                       ),
                     ],
@@ -161,7 +161,7 @@ class _HourlyScreenState extends State<HourlyScreen> {
                       borderRadius: BorderRadius.circular(28),
                       onTap: weatherProvider.isLoading
                           ? null
-                          : () => weatherProvider.refreshWeatherData(),
+                          : () => weatherProvider.forceRefreshWithLocation(),
                       child: Center(
                         child: weatherProvider.isLoading
                             ? const SizedBox(

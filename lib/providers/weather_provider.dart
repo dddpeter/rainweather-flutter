@@ -73,11 +73,18 @@ class WeatherProvider extends ChangeNotifier {
         // 清理默认位置的缓存数据
         await clearDefaultLocationCache();
         
+        // 重新加载主要城市列表，确保当前定位城市被包含
+        await loadMainCities();
+        
         await refreshWeatherData();
       } else {
-        // 如果没有获得真实位置，加载缓存数据
-        print('No real location available, loading cached data');
-        await loadCachedData();
+        // 如果没有获得真实位置，使用北京作为默认位置
+        print('No real location available, using Beijing as default');
+        _currentLocation = _getDefaultLocation();
+        
+        // 重新加载主要城市列表
+        await loadMainCities();
+        
         await refreshWeatherData();
       }
       
@@ -104,35 +111,38 @@ class WeatherProvider extends ChangeNotifier {
           _hourlyForecast = _currentWeather!.forecast24h;
           _dailyForecast = _currentWeather!.forecast15d?.take(7).toList();
         }
+      } else {
+        // If no cached location, use Beijing as default
+        _currentLocation = _getDefaultLocation();
+        print('No cached location found, using Beijing as default');
       }
       
       notifyListeners();
     } catch (e) {
       print('Error loading cached data: $e');
+      // If error loading cached data, use Beijing as default
+      _currentLocation = _getDefaultLocation();
+      notifyListeners();
     }
   }
   
-  /// Refresh weather data
+  /// Refresh weather data (without re-requesting permission)
   Future<void> refreshWeatherData() async {
     _setLoading(true);
     _error = null;
     
     try {
-      // Always try to get current location first (even if we have cached data)
-      LocationModel? location = await _locationService.getCurrentLocation();
-      
-      if (location == null) {
-        // Only use cached location or default if we can't get current location
-        location = _currentLocation ?? _getDefaultLocation();
-        print('Using cached/default location: ${location.district}');
-      } else {
-        print('Got current location: ${location.district}');
-      }
+      // Use current location without re-requesting permission
+      LocationModel? location = _currentLocation ?? _getDefaultLocation();
+      print('Refreshing weather for: ${location.district}');
       
       _currentLocation = location;
       
       // Save location to cache
       await _databaseService.putLocationData(AppConstants.currentLocationKey, location);
+      
+      // Update main cities list to include current location
+      await loadMainCities();
       
       // Check if we have valid cached weather data
       final weatherKey = '${location.district}:${AppConstants.weatherAllKey}';
@@ -592,6 +602,9 @@ class WeatherProvider extends ChangeNotifier {
       
       // Save fresh location to cache
       await _databaseService.putLocationData(AppConstants.currentLocationKey, location);
+      
+      // Update main cities list to include current location
+      await loadMainCities();
       
       // Get fresh weather data (no cache)
       WeatherModel? weather = await _weatherService.getWeatherDataForLocation(location);

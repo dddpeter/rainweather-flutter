@@ -7,6 +7,7 @@ import 'screens/hourly_screen.dart';
 import 'screens/city_weather_screen.dart';
 import 'models/city_model.dart';
 import 'constants/app_colors.dart';
+import 'services/location_service.dart';
 
 void main() {
   runApp(const RainWeatherApp());
@@ -59,7 +60,7 @@ class RainWeatherApp extends StatelessWidget {
             ),
           ],
         ),
-        home: const MainScreen(),
+        home: const SplashScreen(),
       ),
     );
   }
@@ -943,6 +944,301 @@ class _AppThemeExtension extends ThemeExtension<_AppThemeExtension> {
       warningColor: Color.lerp(warningColor, other.warningColor, t)!,
       errorColor: Color.lerp(errorColor, other.errorColor, t)!,
       infoColor: Color.lerp(infoColor, other.infoColor, t)!,
+    );
+  }
+}
+
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _scaleAnimation;
+  
+  bool _isLoading = true;
+  String _statusMessage = '正在初始化...';
+  bool _permissionGranted = false;
+  bool _showPermissionDialog = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _setupAnimations();
+    _initializeApp();
+  }
+
+  void _setupAnimations() {
+    _animationController = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    );
+    
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    ));
+    
+    _scaleAnimation = Tween<double>(
+      begin: 0.8,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.elasticOut,
+    ));
+    
+    _animationController.forward();
+  }
+
+  Future<void> _initializeApp() async {
+    try {
+      // 等待动画完成
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      // 检查权限
+      setState(() {
+        _statusMessage = '检查定位权限...';
+      });
+      
+      final context = this.context;
+      final weatherProvider = Provider.of<WeatherProvider>(context, listen: false);
+      final locationService = LocationService.getInstance();
+      
+      // 检查权限状态，但不强制请求权限
+      final permissionStatus = await locationService.checkLocationPermission();
+      
+      if (!mounted) return;
+      
+      if (permissionStatus == LocationPermissionResult.granted) {
+        setState(() {
+          _statusMessage = '权限已获取，正在加载天气数据...';
+          _permissionGranted = true;
+        });
+      } else {
+        setState(() {
+          _statusMessage = '权限未获取，使用北京天气...';
+        });
+      }
+      
+      // 无论是否有权限都初始化天气数据
+      await weatherProvider.initializeWeather();
+      
+      if (!mounted) return;
+      
+      setState(() {
+        _statusMessage = '加载完成';
+      });
+      
+      // 延迟一下再跳转到主界面
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const MainScreen()),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _statusMessage = '初始化失败，请重试';
+        _showPermissionDialog = true;
+      });
+    }
+  }
+
+  void _requestPermissionAgain() async {
+    setState(() {
+      _showPermissionDialog = false;
+      _statusMessage = '重新请求权限...';
+    });
+    
+    await _initializeApp();
+  }
+
+  void _skipPermission() {
+    setState(() {
+      _showPermissionDialog = false;
+      _statusMessage = '跳过权限，使用默认位置...';
+    });
+    
+    // 直接跳转到主界面，让应用使用默认位置
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => const MainScreen()),
+    );
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: AppColors.primaryGradient,
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Logo 和动画
+              AnimatedBuilder(
+                animation: _animationController,
+                builder: (context, child) {
+                  return Transform.scale(
+                    scale: _scaleAnimation.value,
+                    child: Opacity(
+                      opacity: _fadeAnimation.value,
+                      child: Column(
+                        children: [
+                          // 应用图标
+                          Container(
+                            width: 120,
+                            height: 120,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(30),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.3),
+                                width: 2,
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.wb_sunny,
+                              size: 60,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 30),
+                          // 应用名称
+                          const Text(
+                            '知雨天气2',
+                            style: TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              fontFamily: 'JetBrainsMono',
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          const Text(
+                            '智能天气预报应用',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white70,
+                              fontFamily: 'JetBrainsMono',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+              
+              const SizedBox(height: 60),
+              
+              // 加载指示器
+              if (_isLoading) ...[
+                const CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  _statusMessage,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.white70,
+                    fontFamily: 'JetBrainsMono',
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+              
+              // 权限对话框
+              if (_showPermissionDialog) ...[
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 40),
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(15),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.location_on,
+                        size: 48,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        '初始化失败',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          fontFamily: 'JetBrainsMono',
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        '应用初始化失败，您可以重试或跳过权限直接使用。',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.white70,
+                          fontFamily: 'JetBrainsMono',
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextButton(
+                              onPressed: _skipPermission,
+                              style: TextButton.styleFrom(
+                                backgroundColor: Colors.white.withOpacity(0.2),
+                                foregroundColor: Colors.white70,
+                              ),
+                              child: const Text('跳过'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: _requestPermissionAgain,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.accentBlue,
+                                foregroundColor: Colors.white,
+                              ),
+                              child: const Text('重试'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

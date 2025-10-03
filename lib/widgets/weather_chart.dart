@@ -50,14 +50,11 @@ class WeatherChart extends StatelessWidget {
               interval: 1,
               getTitlesWidget: (value, meta) {
                 if (value.toInt() < dailyForecast!.length) {
-                  return SideTitleWidget(
-                    axisSide: meta.axisSide,
-                    child: Text(
-                      _formatDate(dailyForecast![value.toInt()].forecasttime ?? ''),
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 12,
-                      ),
+                  return Text(
+                    _formatDate(dailyForecast![value.toInt()].forecasttime ?? ''),
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
                     ),
                   );
                 }

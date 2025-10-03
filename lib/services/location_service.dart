@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:geolocator/geolocator.dart';
 import '../models/location_model.dart';
 import 'geocoding_service.dart';
+import 'ip_location_service.dart';
 
 enum LocationPermissionResult {
   granted,
@@ -28,6 +29,30 @@ class LocationService {
   static LocationService getInstance() {
     _instance ??= LocationService._();
     return _instance!;
+  }
+  
+  /// Check location permission status without requesting
+  Future<LocationPermissionResult> checkLocationPermission() async {
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      
+      if (permission == LocationPermission.denied) {
+        return LocationPermissionResult.denied;
+      }
+      
+      if (permission == LocationPermission.deniedForever) {
+        return LocationPermissionResult.deniedForever;
+      }
+      
+      if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
+        return LocationPermissionResult.granted;
+      }
+      
+      return LocationPermissionResult.denied;
+    } catch (e) {
+      print('Error checking location permission: $e');
+      return LocationPermissionResult.error;
+    }
   }
   
   /// Check and request location permissions
@@ -70,11 +95,14 @@ class LocationService {
       
       switch (permissionResult) {
         case LocationPermissionResult.denied:
-          throw LocationException('定位权限被拒绝，请在设置中开启定位权限');
+          print('定位权限被拒绝，尝试IP定位');
+          return await _tryIpLocation();
         case LocationPermissionResult.deniedForever:
-          throw LocationException('定位权限被永久拒绝，请在设置中手动开启定位权限');
+          print('定位权限被永久拒绝，尝试IP定位');
+          return await _tryIpLocation();
         case LocationPermissionResult.error:
-          throw LocationException('定位权限检查失败，请重试');
+          print('定位权限检查失败，尝试IP定位');
+          return await _tryIpLocation();
         case LocationPermissionResult.granted:
           break;
       }
@@ -82,7 +110,8 @@ class LocationService {
       // Check if location services are enabled
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        throw LocationException('定位服务未开启，请在设置中开启定位服务');
+        print('定位服务未开启，尝试IP定位');
+        return await _tryIpLocation();
       }
       
       // Get current position
@@ -110,7 +139,13 @@ class LocationService {
       
       return location;
     } catch (e) {
-      print('Location error: $e');
+      print('GPS location error: $e, trying IP location...');
+      
+      // Try IP location as fallback
+      final ipLocation = await _tryIpLocation();
+      if (ipLocation != null) {
+        return ipLocation;
+      }
       
       if (e is LocationException) {
         // Re-throw location exceptions with user-friendly messages
@@ -126,6 +161,28 @@ class LocationService {
   /// Get cached location
   LocationModel? getCachedLocation() {
     return _cachedLocation;
+  }
+  
+  /// Try IP location as fallback
+  Future<LocationModel?> _tryIpLocation() async {
+    try {
+      print('Trying IP location...');
+      final ipLocationService = IpLocationService.getInstance();
+      final location = await ipLocationService.getLocationByIp();
+      
+      if (location != null) {
+        print('IP location successful: ${location.district}');
+        // Cache the IP location
+        _cachedLocation = location;
+        return location;
+      } else {
+        print('IP location failed');
+        return null;
+      }
+    } catch (e) {
+      print('IP location error: $e');
+      return null;
+    }
   }
   
   /// Set cached location

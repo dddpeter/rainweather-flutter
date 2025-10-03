@@ -16,12 +16,11 @@ class AppConstants {
   
   // Main Cities
   static const List<String> mainCities = [
-    '北京', '上海', '香港', '成都', '广州', 
-    '深圳', '天津', '杭州', '南京', '澳门'
+    '北京', '上海'
   ];
   
   // Default Location
-  static const String defaultCity = '东城区';
+  static const String defaultCity = '北京';
   static const String defaultCityId = '101010100';
   
   // Weather Icons Mapping

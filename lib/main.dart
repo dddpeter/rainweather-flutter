@@ -9,6 +9,7 @@ import 'screens/forecast15d_screen.dart';
 import 'screens/city_weather_screen.dart';
 import 'models/city_model.dart';
 import 'constants/app_colors.dart';
+import 'constants/theme_extensions.dart';
 import 'services/location_service.dart';
 import 'widgets/custom_bottom_navigation_v2.dart';
 
@@ -31,13 +32,28 @@ class RainWeatherApp extends StatelessWidget {
           // 设置主题提供者到AppColors
           AppColors.setThemeProvider(themeProvider);
           
-          return MaterialApp(
-            title: 'Rain Weather',
-            debugShowCheckedModeBanner: false,
-            theme: _buildLightTheme(themeProvider),
-            darkTheme: _buildDarkTheme(themeProvider),
-            themeMode: _getThemeMode(themeProvider.themeMode),
-            home: const SplashScreen(),
+          return AnimatedTheme(
+            data: themeProvider.themeMode == AppThemeMode.light
+                ? _buildLightTheme(themeProvider)
+                : themeProvider.themeMode == AppThemeMode.dark
+                    ? _buildDarkTheme(themeProvider)
+                    : (WidgetsBinding.instance.platformDispatcher.platformBrightness == Brightness.light
+                        ? _buildLightTheme(themeProvider)
+                        : _buildDarkTheme(themeProvider)),
+            duration: const Duration(milliseconds: 300), // 动画持续时间
+            curve: Curves.easeInOut, // 动画曲线
+            child: Builder(
+              builder: (context) {
+                return MaterialApp(
+                  title: 'Rain Weather',
+                  debugShowCheckedModeBanner: false,
+                  theme: _buildLightTheme(themeProvider),
+                  darkTheme: _buildDarkTheme(themeProvider),
+                  themeMode: _getThemeMode(themeProvider.themeMode),
+                  home: const SplashScreen(),
+                );
+              },
+            ),
           );
         },
       ),
@@ -87,6 +103,9 @@ class RainWeatherApp extends StatelessWidget {
         onSurface: Color(0xFF001A4D), // 深蓝色文字
         onBackground: Color(0xFF001A4D), // 深蓝色文字
       ),
+      extensions: <ThemeExtension<dynamic>>[
+        AppThemeExtension.light(), // 添加自定义主题扩展
+      ],
     );
   }
 
@@ -122,6 +141,9 @@ class RainWeatherApp extends StatelessWidget {
         onSurface: Color(0xFFFFFFFF),
         onBackground: Color(0xFFFFFFFF),
       ),
+      extensions: <ThemeExtension<dynamic>>[
+        AppThemeExtension.dark(), // 添加自定义主题扩展
+      ],
     );
   }
 }

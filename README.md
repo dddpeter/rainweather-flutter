@@ -1,74 +1,111 @@
 # 雨天气 Flutter
 
-从原始Android项目重构的Flutter天气应用程序。该应用提供实时天气信息，包括定位服务、天气预报和美观的UI组件。
+一款现代化的天气预报应用，采用 Flutter 开发，提供流畅的用户体验和精美的界面设计。
 
 > **English Documentation**: [README_EN.md](README_EN.md) | **中文文档**: 本文件
 
-## 功能特性
+## ✨ 功能特性
 
 ### 核心功能
-- **实时天气数据**：从weatherol.cn API获取当前天气状况
-- **定位服务**：使用GPS自动检测用户位置
-- **天气预报**：24小时逐时预报和15天每日预报
-- **温度图表**：显示温度趋势的交互式图表
-- **空气质量**：显示空气质量指数(AQI)和颜色编码等级
-- **主要城市**：快速访问中国主要城市的天气
+- 🌤️ **实时天气数据**：从 weatherol.cn API 获取准确的天气信息
+- 📍 **智能定位**：GPS 自动定位和 IP 定位双重保障
+- 📊 **多维度预报**：24小时逐时预报 + 15天每日预报
+- 📈 **交互式图表**：温度趋势可视化展示
+- 🌫️ **空气质量**：实时 AQI 指数和等级显示
+- 🏙️ **城市管理**：快速访问和管理多个城市
 
-### UI/UX特性
-- **深色主题**：现代深色主题配蓝色强调色
-- **响应式设计**：适配不同屏幕尺寸
-- **下拉刷新**：通过下拉手势轻松刷新数据
-- **加载状态**：流畅的加载指示器和错误处理
-- **天气图标**：不同天气条件的自定义图标
-- **渐变背景**：基于天气条件的动态背景
+### 🎨 主题系统（新功能）
+- **三种主题模式**：亮色、暗色、跟随系统
+- **平滑动画过渡**：300ms 主题切换动画，使用 Curves.easeInOut 曲线
+- **主题扩展系统**：基于 Flutter ThemeExtension 的现代化主题架构
+- **自动适配**：所有 UI 组件自动适应主题变化
+- **颜色插值**：主题切换时所有颜色平滑过渡
+
+### UI/UX 特性
+- 🎯 **现代化设计**：Material Design 3 设计语言
+- 📱 **响应式布局**：适配不同屏幕尺寸
+- 🔄 **下拉刷新**：流畅的刷新交互体验
+- 🎭 **动态背景**：基于主题的渐变背景
+- ⚡ **流畅动画**：精心设计的加载和过渡动画
+- 🌡️ **温度图表**：直观的温度趋势展示
 
 ### 技术特性
-- **状态管理**：使用Provider模式进行响应式UI更新
-- **本地缓存**：SQLite数据库用于离线数据存储
-- **后台更新**：定期刷新天气数据
-- **错误处理**：全面的错误处理和回退状态
-- **JSON序列化**：自动模型序列化/反序列化
+- 🔥 **状态管理**：Provider 模式实现响应式 UI
+- 💾 **本地缓存**：SQLite 数据库离线数据存储
+- 🔐 **权限管理**：完善的权限请求和处理机制
+- 🛡️ **错误处理**：全面的错误处理和友好提示
+- 📦 **JSON 序列化**：自动模型序列化/反序列化
+- 🎨 **主题扩展**：可扩展的自定义主题系统
 
-## 项目结构
+## 🏗️ 项目结构
 
 ```
 lib/
 ├── constants/          # 应用常量和配置
-├── models/            # 带有JSON序列化的数据模型
-├── providers/         # 使用Provider的状态管理
-├── screens/           # 主要UI屏幕
-├── services/          # 业务逻辑和API服务
-├── widgets/           # 可重用的UI组件
-└── utils/             # 工具函数
+│   ├── app_colors.dart          # 颜色常量（兼容层）
+│   ├── theme_extensions.dart   # 主题扩展定义
+│   └── app_constants.dart       # 应用常量
+├── models/            # 数据模型
+│   ├── weather_model.dart       # 天气数据模型
+│   └── location_model.dart      # 位置数据模型
+├── providers/         # 状态管理
+│   ├── weather_provider.dart    # 天气数据状态
+│   └── theme_provider.dart      # 主题状态管理
+├── screens/           # 主要页面
+│   ├── today_screen.dart        # 今日天气页面
+│   ├── hourly_screen.dart       # 24小时预报页面
+│   ├── forecast15d_screen.dart  # 15日预报页面
+│   ├── city_weather_screen.dart # 城市天气页面
+│   └── main_cities_screen.dart  # 主要城市页面
+├── services/          # 业务逻辑和 API
+│   ├── weather_service.dart     # 天气 API 服务
+│   ├── location_service.dart    # 定位服务
+│   ├── database_service.dart    # 数据库服务
+│   └── city_service.dart        # 城市数据服务
+└── widgets/           # 可重用组件
+    ├── weather_chart.dart       # 7日温度图表
+    ├── hourly_chart.dart        # 24小时温度图表
+    ├── forecast15d_chart.dart   # 15日温度图表
+    ├── hourly_weather_widget.dart  # 24小时预报卡片
+    ├── life_index_widget.dart   # 生活指数组件
+    └── sun_moon_widget.dart     # 日出日落月相组件
 ```
 
-## 依赖项
+## 📦 核心依赖
 
-### 核心依赖
-- **provider**: 状态管理
-- **dio**: API请求的HTTP客户端
-- **geolocator**: 定位服务
-- **sqflite**: 本地数据库存储
-- **fl_chart**: 交互式图表
+### 状态管理
+- **provider** ^6.1.2 - 状态管理解决方案
 
-### UI依赖
-- **cached_network_image**: 图片缓存
-- **flutter_svg**: SVG支持
-- **lottie**: 动画支持
+### 网络请求
+- **dio** ^5.7.0 - HTTP 客户端
+- **http** ^1.2.2 - HTTP 请求
 
-### 开发依赖
-- **json_serializable**: JSON模型生成
-- **build_runner**: 代码生成
+### 定位服务
+- **geolocator** ^14.0.2 - GPS 定位
+- **permission_handler** ^12.0.1 - 权限管理
 
-## 开始使用
+### 本地存储
+- **sqflite** ^2.3.3+1 - 本地数据库
+- **shared_preferences** ^2.3.2 - 键值存储
 
-### 前置条件
-- Flutter SDK (3.9.2或更高版本)
-- Dart SDK
+### UI 组件
+- **fl_chart** ^0.69.2 - 图表组件
+- **cached_network_image** ^3.4.1 - 图片缓存
+- **lottie** ^3.1.2 - 动画支持
+
+### 开发工具
+- **json_serializable** ^6.9.1 - JSON 序列化
+- **build_runner** ^2.4.13 - 代码生成
+
+## 🚀 快速开始
+
+### 环境要求
+- Flutter SDK 3.9.2 或更高版本
+- Dart SDK 3.9.2 或更高版本
 - Android Studio / VS Code
-- Android设备或模拟器
+- Android 设备或模拟器（iOS 也支持）
 
-### 安装
+### 安装步骤
 
 1. **克隆仓库**
    ```bash
@@ -81,9 +118,9 @@ lib/
    flutter pub get
    ```
 
-3. **生成代码**
+3. **生成代码**（如需要）
    ```bash
-   flutter packages pub run build_runner build
+   flutter pub run build_runner build --delete-conflicting-outputs
    ```
 
 4. **运行应用**
@@ -91,137 +128,251 @@ lib/
    flutter run
    ```
 
-### 配置
+### 构建发布版本
 
-应用使用以下API端点：
-- **天气API**: `https://www.weatherol.cn/api/home/getCurrAnd15dAnd24h?cityid=`
-- **城市数据**: 本地`city.json`文件，包含城市映射
+```bash
+# Android APK
+flutter build apk --release
 
-## 架构
+# Android App Bundle
+flutter build appbundle --release
 
-### 状态管理
-应用使用Provider模式进行状态管理：
+# iOS
+flutter build ios --release
+```
 
-- **WeatherProvider**: 管理天气数据、位置和UI状态
-- **响应式更新**: 数据变化时UI自动更新
-- **错误处理**: 集中式错误状态管理
+## 🎨 主题系统使用
 
-### 数据流
-1. **定位服务**: 获取当前GPS位置
-2. **天气服务**: 从API获取天气数据
-3. **数据库服务**: 本地缓存数据
-4. **Provider**: 管理状态并通知UI
-5. **UI**: 响应式显示数据
+### 三种使用方式
 
-### 服务
-- **LocationService**: GPS定位检测和权限处理
-- **WeatherService**: API通信和数据解析
-- **DatabaseService**: 本地存储和缓存
+**方式 1：推荐 - 使用扩展方法**
+```dart
+Text(
+  '示例文本',
+  style: TextStyle(
+    color: context.appTheme.textPrimary,
+    fontSize: 16,
+  ),
+)
+```
 
-## API集成
+**方式 2：静态方法**
+```dart
+Text(
+  '示例文本',
+  style: TextStyle(
+    color: AppColors.of(context).textPrimary,
+    fontSize: 16,
+  ),
+)
+```
 
-应用与weatherol.cn天气API集成：
+**方式 3：兼容方式（旧代码）**
+```dart
+Consumer<ThemeProvider>(
+  builder: (context, themeProvider, child) {
+    AppColors.setThemeProvider(themeProvider);
+    return Text(
+      '示例文本',
+      style: TextStyle(color: AppColors.textPrimary),
+    );
+  },
+)
+```
 
-### 端点
-- **当前天气**: `/getCurrAnd15dAnd24h?cityid={cityId}`
-- **响应格式**: 包含当前、24小时预报和15天预报数据的JSON
+详细使用指南请查看 [THEME_USAGE.md](THEME_USAGE.md)
 
-### 数据模型
-- **WeatherModel**: 完整的天气数据结构
-- **CurrentWeather**: 当前天气状况
-- **HourlyWeather**: 24小时预报
-- **DailyWeather**: 15天预报
-- **AirQuality**: 空气质量信息
+## 📱 主要页面
 
-## 权限
+### 今日天气
+- ✅ 当前天气详细信息展示
+- ✅ 温度、湿度、风力、气压等数据
+- ✅ 空气质量指数（AQI）
+- ✅ 日出日落时间和月相
+- ✅ 生活指数建议
+- ✅ 24小时天气预览
+- ✅ 7日温度趋势图表
+- ✅ 底部刷新按钮
 
-### Android权限
-- `ACCESS_FINE_LOCATION`: GPS定位访问
-- `ACCESS_COARSE_LOCATION`: 网络定位访问
-- `ACCESS_BACKGROUND_LOCATION`: 后台定位更新
-- `INTERNET`: API调用的网络访问
-- `WAKE_LOCK`: 后台任务执行
+### 24小时预报
+- ✅ 逐小时天气变化
+- ✅ 温度趋势交互式图表
+- ✅ 天气图标和描述
+- ✅ 风力风向详细信息
+- ✅ 温度单位显示（℃）
 
-## 开发
+### 15日预报
+- ✅ 15天详细天气预报
+- ✅ 最高/最低温度趋势图
+- ✅ 上午/下午天气对比
+- ✅ 日出日落时间
+- ✅ 天气描述
+
+### 主要城市
+- ✅ 中国主要城市天气快速查看
+- ✅ 城市天气卡片展示
+- ✅ 点击查看城市详细天气
+- ✅ 支持多个城市管理
+
+### 城市天气详情
+- ✅ 单个城市完整天气信息
+- ✅ 返回按钮导航
+- ✅ 与今日天气相同的详细信息
+- ✅ 下拉刷新支持
+
+## 🔧 最近更新
+
+### v1.0.0 (2025-10)
+
+**主题系统重构**
+- ✨ 新增三种主题模式（亮色/暗色/跟随系统）
+- ✨ 实现主题切换平滑动画（300ms）
+- ✨ 引入 ThemeExtension 现代化主题架构
+- ✨ 所有 UI 组件支持主题自动适配
+
+**UI/UX 优化**
+- 🎨 统一今日天气和城市天气的头部样式
+- 🎨 优化 24小时预报区域间距（减少至 1/3）
+- 🎨 24小时预报添加天气描述文字
+- 🎨 移除 24小时页面刷新按钮
+- 🎨 移除城市天气页面的生活建议和刷新按钮
+- 🎨 今日天气刷新按钮移至右下角
+
+**数据展示优化**
+- 📊 所有图表 Y 轴温度单位改为 ℃
+- 📊 图表点描边颜色适配主题
+- 📊 生活指数卡片文字颜色适配主题
+
+**技术改进**
+- ⚡ 优化主题切换性能
+- 🔧 添加主题使用文档（THEME_USAGE.md）
+- 🛡️ 改进错误处理和边界情况
+- 📦 代码结构优化和清理
+
+## 📡 API 集成
+
+### 天气 API
+- **基础 URL**: `https://www.weatherol.cn/api/home/`
+- **主要端点**: `/getCurrAnd15dAnd24h?cityid={cityId}`
+- **数据格式**: JSON
+
+### 响应数据结构
+```json
+{
+  "current": {
+    "current": {},      // 当前天气
+    "tips": ""          // 天气提示
+  },
+  "forecast24h": [],    // 24小时预报
+  "forecast15d": [],    // 15日预报
+  "sunMoonData": {},    // 日出日落月相
+  "lifeIndex": []       // 生活指数
+}
+```
+
+## 🔐 权限说明
+
+### Android 权限
+```xml
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+<uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+```
+
+### iOS 权限
+在 `Info.plist` 中配置：
+- NSLocationWhenInUseUsageDescription
+- NSLocationAlwaysUsageDescription
+
+## 🧪 开发指南
 
 ### 代码生成
-模型更改后运行代码生成：
 ```bash
-flutter packages pub run build_runner build --delete-conflicting-outputs
+# 生成 JSON 序列化代码
+flutter pub run build_runner build --delete-conflicting-outputs
+
+# 监听文件变化自动生成
+flutter pub run build_runner watch
+```
+
+### 代码分析
+```bash
+# 分析所有代码
+flutter analyze
+
+# 分析特定文件
+flutter analyze lib/screens/today_screen.dart
 ```
 
 ### 测试
 ```bash
+# 运行所有测试
 flutter test
+
+# 运行特定测试
+flutter test test/widget_test.dart
 ```
 
-### 构建
-```bash
-# 调试构建
-flutter build apk --debug
+## 🏗️ 架构设计
 
-# 发布构建
-flutter build apk --release
+### 状态管理
+```
+WeatherProvider (顶层)
+  ├── currentWeather: WeatherModel?
+  ├── currentLocation: LocationModel?
+  ├── isLoading: bool
+  └── error: String?
+
+ThemeProvider (顶层)
+  ├── themeMode: AppThemeMode
+  └── notifyListeners()
 ```
 
-## 从Android迁移
+### 数据流
+```
+定位服务 → WeatherProvider → 天气服务 → API
+                ↓
+         数据库缓存 ← ← ← ← ← ← ←
+                ↓
+              UI 更新
+```
 
-这个Flutter应用是对原始Android天气应用的完全重构，具有以下改进：
+## 🤝 贡献指南
 
-### 增强功能
-- **现代UI**: Material Design 3深色主题
-- **更好的状态管理**: Provider模式vs手动状态处理
-- **改进的错误处理**: 全面的错误状态和回退
-- **跨平台**: 同时支持Android和iOS
-- **更好的性能**: Flutter的高效渲染引擎
+欢迎贡献代码！请遵循以下步骤：
 
-### 保留功能
-- **相同API**: 使用相同的天气API端点
-- **相同数据结构**: 与现有数据保持兼容
-- **相同功能**: 所有原始功能都保留并增强
-- **相同城市支持**: 支持所有原始中国城市
+1. Fork 本仓库
+2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 提交 Pull Request
 
-## 页面功能
+### 代码规范
+- 遵循 Dart 官方代码风格
+- 使用有意义的变量和函数名
+- 添加必要的注释
+- 保持代码整洁和可读性
 
-### 今日天气
-- 当前天气状况显示
-- 温度、湿度、风力等详细信息
-- 空气质量指数
-- 日出日落时间
-- 体感温度
+## 📄 许可证
 
-### 24小时预报
-- 逐小时天气变化
-- 温度趋势图表
-- 天气图标和描述
-- 风力风向信息
+本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件
 
-### 15日预报
-- 15天天气预报
-- 温度趋势图表
-- 上午/下午天气对比
-- 日出日落时间
+## 🙏 致谢
 
-### 主要城市
-- 中国主要城市天气
-- 快速切换城市
-- 城市天气对比
+- [weatherol.cn](https://www.weatherol.cn) - 提供天气数据 API
+- [Flutter](https://flutter.dev) - 优秀的跨平台框架
+- [Provider](https://pub.dev/packages/provider) - 状态管理解决方案
+- [FL Chart](https://pub.dev/packages/fl_chart) - 图表组件库
+- 所有开源贡献者
 
-## 贡献
+## 📞 联系方式
 
-1. Fork仓库
-2. 创建功能分支
-3. 进行更改
-4. 如适用，添加测试
-5. 提交拉取请求
+如有问题或建议，欢迎：
+- 提交 Issue
+- 发起 Discussion
+- 提交 Pull Request
 
-## 许可证
+---
 
-本项目采用MIT许可证 - 详见LICENSE文件。
-
-## 致谢
-
-- 原始Android天气应用提供灵感和API集成
-- weatherol.cn提供天气数据API
-- Flutter团队提供优秀的框架
-- 开源社区提供各种包
+**Made with ❤️ using Flutter**

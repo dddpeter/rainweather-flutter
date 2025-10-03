@@ -129,68 +129,6 @@ class _HourlyScreenState extends State<HourlyScreen> {
               ),
             ),
           ),
-          floatingActionButton: Consumer<WeatherProvider>(
-            builder: (context, weatherProvider, child) {
-          return Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(28),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.buttonShadow,
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(28),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: weatherProvider.isLoading 
-                        ? AppColors.glassBackground.withOpacity(0.8)
-                        : AppColors.glassBackground,
-                    borderRadius: BorderRadius.circular(28),
-                    border: Border.all(
-                      color: AppColors.cardBorder,
-                      width: 1,
-                    ),
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(28),
-                      onTap: weatherProvider.isLoading
-                          ? null
-                          : () => weatherProvider.forceRefreshWithLocation(),
-                      child: Center(
-                        child: weatherProvider.isLoading
-                            ? SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.textPrimary),
-                                ),
-                              )
-                            : Icon(
-                                Icons.refresh,
-                                color: AppColors.titleBarIconColor,
-                                size: 24,
-                              ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-              );
-            },
-          ),
-          floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
         );
       },
     );

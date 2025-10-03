@@ -1,10 +1,21 @@
 import 'package:flutter/material.dart';
 import '../providers/theme_provider.dart';
+import 'theme_extensions.dart';
 
 /// 应用颜色配置 - 支持亮色和暗色主题
+/// 
+/// 使用指南：
+/// 1. 新代码推荐使用: context.appTheme.textPrimary
+/// 2. 旧代码兼容使用: AppColors.textPrimary (需要 setThemeProvider)
+/// 3. 静态方法: AppColors.of(context).textPrimary
 class AppColors {
   static ThemeProvider? _themeProvider;
   static bool _listenerAdded = false;
+
+  /// 从 BuildContext 获取主题扩展（推荐的新方式）
+  static AppThemeExtension of(BuildContext context) {
+    return Theme.of(context).extension<AppThemeExtension>() ?? AppThemeExtension.dark();
+  }
 
   static void setThemeProvider(ThemeProvider provider) {
     if (_themeProvider != provider) {

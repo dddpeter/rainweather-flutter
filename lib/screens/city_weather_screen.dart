@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/weather_provider.dart';
@@ -123,68 +122,6 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
               ),
             ),
           ),
-          floatingActionButton: Consumer<WeatherProvider>(
-            builder: (context, weatherProvider, child) {
-              return Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(28),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.buttonShadow,
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(28),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: weatherProvider.isLoading 
-                        ? AppColors.glassBackground.withOpacity(0.8)
-                        : AppColors.glassBackground,
-                    borderRadius: BorderRadius.circular(28),
-                    border: Border.all(
-                      color: AppColors.borderColor,
-                      width: 1,
-                    ),
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(28),
-                      onTap: weatherProvider.isLoading
-                          ? null
-                          : () => weatherProvider.getWeatherForCity(widget.cityName),
-                      child: Center(
-                        child: weatherProvider.isLoading
-                            ? SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.textPrimary),
-                                ),
-                              )
-                            : Icon(
-                                Icons.refresh,
-                                color: AppColors.textPrimary,
-                                size: 24,
-                              ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-              );
-            },
-          ),
-          floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
         );
       },
     );
@@ -198,31 +135,62 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
       width: double.infinity,
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 16.0),
           child: Column(
             children: [
-              // City name
-              Center(
-                child: Text(
-                  widget.cityName,
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+              // City name and navigation
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Icon(
+                        Icons.arrow_back,
+                        color: AppColors.titleBarIconColor,
+                        size: AppColors.titleBarIconSize,
+                      ),
+                    ),
                   ),
-                ),
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        widget.cityName,
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 40, // 占位保持对称
+                    height: 40,
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
               
-              // Weather icon and temperature
+              // Weather icon, weather text and temperature
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
                     weatherProvider.getWeatherIcon(current?.weather ?? '晴'),
                     style: TextStyle(
-                      fontSize: 50,
+                      fontSize: 72,
                       color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Text(
+                    current?.weather ?? '晴',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -235,17 +203,6 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
                     ),
                   ),
                 ],
-              ),
-              const SizedBox(height: 8),
-              
-              // Weather type
-              Text(
-                current?.weather ?? '晴',
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w500,
-                ),
               ),
               const SizedBox(height: 16),
               
@@ -566,6 +523,4 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
       ),
     );
   }
-
-
 }

@@ -61,13 +61,19 @@ class _TodayScreenState extends State<TodayScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: AppColors.primaryGradient,
-        ),
-        child: Consumer2<WeatherProvider, ThemeProvider>(
-        builder: (context, weatherProvider, themeProvider, child) {
+    // 使用Consumer监听主题变化，确保整个页面在主题切换时重建
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, _) {
+        // 确保AppColors使用最新的主题
+        AppColors.setThemeProvider(themeProvider);
+        
+        return Scaffold(
+          body: Container(
+            decoration: BoxDecoration(
+              gradient: AppColors.primaryGradient,
+            ),
+            child: Consumer<WeatherProvider>(
+              builder: (context, weatherProvider, child) {
           if (weatherProvider.isLoading && weatherProvider.currentWeather == null) {
             return Center(
               child: CircularProgressIndicator(
@@ -194,9 +200,12 @@ class _TodayScreenState extends State<TodayScreen> {
                 ),
               ),
             ),
-          );
-        },
-      ),
+              );
+            },
+          ),
+          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+        );
+      },
     );
   }
 

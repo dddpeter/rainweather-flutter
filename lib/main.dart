@@ -145,38 +145,46 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
-      resizeToAvoidBottomInset: false,
-      bottomNavigationBar: CustomBottomNavigationV2(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        items: const [
-          BottomNavigationItem(
-            icon: Icons.today,
-            label: '今日天气',
+    // 使用Consumer监听主题变化，确保整个MainScreen在主题切换时重建
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        // 确保AppColors使用最新的主题
+        AppColors.setThemeProvider(themeProvider);
+        
+        return Scaffold(
+          body: IndexedStack(
+            index: _currentIndex,
+            children: _screens,
           ),
-          BottomNavigationItem(
-            icon: Icons.schedule,
-            label: '24小时',
+          resizeToAvoidBottomInset: false,
+          bottomNavigationBar: CustomBottomNavigationV2(
+            currentIndex: _currentIndex,
+            onTap: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+            items: const [
+              BottomNavigationItem(
+                icon: Icons.today,
+                label: '今日天气',
+              ),
+              BottomNavigationItem(
+                icon: Icons.schedule,
+                label: '24小时',
+              ),
+              BottomNavigationItem(
+                icon: Icons.calendar_today,
+                label: '15日预报',
+              ),
+              BottomNavigationItem(
+                icon: Icons.location_city,
+                label: '主要城市',
+              ),
+            ],
           ),
-          BottomNavigationItem(
-            icon: Icons.calendar_today,
-            label: '15日预报',
-          ),
-          BottomNavigationItem(
-            icon: Icons.location_city,
-            label: '主要城市',
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -188,13 +196,19 @@ class MainCitiesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: AppColors.primaryGradient,
-        ),
-        child: SafeArea(
-          child: Column(
+    // 使用Consumer监听主题变化，确保整个页面在主题切换时重建
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, _) {
+        // 确保AppColors使用最新的主题
+        AppColors.setThemeProvider(themeProvider);
+        
+        return Scaffold(
+          body: Container(
+            decoration: BoxDecoration(
+              gradient: AppColors.primaryGradient,
+            ),
+            child: SafeArea(
+              child: Column(
             children: [
               // Header
               Padding(
@@ -526,10 +540,12 @@ class MainCitiesScreen extends StatelessWidget {
                   },
                 ),
               ),
-            ],
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

@@ -36,15 +36,15 @@ class LifeIndexWidget extends StatelessWidget {
             ),
             child: Column(
               children: [
-                const Text(
+                Text(
                   '调试信息：生活指数数据',
-                  style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: AppColors.error, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
-                Text('sunMoonData: ${sunMoonData != null ? "有数据" : "无数据"}', style: const TextStyle(color: Colors.white70)),
-                Text('index: ${sunMoonData?.index != null ? "有数据" : "无数据"}', style: const TextStyle(color: Colors.white70)),
-                Text('index长度: ${sunMoonData?.index?.length ?? 0}', style: const TextStyle(color: Colors.white70)),
-                Text('isLoading: ${weatherProvider.isLoadingSunMoonIndex}', style: const TextStyle(color: Colors.white70)),
+                Text('sunMoonData: ${sunMoonData != null ? "有数据" : "无数据"}', style: TextStyle(color: AppColors.textSecondary)),
+                Text('index: ${sunMoonData?.index != null ? "有数据" : "无数据"}', style: TextStyle(color: AppColors.textSecondary)),
+                Text('index长度: ${sunMoonData?.index?.length ?? 0}', style: TextStyle(color: AppColors.textSecondary)),
+                Text('isLoading: ${weatherProvider.isLoadingSunMoonIndex}', style: TextStyle(color: AppColors.textSecondary)),
               ],
             ),
           );
@@ -160,8 +160,8 @@ class LifeIndexWidget extends StatelessWidget {
         children: [
           Text(
             lifeIndex.indexTypeCh ?? '',
-            style: const TextStyle(
-              color: Colors.white70,
+            style: TextStyle(
+              color: AppColors.textSecondary, // 使用主题色
               fontSize: 11,
               fontWeight: FontWeight.w500,
             ),
@@ -172,7 +172,7 @@ class LifeIndexWidget extends StatelessWidget {
           Text(
             lifeIndex.indexLevel ?? '--',
             style: TextStyle(
-              color: color,
+              color: AppColors.textPrimary, // 使用主题色，提高对比度
               fontSize: 12,
               fontWeight: FontWeight.bold,
             ),
@@ -182,8 +182,8 @@ class LifeIndexWidget extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             lifeIndex.indexContent ?? '',
-            style: const TextStyle(
-              color: Colors.white60,
+            style: TextStyle(
+              color: AppColors.textSecondary, // 使用主题色
               fontSize: 9,
               height: 1.1,
             ),

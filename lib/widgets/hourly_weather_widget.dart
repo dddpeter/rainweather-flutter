@@ -41,7 +41,7 @@ class HourlyWeatherWidget extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(12), // 16 -> 12 (减少约1/4)
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -67,10 +67,10 @@ class HourlyWeatherWidget extends StatelessWidget {
                 ),
               ),
               SizedBox(
-                height: 100,
+                height: 90, // 100 -> 90 (减少10)
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 8), // 16 -> 8 (1/2)
                   itemCount: hourlyForecast!.length,
                   itemBuilder: (context, index) {
                     final hour = hourlyForecast![index];
@@ -78,7 +78,7 @@ class HourlyWeatherWidget extends StatelessWidget {
                   },
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 8), // 16 -> 8 (1/2)
             ],
           ),
         );
@@ -90,11 +90,13 @@ class HourlyWeatherWidget extends StatelessWidget {
     final time = _formatHourTime(hour.forecasttime ?? '');
     final temperature = _parseTemperature(hour.temperature ?? '');
     final weatherIcon = weatherService.getWeatherIcon(hour.weather ?? '晴');
+    final weatherDesc = hour.weather ?? '晴'; // 天气描述
 
     return Container(
-      width: 80,
-      margin: const EdgeInsets.only(right: 4),
+      width: 70, // 80 -> 70 (减少宽度)
+      margin: const EdgeInsets.only(right: 2), // 4 -> 2 (1/2)
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center, // 垂直居中
         children: [
           Text(
             time,
@@ -104,14 +106,25 @@ class HourlyWeatherWidget extends StatelessWidget {
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 3), // 8 -> 3 (约1/3)
           Text(
             weatherIcon,
-            style: const TextStyle(fontSize: 24),
+            style: const TextStyle(fontSize: 22), // 24 -> 22 (稍微缩小)
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 2), // 图标和描述间距
           Text(
-            '${temperature.toInt()}°',
+            weatherDesc,
+            style: TextStyle(
+              color: AppColors.textSecondary, // 使用主题色
+              fontSize: 10, // 小字体
+              fontWeight: FontWeight.normal,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis, // 防止文字过长
+          ),
+          const SizedBox(height: 2), // 描述和温度间距
+          Text(
+            '${temperature.toInt()}℃',
             style: TextStyle(
               color: AppColors.textPrimary,
               fontSize: 14,

@@ -75,7 +75,7 @@ class HourlyChart extends StatelessWidget {
                           interval: 5,
                           getTitlesWidget: (value, meta) {
                             return Text(
-                              '${value.toInt()}°',
+                              '${value.toInt()}℃',
                               style: TextStyle(
                                 color: AppColors.textSecondary,
                                 fontSize: 10,
@@ -125,7 +125,7 @@ class HourlyChart extends StatelessWidget {
                               radius: 4,
                               color: AppColors.primaryBlue,
                               strokeWidth: 2,
-                              strokeColor: Colors.white,
+                              strokeColor: AppColors.cardBackground, // 使用卡片背景色作为描边
                             );
                           },
                         ),

@@ -88,7 +88,7 @@ class Forecast15dChart extends StatelessWidget {
                       reservedSize: 40,
                       getTitlesWidget: (value, meta) {
                         return Text(
-                          '${value.toInt()}°',
+                          '${value.toInt()}℃',
                           style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 10,
@@ -165,7 +165,7 @@ class Forecast15dChart extends StatelessWidget {
                           final day = chartData[index];
                           final isMaxTemp = touchedSpot.barIndex == 0;
                           return LineTooltipItem(
-                            isMaxTemp ? '最高: ${day['maxTemp']}°' : '最低: ${day['minTemp']}°',
+                            isMaxTemp ? '最高: ${day['maxTemp']}℃' : '最低: ${day['minTemp']}℃',
                             TextStyle(
                               color: AppColors.textPrimary,
                               fontSize: 12,

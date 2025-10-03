@@ -4,11 +4,22 @@ import '../providers/theme_provider.dart';
 /// 应用颜色配置 - 支持亮色和暗色主题
 class AppColors {
   static ThemeProvider? _themeProvider;
+  static bool _listenerAdded = false;
 
   static void setThemeProvider(ThemeProvider provider) {
-    _themeProvider = provider;
-    // 监听主题变化
-    provider.addListener(_onThemeChanged);
+    if (_themeProvider != provider) {
+      // 移除旧的监听器
+      if (_themeProvider != null && _listenerAdded) {
+        _themeProvider!.removeListener(_onThemeChanged);
+        _listenerAdded = false;
+      }
+      _themeProvider = provider;
+      // 添加新的监听器
+      if (!_listenerAdded) {
+        provider.addListener(_onThemeChanged);
+        _listenerAdded = true;
+      }
+    }
   }
 
   static void _onThemeChanged() {

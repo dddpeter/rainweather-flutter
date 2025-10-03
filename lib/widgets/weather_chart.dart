@@ -81,7 +81,7 @@ class WeatherChart extends StatelessWidget {
               reservedSize: 40,
               getTitlesWidget: (value, meta) {
                 return Text(
-                  '${value.toInt()}°',
+                  '${value.toInt()}℃',
                   style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,

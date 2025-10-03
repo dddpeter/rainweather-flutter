@@ -2,12 +2,13 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/weather_provider.dart';
-import '../models/weather_model.dart';
+import '../providers/theme_provider.dart';
 import '../models/location_model.dart';
 import '../services/weather_service.dart';
 import '../widgets/hourly_chart.dart';
 import '../widgets/hourly_list.dart';
 import '../constants/app_constants.dart';
+import '../constants/app_colors.dart';
 
 class HourlyScreen extends StatefulWidget {
   const HourlyScreen({super.key});
@@ -29,23 +30,16 @@ class _HourlyScreenState extends State<HourlyScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF0A0E27),
-              Color(0xFF1A1F3A),
-            ],
-          ),
+        decoration: BoxDecoration(
+          gradient: AppColors.primaryGradient,
         ),
         child: SafeArea(
-          child: Consumer<WeatherProvider>(
-            builder: (context, weatherProvider, child) {
+          child: Consumer2<WeatherProvider, ThemeProvider>(
+            builder: (context, weatherProvider, themeProvider, child) {
               if (weatherProvider.isLoading && weatherProvider.currentWeather == null) {
-                return const Center(
+                return Center(
                   child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    color: AppColors.textPrimary,
                   ),
                 );
               }
@@ -55,16 +49,16 @@ class _HourlyScreenState extends State<HourlyScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.error_outline,
-                        color: Colors.white,
+                        color: AppColors.textPrimary,
                         size: 64,
                       ),
                       const SizedBox(height: 16),
                       Text(
                         '加载失败',
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
@@ -72,8 +66,8 @@ class _HourlyScreenState extends State<HourlyScreen> {
                       const SizedBox(height: 8),
                       Text(
                         weatherProvider.error!,
-                        style: const TextStyle(
-                          color: Colors.white70,
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
                           fontSize: 14,
                         ),
                         textAlign: TextAlign.center,
@@ -81,6 +75,10 @@ class _HourlyScreenState extends State<HourlyScreen> {
                       const SizedBox(height: 24),
                       ElevatedButton(
                         onPressed: () => weatherProvider.forceRefreshWithLocation(),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryBlue,
+                          foregroundColor: AppColors.textPrimary,
+                        ),
                         child: const Text('重试'),
                       ),
                     ],
@@ -94,8 +92,8 @@ class _HourlyScreenState extends State<HourlyScreen> {
 
               return RefreshIndicator(
                 onRefresh: () => weatherProvider.refreshWeatherData(),
-                color: Colors.blue,
-                backgroundColor: Colors.black,
+                color: AppColors.primaryBlue,
+                backgroundColor: AppColors.backgroundSecondary,
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   child: Padding(
@@ -125,14 +123,14 @@ class _HourlyScreenState extends State<HourlyScreen> {
           ),
         ),
       ),
-      floatingActionButton: Consumer<WeatherProvider>(
-        builder: (context, weatherProvider, child) {
+      floatingActionButton: Consumer2<WeatherProvider, ThemeProvider>(
+        builder: (context, weatherProvider, themeProvider, child) {
           return Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(28),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: AppColors.buttonShadow,
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -147,11 +145,11 @@ class _HourlyScreenState extends State<HourlyScreen> {
                   height: 56,
                   decoration: BoxDecoration(
                     color: weatherProvider.isLoading 
-                        ? Colors.white.withOpacity(0.3)
-                        : Colors.white.withOpacity(0.2),
+                        ? AppColors.glassBackground.withOpacity(0.8)
+                        : AppColors.glassBackground,
                     borderRadius: BorderRadius.circular(28),
                     border: Border.all(
-                      color: Colors.white.withOpacity(0.2),
+                      color: AppColors.cardBorder,
                       width: 1,
                     ),
                   ),
@@ -164,17 +162,17 @@ class _HourlyScreenState extends State<HourlyScreen> {
                           : () => weatherProvider.forceRefreshWithLocation(),
                       child: Center(
                         child: weatherProvider.isLoading
-                            ? const SizedBox(
+                            ? SizedBox(
                                 width: 20,
                                 height: 20,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.textPrimary),
                                 ),
                               )
-                            : const Icon(
+                            : Icon(
                                 Icons.refresh,
-                                color: Colors.white,
+                                color: AppColors.titleBarIconColor,
                                 size: 24,
                               ),
                       ),
@@ -198,8 +196,8 @@ class _HourlyScreenState extends State<HourlyScreen> {
           children: [
             Text(
               _getDisplayCity(location),
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: AppColors.textPrimary,
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
@@ -207,8 +205,8 @@ class _HourlyScreenState extends State<HourlyScreen> {
             const SizedBox(height: 4),
             Text(
               '24小时预报',
-              style: const TextStyle(
-                color: Colors.white70,
+              style: TextStyle(
+                color: AppColors.textSecondary,
                 fontSize: 16,
               ),
             ),
@@ -217,17 +215,17 @@ class _HourlyScreenState extends State<HourlyScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.2),
+            color: AppColors.glassBackground,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: Colors.white.withOpacity(0.3),
+              color: AppColors.cardBorder,
               width: 1,
             ),
           ),
           child: Text(
             _getCurrentTime(),
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: AppColors.textPrimary,
               fontSize: 14,
               fontWeight: FontWeight.w500,
             ),

@@ -22,20 +22,12 @@ class Forecast15dChart extends StatelessWidget {
     
     return Container(
       height: 200,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
+      decoration: AppColors.standardCardDecoration,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             '15日温度趋势',
             style: TextStyle(
               color: AppColors.textPrimary,
@@ -78,7 +70,7 @@ class Forecast15dChart extends StatelessWidget {
                             padding: const EdgeInsets.only(top: 8),
                             child: Text(
                               day['date'],
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.textSecondary,
                                 fontSize: 10,
                               ),
@@ -97,7 +89,7 @@ class Forecast15dChart extends StatelessWidget {
                       getTitlesWidget: (value, meta) {
                         return Text(
                           '${value.toInt()}°',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 10,
                           ),
@@ -124,7 +116,7 @@ class Forecast15dChart extends StatelessWidget {
                       return FlSpot(entry.key.toDouble(), entry.value['maxTemp']);
                     }).toList(),
                     isCurved: true,
-                    color: AppColors.error,
+                    color: AppColors.highTemp,
                     barWidth: 3,
                     isStrokeCapRound: true,
                     dotData: FlDotData(
@@ -132,7 +124,7 @@ class Forecast15dChart extends StatelessWidget {
                       getDotPainter: (spot, percent, barData, index) {
                         return FlDotCirclePainter(
                           radius: 4,
-                          color: AppColors.error,
+                          color: AppColors.highTemp,
                           strokeWidth: 2,
                           strokeColor: AppColors.cardBackground,
                         );
@@ -146,7 +138,7 @@ class Forecast15dChart extends StatelessWidget {
                       return FlSpot(entry.key.toDouble(), entry.value['minTemp']);
                     }).toList(),
                     isCurved: true,
-                    color: AppColors.accentBlue,
+                    color: AppColors.lowTemp,
                     barWidth: 3,
                     isStrokeCapRound: true,
                     dotData: FlDotData(
@@ -154,7 +146,7 @@ class Forecast15dChart extends StatelessWidget {
                       getDotPainter: (spot, percent, barData, index) {
                         return FlDotCirclePainter(
                           radius: 4,
-                          color: AppColors.accentBlue,
+                          color: AppColors.lowTemp,
                           strokeWidth: 2,
                           strokeColor: AppColors.cardBackground,
                         );
@@ -174,7 +166,7 @@ class Forecast15dChart extends StatelessWidget {
                           final isMaxTemp = touchedSpot.barIndex == 0;
                           return LineTooltipItem(
                             isMaxTemp ? '最高: ${day['maxTemp']}°' : '最低: ${day['minTemp']}°',
-                            const TextStyle(
+                            TextStyle(
                               color: AppColors.textPrimary,
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
@@ -182,7 +174,7 @@ class Forecast15dChart extends StatelessWidget {
                             children: [
                               TextSpan(
                                 text: '\n${day['date']}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: AppColors.textSecondary,
                                   fontSize: 10,
                                 ),
@@ -203,9 +195,9 @@ class Forecast15dChart extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildLegendItem('最高温度', AppColors.error),
+              _buildLegendItem('最高温度', AppColors.highTemp),
               const SizedBox(width: 24),
-              _buildLegendItem('最低温度', AppColors.accentBlue),
+              _buildLegendItem('最低温度', AppColors.lowTemp),
             ],
           ),
         ],
@@ -228,7 +220,7 @@ class Forecast15dChart extends StatelessWidget {
         const SizedBox(width: 6),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.textSecondary,
             fontSize: 10,
           ),

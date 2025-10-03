@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'providers/weather_provider.dart';
+import 'providers/theme_provider.dart';
 import 'screens/today_screen.dart';
 import 'screens/hourly_screen.dart';
 import 'screens/forecast15d_screen.dart';
@@ -9,6 +10,7 @@ import 'screens/city_weather_screen.dart';
 import 'models/city_model.dart';
 import 'constants/app_colors.dart';
 import 'services/location_service.dart';
+import 'widgets/custom_bottom_navigation_v2.dart';
 
 void main() {
   runApp(const RainWeatherApp());
@@ -21,47 +23,106 @@ class RainWeatherApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => WeatherProvider()),
       ],
-      child: MaterialApp(
-        title: 'Rain Weather',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          brightness: Brightness.dark,
-          fontFamily: 'JetBrainsMono',
-          scaffoldBackgroundColor: AppColors.backgroundPrimary,
-          appBarTheme: const AppBarTheme(
-            backgroundColor: AppColors.backgroundPrimary,
-            foregroundColor: AppColors.textPrimary,
-            elevation: 0,
-            systemOverlayStyle: SystemUiOverlayStyle.light,
-          ),
-          colorScheme: const ColorScheme.dark(
-            primary: AppColors.accentBlue,
-            secondary: AppColors.accentGreen,
-            surface: AppColors.backgroundSecondary,
-            background: AppColors.backgroundPrimary,
-            onPrimary: AppColors.textPrimary,
-            onSecondary: AppColors.textPrimary,
-            onSurface: AppColors.textPrimary,
-            onBackground: AppColors.textPrimary,
-          ),
-          // 自定义颜色扩展
-          extensions: const <ThemeExtension<dynamic>>[
-            _AppThemeExtension(
-              cardBackground: AppColors.cardBackground,
-              glassBackground: AppColors.glassBackground,
-              borderColor: AppColors.borderColor,
-              dividerColor: AppColors.dividerColor,
-              successColor: AppColors.success,
-              warningColor: AppColors.warning,
-              errorColor: AppColors.error,
-              infoColor: AppColors.info,
-            ),
-          ],
-        ),
-        home: const SplashScreen(),
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) {
+          // 设置主题提供者到AppColors
+          AppColors.setThemeProvider(themeProvider);
+          
+          return MaterialApp(
+            title: 'Rain Weather',
+            debugShowCheckedModeBanner: false,
+            theme: _buildLightTheme(themeProvider),
+            darkTheme: _buildDarkTheme(themeProvider),
+            themeMode: _getThemeMode(themeProvider.themeMode),
+            home: const SplashScreen(),
+          );
+        },
+      ),
+    );
+  }
+
+  ThemeMode _getThemeMode(AppThemeMode appThemeMode) {
+    switch (appThemeMode) {
+      case AppThemeMode.light:
+        return ThemeMode.light;
+      case AppThemeMode.dark:
+        return ThemeMode.dark;
+      case AppThemeMode.system:
+        return ThemeMode.system;
+    }
+  }
+
+  ThemeData _buildLightTheme(ThemeProvider themeProvider) {
+    return ThemeData(
+      primarySwatch: MaterialColor(0xFF012d78, {
+        50: const Color(0xFFE3F2FD),
+        100: const Color(0xFFBBDEFB),
+        200: const Color(0xFF90CAF9),
+        300: const Color(0xFF64B5F6),
+        400: const Color(0xFF42A5F5),
+        500: const Color(0xFF012d78),
+        600: const Color(0xFF1E88E5),
+        700: const Color(0xFF1976D2),
+        800: const Color(0xFF1565C0),
+        900: const Color(0xFF0D47A1),
+      }),
+      brightness: Brightness.light,
+      fontFamily: 'JetBrainsMono',
+      scaffoldBackgroundColor: const Color(0xFFF0F8FF), // 浅蓝背景
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Color(0xFFF0F8FF),
+        foregroundColor: Color(0xFF001A4D), // 深蓝色文字
+        elevation: 0,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
+      ),
+      colorScheme: const ColorScheme.light(
+        primary: Color(0xFF012d78), // 深蓝色主色
+        secondary: Color(0xFF8edafc), // 亮蓝色
+        surface: Color(0xFFFFFFFF),
+        background: Color(0xFFF0F8FF),
+        onPrimary: Color(0xFFFFFFFF),
+        onSecondary: Color(0xFF001A4D),
+        onSurface: Color(0xFF001A4D), // 深蓝色文字
+        onBackground: Color(0xFF001A4D), // 深蓝色文字
+      ),
+    );
+  }
+
+  ThemeData _buildDarkTheme(ThemeProvider themeProvider) {
+    return ThemeData(
+      primarySwatch: MaterialColor(0xFF4A90E2, {
+        50: const Color(0xFFE3F2FD),
+        100: const Color(0xFFBBDEFB),
+        200: const Color(0xFF90CAF9),
+        300: const Color(0xFF64B5F6),
+        400: const Color(0xFF42A5F5),
+        500: const Color(0xFF4A90E2),
+        600: const Color(0xFF1E88E5),
+        700: const Color(0xFF1976D2),
+        800: const Color(0xFF1565C0),
+        900: const Color(0xFF0D47A1),
+      }),
+      brightness: Brightness.dark,
+      fontFamily: 'JetBrainsMono',
+      scaffoldBackgroundColor: const Color(0xFF0A1B3D), // 基于#012d78的深背景
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Color(0xFF0A1B3D),
+        foregroundColor: Color(0xFFFFFFFF),
+        elevation: 0,
+        systemOverlayStyle: SystemUiOverlayStyle.light,
+      ),
+      colorScheme: const ColorScheme.dark(
+        primary: Color(0xFF4A90E2), // 基于#012d78的亮蓝色
+        secondary: Color(0xFF8edafc), // 指定的亮蓝色
+        surface: Color(0xFF1A2F5D), // 基于#012d78的稍亮表面
+        background: Color(0xFF0A1B3D),
+        onPrimary: Color(0xFFFFFFFF),
+        onSecondary: Color(0xFF001A4D),
+        onSurface: Color(0xFFFFFFFF),
+        onBackground: Color(0xFFFFFFFF),
       ),
     );
   }
@@ -91,46 +152,32 @@ class _MainScreenState extends State<MainScreen> {
         index: _currentIndex,
         children: _screens,
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: AppColors.backgroundSecondary,
-          border: Border(
-            top: BorderSide(
-              color: AppColors.borderColor,
-              width: 1,
-            ),
+      resizeToAvoidBottomInset: false,
+      bottomNavigationBar: CustomBottomNavigationV2(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        items: const [
+          BottomNavigationItem(
+            icon: Icons.today,
+            label: '今日天气',
           ),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-          },
-          backgroundColor: AppColors.backgroundSecondary,
-          selectedItemColor: AppColors.accentBlue,
-          unselectedItemColor: AppColors.textSecondary,
-          type: BottomNavigationBarType.fixed,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.today),
-              label: '今日天气',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.schedule),
-              label: '24小时',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.calendar_today),
-              label: '15日预报',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.location_city),
-              label: '主要城市',
-            ),
-          ],
-        ),
+          BottomNavigationItem(
+            icon: Icons.schedule,
+            label: '24小时',
+          ),
+          BottomNavigationItem(
+            icon: Icons.calendar_today,
+            label: '15日预报',
+          ),
+          BottomNavigationItem(
+            icon: Icons.location_city,
+            label: '主要城市',
+          ),
+        ],
       ),
     );
   }
@@ -145,15 +192,8 @@ class MainCitiesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF0A0E27),
-              Color(0xFF1A1F3A),
-            ],
-          ),
+        decoration: BoxDecoration(
+          gradient: AppColors.primaryGradient,
         ),
         child: SafeArea(
           child: Column(
@@ -166,7 +206,7 @@ class MainCitiesScreen extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        const Text(
+                        Text(
                           '主要城市',
                           style: TextStyle(
                             color: AppColors.textPrimary,
@@ -182,58 +222,10 @@ class MainCitiesScreen extends StatelessWidget {
                               children: [
                                 IconButton(
                                   onPressed: () => _showAddCityDialog(context, weatherProvider),
-                                  icon: const Icon(
+                                  icon: Icon(
                                     Icons.add_location,
-                                    color: AppColors.accentGreen,
-                                    size: 24,
-                                  ),
-                                ),
-                                IconButton(
-                                  onPressed: () {
-                                    showDialog(
-                                      context: context,
-                                      builder: (context) => AlertDialog(
-                                        backgroundColor: AppColors.backgroundSecondary,
-                                        title: const Text(
-                                          '清理缓存',
-                                          style: TextStyle(color: AppColors.textPrimary),
-                                        ),
-                                        content: const Text(
-                                          '确定要清理所有缓存的天气数据吗？这将删除所有本地缓存，下次加载时需要重新获取数据。',
-                                          style: TextStyle(color: AppColors.textSecondary),
-                                        ),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () => Navigator.pop(context),
-                                            child: const Text(
-                                              '取消',
-                                              style: TextStyle(color: AppColors.textSecondary),
-                                            ),
-                                          ),
-                                          TextButton(
-                                            onPressed: () {
-                                              Navigator.pop(context);
-                                              weatherProvider.clearAllCache();
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                const SnackBar(
-                                                  content: Text('缓存已清理'),
-                                                  backgroundColor: AppColors.accentBlue,
-                                                ),
-                                              );
-                                            },
-                                            child: const Text(
-                                              '确定',
-                                              style: TextStyle(color: AppColors.accentBlue),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                  icon: const Icon(
-                                    Icons.delete_sweep,
-                                    color: AppColors.textSecondary,
-                                    size: 20,
+                                    color: AppColors.titleBarIconColor,
+                                    size: AppColors.titleBarIconSize,
                                   ),
                                 ),
                                 IconButton(
@@ -241,7 +233,7 @@ class MainCitiesScreen extends StatelessWidget {
                                       ? null
                                       : () => weatherProvider.forceRefreshWithLocation(),
                                   icon: weatherProvider.isLoading
-                                      ? const SizedBox(
+                                      ? SizedBox(
                                           width: 20,
                                           height: 20,
                                           child: CircularProgressIndicator(
@@ -249,10 +241,10 @@ class MainCitiesScreen extends StatelessWidget {
                                             valueColor: AlwaysStoppedAnimation<Color>(AppColors.textPrimary),
                                           ),
                                         )
-                                      : const Icon(
+                                      : Icon(
                                           Icons.refresh,
-                                          color: AppColors.textPrimary,
-                                          size: 24,
+                                          color: AppColors.titleBarIconColor,
+                                          size: AppColors.titleBarIconSize,
                                         ),
                                 ),
                               ],
@@ -277,7 +269,7 @@ class MainCitiesScreen extends StatelessWidget {
                 child: Consumer<WeatherProvider>(
                   builder: (context, weatherProvider, child) {
                     if (weatherProvider.isLoadingCities) {
-                      return const Center(
+                      return Center(
                         child: CircularProgressIndicator(
                           color: AppColors.accentBlue,
                         ),
@@ -286,7 +278,7 @@ class MainCitiesScreen extends StatelessWidget {
 
                     final cities = weatherProvider.mainCities;
                     if (cities.isEmpty) {
-                      return const Center(
+                      return Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -356,19 +348,19 @@ class MainCitiesScreen extends StatelessWidget {
                             ),
                             alignment: Alignment.centerRight,
                             padding: const EdgeInsets.only(right: 20),
-                            child: const Column(
+                            child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(
                                   Icons.delete_forever,
-                                  color: Colors.white,
+                                  color: AppColors.textPrimary,
                                   size: 28,
                                 ),
                                 SizedBox(height: 4),
                                 Text(
                                   '删除城市',
                                   style: TextStyle(
-                                    color: Colors.white,
+                                    color: AppColors.textPrimary,
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -391,19 +383,19 @@ class MainCitiesScreen extends StatelessWidget {
                             ),
                             alignment: Alignment.centerLeft,
                             padding: const EdgeInsets.only(left: 20),
-                            child: const Column(
+                            child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(
                                   Icons.cancel_outlined,
-                                  color: Colors.white,
+                                  color: AppColors.textPrimary,
                                   size: 28,
                                 ),
                                 SizedBox(height: 4),
                                 Text(
                                   '取消',
                                   style: TextStyle(
-                                    color: Colors.white,
+                                    color: AppColors.textPrimary,
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -421,10 +413,10 @@ class MainCitiesScreen extends StatelessWidget {
                             key: Key(city.id),
                             margin: const EdgeInsets.only(bottom: 12),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.1),
+                              color: AppColors.cardBackground,
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: Colors.white.withOpacity(0.2),
+                                color: AppColors.cardBorder,
                                 width: 1,
                               ),
                             ),
@@ -455,7 +447,7 @@ class MainCitiesScreen extends StatelessWidget {
                                         child: Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
-                                            const Icon(
+                                            Icon(
                                               Icons.my_location,
                                               color: AppColors.accentGreen,
                                               size: 14,
@@ -478,7 +470,7 @@ class MainCitiesScreen extends StatelessWidget {
                                   Expanded(
                                     child: Text(
                                       city.name,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         color: AppColors.textPrimary,
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold,
@@ -490,7 +482,7 @@ class MainCitiesScreen extends StatelessWidget {
                               subtitle: cityWeather != null
                                   ? _buildCityWeatherInfo(cityWeather, weatherProvider)
                                   : weatherProvider.isLoadingCitiesWeather
-                                      ? const Padding(
+                                      ? Padding(
                                           padding: EdgeInsets.only(top: 8),
                                           child: Row(
                                             children: [
@@ -514,9 +506,9 @@ class MainCitiesScreen extends StatelessWidget {
                                           ),
                                         )
                                       : null,
-                              trailing: const Icon(
+                              trailing: Icon(
                                 Icons.arrow_forward_ios,
-                                color: AppColors.accentBlue,
+                                color: AppColors.textSecondary,
                                 size: 16,
                               ),
                               onTap: () {
@@ -554,13 +546,13 @@ class MainCitiesScreen extends StatelessWidget {
           // 天气图标
           Text(
             weatherProvider.getWeatherIcon(current.weather ?? '晴'),
-            style: const TextStyle(fontSize: 20),
+            style: TextStyle(fontSize: 20),
           ),
           const SizedBox(width: 8),
           // 温度
           Text(
             '${current.temperature ?? '--'}°',
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textPrimary,
               fontSize: 16,
               fontWeight: FontWeight.w500,
@@ -571,7 +563,7 @@ class MainCitiesScreen extends StatelessWidget {
           Expanded(
             child: Text(
               current.weather ?? '晴',
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 14,
               ),
@@ -587,7 +579,7 @@ class MainCitiesScreen extends StatelessWidget {
                 if (current.humidity != null)
                   Text(
                     '湿度 ${current.humidity}%',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.accentGreen,
                       fontSize: 11,
                     ),
@@ -595,8 +587,8 @@ class MainCitiesScreen extends StatelessWidget {
                 if (current.windpower != null)
                   Text(
                     '${current.winddir ?? ''}${current.windpower}',
-                    style: const TextStyle(
-                      color: AppColors.accentBlue,
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
                       fontSize: 11,
                     ),
                   ),
@@ -619,36 +611,38 @@ class MainCitiesScreen extends StatelessWidget {
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
           backgroundColor: AppColors.backgroundSecondary,
-          title: const Text(
+          shape: AppColors.dialogShape,
+          title: Text(
             '添加城市',
             style: TextStyle(color: AppColors.textPrimary),
           ),
           content: SizedBox(
             width: double.maxFinite,
+            height: 400, // 固定高度防止溢出
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
                   controller: searchController,
-                  style: const TextStyle(color: AppColors.textPrimary),
+                  style: TextStyle(color: AppColors.textPrimary),
                   decoration: InputDecoration(
                     hintText: '搜索城市名称（如：北京、上海）',
-                    hintStyle: const TextStyle(color: AppColors.textSecondary),
-                    prefixIcon: const Icon(
+                    hintStyle: TextStyle(color: AppColors.textSecondary),
+                    prefixIcon: Icon(
                       Icons.search,
                       color: AppColors.textSecondary,
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppColors.borderColor),
+                      borderSide: BorderSide(color: AppColors.borderColor),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppColors.borderColor),
+                      borderSide: BorderSide(color: AppColors.borderColor),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: AppColors.accentBlue),
+                      borderSide: BorderSide(color: AppColors.accentBlue),
                     ),
                   ),
                   onChanged: (value) async {
@@ -670,21 +664,17 @@ class MainCitiesScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 if (isSearching)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.all(16),
                     child: CircularProgressIndicator(
                       color: AppColors.accentBlue,
                     ),
                   )
                 else if (searchResults.isNotEmpty)
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      maxHeight: 250,
-                      minHeight: 0,
-                    ),
+                  Expanded(
                     child: ListView.builder(
                       shrinkWrap: true,
-                      physics: const ClampingScrollPhysics(),
+                      physics: const AlwaysScrollableScrollPhysics(),
                       itemCount: searchResults.length,
                       itemBuilder: (context, index) {
                         final city = searchResults[index];
@@ -714,18 +704,18 @@ class MainCitiesScreen extends StatelessWidget {
                             ),
                             subtitle: Text(
                               '城市ID: ${city.id}',
-                              style: const TextStyle(color: AppColors.textSecondary),
+                              style: TextStyle(color: AppColors.textSecondary),
                             ),
                             trailing: isMainCity
-                                ? const Icon(
+                                ? Icon(
                                     Icons.check_circle,
                                     color: AppColors.accentGreen,
                                     size: 20,
                                   )
-                                : const Icon(
+                                : Icon(
                                     Icons.add_circle_outline,
-                                    color: AppColors.accentBlue,
-                                    size: 20,
+                                    color: AppColors.titleBarDecorIconColor,
+                                    size: AppColors.titleBarDecorIconSize,
                                   ),
                             onTap: isMainCity ? null : () async {
                               final success = await weatherProvider.addMainCity(city);
@@ -740,7 +730,7 @@ class MainCitiesScreen extends StatelessWidget {
                                 );
                               } else if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
+                                  SnackBar(
                                     content: Text('添加城市失败，请重试'),
                                     backgroundColor: AppColors.error,
                                     duration: Duration(milliseconds: 1500),
@@ -754,7 +744,7 @@ class MainCitiesScreen extends StatelessWidget {
                     ),
                   )
                 else if (searchController.text.isNotEmpty)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.all(16),
                     child: Text(
                       '未找到匹配的城市',
@@ -770,7 +760,7 @@ class MainCitiesScreen extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text(
+              child: Text(
                 '取消',
                 style: TextStyle(color: AppColors.textSecondary),
               ),
@@ -787,7 +777,7 @@ class MainCitiesScreen extends StatelessWidget {
     try {
       // 显示加载提示
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Row(
             children: [
               SizedBox(
@@ -795,7 +785,7 @@ class MainCitiesScreen extends StatelessWidget {
                 height: 16,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.textPrimary),
                 ),
               ),
               SizedBox(width: 12),
@@ -814,7 +804,7 @@ class MainCitiesScreen extends StatelessWidget {
       
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('位置信息已更新'),
             backgroundColor: AppColors.accentGreen,
             duration: Duration(milliseconds: 1500),
@@ -839,18 +829,19 @@ class MainCitiesScreen extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.backgroundSecondary,
-        title: const Text(
+        shape: AppColors.dialogShape,
+        title: Text(
           '删除城市',
           style: TextStyle(color: AppColors.textPrimary),
         ),
         content: Text(
           '确定要从主要城市中删除 "${city.name}" 吗？',
-          style: const TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(color: AppColors.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text(
+            child: Text(
               '取消',
               style: TextStyle(color: AppColors.textSecondary),
             ),
@@ -871,7 +862,7 @@ class MainCitiesScreen extends StatelessWidget {
               } else if (context.mounted) {
                 // 删除失败也显示Toast
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
+                  SnackBar(
                     content: Text('删除城市失败，请重试'),
                     backgroundColor: AppColors.error,
                     duration: Duration(milliseconds: 1500),
@@ -879,7 +870,7 @@ class MainCitiesScreen extends StatelessWidget {
                 );
               }
             },
-            child: const Text(
+            child: Text(
               '删除',
               style: TextStyle(color: AppColors.error),
             ),
@@ -891,68 +882,6 @@ class MainCitiesScreen extends StatelessWidget {
 
 }
 
-/// 自定义主题扩展
-class _AppThemeExtension extends ThemeExtension<_AppThemeExtension> {
-  final Color cardBackground;
-  final Color glassBackground;
-  final Color borderColor;
-  final Color dividerColor;
-  final Color successColor;
-  final Color warningColor;
-  final Color errorColor;
-  final Color infoColor;
-
-  const _AppThemeExtension({
-    required this.cardBackground,
-    required this.glassBackground,
-    required this.borderColor,
-    required this.dividerColor,
-    required this.successColor,
-    required this.warningColor,
-    required this.errorColor,
-    required this.infoColor,
-  });
-
-  @override
-  _AppThemeExtension copyWith({
-    Color? cardBackground,
-    Color? glassBackground,
-    Color? borderColor,
-    Color? dividerColor,
-    Color? successColor,
-    Color? warningColor,
-    Color? errorColor,
-    Color? infoColor,
-  }) {
-    return _AppThemeExtension(
-      cardBackground: cardBackground ?? this.cardBackground,
-      glassBackground: glassBackground ?? this.glassBackground,
-      borderColor: borderColor ?? this.borderColor,
-      dividerColor: dividerColor ?? this.dividerColor,
-      successColor: successColor ?? this.successColor,
-      warningColor: warningColor ?? this.warningColor,
-      errorColor: errorColor ?? this.errorColor,
-      infoColor: infoColor ?? this.infoColor,
-    );
-  }
-
-  @override
-  _AppThemeExtension lerp(_AppThemeExtension? other, double t) {
-    if (other is! _AppThemeExtension) {
-      return this;
-    }
-    return _AppThemeExtension(
-      cardBackground: Color.lerp(cardBackground, other.cardBackground, t)!,
-      glassBackground: Color.lerp(glassBackground, other.glassBackground, t)!,
-      borderColor: Color.lerp(borderColor, other.borderColor, t)!,
-      dividerColor: Color.lerp(dividerColor, other.dividerColor, t)!,
-      successColor: Color.lerp(successColor, other.successColor, t)!,
-      warningColor: Color.lerp(warningColor, other.warningColor, t)!,
-      errorColor: Color.lerp(errorColor, other.errorColor, t)!,
-      infoColor: Color.lerp(infoColor, other.infoColor, t)!,
-    );
-  }
-}
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -968,7 +897,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   
   bool _isLoading = true;
   String _statusMessage = '正在初始化...';
-  bool _permissionGranted = false;
   bool _showPermissionDialog = false;
 
   @override
@@ -1025,7 +953,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       if (permissionStatus == LocationPermissionResult.granted) {
         setState(() {
           _statusMessage = '权限已获取，正在加载天气数据...';
-          _permissionGranted = true;
         });
       } else {
         setState(() {
@@ -1089,7 +1016,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: AppColors.primaryGradient,
         ),
         child: Center(
@@ -1111,36 +1038,36 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                             width: 120,
                             height: 120,
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.1),
+                              color: AppColors.cardBackground,
                               borderRadius: BorderRadius.circular(30),
                               border: Border.all(
-                                color: Colors.white.withOpacity(0.3),
+                                color: AppColors.cardBorder,
                                 width: 2,
                               ),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.wb_sunny,
                               size: 60,
-                              color: Colors.white,
+                              color: AppColors.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 30),
                           // 应用名称
-                          const Text(
+                          Text(
                             '知雨天气2',
                             style: TextStyle(
                               fontSize: 32,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: AppColors.textPrimary,
                               fontFamily: 'JetBrainsMono',
                             ),
                           ),
                           const SizedBox(height: 10),
-                          const Text(
+                          Text(
                             '智能天气预报应用',
                             style: TextStyle(
                               fontSize: 16,
-                              color: Colors.white70,
+                              color: AppColors.textSecondary,
                               fontFamily: 'JetBrainsMono',
                             ),
                           ),
@@ -1155,15 +1082,15 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
               
               // 加载指示器
               if (_isLoading) ...[
-                const CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                CircularProgressIndicator(
+                  color: AppColors.textPrimary,
                 ),
                 const SizedBox(height: 20),
                 Text(
                   _statusMessage,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
-                    color: Colors.white70,
+                    color: AppColors.textSecondary,
                     fontFamily: 'JetBrainsMono',
                   ),
                   textAlign: TextAlign.center,
@@ -1176,37 +1103,37 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                   margin: const EdgeInsets.symmetric(horizontal: 40),
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
+                    color: AppColors.cardBackground,
                     borderRadius: BorderRadius.circular(15),
                     border: Border.all(
-                      color: Colors.white.withOpacity(0.3),
+                      color: AppColors.cardBorder,
                       width: 1,
                     ),
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.location_on,
                         size: 48,
-                        color: Colors.white,
+                        color: AppColors.textPrimary,
                       ),
                       const SizedBox(height: 16),
-                      const Text(
+                      Text(
                         '初始化失败',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: AppColors.textPrimary,
                           fontFamily: 'JetBrainsMono',
                         ),
                       ),
                       const SizedBox(height: 12),
-                      const Text(
+                      Text(
                         '应用初始化失败，您可以重试或跳过权限直接使用。',
                         style: TextStyle(
                           fontSize: 14,
-                          color: Colors.white70,
+                          color: AppColors.textSecondary,
                           fontFamily: 'JetBrainsMono',
                         ),
                         textAlign: TextAlign.center,
@@ -1218,10 +1145,10 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                             child: TextButton(
                               onPressed: _skipPermission,
                               style: TextButton.styleFrom(
-                                backgroundColor: Colors.white.withOpacity(0.2),
-                                foregroundColor: Colors.white70,
+                                backgroundColor: AppColors.cardBackground,
+                                foregroundColor: AppColors.textSecondary,
                               ),
-                              child: const Text('跳过'),
+                              child: Text('跳过'),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -1230,9 +1157,9 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                               onPressed: _requestPermissionAgain,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.accentBlue,
-                                foregroundColor: Colors.white,
+                                foregroundColor: AppColors.textPrimary,
                               ),
-                              child: const Text('重试'),
+                              child: Text('重试'),
                             ),
                           ),
                         ],

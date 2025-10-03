@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/weather_model.dart';
 import '../services/weather_service.dart';
+import '../providers/theme_provider.dart';
+import '../constants/app_colors.dart';
 
 class HourlyList extends StatelessWidget {
   final List<HourlyWeather>? hourlyForecast;
@@ -14,70 +17,60 @@ class HourlyList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (hourlyForecast == null || hourlyForecast!.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: Colors.white.withOpacity(0.2),
-            width: 1,
-          ),
-        ),
-        child: const Center(
-          child: Text(
-            '暂无24小时预报数据',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 16,
-            ),
-          ),
-        ),
-      );
-    }
-
-    // 过滤显示当前时间前2小时、当前时间和当前时间后21小时的数据
-    final filteredForecast = _filterHourlyForecast(hourlyForecast!);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: Text(
-              '逐小时详情',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        if (hourlyForecast == null || hourlyForecast!.isEmpty) {
+          return Container(
+            padding: const EdgeInsets.all(16),
+            decoration: AppColors.standardCardDecoration,
+            child: Center(
+              child: Text(
+                '暂无24小时预报数据',
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 16,
+                ),
               ),
             ),
+          );
+        }
+
+        // 过滤显示当前时间前2小时、当前时间和当前时间后21小时的数据
+        final filteredForecast = _filterHourlyForecast(hourlyForecast!);
+
+        return Container(
+          decoration: AppColors.standardCardDecoration,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  '逐小时详情',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: filteredForecast.length,
+                separatorBuilder: (context, index) => Divider(
+                  color: AppColors.cardBorder,
+                  height: 1,
+                ),
+                itemBuilder: (context, index) {
+                  final hour = filteredForecast[index];
+                  return _buildHourlyItem(hour, index);
+                },
+              ),
+            ],
           ),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: filteredForecast.length,
-            separatorBuilder: (context, index) => Divider(
-              color: Colors.white.withOpacity(0.1),
-              height: 1,
-            ),
-            itemBuilder: (context, index) {
-              final hour = filteredForecast[index];
-              return _buildHourlyItem(hour, index);
-            },
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -90,7 +83,7 @@ class HourlyList extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: isCurrentHour ? Colors.white.withOpacity(0.1) : Colors.transparent,
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -104,24 +97,29 @@ class HourlyList extends StatelessWidget {
                 Text(
                   time,
                   style: TextStyle(
-                    color: isCurrentHour ? Colors.white : Colors.white70,
+                    color: AppColors.textSecondary,
                     fontSize: 14,
-                    fontWeight: isCurrentHour ? FontWeight.bold : FontWeight.normal,
+                    fontWeight: FontWeight.normal,
                   ),
                 ),
                 if (isCurrentHour)
                   Container(
                     margin: const EdgeInsets.only(top: 2),
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: Colors.blue,
-                      borderRadius: BorderRadius.circular(4),
+                      color: AppColors.currentTagBackground,
+                      border: Border.all(
+                        color: AppColors.currentTagBorder,
+                        width: 1,
+                      ),
+                      borderRadius: BorderRadius.circular(6),
                     ),
-                    child: const Text(
+                    child: Text(
                       '现在',
                       style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 8,
+                        color: AppColors.currentTag,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
@@ -144,11 +142,11 @@ class HourlyList extends StatelessWidget {
           SizedBox(
             width: 60,
             child: Text(
-              '${temperature.toInt()}°',
+              '${temperature.toInt()}℃',
               style: TextStyle(
-                color: isCurrentHour ? Colors.white : Colors.white70,
+                color: AppColors.textSecondary,
                 fontSize: 16,
-                fontWeight: isCurrentHour ? FontWeight.bold : FontWeight.normal,
+                fontWeight: FontWeight.normal,
               ),
             ),
           ),
@@ -158,9 +156,9 @@ class HourlyList extends StatelessWidget {
             child: Text(
               hour.weather ?? '晴',
               style: TextStyle(
-                color: isCurrentHour ? Colors.white : Colors.white70,
+                color: AppColors.textSecondary,
                 fontSize: 14,
-                fontWeight: isCurrentHour ? FontWeight.w500 : FontWeight.normal,
+                fontWeight: FontWeight.normal,
               ),
             ),
           ),
@@ -171,7 +169,7 @@ class HourlyList extends StatelessWidget {
             child: Text(
               '${hour.windDir ?? '--'}${hour.windPower ?? ''}',
               style: TextStyle(
-                color: Colors.white.withOpacity(0.6),
+                color: AppColors.textTertiary,
                 fontSize: 12,
               ),
               textAlign: TextAlign.right,
@@ -297,41 +295,5 @@ class HourlyList extends StatelessWidget {
     } catch (e) {
       return 0;
     }
-  }
-
-  /// 解析预报时间字符串为DateTime
-  DateTime _parseForecastTime(String timeStr) {
-    try {
-      if (timeStr.contains('T')) {
-        return DateTime.parse(timeStr);
-      } else if (timeStr.contains(' ')) {
-        return DateTime.parse(timeStr);
-      } else if (timeStr.contains(':')) {
-        final parts = timeStr.split(':');
-        if (parts.length >= 2) {
-          final hour = int.parse(parts[0]);
-          final minute = int.parse(parts[1]);
-          final now = DateTime.now();
-          return DateTime(now.year, now.month, now.day, hour, minute);
-        }
-      }
-    } catch (e) {
-      // 解析失败，返回当前时间
-    }
-    return DateTime.now();
-  }
-
-  /// 获取下一天的日期字符串
-  String _getNextDay(String dateStr) {
-    final date = DateTime.parse(dateStr);
-    final nextDay = date.add(const Duration(days: 1));
-    return nextDay.toIso8601String().split('T')[0];
-  }
-
-  /// 获取前一天的日期字符串
-  String _getPreviousDay(String dateStr) {
-    final date = DateTime.parse(dateStr);
-    final previousDay = date.subtract(const Duration(days: 1));
-    return previousDay.toIso8601String().split('T')[0];
   }
 }

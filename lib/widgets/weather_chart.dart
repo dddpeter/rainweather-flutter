@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:provider/provider.dart';
 import '../models/weather_model.dart';
 import '../constants/app_colors.dart';
+import '../providers/theme_provider.dart';
 
 class WeatherChart extends StatelessWidget {
   final List<DailyWeather>? dailyForecast;
@@ -13,8 +15,10 @@ class WeatherChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (dailyForecast == null || dailyForecast!.isEmpty) {
-      return const Center(
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        if (dailyForecast == null || dailyForecast!.isEmpty) {
+      return Center(
         child: Text(
           '暂无数据',
           style: TextStyle(color: AppColors.textSecondary),
@@ -22,19 +26,21 @@ class WeatherChart extends StatelessWidget {
       );
     }
 
-    return LineChart(
-      LineChartData(
-        gridData: FlGridData(
-          show: true,
-          drawVerticalLine: false,
-          horizontalInterval: 5,
-          getDrawingHorizontalLine: (value) {
-            return FlLine(
-              color: AppColors.textTertiary,
-              strokeWidth: 1,
-            );
-          },
-        ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      child: LineChart(
+        LineChartData(
+          gridData: FlGridData(
+            show: true,
+            drawVerticalLine: false,
+            horizontalInterval: 5,
+            getDrawingHorizontalLine: (value) {
+              return FlLine(
+                color: AppColors.textTertiary,
+                strokeWidth: 1,
+              );
+            },
+          ),
         titlesData: FlTitlesData(
           show: true,
           rightTitles: const AxisTitles(
@@ -46,15 +52,21 @@ class WeatherChart extends StatelessWidget {
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 30,
+              reservedSize: 40, // 增加预留空间
               interval: 1,
               getTitlesWidget: (value, meta) {
                 if (value.toInt() < dailyForecast!.length) {
-                  return Text(
-                    _formatDate(dailyForecast![value.toInt()].forecasttime ?? ''),
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 12,
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 4.0),
+                    child: Text(
+                      _formatDate(dailyForecast![value.toInt()].forecasttime ?? ''),
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 10, // 减小字体大小
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   );
                 }
@@ -70,8 +82,8 @@ class WeatherChart extends StatelessWidget {
               getTitlesWidget: (value, meta) {
                 return Text(
                   '${value.toInt()}°',
-                  style: const TextStyle(
-                    color: Colors.white70,
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
                     fontSize: 12,
                   ),
                 );
@@ -128,7 +140,10 @@ class WeatherChart extends StatelessWidget {
             belowBarData: BarAreaData(show: false),
           ),
         ],
+        ),
       ),
+    );
+      },
     );
   }
 

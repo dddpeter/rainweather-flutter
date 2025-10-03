@@ -2,12 +2,16 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/weather_provider.dart';
+import '../providers/theme_provider.dart';
 import '../widgets/weather_chart.dart';
 import '../widgets/hourly_weather_widget.dart';
 import '../services/weather_service.dart';
 import '../constants/app_constants.dart';
 import '../constants/app_colors.dart';
 import '../models/location_model.dart';
+import '../widgets/sun_moon_widget.dart';
+import '../widgets/life_index_widget.dart';
+import '../widgets/app_menu.dart';
 import 'hourly_screen.dart';
 
 class TodayScreen extends StatefulWidget {
@@ -59,13 +63,13 @@ class _TodayScreenState extends State<TodayScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: AppColors.primaryGradient,
         ),
-        child: Consumer<WeatherProvider>(
-        builder: (context, weatherProvider, child) {
+        child: Consumer2<WeatherProvider, ThemeProvider>(
+        builder: (context, weatherProvider, themeProvider, child) {
           if (weatherProvider.isLoading && weatherProvider.currentWeather == null) {
-            return const Center(
+            return Center(
               child: CircularProgressIndicator(
                 color: AppColors.accentBlue,
               ),
@@ -77,7 +81,7 @@ class _TodayScreenState extends State<TodayScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.error_outline,
                     size: 64,
                     color: AppColors.error,
@@ -85,7 +89,7 @@ class _TodayScreenState extends State<TodayScreen> {
                   const SizedBox(height: 16),
                   Text(
                     weatherProvider.error!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textPrimary,
                       fontSize: 16,
                     ),
@@ -98,7 +102,7 @@ class _TodayScreenState extends State<TodayScreen> {
                       backgroundColor: AppColors.accentBlue,
                       foregroundColor: AppColors.textPrimary,
                     ),
-                    child: const Text('重试'),
+                    child: Text('重试'),
                   ),
                 ],
               ),
@@ -107,21 +111,23 @@ class _TodayScreenState extends State<TodayScreen> {
 
           return RefreshIndicator(
             onRefresh: () => weatherProvider.refreshWeatherData(),
-            color: Colors.blue,
-            backgroundColor: Colors.black,
+            color: AppColors.primaryBlue,
+            backgroundColor: AppColors.backgroundSecondary,
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               child: Column(
                 children: [
                   _buildTopWeatherSection(weatherProvider),
                   const SizedBox(height: 16),
-                  _buildTemperatureChart(weatherProvider),
+                  SunMoonWidget(weatherProvider: weatherProvider),
+                  const SizedBox(height: 16),
+                  LifeIndexWidget(weatherProvider: weatherProvider),
                   const SizedBox(height: 16),
                   _buildHourlyWeather(weatherProvider),
                   const SizedBox(height: 16),
-                  _buildWeatherDetails(weatherProvider),
+                  _buildTemperatureChart(weatherProvider),
                   const SizedBox(height: 16),
-                  _buildLifeAdvice(weatherProvider),
+                  _buildWeatherDetails(weatherProvider),
                   const SizedBox(height: 80), // Space for bottom buttons
                 ],
               ),
@@ -169,7 +175,7 @@ class _TodayScreenState extends State<TodayScreen> {
                           : () => weatherProvider.forceRefreshWithLocation(),
                       child: Center(
                         child: weatherProvider.isLoading
-                            ? const SizedBox(
+                            ? SizedBox(
                                 width: 20,
                                 height: 20,
                                 child: CircularProgressIndicator(
@@ -177,7 +183,7 @@ class _TodayScreenState extends State<TodayScreen> {
                                   valueColor: AlwaysStoppedAnimation<Color>(AppColors.textPrimary),
                                 ),
                               )
-                            : const Icon(
+                            : Icon(
                                 Icons.refresh,
                                 color: AppColors.textPrimary,
                                 size: 24,
@@ -203,54 +209,71 @@ class _TodayScreenState extends State<TodayScreen> {
       width: double.infinity,
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 16.0),
           child: Column(
             children: [
-              // City name
-              Center(
-                child: Text(
-                  _getDisplayCity(location),
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+              // City name and menu
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const AppMenu(), // 菜单按钮
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        _getDisplayCity(location),
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                  GestureDetector(
+                    onTap: () => _showLifeAdviceDialog(weatherProvider),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Icon(
+                        Icons.lightbulb_outline,
+                        color: AppColors.titleBarDecorIconColor,
+                        size: AppColors.titleBarDecorIconSize,
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
               
-              // Weather icon and temperature
+              // Weather icon, weather text and temperature
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
                     weatherProvider.getWeatherIcon(current?.weather ?? '晴'),
-                    style: const TextStyle(
-                      fontSize: 50,
+                    style: TextStyle(
+                      fontSize: 72,
                       color: AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(width: 16),
                   Text(
-                    '${current?.temperature ?? '--'}°',
-                    style: const TextStyle(
+                    current?.weather ?? '晴',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Text(
+                    '${current?.temperature ?? '--'}℃',
+                    style: TextStyle(
                       color: AppColors.textPrimary,
                       fontSize: 48,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
-              ),
-              const SizedBox(height: 8),
-              
-              // Weather type
-              Text(
-                current?.weather ?? '晴',
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w500,
-                ),
               ),
               const SizedBox(height: 16),
               
@@ -263,7 +286,7 @@ class _TodayScreenState extends State<TodayScreen> {
                         Icons.water_drop,
                         '湿度',
                         '${current.humidity ?? '--'}%',
-                        const Color(0xFF66BB6A), // 绿色
+                        AppColors.textPrimary, // 使用主文字色确保可见性
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -272,7 +295,7 @@ class _TodayScreenState extends State<TodayScreen> {
                         Icons.air,
                         '风力',
                         '${current.winddir ?? '--'}${current.windpower ?? ''}',
-                        const Color(0xFF4FC3F7), // 蓝色
+                        AppColors.accentGreen, // 使用主题色
                       ),
                     ),
                   ],
@@ -285,7 +308,7 @@ class _TodayScreenState extends State<TodayScreen> {
                         Icons.compress,
                         '气压',
                         '${current.airpressure ?? '--'}hpa',
-                        const Color(0xFF4FC3F7), // 蓝色
+                        AppColors.textPrimary, // 使用主文字色确保可见性
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -294,7 +317,7 @@ class _TodayScreenState extends State<TodayScreen> {
                         Icons.visibility,
                         '能见度',
                         '${current.visibility ?? '--'}km',
-                        const Color(0xFF66BB6A), // 绿色
+                        AppColors.accentGreen, // 使用主题色
                       ),
                     ),
                   ],
@@ -306,8 +329,8 @@ class _TodayScreenState extends State<TodayScreen> {
                       child: _buildCompactWeatherDetail(
                         Icons.thermostat,
                         '体感温度',
-                        '${current.feelstemperature ?? '--'}°',
-                        const Color(0xFF66BB6A), // 绿色
+                        '${current.feelstemperature ?? '--'}℃',
+                        AppColors.textPrimary, // 使用主文字色确保可见性
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -316,7 +339,7 @@ class _TodayScreenState extends State<TodayScreen> {
                         Icons.eco,
                         '空气指数',
                         '${weather?.current?.air?.AQI ?? '--'}',
-                        const Color(0xFF4FC3F7), // 蓝色
+                        AppColors.accentGreen, // 使用主题色
                       ),
                     ),
                   ],
@@ -347,8 +370,8 @@ class _TodayScreenState extends State<TodayScreen> {
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(
-                color: Colors.white70,
+                        style: TextStyle(
+                color: AppColors.textSecondary,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
@@ -367,76 +390,26 @@ class _TodayScreenState extends State<TodayScreen> {
     );
   }
 
-  /// Get air quality color based on AQI value
-  Color _getAirQualityColor(String? aqi) {
-    if (aqi == null || aqi == '--') return AppColors.accentGreen;
-    
-    try {
-      final aqiValue = int.parse(aqi);
-      if (aqiValue <= 50) {
-        return Colors.green; // 优
-      } else if (aqiValue <= 100) {
-        return Colors.yellow; // 良
-      } else if (aqiValue <= 150) {
-        return Colors.orange; // 轻度污染
-      } else if (aqiValue <= 200) {
-        return Colors.red; // 中度污染
-      } else if (aqiValue <= 300) {
-        return Colors.purple; // 重度污染
-      } else {
-        return Colors.deepPurple; // 严重污染
-      }
-    } catch (e) {
-      return AppColors.accentGreen;
-    }
-  }
-
-  Widget _buildWeatherDetailRow(IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.white70, size: 20),
-          const SizedBox(width: 8),
-          Text(
-            '$label: ',
-            style: const TextStyle(color: Colors.white70, fontSize: 16),
-          ),
-          Text(
-            value,
-            style: const TextStyle(color: Colors.white, fontSize: 16),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildTemperatureChart(WeatherProvider weatherProvider) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
+      padding: const EdgeInsets.all(12),
+      decoration: AppColors.standardCardDecoration,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             '7日温度趋势',
             style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
+              color: AppColors.textPrimary,
+              fontSize: 14,
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           SizedBox(
-            height: 200,
+            height: 120,
             child: WeatherChart(
               dailyForecast: weatherProvider.dailyForecast,
             ),
@@ -474,14 +447,7 @@ class _TodayScreenState extends State<TodayScreen> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
+      decoration: AppColors.standardCardDecoration,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -489,14 +455,14 @@ class _TodayScreenState extends State<TodayScreen> {
             children: [
               Icon(
                 Icons.info_outline,
-                color: const Color(0xFF4FC3F7),
-                size: 20,
+                color: AppColors.titleBarDecorIconColor,
+                size: AppColors.titleBarDecorIconSize,
               ),
               const SizedBox(width: 8),
-              const Text(
+              Text(
                 '详细信息',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppColors.textPrimary,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
@@ -505,131 +471,93 @@ class _TodayScreenState extends State<TodayScreen> {
           ),
           const SizedBox(height: 16),
           if (air != null) ...[
-            _buildEnhancedDetailItem(
-              Icons.air,
-              '空气质量',
-              '${air.AQI ?? '--'} (${air.levelIndex ?? '未知'})',
-              const Color(0xFF66BB6A),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildCompactDetailItem(
+                    Icons.air,
+                    '空气质量',
+                    '${air.AQI ?? '--'} (${air.levelIndex ?? '未知'})',
+                    AppColors.textPrimary, // 使用主文字色确保可见性
+                  ),
+                ),
+                const SizedBox(width: 8),
+                if (weather?.current?.current != null)
+                  Expanded(
+                    child: _buildCompactDetailItem(
+                      Icons.thermostat,
+                      '体感温度',
+                      '${weather!.current!.current!.feelstemperature ?? '--'}℃',
+                      AppColors.textPrimary, // 使用主文字色确保可见性
+                    ),
+                  ),
+              ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
           ],
           if (weather?.current?.current != null) ...[
-            _buildEnhancedDetailItem(
-              Icons.thermostat,
-              '体感温度',
-              '${weather!.current!.current!.feelstemperature ?? '--'}°',
-              const Color(0xFF4FC3F7),
+            // 第一行：湿度和气压
+            Row(
+              children: [
+                Expanded(
+                  child: _buildCompactDetailItem(
+                    Icons.water_drop,
+                    '湿度',
+                    '${weather!.current!.current!.humidity ?? '--'}%',
+                    AppColors.textPrimary, // 使用主文字色确保可见性
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildCompactDetailItem(
+                    Icons.compress,
+                    '气压',
+                    '${weather.current!.current!.airpressure ?? '--'}hpa',
+                    AppColors.textPrimary, // 使用主文字色确保可见性
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-            _buildEnhancedDetailItem(
-              Icons.navigation,
-              '风向',
-              weather.current!.current!.winddir ?? '--',
-              const Color(0xFF66BB6A),
+            const SizedBox(height: 8),
+            
+            // 第二行：风力和能见度
+            Row(
+              children: [
+                Expanded(
+                  child: _buildCompactDetailItem(
+                    Icons.air,
+                    '风力',
+                    '${weather.current!.current!.winddir ?? '--'} ${weather.current!.current!.windpower ?? ''}',
+                    AppColors.textPrimary, // 使用主文字色确保可见性
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildCompactDetailItem(
+                    Icons.visibility,
+                    '能见度',
+                    '${weather.current!.current!.visibility ?? '--'}km',
+                    AppColors.textPrimary, // 使用主文字色确保可见性
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-            _buildEnhancedDetailItem(
-              Icons.air,
-              '风力',
-              weather.current!.current!.windpower ?? '--',
-              const Color(0xFF4FC3F7),
-            ),
-            const SizedBox(height: 12),
-            _buildEnhancedDetailItem(
-              Icons.water_drop,
-              '湿度',
-              '${weather.current!.current!.humidity ?? '--'}%',
-              const Color(0xFF66BB6A),
-            ),
-            const SizedBox(height: 12),
-            _buildEnhancedDetailItem(
-              Icons.compress,
-              '气压',
-              '${weather.current!.current!.airpressure ?? '--'}hpa',
-              const Color(0xFF4FC3F7),
-            ),
-            const SizedBox(height: 12),
-            _buildEnhancedDetailItem(
-              Icons.visibility,
-              '能见度',
-              '${weather.current!.current!.visibility ?? '--'}km',
-              const Color(0xFF66BB6A),
-            ),
+            const SizedBox(height: 8),
           ],
         ],
       ),
     );
   }
 
-  Widget _buildEnhancedDetailItem(IconData icon, String label, String value, Color color) {
+
+  Widget _buildCompactDetailItem(IconData icon, String label, String value, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: color.withOpacity(0.3),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              color: color,
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailItem(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(color: Colors.white70, fontSize: 16),
-          ),
-          Text(
-            value,
-            style: const TextStyle(color: Colors.white, fontSize: 16),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLifeAdvice(WeatherProvider weatherProvider) {
-    final weather = weatherProvider.currentWeather;
-    final tips = weather?.current?.tips ?? weather?.tips ?? '今天天气不错，适合外出活动';
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.2),
           width: 1,
         ),
       ),
@@ -638,30 +566,73 @@ class _TodayScreenState extends State<TodayScreen> {
         children: [
           Row(
             children: [
+              Icon(icon, color: color, size: 16),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.left,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.left,
+          ),
+        ],
+      ),
+    );
+  }
+
+
+
+  void _showLifeAdviceDialog(WeatherProvider weatherProvider) {
+    final weather = weatherProvider.currentWeather;
+    final tips = weather?.current?.tips ?? weather?.tips ?? '今天天气不错，适合外出活动';
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: AppColors.backgroundSecondary,
+          shape: AppColors.dialogShape,
+          title: Row(
+            children: [
               Icon(
                 Icons.lightbulb_outline,
-                color: const Color(0xFF66BB6A),
-                size: 20,
+                color: AppColors.titleBarIconColor,
+                size: AppColors.titleBarIconSize,
               ),
               const SizedBox(width: 8),
-              const Text(
+              Text(
                 '生活建议',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppColors.textPrimary,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Container(
+          content: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF66BB6A).withOpacity(0.1),
+              color: AppColors.accentGreen.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: const Color(0xFF66BB6A).withOpacity(0.3),
+                color: AppColors.accentGreen.withOpacity(0.3),
                 width: 1,
               ),
             ),
@@ -670,15 +641,15 @@ class _TodayScreenState extends State<TodayScreen> {
               children: [
                 Icon(
                   Icons.chat_bubble_outline,
-                  color: const Color(0xFF66BB6A),
+                  color: AppColors.accentGreen,
                   size: 18,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     tips,
-                    style: const TextStyle(
-                      color: Colors.white70,
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
                       fontSize: 14,
                       height: 1.5,
                     ),
@@ -687,8 +658,20 @@ class _TodayScreenState extends State<TodayScreen> {
               ],
             ),
           ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                '确定',
+                style: TextStyle(
+                  color: AppColors.accentGreen,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

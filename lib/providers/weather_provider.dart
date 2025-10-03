@@ -2,11 +2,14 @@ import 'package:flutter/foundation.dart';
 import '../models/weather_model.dart';
 import '../models/location_model.dart';
 import '../models/city_model.dart';
+import '../models/sun_moon_index_model.dart';
 import '../services/weather_service.dart';
 import '../services/forecast15d_service.dart';
 import '../services/location_service.dart';
 import '../services/database_service.dart';
 import '../services/city_service.dart';
+import '../services/city_data_service.dart';
+import '../services/sun_moon_index_service.dart';
 import '../constants/app_constants.dart';
 
 class WeatherProvider extends ChangeNotifier {
@@ -16,6 +19,9 @@ class WeatherProvider extends ChangeNotifier {
   final DatabaseService _databaseService = DatabaseService.getInstance();
   final CityService _cityService = CityService.getInstance();
   
+  // 获取CityDataService实例
+  CityDataService get _cityDataService => CityDataService.getInstance();
+  
   WeatherModel? _currentWeather;
   LocationModel? _currentLocation;
   List<HourlyWeather>? _hourlyForecast;
@@ -23,6 +29,10 @@ class WeatherProvider extends ChangeNotifier {
   List<DailyWeather>? _forecast15d;
   bool _isLoading = false;
   String? _error;
+  
+  // 日出日落和生活指数数据
+  SunMoonIndexData? _sunMoonIndexData;
+  bool _isLoadingSunMoonIndex = false;
   
   // 当前定位的天气数据（用于今日天气页面）
   WeatherModel? _currentLocationWeather;
@@ -46,6 +56,10 @@ class WeatherProvider extends ChangeNotifier {
   String? get error => _error;
   Map<String, WeatherModel> get mainCitiesWeather => _mainCitiesWeather;
   bool get isLoadingCitiesWeather => _isLoadingCitiesWeather;
+  
+  // 日出日落和生活指数数据getters
+  SunMoonIndexData? get sunMoonIndexData => _sunMoonIndexData;
+  bool get isLoadingSunMoonIndex => _isLoadingSunMoonIndex;
   
   // Dynamic cities getters
   List<CityModel> get mainCities => _mainCities;
@@ -83,6 +97,8 @@ class WeatherProvider extends ChangeNotifier {
         await refreshWeatherData();
         // 异步加载15日预报数据
         refresh15DayForecast();
+        // 异步加载日出日落和生活指数数据
+        loadSunMoonIndexData();
       } else {
         // 如果没有获得真实位置，使用北京作为默认位置
         print('No real location available, using Beijing as default');
@@ -94,6 +110,8 @@ class WeatherProvider extends ChangeNotifier {
         await refreshWeatherData();
         // 异步加载15日预报数据
         refresh15DayForecast();
+        // 异步加载日出日落和生活指数数据
+        loadSunMoonIndexData();
       }
       
       // 异步加载主要城市天气数据
@@ -251,6 +269,9 @@ class WeatherProvider extends ChangeNotifier {
           _error = 'Failed to fetch weather data for $cityName';
         }
       }
+      
+      // 为特定城市加载日出日落和生活指数数据
+      await _loadSunMoonIndexDataForCity(cityName);
     } catch (e) {
       _error = 'Error: $e';
       print('City weather error: $e');
@@ -551,10 +572,38 @@ class WeatherProvider extends ChangeNotifier {
       _originalLocation = null;
       _hourlyForecast = null;
       _dailyForecast = null;
+      _sunMoonIndexData = null; // 清除日出日落和生活指数数据
       notifyListeners();
-      print('All cache data cleared');
+      print('All cache data cleared including sun/moon index data');
     } catch (e) {
       print('Error clearing cache: $e');
+    }
+  }
+
+  /// 只清理天气数据，保留城市列表
+  Future<void> clearWeatherCache() async {
+    try {
+      // 只清理天气相关的缓存数据
+      await _databaseService.clearWeatherData();
+      
+      // 清空内存中的天气数据
+      _mainCitiesWeather.clear();
+      _currentWeather = null;
+      _currentLocationWeather = null;
+      _hourlyForecast = null;
+      _dailyForecast = null;
+      _sunMoonIndexData = null;
+      
+      // 保留城市列表和位置信息
+      // _mainCities 和 _currentLocation 保持不变
+      
+      notifyListeners();
+      print('Weather cache cleared, cities preserved');
+      
+      // 清理后自动刷新数据
+      await refreshWeatherData();
+    } catch (e) {
+      print('Error clearing weather cache: $e');
     }
   }
 
@@ -709,4 +758,144 @@ class WeatherProvider extends ChangeNotifier {
       _setLoading(false);
     }
   }
+
+  /// 获取日出日落和生活指数数据
+  Future<void> loadSunMoonIndexData() async {
+    if (_currentLocation == null) return;
+    
+    _isLoadingSunMoonIndex = true;
+    notifyListeners();
+    
+    try {
+      // 获取城市ID
+      String cityId = _getCityIdFromLocation(_currentLocation!);
+      if (cityId.isEmpty) {
+        cityId = AppConstants.defaultCityId;
+      }
+      
+      print('Loading sun/moon index data for city ID: $cityId');
+      
+      // 检查缓存
+      final cacheKey = '${_currentLocation!.district}:sun_moon_index';
+      final cachedData = await _databaseService.getSunMoonIndexData(cacheKey);
+      
+      if (cachedData != null) {
+        // 使用缓存数据
+        _sunMoonIndexData = cachedData;
+        print('Using cached sun/moon index data for ${_currentLocation!.district}');
+        notifyListeners(); // 通知UI更新
+      } else {
+        // 从API获取新数据
+        print('No valid cache found, fetching fresh sun/moon index data for ${_currentLocation!.district}');
+        final response = await SunMoonIndexService.getSunMoonAndIndex(cityId);
+        
+        if (response != null && response.code == 200 && response.data != null) {
+          _sunMoonIndexData = response.data;
+          
+          // 调试信息
+          print('Sun/moon index data loaded successfully:');
+          print('  - sunAndMoon: ${response.data!.sunAndMoon}');
+          print('  - index count: ${response.data!.index?.length ?? 0}');
+          if (response.data!.index != null) {
+            for (var item in response.data!.index!) {
+              print('  - ${item.indexTypeCh}: ${item.indexLevel}');
+            }
+          }
+          
+          // 保存到缓存
+          await _databaseService.putSunMoonIndexData(cacheKey, response.data!);
+          print('Sun/moon index data cached for ${_currentLocation!.district}');
+          notifyListeners(); // 通知UI更新
+        } else {
+          print('Failed to fetch sun/moon index data - response: $response');
+          notifyListeners(); // 通知UI更新，即使失败也要更新状态
+        }
+      }
+    } catch (e) {
+      print('Error loading sun/moon index data: $e');
+      notifyListeners(); // 通知UI更新，即使出错也要更新状态
+    } finally {
+      _isLoadingSunMoonIndex = false;
+      notifyListeners();
+    }
+  }
+
+  /// 为特定城市获取日出日落和生活指数数据
+  Future<void> _loadSunMoonIndexDataForCity(String cityName) async {
+    _isLoadingSunMoonIndex = true;
+    notifyListeners();
+    
+    try {
+      // 获取城市ID
+      String cityId = _cityDataService.findCityIdByName(cityName) ?? AppConstants.defaultCityId;
+      
+      print('Loading sun/moon index data for city: $cityName, city ID: $cityId');
+      
+      // 检查缓存
+      final cacheKey = '$cityName:sun_moon_index';
+      final cachedData = await _databaseService.getSunMoonIndexData(cacheKey);
+      
+      if (cachedData != null) {
+        // 使用缓存数据
+        _sunMoonIndexData = cachedData;
+        print('Using cached sun/moon index data for $cityName');
+        notifyListeners(); // 通知UI更新
+      } else {
+        // 从API获取新数据
+        print('No valid cache found, fetching fresh sun/moon index data for $cityName');
+        final response = await SunMoonIndexService.getSunMoonAndIndex(cityId);
+        
+        if (response != null && response.code == 200 && response.data != null) {
+          _sunMoonIndexData = response.data;
+          
+          // 调试信息
+          print('Sun/moon index data loaded successfully for $cityName:');
+          print('  - sunAndMoon: ${response.data!.sunAndMoon}');
+          print('  - index count: ${response.data!.index?.length ?? 0}');
+          if (response.data!.index != null) {
+            for (var item in response.data!.index!) {
+              print('  - ${item.indexTypeCh}: ${item.indexLevel}');
+            }
+          }
+          
+          // 保存到缓存
+          await _databaseService.putSunMoonIndexData(cacheKey, response.data!);
+          print('Sun/moon index data cached for $cityName');
+          notifyListeners(); // 通知UI更新
+        } else {
+          print('Failed to fetch sun/moon index data for $cityName - response: $response');
+          notifyListeners(); // 通知UI更新，即使失败也要更新状态
+        }
+      }
+    } catch (e) {
+      print('Error loading sun/moon index data for $cityName: $e');
+      notifyListeners(); // 通知UI更新，即使出错也要更新状态
+    } finally {
+      _isLoadingSunMoonIndex = false;
+      notifyListeners();
+    }
+  }
+
+  /// 获取城市ID（从LocationModel）
+  String _getCityIdFromLocation(LocationModel location) {
+    // 使用CityDataService来获取城市ID
+    final cityDataService = _cityDataService;
+    
+    // Try to find city ID by district first
+    String? cityId = cityDataService.findCityIdByName(location.district);
+    
+    // If not found, try by city
+    if (cityId == null && location.city.isNotEmpty) {
+      cityId = cityDataService.findCityIdByName(location.city);
+    }
+    
+    // If still not found, try by province
+    if (cityId == null && location.province.isNotEmpty) {
+      cityId = cityDataService.findCityIdByName(location.province);
+    }
+    
+    // Return found city ID or default
+    return cityId ?? AppConstants.defaultCityId;
+  }
+
 }

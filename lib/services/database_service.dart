@@ -5,6 +5,7 @@ import 'package:path/path.dart';
 import '../models/weather_model.dart';
 import '../models/location_model.dart';
 import '../models/city_model.dart';
+import '../models/sun_moon_index_model.dart';
 import '../constants/app_constants.dart';
 
 class DatabaseService {
@@ -112,6 +113,41 @@ class DatabaseService {
     }
     return _database!;
   }
+
+  /// Clear all cached data
+  Future<void> clearAllCache() async {
+    try {
+      final db = await database;
+      await db.delete('weather_cache');
+      print('All cached data cleared successfully');
+    } catch (e) {
+      print('Error clearing cache: $e');
+    }
+  }
+
+  /// Clear only weather data, preserve cities and location
+  Future<void> clearWeatherData() async {
+    try {
+      final db = await database;
+      
+      // 只删除天气相关的数据，保留城市和位置数据
+      await db.delete(
+        'weather_cache',
+        where: 'key LIKE ? OR key LIKE ? OR key LIKE ? OR key LIKE ? OR key LIKE ?',
+        whereArgs: [
+          '%:${AppConstants.weatherAllKey}',  // 天气数据
+          '%:${AppConstants.hourlyForecastKey}',  // 小时预报
+          '%:${AppConstants.dailyForecastKey}',   // 日预报
+          '%:${AppConstants.sunMoonIndexKey}',    // 日出日落和生活指数
+          '${AppConstants.currentLocationKey}:${AppConstants.weatherAllKey}', // 当前位置天气
+        ],
+      );
+      
+      print('Weather data cleared successfully, cities preserved');
+    } catch (e) {
+      print('Error clearing weather data: $e');
+    }
+  }
   
   /// Store string data
   Future<void> putString(String key, String value) async {
@@ -204,6 +240,43 @@ class DatabaseService {
         return WeatherModel.fromJson(json);
       } catch (e) {
         print('Error parsing weather data: $e');
+      }
+    }
+    return null;
+  }
+
+  /// Store sun/moon index data
+  Future<void> putSunMoonIndexData(String key, SunMoonIndexData sunMoonIndexData) async {
+    final db = await database;
+    await db.insert(
+      'weather_cache',
+      {
+        'key': key,
+        'data': jsonEncode(sunMoonIndexData.toJson()),
+        'type': 'SunMoonIndexData',
+        'created_at': DateTime.now().millisecondsSinceEpoch,
+        'expires_at': DateTime.now().add(AppConstants.sunMoonIndexCacheExpiration).millisecondsSinceEpoch,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  /// Get sun/moon index data
+  Future<SunMoonIndexData?> getSunMoonIndexData(String key) async {
+    final db = await database;
+    final result = await db.query(
+      'weather_cache',
+      where: 'key = ? AND expires_at > ?',
+      whereArgs: [key, DateTime.now().millisecondsSinceEpoch],
+    );
+    
+    if (result.isNotEmpty) {
+      final data = result.first['data'] as String;
+      try {
+        final json = jsonDecode(data) as Map<String, dynamic>;
+        return SunMoonIndexData.fromJson(json);
+      } catch (e) {
+        print('Error parsing sun/moon index data: $e');
       }
     }
     return null;

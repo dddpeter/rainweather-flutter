@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/weather_provider.dart';
+import '../providers/theme_provider.dart';
 import '../models/weather_model.dart';
 import '../constants/app_colors.dart';
 import '../widgets/forecast15d_chart.dart';
@@ -17,23 +18,16 @@ class _Forecast15dScreenState extends State<Forecast15dScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF0A0E27),
-              Color(0xFF1A1F3A),
-            ],
-          ),
+        decoration: BoxDecoration(
+          gradient: AppColors.primaryGradient,
         ),
         child: SafeArea(
-          child: Consumer<WeatherProvider>(
-            builder: (context, weatherProvider, child) {
+          child: Consumer2<WeatherProvider, ThemeProvider>(
+            builder: (context, weatherProvider, themeProvider, child) {
               if (weatherProvider.isLoading) {
-                return const Center(
+                return Center(
                   child: CircularProgressIndicator(
-                    color: AppColors.accentBlue,
+                    color: AppColors.textPrimary,
                   ),
                 );
               }
@@ -43,7 +37,7 @@ class _Forecast15dScreenState extends State<Forecast15dScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.error_outline,
                         size: 64,
                         color: AppColors.error,
@@ -51,7 +45,7 @@ class _Forecast15dScreenState extends State<Forecast15dScreen> {
                       const SizedBox(height: 16),
                       Text(
                         '加载失败',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textPrimary,
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -60,7 +54,7 @@ class _Forecast15dScreenState extends State<Forecast15dScreen> {
                       const SizedBox(height: 8),
                       Text(
                         weatherProvider.error!,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 14,
                         ),
@@ -70,8 +64,8 @@ class _Forecast15dScreenState extends State<Forecast15dScreen> {
                       ElevatedButton(
                         onPressed: () => weatherProvider.refresh15DayForecast(),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.accentBlue,
-                          foregroundColor: Colors.white,
+                          backgroundColor: AppColors.primaryBlue,
+                          foregroundColor: AppColors.textPrimary,
                         ),
                         child: const Text('重试'),
                       ),
@@ -83,7 +77,7 @@ class _Forecast15dScreenState extends State<Forecast15dScreen> {
               final forecast15d = weatherProvider.forecast15d;
 
               if (forecast15d == null || forecast15d.isEmpty) {
-                return const Center(
+                return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -105,68 +99,74 @@ class _Forecast15dScreenState extends State<Forecast15dScreen> {
                 );
               }
 
-              return Column(
-                children: [
+              return CustomScrollView(
+                slivers: [
                   // Header
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Text(
-                              '15日预报',
-                              style: TextStyle(
-                                color: AppColors.textPrimary,
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                '15日预报',
+                                style: TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                            const Spacer(),
-                            IconButton(
-                              onPressed: weatherProvider.isLoading
-                                  ? null
-                                  : () => weatherProvider.refresh15DayForecast(),
-                              icon: weatherProvider.isLoading
-                                  ? const SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.textPrimary),
+                              const Spacer(),
+                              IconButton(
+                                onPressed: weatherProvider.isLoading
+                                    ? null
+                                    : () => weatherProvider.refresh15DayForecast(),
+                                icon: weatherProvider.isLoading
+                                    ? SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.textPrimary),
+                                        ),
+                                      )
+                                    : Icon(
+                                        Icons.refresh,
+                                        color: AppColors.titleBarIconColor,
+                                        size: AppColors.titleBarIconSize,
                                       ),
-                                    )
-                                  : const Icon(
-                                      Icons.refresh,
-                                      color: AppColors.textPrimary,
-                                      size: 24,
-                                    ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          '${weatherProvider.currentLocation?.district ?? '未知地区'} 未来15天天气预报',
-                          style: TextStyle(
-                            color: AppColors.textSecondary.withOpacity(0.8),
-                            fontSize: 14,
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 8),
+                          Text(
+                            '${weatherProvider.currentLocation?.district ?? '未知地区'} 未来15天天气预报',
+                            style: TextStyle(
+                              color: AppColors.textSecondary.withOpacity(0.8),
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   // Temperature Trend Chart
-                  Forecast15dChart(forecast15d: forecast15d),
+                  SliverToBoxAdapter(
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Forecast15dChart(forecast15d: forecast15d),
+                    ),
+                  ),
                   // Forecast List
-                  Expanded(
-                    child: ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: forecast15d.length,
-                      itemBuilder: (context, index) {
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
                         final day = forecast15d[index];
                         return _buildForecastCard(day, weatherProvider, index);
                       },
+                      childCount: forecast15d.length,
                     ),
                   ),
                 ],
@@ -183,15 +183,8 @@ class _Forecast15dScreenState extends State<Forecast15dScreen> {
     final isTomorrow = index == 1;
     
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: AppColors.standardCardDecoration,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
@@ -219,7 +212,7 @@ class _Forecast15dScreenState extends State<Forecast15dScreen> {
                     child: Text(
                       isToday ? '今天' : isTomorrow ? '明天' : day.week ?? '',
                       style: TextStyle(
-                        color: isToday ? AppColors.accentBlue : AppColors.accentGreen,
+                        color: isToday ? AppColors.textPrimary : AppColors.accentGreen,
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
                       ),
@@ -229,7 +222,7 @@ class _Forecast15dScreenState extends State<Forecast15dScreen> {
                   const SizedBox(height: 4),
                   Text(
                     day.forecasttime ?? '',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textPrimary,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
@@ -239,7 +232,7 @@ class _Forecast15dScreenState extends State<Forecast15dScreen> {
                     const SizedBox(height: 2),
                     Text(
                       day.sunrise_sunset!,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 9,
                       ),
@@ -308,7 +301,7 @@ class _Forecast15dScreenState extends State<Forecast15dScreen> {
       children: [
         Text(
           period,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.textSecondary,
             fontSize: 10,
             fontWeight: FontWeight.w500,
@@ -318,15 +311,22 @@ class _Forecast15dScreenState extends State<Forecast15dScreen> {
         Row(
           children: [
             // Weather icon
-            Text(
-              weatherProvider.getWeatherIcon(weather),
-              style: const TextStyle(fontSize: 16),
+            Container(
+              width: 20, // 固定宽度
+              height: 20, // 固定高度
+              alignment: Alignment.center, // 居中对齐
+              child: Text(
+                weatherProvider.getWeatherIcon(weather),
+                style: TextStyle(fontSize: 16),
+                textAlign: TextAlign.center, // 文字居中
+                overflow: TextOverflow.visible, // 允许溢出但控制在容器内
+              ),
             ),
             const SizedBox(width: 4),
             // Temperature
             Text(
               '$temperature°',
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
@@ -338,7 +338,7 @@ class _Forecast15dScreenState extends State<Forecast15dScreen> {
         // Weather description
         Text(
           weather,
-          style: const TextStyle(
+          style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 11,
             fontWeight: FontWeight.w500,
@@ -348,8 +348,8 @@ class _Forecast15dScreenState extends State<Forecast15dScreen> {
         if (windDir.isNotEmpty || windPower.isNotEmpty)
           Text(
             '$windDir$windPower',
-            style: const TextStyle(
-              color: AppColors.accentBlue,
+            style: TextStyle(
+              color: AppColors.textSecondary,
               fontSize: 9,
             ),
           ),

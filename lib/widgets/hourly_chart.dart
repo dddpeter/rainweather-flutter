@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:provider/provider.dart';
 import '../models/weather_model.dart';
+import '../constants/app_colors.dart';
+import '../providers/theme_provider.dart';
 
 class HourlyChart extends StatelessWidget {
   final List<HourlyWeather>? hourlyForecast;
@@ -12,167 +15,142 @@ class HourlyChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (hourlyForecast == null || hourlyForecast!.isEmpty) {
-      return Container(
-        height: 200,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: Colors.white.withOpacity(0.2),
-            width: 1,
-          ),
-        ),
-        child: const Center(
-          child: Text(
-            '暂无24小时数据',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 16,
-            ),
-          ),
-        ),
-      );
-    }
-
-    // 过滤显示当前时间前2小时、当前时间和当前时间后21小时的数据
-    final filteredForecast = _filterHourlyForecast(hourlyForecast!);
-
-    return Container(
-      height: 200,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            '24小时温度趋势',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: LineChart(
-              LineChartData(
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: true,
-                  horizontalInterval: 5,
-                  verticalInterval: 2,
-                  getDrawingHorizontalLine: (value) {
-                    return FlLine(
-                      color: Colors.white.withOpacity(0.2),
-                      strokeWidth: 1,
-                    );
-                  },
-                  getDrawingVerticalLine: (value) {
-                    return FlLine(
-                      color: Colors.white.withOpacity(0.2),
-                      strokeWidth: 1,
-                    );
-                  },
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        if (hourlyForecast == null || hourlyForecast!.isEmpty) {
+          return Container(
+            height: 200,
+            padding: const EdgeInsets.all(16),
+            decoration: AppColors.standardCardDecoration,
+            child: Center(
+              child: Text(
+                '暂无24小时数据',
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 16,
                 ),
-                titlesData: FlTitlesData(
-                  show: true,
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 30,
-                      interval: 4,
-                      getTitlesWidget: (value, meta) {
-                        if (value.toInt() >= filteredForecast.length) return const Text('');
-                        final time = _formatTime(filteredForecast[value.toInt()].forecasttime ?? '');
-                        return Text(
-                          time,
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 10,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      interval: 5,
-                      reservedSize: 40,
-                      getTitlesWidget: (value, meta) {
-                        return Text(
-                          '${value.toInt()}°',
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 10,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-                borderData: FlBorderData(
-                  show: true,
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.2),
-                    width: 1,
-                  ),
-                ),
-                minX: 0,
-                maxX: (filteredForecast.length - 1).toDouble(),
-                minY: _getMinTemperature(filteredForecast) - 5,
-                maxY: _getMaxTemperature(filteredForecast) + 5,
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: _getTemperatureSpots(filteredForecast),
-                    isCurved: true,
-                    color: Colors.white,
-                    barWidth: 3,
-                    isStrokeCapRound: true,
-                    dotData: FlDotData(
-                      show: true,
-                      getDotPainter: (spot, percent, barData, index) {
-                        return FlDotCirclePainter(
-                          radius: 4,
-                          color: Colors.white,
-                          strokeWidth: 2,
-                          strokeColor: Colors.blue,
-                        );
-                      },
-                    ),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      color: Colors.white.withOpacity(0.1),
-                    ),
-                  ),
-                ],
               ),
             ),
+          );
+        }
+
+        // 过滤显示当前时间前2小时、当前时间和当前时间后21小时的数据
+        final filteredForecast = _filterHourlyForecast(hourlyForecast!);
+
+        return Container(
+          height: 200,
+          padding: const EdgeInsets.all(16),
+          decoration: AppColors.standardCardDecoration,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '24小时温度趋势',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: LineChart(
+                  LineChartData(
+                    gridData: FlGridData(
+                      show: true,
+                      drawVerticalLine: false,
+                      horizontalInterval: 5,
+                      getDrawingHorizontalLine: (value) {
+                        return FlLine(
+                          color: AppColors.textTertiary,
+                          strokeWidth: 1,
+                        );
+                      },
+                    ),
+                    titlesData: FlTitlesData(
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 30,
+                          interval: 5,
+                          getTitlesWidget: (value, meta) {
+                            return Text(
+                              '${value.toInt()}°',
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 10,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      rightTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      topTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 30,
+                          getTitlesWidget: (value, meta) {
+                            final index = value.toInt();
+                            if (index >= 0 && index < filteredForecast.length) {
+                              return Text(
+                                _formatTime(filteredForecast[index].forecasttime ?? ''),
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 10,
+                                ),
+                              );
+                            }
+                            return const Text('');
+                          },
+                        ),
+                      ),
+                    ),
+                    borderData: FlBorderData(show: false),
+                    lineBarsData: [
+                      LineChartBarData(
+                        spots: _getTemperatureSpots(filteredForecast),
+                        isCurved: true,
+                        color: AppColors.primaryBlue,
+                        barWidth: 3,
+                        isStrokeCapRound: true,
+                        dotData: FlDotData(
+                          show: true,
+                          getDotPainter: (spot, percent, barData, index) {
+                            return FlDotCirclePainter(
+                              radius: 4,
+                              color: AppColors.primaryBlue,
+                              strokeWidth: 2,
+                              strokeColor: Colors.white,
+                            );
+                          },
+                        ),
+                        belowBarData: BarAreaData(
+                          show: true,
+                          color: AppColors.primaryBlue.withOpacity(0.1),
+                        ),
+                      ),
+                    ],
+                    minY: _getMinTemperature(filteredForecast) - 5,
+                    maxY: _getMaxTemperature(filteredForecast) + 5,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   List<FlSpot> _getTemperatureSpots(List<HourlyWeather> forecast) {
     List<FlSpot> spots = [];
     for (int i = 0; i < forecast.length; i++) {
-      double temp = _parseTemperature(forecast[i].temperature ?? '');
+      final temp = _parseTemperature(forecast[i].temperature ?? '');
       spots.add(FlSpot(i.toDouble(), temp));
     }
     return spots;
@@ -180,20 +158,20 @@ class HourlyChart extends StatelessWidget {
 
   double _getMinTemperature(List<HourlyWeather> forecast) {
     double min = double.infinity;
-    for (var hour in forecast) {
-      double temp = _parseTemperature(hour.temperature ?? '');
+    for (final hour in forecast) {
+      final temp = _parseTemperature(hour.temperature ?? '');
       if (temp < min) min = temp;
     }
-    return min;
+    return min == double.infinity ? 0 : min;
   }
 
   double _getMaxTemperature(List<HourlyWeather> forecast) {
     double max = double.negativeInfinity;
-    for (var hour in forecast) {
-      double temp = _parseTemperature(hour.temperature ?? '');
+    for (final hour in forecast) {
+      final temp = _parseTemperature(hour.temperature ?? '');
       if (temp > max) max = temp;
     }
-    return max;
+    return max == double.negativeInfinity ? 0 : max;
   }
 
   String _formatTime(String timeStr) {
@@ -293,41 +271,5 @@ class HourlyChart extends StatelessWidget {
     } catch (e) {
       return 0;
     }
-  }
-
-  /// 解析预报时间字符串为DateTime
-  DateTime _parseForecastTime(String timeStr) {
-    try {
-      if (timeStr.contains('T')) {
-        return DateTime.parse(timeStr);
-      } else if (timeStr.contains(' ')) {
-        return DateTime.parse(timeStr);
-      } else if (timeStr.contains(':')) {
-        final parts = timeStr.split(':');
-        if (parts.length >= 2) {
-          final hour = int.parse(parts[0]);
-          final minute = int.parse(parts[1]);
-          final now = DateTime.now();
-          return DateTime(now.year, now.month, now.day, hour, minute);
-        }
-      }
-    } catch (e) {
-      // 解析失败，返回当前时间
-    }
-    return DateTime.now();
-  }
-
-  /// 获取下一天的日期字符串
-  String _getNextDay(String dateStr) {
-    final date = DateTime.parse(dateStr);
-    final nextDay = date.add(const Duration(days: 1));
-    return nextDay.toIso8601String().split('T')[0];
-  }
-
-  /// 获取前一天的日期字符串
-  String _getPreviousDay(String dateStr) {
-    final date = DateTime.parse(dateStr);
-    final previousDay = date.subtract(const Duration(days: 1));
-    return previousDay.toIso8601String().split('T')[0];
   }
 }

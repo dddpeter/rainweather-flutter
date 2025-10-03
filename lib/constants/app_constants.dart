@@ -8,6 +8,9 @@ class AppConstants {
   static const String weatherAllKey = 'WEATHER_ALL';
   static const String weather7dKey = 'WEATHER_7D';
   static const String weather15dKey = 'WEATHER_15D';
+  static const String hourlyForecastKey = 'HOURLY_FORECAST';
+  static const String dailyForecastKey = 'DAILY_FORECAST';
+  static const String sunMoonIndexKey = 'SUN_MOON_INDEX';
   static const String historyKey = 'HISTORY';
   
   // Broadcast Actions
@@ -117,4 +120,7 @@ class AppConstants {
   
   // Cache Expiration (15 minutes)
   static const Duration cacheExpiration = Duration(minutes: 15);
+  
+  // Sun/Moon Index Cache Expiration (6 hours)
+  static const Duration sunMoonIndexCacheExpiration = Duration(hours: 6);
 }

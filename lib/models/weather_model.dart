@@ -26,7 +26,7 @@ class WeatherModel {
 
 @JsonSerializable()
 class CurrentWeatherData {
-  final List<dynamic>? alerts;
+  final List<WeatherAlert>? alerts;
   final CurrentWeather? current;
   final String? nongLi;
   final AirQuality? air;
@@ -157,10 +157,7 @@ class AirQuality {
   final String? levelIndex;
   final String? AQI;
 
-  AirQuality({
-    this.levelIndex,
-    this.AQI,
-  });
+  AirQuality({this.levelIndex, this.AQI});
 
   factory AirQuality.fromJson(Map<String, dynamic> json) =>
       _$AirQualityFromJson(json);
@@ -173,13 +170,42 @@ class CityInfo {
   final String id;
   final String name;
 
-  CityInfo({
-    required this.id,
-    required this.name,
-  });
+  CityInfo({required this.id, required this.name});
 
   factory CityInfo.fromJson(Map<String, dynamic> json) =>
       _$CityInfoFromJson(json);
 
   Map<String, dynamic> toJson() => _$CityInfoToJson(this);
+}
+
+@JsonSerializable()
+class WeatherAlert {
+  final String? publishTime;
+  final String? city;
+  final String? level;
+  final String? typeNumber;
+  final String? alertPic;
+  final String? provice;
+  final String? levelNumber;
+  final String? alertid;
+  final String? type;
+  final String? content;
+
+  WeatherAlert({
+    this.publishTime,
+    this.city,
+    this.level,
+    this.typeNumber,
+    this.alertPic,
+    this.provice,
+    this.levelNumber,
+    this.alertid,
+    this.type,
+    this.content,
+  });
+
+  factory WeatherAlert.fromJson(Map<String, dynamic> json) =>
+      _$WeatherAlertFromJson(json);
+
+  Map<String, dynamic> toJson() => _$WeatherAlertToJson(this);
 }

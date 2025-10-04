@@ -10,6 +10,7 @@ import '../constants/app_constants.dart';
 import '../widgets/sun_moon_widget.dart';
 import '../widgets/life_index_widget.dart';
 import 'hourly_screen.dart';
+import 'weather_alerts_screen.dart';
 
 class CityWeatherScreen extends StatefulWidget {
   final String cityName;
@@ -170,10 +171,8 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
                       ),
                     ),
                   ),
-                  SizedBox(
-                    width: 40, // 占位保持对称
-                    height: 40,
-                  ),
+                  // 告警图标或右侧占位
+                  _buildAlertButton(weatherProvider),
                 ],
               ),
               const SizedBox(height: 16),
@@ -562,5 +561,50 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildAlertButton(WeatherProvider weatherProvider) {
+    final alerts = weatherProvider.currentWeather?.current?.alerts;
+    final hasAlerts = alerts != null && alerts.isNotEmpty;
+
+    if (hasAlerts) {
+      return Stack(
+        children: [
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => WeatherAlertsScreen(alerts: alerts),
+                ),
+              );
+            },
+            icon: Icon(
+              Icons.warning_rounded,
+              color: AppColors.error,
+              size: AppColors.titleBarIconSize,
+            ),
+          ),
+          Positioned(
+            right: 6,
+            top: 6,
+            child: Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: AppColors.error,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppColors.backgroundPrimary,
+                  width: 1.5,
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return const SizedBox(width: 40, height: 40); // 占位保持对称
   }
 }

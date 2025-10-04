@@ -33,7 +33,9 @@ Map<String, dynamic> _$WeatherModelToJson(WeatherModel instance) =>
 
 CurrentWeatherData _$CurrentWeatherDataFromJson(Map<String, dynamic> json) =>
     CurrentWeatherData(
-      alerts: json['alerts'] as List<dynamic>?,
+      alerts: (json['alerts'] as List<dynamic>?)
+          ?.map((e) => WeatherAlert.fromJson(e as Map<String, dynamic>))
+          .toList(),
       current: json['current'] == null
           ? null
           : CurrentWeather.fromJson(json['current'] as Map<String, dynamic>),
@@ -161,3 +163,30 @@ Map<String, dynamic> _$CityInfoToJson(CityInfo instance) => <String, dynamic>{
   'id': instance.id,
   'name': instance.name,
 };
+
+WeatherAlert _$WeatherAlertFromJson(Map<String, dynamic> json) => WeatherAlert(
+  publishTime: json['publishTime'] as String?,
+  city: json['city'] as String?,
+  level: json['level'] as String?,
+  typeNumber: json['typeNumber'] as String?,
+  alertPic: json['alertPic'] as String?,
+  provice: json['provice'] as String?,
+  levelNumber: json['levelNumber'] as String?,
+  alertid: json['alertid'] as String?,
+  type: json['type'] as String?,
+  content: json['content'] as String?,
+);
+
+Map<String, dynamic> _$WeatherAlertToJson(WeatherAlert instance) =>
+    <String, dynamic>{
+      'publishTime': instance.publishTime,
+      'city': instance.city,
+      'level': instance.level,
+      'typeNumber': instance.typeNumber,
+      'alertPic': instance.alertPic,
+      'provice': instance.provice,
+      'levelNumber': instance.levelNumber,
+      'alertid': instance.alertid,
+      'type': instance.type,
+      'content': instance.content,
+    };

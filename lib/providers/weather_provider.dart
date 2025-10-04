@@ -669,9 +669,7 @@ class WeatherProvider extends ChangeNotifier {
     _error = null;
 
     try {
-      print(
-        'Force refresh: clearing ALL cache and getting fresh data',
-      );
+      print('Force refresh: clearing ALL cache and getting fresh data');
 
       // Clear current location cache
       await _databaseService.deleteLocationData(

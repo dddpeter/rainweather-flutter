@@ -6,6 +6,7 @@ import '../widgets/weather_chart.dart';
 import '../widgets/hourly_weather_widget.dart';
 import '../services/weather_service.dart';
 import '../constants/app_colors.dart';
+import '../constants/app_constants.dart';
 import '../widgets/sun_moon_widget.dart';
 import '../widgets/life_index_widget.dart';
 import 'hourly_screen.dart';
@@ -338,13 +339,23 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                '7日温度趋势',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                ),
+              Row(
+                children: [
+                  Icon(
+                    Icons.show_chart,
+                    color: AppColors.accentBlue,
+                    size: AppConstants.sectionTitleIconSize,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '7日温度趋势',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: AppConstants.sectionTitleFontSize,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
               SizedBox(

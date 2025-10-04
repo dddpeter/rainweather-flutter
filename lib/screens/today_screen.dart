@@ -411,13 +411,23 @@ class _TodayScreenState extends State<TodayScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                '7日温度趋势',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                ),
+              Row(
+                children: [
+                  Icon(
+                    Icons.show_chart,
+                    color: AppColors.accentBlue,
+                    size: AppConstants.sectionTitleIconSize,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '7日温度趋势',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: AppConstants.sectionTitleFontSize,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
               SizedBox(

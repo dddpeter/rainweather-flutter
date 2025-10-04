@@ -4,6 +4,7 @@ import '../models/sun_moon_index_model.dart';
 import '../providers/weather_provider.dart';
 import '../providers/theme_provider.dart';
 import '../constants/app_colors.dart';
+import '../constants/app_constants.dart';
 
 class LifeIndexWidget extends StatelessWidget {
   final WeatherProvider weatherProvider;
@@ -80,13 +81,17 @@ class LifeIndexWidget extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.eco, color: AppColors.accentGreen, size: 20),
+                        Icon(
+                          Icons.eco,
+                          color: AppColors.accentGreen,
+                          size: AppConstants.sectionTitleIconSize,
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           '生活指数',
                           style: TextStyle(
                             color: AppColors.textPrimary,
-                            fontSize: 16,
+                            fontSize: AppConstants.sectionTitleFontSize,
                             fontWeight: FontWeight.bold,
                           ),
                         ),

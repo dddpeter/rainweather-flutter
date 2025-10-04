@@ -3,6 +3,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
 import '../models/weather_model.dart';
 import '../constants/app_colors.dart';
+import '../constants/app_constants.dart';
 import '../providers/theme_provider.dart';
 
 class HourlyChart extends StatelessWidget {
@@ -50,13 +51,23 @@ class HourlyChart extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '24小时温度趋势',
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.show_chart,
+                        color: AppColors.accentBlue,
+                        size: AppConstants.sectionTitleIconSize,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '24小时温度趋势',
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: AppConstants.sectionTitleFontSize,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 16),
                   Expanded(

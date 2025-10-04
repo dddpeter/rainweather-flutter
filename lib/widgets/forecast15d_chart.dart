@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../models/weather_model.dart';
 import '../constants/app_colors.dart';
+import '../constants/app_constants.dart';
 
 class Forecast15dChart extends StatelessWidget {
   final List<DailyWeather>? forecast15d;
@@ -29,13 +30,23 @@ class Forecast15dChart extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                '15日温度趋势',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+              Row(
+                children: [
+                  Icon(
+                    Icons.trending_up,
+                    color: AppColors.warning,
+                    size: AppConstants.sectionTitleIconSize,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '15日温度趋势',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: AppConstants.sectionTitleFontSize,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
               Expanded(

@@ -4,6 +4,7 @@ import '../models/sun_moon_index_model.dart';
 import '../providers/weather_provider.dart';
 import '../providers/theme_provider.dart';
 import '../constants/app_colors.dart';
+import '../constants/app_constants.dart';
 
 class SunMoonWidget extends StatelessWidget {
   final WeatherProvider weatherProvider;
@@ -31,13 +32,17 @@ class SunMoonWidget extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.wb_sunny, color: AppColors.warning, size: 20),
+                      Icon(
+                        Icons.wb_sunny,
+                        color: AppColors.warning,
+                        size: AppConstants.sectionTitleIconSize,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         '日出日落',
                         style: TextStyle(
                           color: AppColors.textPrimary,
-                          fontSize: 16,
+                          fontSize: AppConstants.sectionTitleFontSize,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

@@ -1,8 +1,10 @@
 class AppConstants {
   // API Endpoints
-  static const String weatherApiBaseUrl = 'https://www.weatherol.cn/api/home/getCurrAnd15dAnd24h?cityid=';
-  static const String historyApiUrl = 'https://www.ipip5.com/today/api.php?type=json';
-  
+  static const String weatherApiBaseUrl =
+      'https://www.weatherol.cn/api/home/getCurrAnd15dAnd24h?cityid=';
+  static const String historyApiUrl =
+      'https://www.ipip5.com/today/api.php?type=json';
+
   // Cache Keys
   static const String currentLocationKey = 'CURRENT_LOCATION';
   static const String weatherAllKey = 'WEATHER_ALL';
@@ -12,21 +14,23 @@ class AppConstants {
   static const String dailyForecastKey = 'DAILY_FORECAST';
   static const String sunMoonIndexKey = 'SUN_MOON_INDEX';
   static const String historyKey = 'HISTORY';
-  
+
   // Broadcast Actions
   static const String refreshAction = 'refresh_data';
   static const String refresh7dAction = 'refresh_7d_data';
   static const String refreshCityAction = 'refresh_city';
-  
+
   // Main Cities
-  static const List<String> mainCities = [
-    '北京', '上海'
-  ];
-  
+  static const List<String> mainCities = ['北京', '上海'];
+
   // Default Location
   static const String defaultCity = '北京';
   static const String defaultCityId = '101010100';
-  
+
+  // UI Constants - Section Title Styles
+  static const double sectionTitleFontSize = 16.0;
+  static const double sectionTitleIconSize = 20.0;
+
   // Weather Icons Mapping
   static const Map<String, String> weatherIcons = {
     '大雨': '🌧️',
@@ -52,7 +56,7 @@ class AppConstants {
     '扬沙': '🌪️',
     '浮尘': '🌫️',
   };
-  
+
   // Weather Images Mapping (Day)
   static const Map<String, String> dayWeatherImages = {
     '大雨': 'dby.png',
@@ -78,7 +82,7 @@ class AppConstants {
     '扬沙': 'scb.png',
     '浮尘': 'scb.png',
   };
-  
+
   // Weather Images Mapping (Night)
   static const Map<String, String> nightWeatherImages = {
     '大雨': 'dby.png',
@@ -104,7 +108,7 @@ class AppConstants {
     '扬沙': 'scb.png',
     '浮尘': 'scb.png',
   };
-  
+
   // Air Quality Levels
   static const Map<int, String> airQualityLevels = {
     50: '优',
@@ -114,13 +118,13 @@ class AppConstants {
     300: '重度污染',
     500: '严重污染',
   };
-  
+
   // Background Update Interval (5 minutes)
   static const Duration backgroundUpdateInterval = Duration(minutes: 5);
-  
+
   // Cache Expiration (15 minutes)
   static const Duration cacheExpiration = Duration(minutes: 15);
-  
+
   // Sun/Moon Index Cache Expiration (6 hours)
   static const Duration sunMoonIndexCacheExpiration = Duration(hours: 6);
 }

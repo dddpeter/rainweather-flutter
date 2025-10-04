@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/weather_model.dart';
 import '../services/weather_service.dart';
 import '../constants/app_colors.dart';
+import '../constants/app_constants.dart';
 import '../providers/theme_provider.dart';
 
 class HourlyWeatherWidget extends StatelessWidget {
@@ -50,13 +51,23 @@ class HourlyWeatherWidget extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        '24小时预报',
-                        style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.access_time,
+                            color: AppColors.accentBlue,
+                            size: AppConstants.sectionTitleIconSize,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '24小时预报',
+                            style: TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: AppConstants.sectionTitleFontSize,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
                       Text(
                         '更多',

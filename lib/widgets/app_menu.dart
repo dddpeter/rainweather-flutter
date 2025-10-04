@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
 import '../constants/app_colors.dart';
+import '../screens/weather_animation_test_screen.dart';
+import '../screens/extreme_weather_test_screen.dart';
+import '../screens/weather_layout_test_screen.dart';
+import '../screens/weather_animation_theme_test_screen.dart';
 
 class AppMenu extends StatelessWidget {
   const AppMenu({super.key});
@@ -20,7 +24,7 @@ class AppMenu extends StatelessWidget {
             padding: const EdgeInsets.all(8),
             child: Icon(
               Icons.menu,
-              color: AppColors.titleBarDecorIconColor,
+              color: themeProvider.getColor('headerIconColor'),
               size: AppColors.titleBarDecorIconSize,
             ),
           ),
@@ -40,6 +44,67 @@ class AppMenu extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   Text('主题设置', style: TextStyle(color: AppColors.textPrimary)),
+                ],
+              ),
+            ),
+            const PopupMenuDivider(),
+            // 天气动画测试
+            PopupMenuItem<String>(
+              value: 'weather_test',
+              child: Row(
+                children: [
+                  Icon(Icons.animation, color: AppColors.textPrimary, size: 20),
+                  const SizedBox(width: 12),
+                  Text(
+                    '天气动画测试',
+                    style: TextStyle(color: AppColors.textPrimary),
+                  ),
+                ],
+              ),
+            ),
+            // 极端天气测试
+            PopupMenuItem<String>(
+              value: 'extreme_weather_test',
+              child: Row(
+                children: [
+                  Icon(Icons.flash_on, color: AppColors.warning, size: 20),
+                  const SizedBox(width: 12),
+                  Text(
+                    '极端天气测试',
+                    style: TextStyle(color: AppColors.textPrimary),
+                  ),
+                ],
+              ),
+            ),
+            // 天气布局测试
+            PopupMenuItem<String>(
+              value: 'weather_layout_test',
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.format_align_center,
+                    color: AppColors.primaryBlue,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    '天气布局测试',
+                    style: TextStyle(color: AppColors.textPrimary),
+                  ),
+                ],
+              ),
+            ),
+            // 天气动画主题测试
+            PopupMenuItem<String>(
+              value: 'weather_animation_theme_test',
+              child: Row(
+                children: [
+                  Icon(Icons.palette, color: AppColors.primaryBlue, size: 20),
+                  const SizedBox(width: 12),
+                  Text(
+                    '天气动画主题测试',
+                    style: TextStyle(color: AppColors.textPrimary),
+                  ),
                 ],
               ),
             ),
@@ -70,10 +135,54 @@ class AppMenu extends StatelessWidget {
       case 'theme':
         _showThemeDialog(context);
         break;
+      case 'weather_test':
+        _navigateToWeatherTest(context);
+        break;
+      case 'extreme_weather_test':
+        _navigateToExtremeWeatherTest(context);
+        break;
+      case 'weather_layout_test':
+        _navigateToWeatherLayoutTest(context);
+        break;
+      case 'weather_animation_theme_test':
+        _navigateToWeatherAnimationThemeTest(context);
+        break;
       case 'about':
         _showAboutDialog(context);
         break;
     }
+  }
+
+  void _navigateToWeatherTest(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const WeatherAnimationTestScreen(),
+      ),
+    );
+  }
+
+  void _navigateToExtremeWeatherTest(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const ExtremeWeatherTestScreen()),
+    );
+  }
+
+  void _navigateToWeatherLayoutTest(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const WeatherLayoutTestScreen()),
+    );
+  }
+
+  void _navigateToWeatherAnimationThemeTest(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const WeatherAnimationThemeTestScreen(),
+      ),
+    );
   }
 
   void _showThemeDialog(BuildContext context) {

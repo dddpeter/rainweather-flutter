@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:ui';
 import 'package:provider/provider.dart';
 import 'providers/weather_provider.dart';
 import 'providers/theme_provider.dart';
@@ -8,6 +9,8 @@ import 'screens/hourly_screen.dart';
 import 'screens/forecast15d_screen.dart';
 import 'screens/city_weather_screen.dart';
 import 'screens/weather_alerts_screen.dart';
+import 'screens/weather_animation_test_screen.dart';
+import 'screens/extreme_weather_test_screen.dart';
 import 'models/city_model.dart';
 import 'constants/app_colors.dart';
 import 'constants/theme_extensions.dart';
@@ -91,9 +94,9 @@ class RainWeatherApp extends StatelessWidget {
         900: const Color(0xFF0D47A1),
       }),
       brightness: Brightness.light,
-      scaffoldBackgroundColor: const Color(0xFFF0F8FF), // 浅蓝背景
+      scaffoldBackgroundColor: const Color.fromARGB(255, 192, 216, 236), // 浅蓝背景
       appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFFF0F8FF),
+        backgroundColor: Color.fromARGB(255, 192, 216, 236),
         foregroundColor: Color(0xFF001A4D), // 深蓝色文字
         elevation: 0,
         systemOverlayStyle: SystemUiOverlayStyle.dark,
@@ -102,7 +105,7 @@ class RainWeatherApp extends StatelessWidget {
         primary: Color(0xFF012d78), // 深蓝色主色
         secondary: Color(0xFF8edafc), // 亮蓝色
         surface: Color(0xFFFFFFFF),
-        background: Color(0xFFF0F8FF),
+        background: Color.fromARGB(255, 192, 216, 236),
         onPrimary: Color(0xFFFFFFFF),
         onSecondary: Color(0xFF001A4D),
         onSurface: Color(0xFF001A4D), // 深蓝色文字
@@ -197,6 +200,154 @@ class _MainScreenState extends State<MainScreen> {
               BottomNavigationItem(icon: Icons.location_city, label: '主要城市'),
             ],
           ),
+          floatingActionButton: _currentIndex == 0
+              ? Consumer<WeatherProvider>(
+                  builder: (context, weatherProvider, child) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(28),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.buttonShadow,
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(28),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                          child: Container(
+                            width: 56,
+                            height: 56,
+                            decoration: BoxDecoration(
+                              color: weatherProvider.isLoading
+                                  ? AppColors.glassBackground.withOpacity(0.8)
+                                  : AppColors.glassBackground,
+                              borderRadius: BorderRadius.circular(28),
+                              border: Border.all(
+                                color: AppColors.borderColor,
+                                width: 1,
+                              ),
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(28),
+                                onTap: weatherProvider.isLoading
+                                    ? null
+                                    : () => weatherProvider
+                                          .forceRefreshWithLocation(),
+                                child: Center(
+                                  child: weatherProvider.isLoading
+                                      ? SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                                  AppColors.textPrimary,
+                                                ),
+                                          ),
+                                        )
+                                      : Icon(
+                                          Icons.refresh,
+                                          color: AppColors.textPrimary,
+                                          size: 24,
+                                        ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                )
+              : _currentIndex == 3
+              ? null
+              : FloatingActionButton(
+                  onPressed: () {
+                    showModalBottomSheet(
+                      context: context,
+                      backgroundColor: AppColors.materialCardColor,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(20),
+                        ),
+                      ),
+                      builder: (context) => Container(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // 拖拽指示器
+                            Container(
+                              width: 40,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: AppColors.textSecondary.withOpacity(0.3),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            Text(
+                              '选择测试页面',
+                              style: TextStyle(
+                                color: AppColors.textPrimary,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            // 测试选项
+                            ListTile(
+                              leading: Icon(
+                                Icons.grid_view,
+                                color: AppColors.primaryBlue,
+                              ),
+                              title: Text('所有天气动画'),
+                              subtitle: Text('查看所有天气类型的动画效果'),
+                              onTap: () {
+                                Navigator.pop(context);
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const WeatherAnimationTestScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                            ListTile(
+                              leading: Icon(
+                                Icons.flash_on,
+                                color: AppColors.warning,
+                              ),
+                              title: Text('极端天气动画'),
+                              subtitle: Text('专门测试极端天气的增强动画'),
+                              onTap: () {
+                                Navigator.pop(context);
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const ExtremeWeatherTestScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                  backgroundColor: AppColors.primaryBlue,
+                  child: const Icon(Icons.animation, color: Colors.white),
+                  tooltip: '天气动画测试',
+                ),
         );
       },
     );

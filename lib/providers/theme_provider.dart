@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-enum AppThemeMode {
-  light,
-  dark,
-  system,
-}
+enum AppThemeMode { light, dark, system }
 
 class ThemeProvider extends ChangeNotifier {
   AppThemeMode _themeMode = AppThemeMode.system;
@@ -19,12 +15,13 @@ class ThemeProvider extends ChangeNotifier {
     _updateTheme();
     _loadThemeFromPrefs();
     // 监听系统主题变化
-    WidgetsBinding.instance.platformDispatcher.onPlatformBrightnessChanged = () {
-      if (_themeMode == AppThemeMode.system) {
-        _updateTheme();
-        notifyListeners();
-      }
-    };
+    WidgetsBinding.instance.platformDispatcher.onPlatformBrightnessChanged =
+        () {
+          if (_themeMode == AppThemeMode.system) {
+            _updateTheme();
+            notifyListeners();
+          }
+        };
   }
 
   // 亮色主题配色 - 基于#8edafc亮蓝色
@@ -32,7 +29,12 @@ class ThemeProvider extends ChangeNotifier {
     'primary': Color(0xFF012d78), // 深蓝色主色
     'primaryDark': Color(0xFF001A4D), // 更深的蓝色
     'accent': Color(0xFF8edafc), // 指定的亮蓝色
-    'background': Color(0xFFF0F8FF), // 基于#8edafc的浅蓝背景
+    'background': Color.fromARGB(255, 192, 216, 236), // 基于#8edafc的浅蓝背景
+    'headerBackground': Color(0xFF012d78), // 头部背景 - 深蓝色
+    'headerBackgroundSecondary': Color(0xFF001A4D), // 头部次要背景 - 更深的蓝色
+    'headerTextPrimary': Color(0xFFFFFFFF), // 头部主要文字 - 白色
+    'headerTextSecondary': Color(0xFFE8F4FD), // 头部次要文字 - 浅蓝色
+    'headerIconColor': Color(0xFFFFFFFF), // 头部图标 - 白色
     'surface': Color(0xFFFFFFFF), // 纯白表面
     'textPrimary': Color(0xFF001A4D), // 深蓝色文字，高对比度
     'textSecondary': Color(0xFF003366), // 深蓝色次要文字
@@ -68,6 +70,11 @@ class ThemeProvider extends ChangeNotifier {
     'primaryDark': Color(0xFF012d78), // 指定的深蓝色
     'accent': Color(0xFF8edafc), // 指定的亮蓝色
     'background': Color(0xFF0A1B3D), // 基于#012d78的深背景
+    'headerBackground': Color(0xFF1A2F5D), // 头部背景 - 深蓝色系
+    'headerBackgroundSecondary': Color(0xFF2D4A7D), // 头部次要背景 - 更深的蓝色
+    'headerTextPrimary': Color(0xFFFFFFFF), // 头部主要文字 - 白色
+    'headerTextSecondary': Color(0xFFE8F4FD), // 头部次要文字 - 浅蓝色
+    'headerIconColor': Color(0xFFFFFFFF), // 头部图标 - 白色
     'surface': Color(0xFF1A2F5D), // 基于#012d78的稍亮表面
     'textPrimary': Color(0xFFFFFFFF), // 纯白色文字
     'textSecondary': Color(0xFFE8F4FD), // 接近#8edafc的亮色文字
@@ -128,6 +135,30 @@ class ThemeProvider extends ChangeNotifier {
     }
   }
 
+  LinearGradient get headerGradient {
+    if (_isLightTheme) {
+      return const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Color(0xFF012d78), // 主要头部背景 - 深蓝色
+          Color(0xFF001A4D), // 次要头部背景 - 更深的蓝色
+        ],
+        stops: [0.0, 1.0],
+      );
+    } else {
+      return const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Color(0xFF1A2F5D), // 深蓝色头部背景
+          Color(0xFF2D4A7D), // 更深的蓝色
+        ],
+        stops: [0.0, 1.0],
+      );
+    }
+  }
+
   void setThemeMode(AppThemeMode mode) {
     _themeMode = mode;
     _updateTheme();
@@ -145,7 +176,9 @@ class ThemeProvider extends ChangeNotifier {
         break;
       case AppThemeMode.system:
         // 检测系统主题
-        _isLightTheme = WidgetsBinding.instance.platformDispatcher.platformBrightness == Brightness.light;
+        _isLightTheme =
+            WidgetsBinding.instance.platformDispatcher.platformBrightness ==
+            Brightness.light;
         break;
     }
   }

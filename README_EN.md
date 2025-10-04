@@ -226,7 +226,30 @@ This Flutter app is a complete refactor of the original Android weather app with
 
 ## Changelog
 
-### v1.2.0 (Latest)
+### v1.3.0 (Latest)
+- 🎨 **Header Design Optimization**: Unified deep blue header background for today and city weather screens
+- 🎨 **Consistent Visual Design**: Both light and dark themes use dark header backgrounds for visual consistency
+- 🎨 **Enhanced Readability**: White text and icons on dark header background for better visibility
+- 🎨 **Visual Hierarchy**: Added gradient effects and shadows to header areas for enhanced depth
+
+**Weather Animation Improvements**
+- 🌈 **Unified Color Scheme**: Light theme weather animations now use dark theme color palette
+- 🌈 **Fixed Heavy Rain Colors**: Resolved overly dark small cloud colors in heavy rain, storm, and extreme rain animations
+- 🌈 **Realistic Fog/Haze**: Updated fog and haze animations to use near-white gray colors for more realistic appearance
+- 🌈 **Better Contrast**: All weather animations now have better visual effects on dark header backgrounds
+
+**Test Page Enhancements**
+- 🧪 **Consistent Card Design**: Weather animation test page cards now use deep blue background
+- 🧪 **Unified Typography**: Test page card text uses white color, consistent with header styling
+- 🧪 **Improved UX**: Enhanced visual consistency and user experience for test pages
+
+**Technical Improvements**
+- ⚡ **Optimized Color Management**: Improved header area color management system
+- 🔧 **Dedicated Color Configs**: Added header-specific text and icon color configurations
+- 🛡️ **Enhanced Theme Support**: Improved weather animation display across different themes
+- 📦 **Unified Design Language**: Consistent design language across header areas
+
+### v1.2.0
 - ✨ **Material Design 3 Optimization**: Complete upgrade to Material Design 3 guidelines
 - 🌅 **Sun & Moon Cards**: New sunrise/sunset and moonrise/moonset information display
 - 🌙 **Moon Phase Feature**: Real-time moon phase emoji display and moon age information

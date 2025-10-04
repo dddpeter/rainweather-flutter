@@ -9,6 +9,7 @@ import '../constants/app_colors.dart';
 import '../constants/app_constants.dart';
 import '../widgets/sun_moon_widget.dart';
 import '../widgets/life_index_widget.dart';
+import '../widgets/weather_animation_widget.dart';
 import 'hourly_screen.dart';
 import 'weather_alerts_screen.dart';
 
@@ -156,6 +157,17 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
 
     return Container(
       width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: context.read<ThemeProvider>().headerGradient,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+            spreadRadius: 2,
+          ),
+        ],
+      ),
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 16.0),
@@ -172,7 +184,9 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
                       padding: const EdgeInsets.all(8),
                       child: Icon(
                         Icons.arrow_back,
-                        color: AppColors.titleBarIconColor,
+                        color: context.read<ThemeProvider>().getColor(
+                          'headerIconColor',
+                        ),
                         size: AppColors.titleBarIconSize,
                       ),
                     ),
@@ -182,7 +196,9 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
                       child: Text(
                         widget.cityName,
                         style: TextStyle(
-                          color: AppColors.textPrimary,
+                          color: context.read<ThemeProvider>().getColor(
+                            'headerTextPrimary',
+                          ),
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                         ),
@@ -195,34 +211,55 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Weather icon, weather text and temperature
+              // Weather animation, weather text and temperature
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text(
-                    weatherProvider.getWeatherIcon(current?.weather ?? '晴'),
-                    style: TextStyle(
-                      fontSize: 72,
-                      color: AppColors.textSecondary,
+                  // 左侧天气动画区域 - 45%宽度，右对齐
+                  Flexible(
+                    flex: 45,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        WeatherAnimationWidget(
+                          weatherType: current?.weather ?? '晴',
+                          size: 120, // 从100增大到120
+                          isPlaying: true,
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(width: 24),
-                  Text(
-                    current?.weather ?? '晴',
-                    style: TextStyle(
-                      color: AppColors.textSecondary, // 修复：使用深色以确保亮色模式下可见
-                      fontSize: 30, // 48 * 0.618 ≈ 30
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(width: 24),
-                  Text(
-                    '${current?.temperature ?? '--'}℃',
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 48,
-                      fontWeight: FontWeight.bold,
+                  // 右侧温度和天气汉字区域 - 55%宽度，左对齐
+                  Flexible(
+                    flex: 55,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${current?.temperature ?? '--'}℃',
+                          style: TextStyle(
+                            color: context.read<ThemeProvider>().getColor(
+                              'headerTextPrimary',
+                            ),
+                            fontSize: 48,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          current?.weather ?? '晴',
+                          style: TextStyle(
+                            color: context.read<ThemeProvider>().getColor(
+                              'headerTextSecondary',
+                            ),
+                            fontSize: 24, // 从28减小到24
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -234,7 +271,9 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
                 Text(
                   weather!.current!.nongLi!,
                   style: TextStyle(
-                    color: AppColors.textSecondary,
+                    color: context.read<ThemeProvider>().getColor(
+                      'headerTextSecondary',
+                    ),
                     fontSize: 13,
                     fontWeight: FontWeight.w400,
                     letterSpacing: 0.5,
@@ -510,7 +549,7 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
         },
         icon: Icon(
           Icons.warning_rounded,
-          color: AppColors.error,
+          color: context.read<ThemeProvider>().getColor('headerIconColor'),
           size: AppColors.titleBarIconSize,
         ),
       );

@@ -31,15 +31,19 @@ class RainWeatherApp extends StatelessWidget {
         builder: (context, themeProvider, child) {
           // 设置主题提供者到AppColors
           AppColors.setThemeProvider(themeProvider);
-          
+
           return AnimatedTheme(
             data: themeProvider.themeMode == AppThemeMode.light
                 ? _buildLightTheme(themeProvider)
                 : themeProvider.themeMode == AppThemeMode.dark
-                    ? _buildDarkTheme(themeProvider)
-                    : (WidgetsBinding.instance.platformDispatcher.platformBrightness == Brightness.light
-                        ? _buildLightTheme(themeProvider)
-                        : _buildDarkTheme(themeProvider)),
+                ? _buildDarkTheme(themeProvider)
+                : (WidgetsBinding
+                              .instance
+                              .platformDispatcher
+                              .platformBrightness ==
+                          Brightness.light
+                      ? _buildLightTheme(themeProvider)
+                      : _buildDarkTheme(themeProvider)),
             duration: const Duration(milliseconds: 300), // 动画持续时间
             curve: Curves.easeInOut, // 动画曲线
             child: Builder(
@@ -172,12 +176,9 @@ class _MainScreenState extends State<MainScreen> {
       builder: (context, themeProvider, child) {
         // 确保AppColors使用最新的主题
         AppColors.setThemeProvider(themeProvider);
-        
+
         return Scaffold(
-          body: IndexedStack(
-            index: _currentIndex,
-            children: _screens,
-          ),
+          body: IndexedStack(index: _currentIndex, children: _screens),
           resizeToAvoidBottomInset: false,
           bottomNavigationBar: CustomBottomNavigationV2(
             currentIndex: _currentIndex,
@@ -187,22 +188,10 @@ class _MainScreenState extends State<MainScreen> {
               });
             },
             items: const [
-              BottomNavigationItem(
-                icon: Icons.today,
-                label: '今日天气',
-              ),
-              BottomNavigationItem(
-                icon: Icons.schedule,
-                label: '24小时',
-              ),
-              BottomNavigationItem(
-                icon: Icons.calendar_today,
-                label: '15日预报',
-              ),
-              BottomNavigationItem(
-                icon: Icons.location_city,
-                label: '主要城市',
-              ),
+              BottomNavigationItem(icon: Icons.today, label: '今日天气'),
+              BottomNavigationItem(icon: Icons.schedule, label: '24小时'),
+              BottomNavigationItem(icon: Icons.calendar_today, label: '15日预报'),
+              BottomNavigationItem(icon: Icons.location_city, label: '主要城市'),
             ],
           ),
         );
@@ -223,369 +212,428 @@ class MainCitiesScreen extends StatelessWidget {
       builder: (context, themeProvider, _) {
         // 确保AppColors使用最新的主题
         AppColors.setThemeProvider(themeProvider);
-        
+
         return Scaffold(
           body: Container(
-            decoration: BoxDecoration(
-              gradient: AppColors.primaryGradient,
-            ),
+            decoration: BoxDecoration(gradient: AppColors.primaryGradient),
             child: SafeArea(
               child: Column(
-            children: [
-              // Header
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+                children: [
+                  // Header
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          '主要城市',
-                          style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const Spacer(),
-                        Consumer<WeatherProvider>(
-                          builder: (context, weatherProvider, child) {
-                            return Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  onPressed: () => _showAddCityDialog(context, weatherProvider),
-                                  icon: Icon(
-                                    Icons.add_location,
-                                    color: AppColors.titleBarIconColor,
-                                    size: AppColors.titleBarIconSize,
-                                  ),
-                                ),
-                                IconButton(
-                                  onPressed: weatherProvider.isLoading
-                                      ? null
-                                      : () => weatherProvider.forceRefreshWithLocation(),
-                                  icon: weatherProvider.isLoading
-                                      ? SizedBox(
-                                          width: 20,
-                                          height: 20,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            valueColor: AlwaysStoppedAnimation<Color>(AppColors.textPrimary),
-                                          ),
-                                        )
-                                      : Icon(
-                                          Icons.refresh,
-                                          color: AppColors.titleBarIconColor,
-                                          size: AppColors.titleBarIconSize,
-                                        ),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '长按拖拽可调整城市顺序，左滑可删除城市（当前位置城市除外）',
-                      style: TextStyle(
-                        color: AppColors.textSecondary.withOpacity(0.7),
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Cities List
-              Expanded(
-                child: Consumer<WeatherProvider>(
-                  builder: (context, weatherProvider, child) {
-                    if (weatherProvider.isLoadingCities) {
-                      return Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.accentBlue,
-                        ),
-                      );
-                    }
-
-                    final cities = weatherProvider.mainCities;
-                    if (cities.isEmpty) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                        Row(
                           children: [
-                            Icon(
-                              Icons.location_city_outlined,
-                              size: 64,
-                              color: AppColors.textSecondary,
-                            ),
-                            SizedBox(height: 16),
                             Text(
-                              '暂无主要城市',
+                              '主要城市',
                               style: TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 16,
+                                color: AppColors.textPrimary,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
                               ),
+                            ),
+                            const Spacer(),
+                            Consumer<WeatherProvider>(
+                              builder: (context, weatherProvider, child) {
+                                return Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      onPressed: () => _showAddCityDialog(
+                                        context,
+                                        weatherProvider,
+                                      ),
+                                      icon: Icon(
+                                        Icons.add_location,
+                                        color: AppColors.titleBarIconColor,
+                                        size: AppColors.titleBarIconSize,
+                                      ),
+                                    ),
+                                    IconButton(
+                                      onPressed: weatherProvider.isLoading
+                                          ? null
+                                          : () => weatherProvider
+                                                .forceRefreshWithLocation(),
+                                      icon: weatherProvider.isLoading
+                                          ? SizedBox(
+                                              width: 20,
+                                              height: 20,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                valueColor:
+                                                    AlwaysStoppedAnimation<
+                                                      Color
+                                                    >(AppColors.textPrimary),
+                                              ),
+                                            )
+                                          : Icon(
+                                              Icons.refresh,
+                                              color:
+                                                  AppColors.titleBarIconColor,
+                                              size: AppColors.titleBarIconSize,
+                                            ),
+                                    ),
+                                  ],
+                                );
+                              },
                             ),
                           ],
                         ),
-                      );
-                    }
+                        const SizedBox(height: 8),
+                        Text(
+                          '长按拖拽可调整城市顺序，左滑可删除城市（当前位置城市除外）',
+                          style: TextStyle(
+                            color: AppColors.textSecondary.withOpacity(0.7),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Cities List
+                  Expanded(
+                    child: Consumer<WeatherProvider>(
+                      builder: (context, weatherProvider, child) {
+                        if (weatherProvider.isLoadingCities) {
+                          return Center(
+                            child: CircularProgressIndicator(
+                              color: AppColors.accentBlue,
+                            ),
+                          );
+                        }
 
-                    return ReorderableListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: cities.length,
-                      onReorder: (oldIndex, newIndex) async {
-                        // Handle reordering
-                        if (oldIndex < newIndex) {
-                          newIndex -= 1;
-                        }
-                        
-                        // Get current location city name
-                        final currentLocationName = weatherProvider.getCurrentLocationCityName();
-                        
-                        // Don't allow reordering if trying to move current location
-                        if (cities[oldIndex].name == currentLocationName) {
-                          return;
-                        }
-                        
-                        // Create new list with reordered cities
-                        final List<CityModel> reorderedCities = List.from(cities);
-                        final city = reorderedCities.removeAt(oldIndex);
-                        reorderedCities.insert(newIndex, city);
-                        
-                        // Update sort order
-                        await weatherProvider.updateCitiesSortOrder(reorderedCities);
-                      },
-                      itemBuilder: (context, index) {
-                        final city = cities[index];
-                        final cityWeather = weatherProvider.getCityWeather(city.name);
-                        final isCurrentLocation = weatherProvider.getCurrentLocationCityName() == city.name;
-                        
-                        return Dismissible(
-                          key: Key('${city.id}_dismissible'),
-                          direction: isCurrentLocation ? DismissDirection.none : DismissDirection.endToStart,
-                          background: Container(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  AppColors.error.withOpacity(0.8),
-                                  AppColors.error,
-                                ],
-                                begin: Alignment.centerRight,
-                                end: Alignment.centerLeft,
-                              ),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            alignment: Alignment.centerRight,
-                            padding: const EdgeInsets.only(right: 20),
+                        final cities = weatherProvider.mainCities;
+                        if (cities.isEmpty) {
+                          return Center(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(
-                                  Icons.delete_forever,
-                                  color: AppColors.textPrimary,
-                                  size: 28,
+                                  Icons.location_city_outlined,
+                                  size: 64,
+                                  color: AppColors.textSecondary,
                                 ),
-                                SizedBox(height: 4),
+                                SizedBox(height: 16),
                                 Text(
-                                  '删除城市',
+                                  '暂无主要城市',
                                   style: TextStyle(
-                                    color: AppColors.textPrimary,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.textSecondary,
+                                    fontSize: 16,
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                          secondaryBackground: Container(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  AppColors.textSecondary.withOpacity(0.8),
-                                  AppColors.textSecondary,
-                                ],
-                                begin: Alignment.centerLeft,
-                                end: Alignment.centerRight,
-                              ),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            alignment: Alignment.centerLeft,
-                            padding: const EdgeInsets.only(left: 20),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.cancel_outlined,
-                                  color: AppColors.textPrimary,
-                                  size: 28,
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  '取消',
-                                  style: TextStyle(
-                                    color: AppColors.textPrimary,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          confirmDismiss: (direction) async {
-                            if (direction == DismissDirection.endToStart) {
-                              return await _showDeleteCityDialog(context, weatherProvider, city);
+                          );
+                        }
+
+                        return ReorderableListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: cities.length,
+                          onReorder: (oldIndex, newIndex) async {
+                            // Handle reordering
+                            if (oldIndex < newIndex) {
+                              newIndex -= 1;
                             }
-                            return false;
+
+                            // Get current location city name
+                            final currentLocationName = weatherProvider
+                                .getCurrentLocationCityName();
+
+                            // Don't allow reordering if trying to move current location
+                            if (cities[oldIndex].name == currentLocationName) {
+                              return;
+                            }
+
+                            // Create new list with reordered cities
+                            final List<CityModel> reorderedCities = List.from(
+                              cities,
+                            );
+                            final city = reorderedCities.removeAt(oldIndex);
+                            reorderedCities.insert(newIndex, city);
+
+                            // Update sort order
+                            await weatherProvider.updateCitiesSortOrder(
+                              reorderedCities,
+                            );
                           },
-                          child: Padding(
-                            key: Key(city.id),
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: Card(
-                              elevation: AppColors.cardElevation,
-                              shadowColor: AppColors.cardShadowColor,
-                              color: AppColors.materialCardColor,
-                              shape: AppColors.cardShape,
-                              child: InkWell(
-                                onTap: () {
-                                  // Navigate to city weather screen
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => CityWeatherScreen(cityName: city.name),
-                                    ),
-                                  );
-                                },
-                                borderRadius: BorderRadius.circular(16),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 12,
+                          itemBuilder: (context, index) {
+                            final city = cities[index];
+                            final cityWeather = weatherProvider.getCityWeather(
+                              city.name,
+                            );
+                            final isCurrentLocation =
+                                weatherProvider.getCurrentLocationCityName() ==
+                                city.name;
+
+                            return Dismissible(
+                              key: Key('${city.id}_dismissible'),
+                              direction: isCurrentLocation
+                                  ? DismissDirection.none
+                                  : DismissDirection.endToStart,
+                              background: Container(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      AppColors.error.withOpacity(0.8),
+                                      AppColors.error,
+                                    ],
+                                    begin: Alignment.centerRight,
+                                    end: Alignment.centerLeft,
                                   ),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            // Title
-                                            Row(
-                                              children: [
-                                                // 定位图标（如果是当前定位城市）
-                                                if (isCurrentLocation) ...[
-                                    Material(
-                                      color: Colors.transparent,
-                                      child: InkWell(
-                                        onTap: () async {
-                                          // 点击定位图标，更新当前位置数据
-                                          await _updateCurrentLocation(context, weatherProvider);
-                                        },
-                                        borderRadius: BorderRadius.circular(10),
-                                        child: Ink(
-                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                          decoration: BoxDecoration(
-                                            color: AppColors.accentGreen.withOpacity(0.2),
-                                            borderRadius: BorderRadius.circular(10),
-                                            border: Border.all(
-                                              color: AppColors.accentGreen.withOpacity(0.5),
-                                              width: 1,
-                                            ),
-                                          ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Icon(
-                                                Icons.my_location,
-                                                color: AppColors.accentGreen,
-                                                size: 14,
-                                              ),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                '当前位置',
-                                                style: TextStyle(
-                                                  color: AppColors.accentGreen,
-                                                  fontSize: 10,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                alignment: Alignment.centerRight,
+                                padding: const EdgeInsets.only(right: 20),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.delete_forever,
+                                      color: AppColors.textPrimary,
+                                      size: 28,
+                                    ),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      '删除城市',
+                                      style: TextStyle(
+                                        color: AppColors.textPrimary,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                                                    const SizedBox(width: 8),
-                                                  ],
-                                                  Expanded(
-                                                    child: Text(
-                                                      city.name,
-                                                      style: TextStyle(
-                                                        color: AppColors.textPrimary,
-                                                        fontSize: 18,
-                                                        fontWeight: FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
+                                  ],
+                                ),
+                              ),
+                              secondaryBackground: Container(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      AppColors.textSecondary.withOpacity(0.8),
+                                      AppColors.textSecondary,
+                                    ],
+                                    begin: Alignment.centerLeft,
+                                    end: Alignment.centerRight,
+                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                alignment: Alignment.centerLeft,
+                                padding: const EdgeInsets.only(left: 20),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.cancel_outlined,
+                                      color: AppColors.textPrimary,
+                                      size: 28,
+                                    ),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      '取消',
+                                      style: TextStyle(
+                                        color: AppColors.textPrimary,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              confirmDismiss: (direction) async {
+                                if (direction == DismissDirection.endToStart) {
+                                  return await _showDeleteCityDialog(
+                                    context,
+                                    weatherProvider,
+                                    city,
+                                  );
+                                }
+                                return false;
+                              },
+                              child: Padding(
+                                key: Key(city.id),
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: Card(
+                                  elevation: AppColors.cardElevation,
+                                  shadowColor: AppColors.cardShadowColor,
+                                  color: AppColors.materialCardColor,
+                                  shape: AppColors.cardShape,
+                                  child: InkWell(
+                                    onTap: () {
+                                      // Navigate to city weather screen
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              CityWeatherScreen(
+                                                cityName: city.name,
                                               ),
-                                              // Subtitle
-                                              if (cityWeather != null ||
-                                                  weatherProvider.isLoadingCitiesWeather)
-                                                const SizedBox(height: 8),
-                                              if (cityWeather != null)
-                                                _buildCityWeatherInfo(
-                                                  cityWeather,
-                                                  weatherProvider,
-                                                )
-                                              else if (weatherProvider.isLoadingCitiesWeather)
+                                        ),
+                                      );
+                                    },
+                                    borderRadius: BorderRadius.circular(16),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 12,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                // Title
                                                 Row(
                                                   children: [
-                                                    SizedBox(
-                                                      width: 16,
-                                                      height: 16,
-                                                      child: CircularProgressIndicator(
-                                                        strokeWidth: 2,
-                                                        valueColor:
-                                                            AlwaysStoppedAnimation<Color>(
-                                                          AppColors.textSecondary,
+                                                    // 定位图标（如果是当前定位城市）
+                                                    if (isCurrentLocation) ...[
+                                                      Material(
+                                                        color:
+                                                            Colors.transparent,
+                                                        child: InkWell(
+                                                          onTap: () async {
+                                                            // 点击定位图标，更新当前位置数据
+                                                            await _updateCurrentLocation(
+                                                              context,
+                                                              weatherProvider,
+                                                            );
+                                                          },
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                10,
+                                                              ),
+                                                          child: Ink(
+                                                            padding:
+                                                                const EdgeInsets.symmetric(
+                                                                  horizontal: 6,
+                                                                  vertical: 2,
+                                                                ),
+                                                            decoration: BoxDecoration(
+                                                              color: AppColors
+                                                                  .accentGreen
+                                                                  .withOpacity(
+                                                                    0.2,
+                                                                  ),
+                                                              borderRadius:
+                                                                  BorderRadius.circular(
+                                                                    10,
+                                                                  ),
+                                                              border: Border.all(
+                                                                color: AppColors
+                                                                    .accentGreen
+                                                                    .withOpacity(
+                                                                      0.5,
+                                                                    ),
+                                                                width: 1,
+                                                              ),
+                                                            ),
+                                                            child: Row(
+                                                              mainAxisSize:
+                                                                  MainAxisSize
+                                                                      .min,
+                                                              children: [
+                                                                Icon(
+                                                                  Icons
+                                                                      .my_location,
+                                                                  color: AppColors
+                                                                      .accentGreen,
+                                                                  size: 14,
+                                                                ),
+                                                                const SizedBox(
+                                                                  width: 4,
+                                                                ),
+                                                                Text(
+                                                                  '当前位置',
+                                                                  style: TextStyle(
+                                                                    color: AppColors
+                                                                        .accentGreen,
+                                                                    fontSize:
+                                                                        10,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold,
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      const SizedBox(width: 8),
+                                                    ],
+                                                    Expanded(
+                                                      child: Text(
+                                                        city.name,
+                                                        style: TextStyle(
+                                                          color: AppColors
+                                                              .textPrimary,
+                                                          fontSize: 18,
+                                                          fontWeight:
+                                                              FontWeight.bold,
                                                         ),
                                                       ),
                                                     ),
-                                                    SizedBox(width: 8),
-                                                    Text(
-                                                      '加载中...',
-                                                      style: TextStyle(
-                                                        color: AppColors.textSecondary,
-                                                        fontSize: 12,
-                                                      ),
-                                                    ),
                                                   ],
                                                 ),
-                                            ],
+                                                // Subtitle
+                                                if (cityWeather != null ||
+                                                    weatherProvider
+                                                        .isLoadingCitiesWeather)
+                                                  const SizedBox(height: 8),
+                                                if (cityWeather != null)
+                                                  _buildCityWeatherInfo(
+                                                    cityWeather,
+                                                    weatherProvider,
+                                                  )
+                                                else if (weatherProvider
+                                                    .isLoadingCitiesWeather)
+                                                  Row(
+                                                    children: [
+                                                      SizedBox(
+                                                        width: 16,
+                                                        height: 16,
+                                                        child: CircularProgressIndicator(
+                                                          strokeWidth: 2,
+                                                          valueColor:
+                                                              AlwaysStoppedAnimation<
+                                                                Color
+                                                              >(
+                                                                AppColors
+                                                                    .textSecondary,
+                                                              ),
+                                                        ),
+                                                      ),
+                                                      SizedBox(width: 8),
+                                                      Text(
+                                                        '加载中...',
+                                                        style: TextStyle(
+                                                          color: AppColors
+                                                              .textSecondary,
+                                                          fontSize: 12,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                              ],
+                                            ),
                                           ),
-                                        ),
-                                      // Trailing icon
-                                      Icon(
-                                        Icons.arrow_forward_ios,
-                                        color: AppColors.textSecondary,
-                                        size: 16,
+                                        ],
                                       ),
-                                    ],
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ),
+                            );
+                          },
                         );
                       },
-                    );
-                  },
-                ),
-              ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -595,7 +643,10 @@ class MainCitiesScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCityWeatherInfo(dynamic cityWeather, WeatherProvider weatherProvider) {
+  Widget _buildCityWeatherInfo(
+    dynamic cityWeather,
+    WeatherProvider weatherProvider,
+  ) {
     final current = cityWeather?.current?.current;
     if (current == null) return const SizedBox.shrink();
 
@@ -606,16 +657,16 @@ class MainCitiesScreen extends StatelessWidget {
           // 天气图标
           Text(
             weatherProvider.getWeatherIcon(current.weather ?? '晴'),
-            style: TextStyle(fontSize: 20),
+            style: TextStyle(fontSize: 32),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
           // 温度
           Text(
             '${current.temperature ?? '--'}℃',
             style: TextStyle(
               color: AppColors.textPrimary,
-              fontSize: 20,
-              fontWeight: FontWeight.w500,
+              fontSize: 28,
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(width: 12),
@@ -623,10 +674,7 @@ class MainCitiesScreen extends StatelessWidget {
           Expanded(
             child: Text(
               current.weather ?? '晴',
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 14,
-              ),
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -661,7 +709,10 @@ class MainCitiesScreen extends StatelessWidget {
   }
 
   /// Show add city dialog
-  void _showAddCityDialog(BuildContext context, WeatherProvider weatherProvider) {
+  void _showAddCityDialog(
+    BuildContext context,
+    WeatherProvider weatherProvider,
+  ) {
     final TextEditingController searchController = TextEditingController();
     List<CityModel> searchResults = [];
     bool isSearching = false;
@@ -672,10 +723,7 @@ class MainCitiesScreen extends StatelessWidget {
         builder: (context, setState) => AlertDialog(
           backgroundColor: AppColors.backgroundSecondary,
           shape: AppColors.dialogShape,
-          title: Text(
-            '添加城市',
-            style: TextStyle(color: AppColors.textPrimary),
-          ),
+          title: Text('添加城市', style: TextStyle(color: AppColors.textPrimary)),
           content: SizedBox(
             width: double.maxFinite,
             height: 400, // 固定高度防止溢出
@@ -738,17 +786,23 @@ class MainCitiesScreen extends StatelessWidget {
                       itemCount: searchResults.length,
                       itemBuilder: (context, index) {
                         final city = searchResults[index];
-                        final isMainCity = weatherProvider.mainCities.any((c) => c.id == city.id);
-                        
+                        final isMainCity = weatherProvider.mainCities.any(
+                          (c) => c.id == city.id,
+                        );
+
                         return Container(
                           margin: const EdgeInsets.only(bottom: 4),
                           decoration: BoxDecoration(
-                            color: isMainCity 
+                            color: isMainCity
                                 ? AppColors.accentGreen.withOpacity(0.1)
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(8),
-                            border: isMainCity 
-                                ? Border.all(color: AppColors.accentGreen.withOpacity(0.3))
+                            border: isMainCity
+                                ? Border.all(
+                                    color: AppColors.accentGreen.withOpacity(
+                                      0.3,
+                                    ),
+                                  )
                                 : null,
                           ),
                           child: ListTile(
@@ -756,10 +810,12 @@ class MainCitiesScreen extends StatelessWidget {
                             title: Text(
                               city.name,
                               style: TextStyle(
-                                color: isMainCity 
-                                    ? AppColors.accentGreen 
+                                color: isMainCity
+                                    ? AppColors.accentGreen
                                     : AppColors.textPrimary,
-                                fontWeight: isMainCity ? FontWeight.bold : FontWeight.normal,
+                                fontWeight: isMainCity
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
                               ),
                             ),
                             subtitle: Text(
@@ -777,27 +833,39 @@ class MainCitiesScreen extends StatelessWidget {
                                     color: AppColors.titleBarDecorIconColor,
                                     size: AppColors.titleBarDecorIconSize,
                                   ),
-                            onTap: isMainCity ? null : () async {
-                              final success = await weatherProvider.addMainCity(city);
-                              if (success && context.mounted) {
-                                Navigator.pop(context);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('已添加城市: ${city.name}'),
-                                    backgroundColor: AppColors.accentGreen,
-                                    duration: const Duration(milliseconds: 1500),
-                                  ),
-                                );
-                              } else if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('添加城市失败，请重试'),
-                                    backgroundColor: AppColors.error,
-                                    duration: Duration(milliseconds: 1500),
-                                  ),
-                                );
-                              }
-                            },
+                            onTap: isMainCity
+                                ? null
+                                : () async {
+                                    final success = await weatherProvider
+                                        .addMainCity(city);
+                                    if (success && context.mounted) {
+                                      Navigator.pop(context);
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text('已添加城市: ${city.name}'),
+                                          backgroundColor:
+                                              AppColors.accentGreen,
+                                          duration: const Duration(
+                                            milliseconds: 1500,
+                                          ),
+                                        ),
+                                      );
+                                    } else if (context.mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text('添加城市失败，请重试'),
+                                          backgroundColor: AppColors.error,
+                                          duration: Duration(
+                                            milliseconds: 1500,
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  },
                           ),
                         );
                       },
@@ -833,7 +901,10 @@ class MainCitiesScreen extends StatelessWidget {
 
   /// Show delete city dialog
   /// 更新当前位置数据
-  Future<void> _updateCurrentLocation(BuildContext context, WeatherProvider weatherProvider) async {
+  Future<void> _updateCurrentLocation(
+    BuildContext context,
+    WeatherProvider weatherProvider,
+  ) async {
     try {
       // 显示加载提示
       ScaffoldMessenger.of(context).showSnackBar(
@@ -845,7 +916,9 @@ class MainCitiesScreen extends StatelessWidget {
                 height: 16,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.textPrimary),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    AppColors.textPrimary,
+                  ),
                 ),
               ),
               SizedBox(width: 12),
@@ -858,10 +931,10 @@ class MainCitiesScreen extends StatelessWidget {
 
       // 强制刷新位置和天气数据（清理缓存）
       await weatherProvider.forceRefreshWithLocation();
-      
+
       // 重新加载主要城市列表
       await weatherProvider.loadMainCities();
-      
+
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -884,64 +957,61 @@ class MainCitiesScreen extends StatelessWidget {
     }
   }
 
-  Future<bool> _showDeleteCityDialog(BuildContext context, WeatherProvider weatherProvider, CityModel city) async {
+  Future<bool> _showDeleteCityDialog(
+    BuildContext context,
+    WeatherProvider weatherProvider,
+    CityModel city,
+  ) async {
     return await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.backgroundSecondary,
-        shape: AppColors.dialogShape,
-        title: Text(
-          '删除城市',
-          style: TextStyle(color: AppColors.textPrimary),
-        ),
-        content: Text(
-          '确定要从主要城市中删除 "${city.name}" 吗？',
-          style: TextStyle(color: AppColors.textSecondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(
-              '取消',
+          context: context,
+          builder: (context) => AlertDialog(
+            backgroundColor: AppColors.backgroundSecondary,
+            shape: AppColors.dialogShape,
+            title: Text('删除城市', style: TextStyle(color: AppColors.textPrimary)),
+            content: Text(
+              '确定要从主要城市中删除 "${city.name}" 吗？',
               style: TextStyle(color: AppColors.textSecondary),
             ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(
+                  '取消',
+                  style: TextStyle(color: AppColors.textSecondary),
+                ),
+              ),
+              TextButton(
+                onPressed: () async {
+                  Navigator.pop(context, true);
+                  final success = await weatherProvider.removeMainCity(city.id);
+                  if (success && context.mounted) {
+                    // 使用Toast显示删除成功信息
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('已删除城市: ${city.name}'),
+                        backgroundColor: AppColors.error,
+                        duration: const Duration(milliseconds: 1500),
+                      ),
+                    );
+                  } else if (context.mounted) {
+                    // 删除失败也显示Toast
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('删除城市失败，请重试'),
+                        backgroundColor: AppColors.error,
+                        duration: Duration(milliseconds: 1500),
+                      ),
+                    );
+                  }
+                },
+                child: Text('删除', style: TextStyle(color: AppColors.error)),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context, true);
-              final success = await weatherProvider.removeMainCity(city.id);
-              if (success && context.mounted) {
-                // 使用Toast显示删除成功信息
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('已删除城市: ${city.name}'),
-                    backgroundColor: AppColors.error,
-                    duration: const Duration(milliseconds: 1500),
-                  ),
-                );
-              } else if (context.mounted) {
-                // 删除失败也显示Toast
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('删除城市失败，请重试'),
-                    backgroundColor: AppColors.error,
-                    duration: Duration(milliseconds: 1500),
-                  ),
-                );
-              }
-            },
-            child: Text(
-              '删除',
-              style: TextStyle(color: AppColors.error),
-            ),
-          ),
-        ],
-      ),
-    ) ?? false;
+        ) ??
+        false;
   }
-
 }
-
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -950,11 +1020,12 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen>
+    with TickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
-  
+
   bool _isLoading = true;
   String _statusMessage = '正在初始化...';
   bool _showPermissionDialog = false;
@@ -971,23 +1042,15 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       duration: const Duration(seconds: 2),
       vsync: this,
     );
-    
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
-    
-    _scaleAnimation = Tween<double>(
-      begin: 0.8,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.elasticOut,
-    ));
-    
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.elasticOut),
+    );
+
     _animationController.forward();
   }
 
@@ -995,21 +1058,24 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     try {
       // 等待动画完成
       await Future.delayed(const Duration(milliseconds: 500));
-      
+
       // 检查权限
       setState(() {
         _statusMessage = '检查定位权限...';
       });
-      
+
       final context = this.context;
-      final weatherProvider = Provider.of<WeatherProvider>(context, listen: false);
+      final weatherProvider = Provider.of<WeatherProvider>(
+        context,
+        listen: false,
+      );
       final locationService = LocationService.getInstance();
-      
+
       // 检查权限状态，但不强制请求权限
       final permissionStatus = await locationService.checkLocationPermission();
-      
+
       if (!mounted) return;
-      
+
       if (permissionStatus == LocationPermissionResult.granted) {
         setState(() {
           _statusMessage = '权限已获取，正在加载天气数据...';
@@ -1019,19 +1085,19 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
           _statusMessage = '权限未获取，使用北京天气...';
         });
       }
-      
+
       // 无论是否有权限都初始化天气数据
       await weatherProvider.initializeWeather();
-      
+
       if (!mounted) return;
-      
+
       setState(() {
         _statusMessage = '加载完成';
       });
-      
+
       // 延迟一下再跳转到主界面
       await Future.delayed(const Duration(milliseconds: 500));
-      
+
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const MainScreen()),
@@ -1050,7 +1116,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       _showPermissionDialog = false;
       _statusMessage = '重新请求权限...';
     });
-    
+
     await _initializeApp();
   }
 
@@ -1059,7 +1125,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       _showPermissionDialog = false;
       _statusMessage = '跳过权限，使用默认位置...';
     });
-    
+
     // 直接跳转到主界面，让应用使用默认位置
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (context) => const MainScreen()),
@@ -1076,9 +1142,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
-          gradient: AppColors.primaryGradient,
-        ),
+        decoration: BoxDecoration(gradient: AppColors.primaryGradient),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -1135,14 +1199,12 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                   );
                 },
               ),
-              
+
               const SizedBox(height: 60),
-              
+
               // 加载指示器
               if (_isLoading) ...[
-                CircularProgressIndicator(
-                  color: AppColors.textPrimary,
-                ),
+                CircularProgressIndicator(color: AppColors.textPrimary),
                 const SizedBox(height: 20),
                 Text(
                   _statusMessage,
@@ -1153,7 +1215,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                   textAlign: TextAlign.center,
                 ),
               ],
-              
+
               // 权限对话框
               if (_showPermissionDialog) ...[
                 Container(
@@ -1162,10 +1224,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                   decoration: BoxDecoration(
                     color: AppColors.cardBackground,
                     borderRadius: BorderRadius.circular(15),
-                    border: Border.all(
-                      color: AppColors.cardBorder,
-                      width: 1,
-                    ),
+                    border: Border.all(color: AppColors.cardBorder, width: 1),
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,

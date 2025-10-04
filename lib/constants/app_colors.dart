@@ -182,6 +182,11 @@ class AppColors {
   /// 强调绿色
   static Color get accentGreen => _getColor('success');
 
+  /// 详细信息卡片专用绿色 - 根据主题模式调整亮度
+  static Color get detailCardGreen => _themeProvider?.isLightTheme == true
+      ? const Color(0xFF4CAF50) // 亮色模式：一般绿色
+      : const Color(0xFF66BB6A); // 暗色模式：亮一些的绿色
+
   /// 分割线颜色
   static Color get dividerColor => _getColor('border');
 

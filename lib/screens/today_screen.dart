@@ -355,14 +355,14 @@ class _TodayScreenState extends State<TodayScreen> with WidgetsBindingObserver {
                     weatherProvider.getWeatherIcon(current?.weather ?? '晴'),
                     style: TextStyle(
                       fontSize: 72,
-                      color: AppColors.textPrimary,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                   const SizedBox(width: 24),
                   Text(
                     current?.weather ?? '晴',
                     style: TextStyle(
-                      color: AppColors.primaryBlue, // 修复：使用深色以确保亮色模式下可见
+                      color: AppColors.textSecondary, // 修复：使用深色以确保亮色模式下可见
                       fontSize: 30, // 48 * 0.618 ≈ 30
                       fontWeight: FontWeight.w600,
                       letterSpacing: 0.5,
@@ -506,22 +506,22 @@ class _TodayScreenState extends State<TodayScreen> with WidgetsBindingObserver {
                         Icons.air,
                         '空气质量',
                         '${air.AQI ?? '--'} (${air.levelIndex ?? '未知'})',
-                        AppColors.detailCardGreen,
+                        AppColors.cardThemeBlue,
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 4), // 减小间隙
                     if (weather?.current?.current != null)
                       Expanded(
                         child: _buildCompactDetailItem(
                           Icons.thermostat,
                           '体感温度',
                           '${weather!.current!.current!.feelstemperature ?? '--'}℃',
-                          AppColors.detailCardGreen,
+                          AppColors.cardThemeBlue,
                         ),
                       ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4), // 减小间隙
               ],
               if (weather?.current?.current != null) ...[
                 // 第一行：湿度和气压
@@ -532,22 +532,21 @@ class _TodayScreenState extends State<TodayScreen> with WidgetsBindingObserver {
                         Icons.water_drop,
                         '湿度',
                         '${weather!.current!.current!.humidity ?? '--'}%',
-                        AppColors.detailCardGreen,
+                        AppColors.cardThemeBlue,
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 4), // 减小间隙
                     Expanded(
                       child: _buildCompactDetailItem(
                         Icons.compress,
                         '气压',
                         '${weather.current!.current!.airpressure ?? '--'}hpa',
-                        AppColors.detailCardGreen,
+                        AppColors.cardThemeBlue,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-
+                const SizedBox(height: 4), // 减小间隙
                 // 第二行：风力和能见度
                 Row(
                   children: [
@@ -556,21 +555,21 @@ class _TodayScreenState extends State<TodayScreen> with WidgetsBindingObserver {
                         Icons.air,
                         '风力',
                         '${weather.current!.current!.winddir ?? '--'} ${weather.current!.current!.windpower ?? ''}',
-                        AppColors.detailCardGreen,
+                        AppColors.cardThemeBlue,
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 4), // 减小间隙
                     Expanded(
                       child: _buildCompactDetailItem(
                         Icons.visibility,
                         '能见度',
                         '${weather.current!.current!.visibility ?? '--'}km',
-                        AppColors.detailCardGreen,
+                        AppColors.cardThemeBlue,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4), // 减小间隙
               ],
             ],
           ),
@@ -600,10 +599,15 @@ class _TodayScreenState extends State<TodayScreen> with WidgetsBindingObserver {
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.40), // 图标容器: 0.25 / 0.618 ≈ 0.40
+                    color: AppColors
+                        .cardThemeBlueIconBackgroundColor, // 使用主题蓝色图标背景
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: Icon(icon, color: color, size: 16),
+                  child: Icon(
+                    icon,
+                    color: AppColors.cardThemeBlueIconColor, // 使用主题蓝色图标颜色
+                    size: 16,
+                  ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(

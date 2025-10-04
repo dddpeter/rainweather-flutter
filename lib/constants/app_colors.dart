@@ -187,6 +187,40 @@ class AppColors {
       ? const Color(0xFF4CAF50) // 亮色模式：一般绿色
       : const Color(0xFF66BB6A); // 暗色模式：亮一些的绿色
 
+  /// 卡片内部图标颜色 - 深色模式使用亮色，浅色模式使用深色
+  static Color get cardIconColor => _themeProvider?.isLightTheme == true
+      ? const Color(0xFF2E7D32) // 亮色模式：深绿色，在浅色背景上清晰可见
+      : const Color(0xFF81C784); // 暗色模式：亮绿色，在深色背景上清晰可见
+
+  /// 卡片内部图标背景颜色 - 根据主题模式调整透明度
+  static Color get cardIconBackgroundColor =>
+      _themeProvider?.isLightTheme == true
+      ? const Color(0xFF2E7D32).withOpacity(0.15) // 亮色模式：深绿色背景
+      : const Color(0xFF81C784).withOpacity(0.25); // 暗色模式：亮绿色背景
+
+  /// 卡片主题蓝色 - 深色模式使用亮些的蓝色，浅色模式使用主题蓝色
+  static Color get cardThemeBlue => _themeProvider?.isLightTheme == true
+      ? const Color(0xFF012d78) // 亮色模式：主题蓝色
+      : const Color(0xFF4A90E2); // 暗色模式：亮蓝色
+
+  /// 卡片主题蓝色背景 - 根据主题模式调整透明度
+  static Color get cardThemeBlueBackground =>
+      _themeProvider?.isLightTheme == true
+      ? const Color(0xFF012d78).withOpacity(0.15) // 亮色模式：主题蓝色背景
+      : const Color(0xFF4A90E2).withOpacity(0.25); // 暗色模式：亮蓝色背景
+
+  /// 卡片主题蓝色图标颜色 - 深色模式使用亮些的蓝色，浅色模式使用深蓝色
+  static Color get cardThemeBlueIconColor =>
+      _themeProvider?.isLightTheme == true
+      ? const Color(0xFF001A4D) // 亮色模式：深蓝色图标
+      : const Color.fromARGB(255, 159, 206, 244); // 暗色模式：更亮的蓝色图标
+
+  /// 卡片主题蓝色图标背景颜色 - 根据主题模式调整透明度
+  static Color get cardThemeBlueIconBackgroundColor =>
+      _themeProvider?.isLightTheme == true
+      ? const Color(0xFF001A4D).withOpacity(0.15) // 亮色模式：深蓝色图标背景
+      : const Color(0xFF90CAF9).withOpacity(0.25); // 暗色模式：更亮的蓝色图标背景
+
   /// 分割线颜色
   static Color get dividerColor => _getColor('border');
 

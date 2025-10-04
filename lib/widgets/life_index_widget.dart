@@ -136,11 +136,11 @@ class LifeIndexWidget extends StatelessWidget {
     return Column(
       children: rows.map((row) {
         return Padding(
-          padding: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.only(bottom: 4), // 减小间隙
           child: Row(
             children: [
               Expanded(child: _buildLifeIndexItem(row[0])),
-              const SizedBox(width: 8),
+              const SizedBox(width: 4), // 减小间隙
               Expanded(
                 child: row.length > 1
                     ? _buildLifeIndexItem(row[1])
@@ -157,68 +157,63 @@ class LifeIndexWidget extends StatelessWidget {
     Color color = _getLifeIndexColor(lifeIndex.indexTypeCh ?? '');
     IconData icon = _getLifeIndexIcon(lifeIndex.indexTypeCh ?? '');
 
-    return Card(
-      elevation: 0,
-      color: color.withOpacity(0.25), // 内层小卡片: 0.4 × 0.618 ≈ 0.25
-      surfaceTintColor: color,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(7),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.40), // 图标容器: 0.25 / 0.618 ≈ 0.40
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(icon, color: color, size: 17),
+    return Builder(
+      builder: (context) => InkWell(
+        onTap: () => _showLifeIndexDialog(context, lifeIndex),
+        borderRadius: BorderRadius.circular(8),
+        child: Card(
+          elevation: 0,
+          color: color.withOpacity(0.25), // 内层小卡片: 0.4 × 0.618 ≈ 0.25
+          surfaceTintColor: color,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: AppColors
+                            .cardThemeBlueIconBackgroundColor, // 使用主题蓝色图标背景
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Icon(
+                        icon,
+                        color: AppColors.cardThemeBlueIconColor, // 使用主题蓝色图标颜色
+                        size: 16,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _truncateIndexName(lifeIndex.indexTypeCh ?? ''),
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 13, // 与详细信息卡片一致
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 0.2,
+                        ),
+                        textAlign: TextAlign.left,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  lifeIndex.indexLevel ?? '--',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    height: 1.2,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    lifeIndex.indexTypeCh ?? '',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 0.2,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    lifeIndex.indexLevel ?? '--',
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      height: 1.2,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    lifeIndex.indexContent ?? '',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 10,
-                      height: 1.3,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -244,6 +239,144 @@ class LifeIndexWidget extends StatelessWidget {
   }
 
   Color _getLifeIndexColor(String indexType) {
-    return AppColors.accentGreen;
+    return AppColors.cardThemeBlue; // 使用主题蓝色
+  }
+
+  /// 截断指标名称，最多显示5个字，超过则去掉末尾的"指数"
+  String _truncateIndexName(String name) {
+    if (name.length <= 5) {
+      return name;
+    }
+
+    // 如果以"指数"结尾，去掉"指数"两个字
+    if (name.endsWith('指数')) {
+      String withoutSuffix = name.substring(0, name.length - 2);
+      // 如果去掉"指数"后仍然超过5个字，则截断到5个字
+      if (withoutSuffix.length > 5) {
+        return withoutSuffix.substring(0, 5);
+      }
+      return withoutSuffix;
+    }
+
+    // 如果不以"指数"结尾，直接截断到5个字
+    return name.substring(0, 5);
+  }
+
+  void _showLifeIndexDialog(BuildContext context, LifeIndex lifeIndex) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: AppColors.backgroundSecondary,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 3,
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.detailCardGreen.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  _getLifeIndexIcon(lifeIndex.indexTypeCh ?? ''),
+                  color: AppColors.detailCardGreen,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  lifeIndex.indexTypeCh ?? '生活指数',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.detailCardGreen.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: AppColors.detailCardGreen.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '指数等级',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      lifeIndex.indexLevel ?? '--',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              if (lifeIndex.indexContent != null &&
+                  lifeIndex.indexContent!.isNotEmpty) ...[
+                Text(
+                  '详细说明',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  lifeIndex.indexContent!,
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 15,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 10,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              child: const Text('确定'),
+            ),
+          ],
+        );
+      },
+    );
   }
 }

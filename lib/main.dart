@@ -186,6 +186,8 @@ class _MainScreenState extends State<MainScreen> {
             onTap: (index) {
               setState(() {
                 _currentIndex = index;
+                // 通知WeatherProvider当前标签页变化
+                context.read<WeatherProvider>().setCurrentTabIndex(index);
               });
             },
             items: const [

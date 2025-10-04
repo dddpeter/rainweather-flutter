@@ -32,6 +32,20 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
   }
 
   @override
+  void didUpdateWidget(CityWeatherScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 如果城市名称发生变化，重新获取天气数据
+    if (oldWidget.cityName != widget.cityName) {
+      print(
+        '🏙️ CityWeatherScreen: City changed from ${oldWidget.cityName} to ${widget.cityName}',
+      );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<WeatherProvider>().getWeatherForCity(widget.cityName);
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     // 使用Consumer监听主题变化，确保整个页面在主题切换时重建
     return Consumer<ThemeProvider>(
@@ -584,6 +598,11 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
   Widget _buildAlertButton(WeatherProvider weatherProvider) {
     final alerts = weatherProvider.currentWeather?.current?.alerts;
     final hasAlerts = alerts != null && alerts.isNotEmpty;
+
+    // 调试信息
+    print(
+      'CityWeatherScreen _buildAlertButton: hasAlerts=$hasAlerts, alerts=$alerts',
+    );
 
     if (hasAlerts) {
       return Stack(

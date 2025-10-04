@@ -22,20 +22,53 @@ class TodayScreen extends StatefulWidget {
   State<TodayScreen> createState() => _TodayScreenState();
 }
 
-class _TodayScreenState extends State<TodayScreen> {
+class _TodayScreenState extends State<TodayScreen> with WidgetsBindingObserver {
+  bool _isVisible = false;
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<WeatherProvider>().initializeWeather();
     });
   }
 
   @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // 这个回调在应用生命周期变化时被调用，但不适合我们的场景
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // 每次页面显示时，恢复当前定位的天气数据
+    // 检查当前页面是否可见
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final navigator = Navigator.of(context);
+      final canPop = navigator.canPop();
+      _isVisible = !canPop; // 如果无法弹出，说明是主页面
+      print(
+        '📱 TodayScreen didChangeDependencies - _isVisible: $_isVisible, canPop: $canPop',
+      );
+    });
+  }
+
+  @override
+  void didUpdateWidget(TodayScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    print('=== TodayScreen didUpdateWidget called ===');
+    // 简化逻辑：直接尝试恢复，由WeatherProvider内部判断是否需要恢复
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      print(
+        'TodayScreen didUpdateWidget - calling restoreCurrentLocationWeather',
+      );
       context.read<WeatherProvider>().restoreCurrentLocationWeather();
     });
   }
@@ -75,6 +108,65 @@ class _TodayScreenState extends State<TodayScreen> {
             decoration: BoxDecoration(gradient: AppColors.primaryGradient),
             child: Consumer<WeatherProvider>(
               builder: (context, weatherProvider, child) {
+                print('🔥 TodayScreen build called 🔥');
+                print(
+                  '🌡️ Current weather temp: ${weatherProvider.currentWeather?.current?.current?.temperature}',
+                );
+                print(
+                  '📍 Current location: ${weatherProvider.currentLocation?.district}',
+                );
+                print(
+                  '🏠 Original location: ${weatherProvider.originalLocation?.district}',
+                );
+                print(
+                  '💾 Current location weather: ${weatherProvider.currentLocationWeather != null}',
+                );
+
+                // 检查是否需要恢复当前定位数据
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  // 使用标签页索引来判断当前是否在今日页面
+                  final isTodayTab = weatherProvider.currentTabIndex == 0;
+                  final navigator = Navigator.of(context);
+                  final canPop = navigator.canPop();
+
+                  // 更新可见性状态
+                  _isVisible = !canPop;
+
+                  print(
+                    '📱 TodayScreen build - tabIndex: ${weatherProvider.currentTabIndex}, isTodayTab: $isTodayTab',
+                  );
+
+                  // 如果当前在今日页面且显示的是城市数据，则恢复
+                  if (isTodayTab &&
+                      weatherProvider.currentLocationWeather != null &&
+                      weatherProvider.originalLocation != null &&
+                      weatherProvider.isShowingCityWeather) {
+                    print(
+                      '=== TodayScreen build - checking if restore needed ===',
+                    );
+                    print(
+                      '🔍 isShowingCityWeather: ${weatherProvider.isShowingCityWeather}',
+                    );
+                    print(
+                      '📱 _isVisible: $_isVisible, canPop: $canPop, isTodayTab: $isTodayTab',
+                    );
+                    print(
+                      'Current location: ${weatherProvider.currentLocation?.district}',
+                    );
+                    print(
+                      'Original location: ${weatherProvider.originalLocation?.district}',
+                    );
+                    print(
+                      '=== TodayScreen build - calling restoreCurrentLocationWeather ===',
+                    );
+                    weatherProvider.restoreCurrentLocationWeather();
+                  } else {
+                    print(
+                      '🚫 TodayScreen build - no restore needed: isTodayTab=$isTodayTab, _isVisible=$_isVisible, canPop=$canPop, isShowingCityWeather=${weatherProvider.isShowingCityWeather}',
+                    );
+                  }
+                });
+
                 if (weatherProvider.isLoading &&
                     weatherProvider.currentWeather == null) {
                   return Center(
@@ -658,6 +750,11 @@ class _TodayScreenState extends State<TodayScreen> {
   Widget _buildAlertButton(WeatherProvider weatherProvider) {
     final alerts = weatherProvider.currentWeather?.current?.alerts;
     final hasAlerts = alerts != null && alerts.isNotEmpty;
+
+    // 调试信息
+    print(
+      'TodayScreen _buildAlertButton: hasAlerts=$hasAlerts, alerts=$alerts',
+    );
 
     if (hasAlerts) {
       return Stack(

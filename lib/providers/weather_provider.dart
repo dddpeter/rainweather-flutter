@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import '../models/weather_model.dart';
 import '../models/location_model.dart';
 import '../models/city_model.dart';
@@ -38,6 +39,8 @@ class WeatherProvider extends ChangeNotifier {
   // 当前定位的天气数据（用于今日天气页面）
   WeatherModel? _currentLocationWeather;
   LocationModel? _originalLocation;
+  bool _isShowingCityWeather = false; // 标记当前是否显示城市天气数据
+  int _currentTabIndex = 0; // 当前标签页索引
 
   // 主要城市天气数据
   Map<String, WeatherModel> _mainCitiesWeather = {};
@@ -69,6 +72,8 @@ class WeatherProvider extends ChangeNotifier {
   // 当前定位天气数据的getter
   WeatherModel? get currentLocationWeather => _currentLocationWeather;
   LocationModel? get originalLocation => _originalLocation;
+  bool get isShowingCityWeather => _isShowingCityWeather;
+  int get currentTabIndex => _currentTabIndex;
 
   /// Initialize weather data
   Future<void> initializeWeather() async {
@@ -189,8 +194,11 @@ class WeatherProvider extends ChangeNotifier {
       if (cachedWeather != null) {
         // Use cached data
         _currentWeather = cachedWeather;
-        _currentLocationWeather = cachedWeather; // 保存当前定位天气数据
+
+        // 保存当前定位天气数据（保持原始状态）
+        _currentLocationWeather = cachedWeather;
         _originalLocation = location; // 保存原始位置
+        _isShowingCityWeather = false; // 重置标记，表示现在显示原始定位数据
         _hourlyForecast = cachedWeather.forecast24h;
         _dailyForecast = cachedWeather.forecast15d?.take(7).toList();
         _forecast15d = cachedWeather.forecast15d; // 保存15日预报数据
@@ -207,8 +215,11 @@ class WeatherProvider extends ChangeNotifier {
 
         if (weather != null) {
           _currentWeather = weather;
-          _currentLocationWeather = weather; // 保存当前定位天气数据
+
+          // 保存当前定位天气数据（保持原始状态）
+          _currentLocationWeather = weather;
           _originalLocation = location; // 保存原始位置
+          _isShowingCityWeather = false; // 重置标记，表示现在显示原始定位数据
           _hourlyForecast = weather.forecast24h;
           _dailyForecast = weather.forecast15d?.take(7).toList();
           _forecast15d = weather.forecast15d; // 保存15日预报数据
@@ -267,11 +278,19 @@ class WeatherProvider extends ChangeNotifier {
 
       if (cachedWeather != null) {
         // Use cached data
+        print(
+          '🏙️ BEFORE SETTING CACHED WEATHER FOR $cityName: ${_currentWeather?.current?.current?.temperature}',
+        );
         _currentWeather = cachedWeather;
         _hourlyForecast = cachedWeather.forecast24h;
         _dailyForecast = cachedWeather.forecast15d?.take(7).toList();
         _forecast15d = cachedWeather.forecast15d; // 保存15日预报数据
-        print('Using cached weather data for $cityName');
+        _isShowingCityWeather = true; // 标记当前显示城市天气数据
+        print(
+          '🏙️ AFTER SETTING CACHED WEATHER FOR $cityName: ${_currentWeather?.current?.current?.temperature}',
+        );
+        print('✅ Using cached weather data for $cityName');
+        print('🏙️ _isShowingCityWeather set to: $_isShowingCityWeather');
       } else {
         // Fetch fresh data from API
         print(
@@ -282,10 +301,18 @@ class WeatherProvider extends ChangeNotifier {
         );
 
         if (weather != null) {
+          print(
+            'Before setting fresh weather for $cityName: ${_currentWeather?.current?.current?.temperature}',
+          );
           _currentWeather = weather;
           _hourlyForecast = weather.forecast24h;
           _dailyForecast = weather.forecast15d?.take(7).toList();
           _forecast15d = weather.forecast15d; // 保存15日预报数据
+          _isShowingCityWeather = true; // 标记当前显示城市天气数据
+          print(
+            'After setting fresh weather for $cityName: ${_currentWeather?.current?.current?.temperature}',
+          );
+          print('🏙️ _isShowingCityWeather set to: $_isShowingCityWeather');
 
           // Save to cache
           await _databaseService.putWeatherData(weatherKey, weather);
@@ -323,6 +350,9 @@ class WeatherProvider extends ChangeNotifier {
   /// Set loading state
   void _setLoading(bool loading) {
     _isLoading = loading;
+    print(
+      '_setLoading($loading) called, current weather temp: ${_currentWeather?.current?.current?.temperature}',
+    );
     notifyListeners();
   }
 
@@ -763,18 +793,102 @@ class WeatherProvider extends ChangeNotifier {
     }
   }
 
+  /// 创建一个清除预警信息的天气数据副本
+  WeatherModel _createWeatherWithoutAlerts(WeatherModel weather) {
+    return WeatherModel(
+      current: weather.current != null
+          ? CurrentWeatherData(
+              alerts: null, // 清除预警信息
+              current: weather.current!.current,
+              nongLi: weather.current!.nongLi,
+              air: weather.current!.air,
+              tips: weather.current!.tips,
+            )
+          : null,
+      forecast24h: weather.forecast24h,
+      forecast15d: weather.forecast15d,
+      air: weather.air,
+      tips: weather.tips,
+    );
+  }
+
   /// 恢复到当前定位的天气数据（用于从城市天气页面返回到今日天气页面）
   void restoreCurrentLocationWeather() {
-    if (_currentLocationWeather != null && _originalLocation != null) {
-      _currentWeather = _currentLocationWeather;
+    print('🔄 RESTORE CURRENT LOCATION WEATHER CALLED 🔄');
+    print(
+      '💾 _currentLocationWeather != null: ${_currentLocationWeather != null}',
+    );
+    print('🏠 _originalLocation != null: ${_originalLocation != null}');
+    print('🔍 _isShowingCityWeather: $_isShowingCityWeather');
+
+    if (_currentLocationWeather != null) {
+      print(
+        '💾 _currentLocationWeather temp: ${_currentLocationWeather!.current?.current?.temperature}',
+      );
+    }
+
+    if (_originalLocation != null) {
+      print('🏠 _originalLocation district: ${_originalLocation!.district}');
+    }
+
+    // 只有在真正需要恢复时才执行恢复逻辑
+    if (_currentLocationWeather != null &&
+        _originalLocation != null &&
+        _isShowingCityWeather) {
+      print(
+        'Before restore - _currentWeather temp: ${_currentWeather?.current?.current?.temperature}',
+      );
+      print(
+        'Before restore - _currentLocationWeather temp: ${_currentLocationWeather!.current?.current?.temperature}',
+      );
+      print(
+        'Before restore - _currentLocation district: ${_currentLocation?.district}',
+      );
+      print(
+        'Before restore - _originalLocation district: ${_originalLocation!.district}',
+      );
+
+      // 恢复当前定位天气数据，但清除预警信息
+      _currentWeather = _createWeatherWithoutAlerts(_currentLocationWeather!);
       _currentLocation = _originalLocation;
       _hourlyForecast = _currentLocationWeather!.forecast24h;
       _dailyForecast = _currentLocationWeather!.forecast15d?.take(7).toList();
       _forecast15d = _currentLocationWeather!.forecast15d;
+      _isShowingCityWeather = false; // 重置标记，表示现在显示原始定位数据
+
+      print(
+        '🚨 After restore - alerts cleared: ${_currentWeather?.current?.alerts}',
+      );
+
+      print(
+        'After restore - _currentWeather temp: ${_currentWeather?.current?.current?.temperature}',
+      );
+      print(
+        'After restore - _currentLocation district: ${_currentLocation?.district}',
+      );
       notifyListeners();
       print(
-        'Restored to current location weather: ${_originalLocation!.district}',
+        'Restored to current location weather (alerts already cleared): ${_originalLocation!.district}',
       );
+    } else {
+      print(
+        'No restore needed: _currentLocationWeather=${_currentLocationWeather != null}, _originalLocation=${_originalLocation != null}, _isShowingCityWeather=$_isShowingCityWeather',
+      );
+    }
+    print('=== restoreCurrentLocationWeather finished ===');
+  }
+
+  /// 设置当前标签页索引
+  void setCurrentTabIndex(int index) {
+    print('📱 Tab index changed to: $index');
+    _currentTabIndex = index;
+
+    // 如果切换到今日页面（索引0），且当前显示城市数据，则恢复
+    if (index == 0 && _isShowingCityWeather) {
+      print('📱 Switched to today tab, checking if restore needed');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        restoreCurrentLocationWeather();
+      });
     }
   }
 

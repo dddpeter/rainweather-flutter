@@ -83,7 +83,8 @@ class AppColors {
     'lowTemp': Color(0xFF8edafc), // 使用指定的亮蓝色
     // 日出日落颜色 - 暗色主题
     'sunrise': Color(0xFFFFB74D), // 明亮的日出黄色
-    'sunset': Color(0xFFE91E63), // 深红色日落
+    'sunset': Color(0xFF1976D2), // 深蓝色日落
+    'sunIcon': Color(0xFFFFFFFF), // 白色太阳图标（深色模式）
     'moon': Color(0xFFB39DDB), // 柔和的月光紫色
   };
 
@@ -118,7 +119,8 @@ class AppColors {
     'lowTemp': Color(0xFF8edafc), // 使用指定的亮蓝色
     // 日出日落颜色 - 亮色主题
     'sunrise': Color(0xFFFF9800), // 鲜艳的日出橙色
-    'sunset': Color(0xFFC2185B), // 深红色日落
+    'sunset': Color(0xFF1565C0), // 深蓝色日落（亮色模式稍深）
+    'sunIcon': Color(0xFFE53935), // 红色太阳图标（浅色模式）
     'moon': Color(0xFF673AB7), // 深紫色月亮
   };
   // 主题化颜色 - 动态获取
@@ -191,6 +193,9 @@ class AppColors {
 
   /// 日落颜色
   static Color get sunset => _getColor('sunset');
+
+  /// 太阳图标颜色（深色模式白色，浅色模式红色）
+  static Color get sunIcon => _getColor('sunIcon');
 
   /// 月亮颜色
   static Color get moon => _getColor('moon');

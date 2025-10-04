@@ -155,53 +155,92 @@ class LifeIndexWidget extends StatelessWidget {
 
   Widget _buildLifeIndexItem(LifeIndex lifeIndex) {
     Color color = _getLifeIndexColor(lifeIndex.indexTypeCh ?? '');
+    IconData icon = _getLifeIndexIcon(lifeIndex.indexTypeCh ?? '');
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withOpacity(0.3), width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            lifeIndex.indexTypeCh ?? '',
-            style: TextStyle(
-              color: AppColors.textSecondary, // 使用主题色
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
+    return Card(
+      elevation: 0,
+      color: color.withOpacity(0.08),
+      surfaceTintColor: color,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: color, size: 18),
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 2),
-          Text(
-            lifeIndex.indexLevel ?? '--',
-            style: TextStyle(
-              color: AppColors.textPrimary, // 使用主题色，提高对比度
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    lifeIndex.indexTypeCh ?? '',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.2,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    lifeIndex.indexLevel ?? '--',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      height: 1.2,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    lifeIndex.indexContent ?? '',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 10,
+                      height: 1.3,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 2),
-          Text(
-            lifeIndex.indexContent ?? '',
-            style: TextStyle(
-              color: AppColors.textSecondary, // 使用主题色
-              fontSize: 9,
-              height: 1.1,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
+          ],
+        ),
       ),
     );
+  }
+
+  IconData _getLifeIndexIcon(String indexType) {
+    switch (indexType) {
+      case '穿衣指数':
+        return Icons.checkroom;
+      case '感冒指数':
+        return Icons.local_hospital;
+      case '化妆指数':
+        return Icons.face;
+      case '紫外线强度指数':
+        return Icons.wb_sunny;
+      case '洗车指数':
+        return Icons.local_car_wash;
+      case '运动指数':
+        return Icons.directions_run;
+      default:
+        return Icons.info_outline;
+    }
   }
 
   Color _getLifeIndexColor(String indexType) {

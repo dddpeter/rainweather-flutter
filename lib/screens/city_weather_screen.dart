@@ -193,7 +193,7 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
                   Text(
                     current?.weather ?? '晴',
                     style: TextStyle(
-                      color: AppColors.accentBlue,
+                      color: AppColors.primaryBlue, // 修复：使用深色以确保亮色模式下可见
                       fontSize: 30, // 48 * 0.618 ≈ 30
                       fontWeight: FontWeight.w600,
                       letterSpacing: 0.5,
@@ -360,7 +360,7 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
               ),
               const SizedBox(height: 8),
               SizedBox(
-                height: 120,
+                height: 220,
                 child: WeatherChart(
                   dailyForecast: weatherProvider.dailyForecast,
                 ),

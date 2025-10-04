@@ -12,6 +12,13 @@ class AppMenu extends StatelessWidget {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return PopupMenuButton<String>(
+          // Material Design 3: 圆角和阴影
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          elevation: 3,
+          color: AppColors.backgroundSecondary,
+          surfaceTintColor: Colors.transparent,
           icon: Padding(
             padding: const EdgeInsets.all(8),
             child: Icon(
@@ -28,15 +35,14 @@ class AppMenu extends StatelessWidget {
               child: Row(
                 children: [
                   Icon(
-                    themeProvider.isLightTheme ? Icons.light_mode : Icons.dark_mode,
+                    themeProvider.isLightTheme
+                        ? Icons.light_mode
+                        : Icons.dark_mode,
                     color: AppColors.textPrimary,
                     size: 20,
                   ),
                   const SizedBox(width: 12),
-                  Text(
-                    '主题设置',
-                    style: TextStyle(color: AppColors.textPrimary),
-                  ),
+                  Text('主题设置', style: TextStyle(color: AppColors.textPrimary)),
                 ],
               ),
             ),
@@ -46,16 +52,9 @@ class AppMenu extends StatelessWidget {
               value: 'clear_cache',
               child: Row(
                 children: [
-                  Icon(
-                    Icons.clear_all,
-                    color: AppColors.error,
-                    size: 20,
-                  ),
+                  Icon(Icons.clear_all, color: AppColors.error, size: 20),
                   const SizedBox(width: 12),
-                  Text(
-                    '清理缓存',
-                    style: TextStyle(color: AppColors.textPrimary),
-                  ),
+                  Text('清理缓存', style: TextStyle(color: AppColors.textPrimary)),
                 ],
               ),
             ),
@@ -71,10 +70,7 @@ class AppMenu extends StatelessWidget {
                     size: 20,
                   ),
                   const SizedBox(width: 12),
-                  Text(
-                    '关于应用',
-                    style: TextStyle(color: AppColors.textPrimary),
-                  ),
+                  Text('关于应用', style: TextStyle(color: AppColors.textPrimary)),
                 ],
               ),
             ),
@@ -106,18 +102,29 @@ class AppMenu extends StatelessWidget {
           builder: (context, themeProvider, child) {
             // 确保AppColors始终使用最新的主题状态
             AppColors.setThemeProvider(themeProvider);
-            
+
             return AlertDialog(
+              // Material Design 3: 弹窗样式
               backgroundColor: AppColors.backgroundSecondary,
-              shape: AppColors.dialogShape,
+              surfaceTintColor: Colors.transparent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(28), // M3: 更大的圆角
+              ),
+              elevation: 3,
               title: Text(
                 '主题设置',
                 style: TextStyle(
                   color: AppColors.textPrimary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 24, // M3: 更大的标题
+                  fontWeight: FontWeight.w500, // M3: Medium weight
                 ),
               ),
+              contentPadding: const EdgeInsets.fromLTRB(
+                24,
+                16,
+                24,
+                8,
+              ), // M3: 标准padding
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -128,6 +135,7 @@ class AppMenu extends StatelessWidget {
                     Icons.light_mode,
                     themeProvider.themeMode == AppThemeMode.light,
                   ),
+                  const SizedBox(height: 8),
                   _buildThemeOption(
                     context,
                     '暗色主题',
@@ -135,6 +143,7 @@ class AppMenu extends StatelessWidget {
                     Icons.dark_mode,
                     themeProvider.themeMode == AppThemeMode.dark,
                   ),
+                  const SizedBox(height: 8),
                   _buildThemeOption(
                     context,
                     '跟随系统',
@@ -144,13 +153,27 @@ class AppMenu extends StatelessWidget {
                   ),
                 ],
               ),
+              actionsPadding: const EdgeInsets.fromLTRB(
+                24,
+                0,
+                24,
+                16,
+              ), // M3: 标准padding
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: Text(
-                    '确定',
-                    style: TextStyle(color: AppColors.textPrimary),
+                  style: TextButton.styleFrom(
+                    // M3: 按钮样式
+                    foregroundColor: AppColors.primaryBlue,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 10,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
                   ),
+                  child: const Text('确定'),
                 ),
               ],
             );
@@ -171,29 +194,46 @@ class AppMenu extends StatelessWidget {
       builder: (context, themeProvider, child) {
         // 确保AppColors始终使用最新的主题状态
         AppColors.setThemeProvider(themeProvider);
-        
+
+        // Material Design 3: 选项卡片样式
         return Container(
           margin: const EdgeInsets.symmetric(vertical: 2),
           decoration: BoxDecoration(
-            color: isSelected 
-                ? AppColors.primaryBlue.withOpacity(0.1)
+            color: isSelected
+                ? AppColors.primaryBlue.withOpacity(0.15)
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-            border: isSelected 
-                ? Border.all(color: AppColors.primaryBlue.withOpacity(0.3), width: 1)
-                : null,
+            borderRadius: BorderRadius.circular(16), // M3: 更大的圆角
+            border: isSelected
+                ? Border.all(
+                    color: AppColors.primaryBlue,
+                    width: 2,
+                  ) // M3: 更粗的边框
+                : Border.all(
+                    color: AppColors.borderColor.withOpacity(0.3),
+                    width: 1,
+                  ),
           ),
           child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 4,
+            ),
             leading: Icon(
               icon,
-              color: isSelected ? AppColors.primaryBlue : AppColors.textSecondary,
-              size: 22,
+              color: isSelected
+                  ? AppColors.primaryBlue
+                  : AppColors.textSecondary,
+              size: 24, // M3: 稍大的图标
             ),
             title: Text(
               title,
               style: TextStyle(
-                color: isSelected ? AppColors.primaryBlue : AppColors.textPrimary,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                color: isSelected
+                    ? AppColors.primaryBlue
+                    : AppColors.textPrimary,
+                fontWeight: isSelected
+                    ? FontWeight.w600
+                    : FontWeight.w400, // M3: 适中的字重
                 fontSize: 16,
               ),
             ),
@@ -201,9 +241,9 @@ class AppMenu extends StatelessWidget {
                 ? Icon(
                     Icons.check_circle,
                     color: AppColors.primaryBlue,
-                    size: 20,
+                    size: 24, // M3: 稍大的图标
                   )
-                : null,
+                : const SizedBox(width: 24), // 占位以保持对齐
             onTap: () {
               themeProvider.setThemeMode(mode);
               // 立即更新AppColors
@@ -220,60 +260,75 @@ class AppMenu extends StatelessWidget {
     showDialog(
       context: context,
       builder: (BuildContext context) {
+        // Material Design 3: 弹窗样式
         return AlertDialog(
           backgroundColor: AppColors.backgroundSecondary,
-          shape: AppColors.dialogShape,
-          title: Row(
-            children: [
-              Icon(
-                Icons.warning,
-                color: AppColors.warning,
-                size: 24,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '清理缓存',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
           ),
+          elevation: 3,
+          icon: Icon(Icons.warning_rounded, color: AppColors.warning, size: 32),
+          title: Text(
+            '清理缓存',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 24,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
           content: Text(
             '确定要清理天气缓存数据吗？这将删除所有已保存的天气数据，但保留城市列表和设置。',
             style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 14,
+              height: 1.5,
             ),
           ),
+          actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                '取消',
-                style: TextStyle(color: AppColors.textSecondary),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.textSecondary,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 10,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
               ),
+              child: const Text('取消'),
             ),
-            TextButton(
+            FilledButton(
               onPressed: () async {
                 await context.read<WeatherProvider>().clearWeatherCache();
                 Navigator.of(context).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(
-                      '缓存已清理',
-                      style: TextStyle(color: AppColors.textPrimary),
-                    ),
+                    content: const Text('缓存已清理'),
                     backgroundColor: AppColors.success,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 );
               },
-              child: Text(
-                '确定',
-                style: TextStyle(color: AppColors.error),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.error,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 10,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
               ),
+              child: const Text('确定'),
             ),
           ],
         );
@@ -285,17 +340,28 @@ class AppMenu extends StatelessWidget {
     showDialog(
       context: context,
       builder: (BuildContext context) {
+        // Material Design 3: 弹窗样式
         return AlertDialog(
           backgroundColor: AppColors.backgroundSecondary,
-          shape: AppColors.dialogShape,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
+          ),
+          elevation: 3,
+          icon: Icon(
+            Icons.info_outline_rounded,
+            color: AppColors.primaryBlue,
+            size: 32,
+          ),
           title: Text(
             '关于应用',
             style: TextStyle(
               color: AppColors.textPrimary,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+              fontSize: 24,
+              fontWeight: FontWeight.w500,
             ),
           ),
+          contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -304,43 +370,51 @@ class AppMenu extends StatelessWidget {
                 '知雨天气',
                 style: TextStyle(
                   color: AppColors.textPrimary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               Text(
                 '版本: 1.0.0',
                 style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 14,
+                  height: 1.5,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
               Text(
                 '一款简洁美观的天气应用',
                 style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 14,
+                  height: 1.5,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 16),
               Text(
                 '© 2024 知雨天气. All rights reserved.',
-                style: TextStyle(
-                  color: AppColors.textTertiary,
-                  fontSize: 12,
-                ),
+                style: TextStyle(color: AppColors.textTertiary, fontSize: 12),
               ),
             ],
           ),
+          actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
           actions: [
-            TextButton(
+            FilledButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                '确定',
-                style: TextStyle(color: AppColors.textPrimary),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.primaryBlue,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 10,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
               ),
+              child: const Text('确定'),
             ),
           ],
         );

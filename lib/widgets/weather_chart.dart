@@ -3,146 +3,133 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
 import '../models/weather_model.dart';
 import '../constants/app_colors.dart';
+import '../constants/chart_styles.dart';
 import '../providers/theme_provider.dart';
 
 class WeatherChart extends StatelessWidget {
   final List<DailyWeather>? dailyForecast;
 
-  const WeatherChart({
-    super.key,
-    this.dailyForecast,
-  });
+  const WeatherChart({super.key, this.dailyForecast});
 
   @override
   Widget build(BuildContext context) {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         if (dailyForecast == null || dailyForecast!.isEmpty) {
-      return Center(
-        child: Text(
-          '暂无数据',
-          style: TextStyle(color: AppColors.textSecondary),
-        ),
-      );
-    }
+          return Center(
+            child: Text(
+              '暂无数据',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+          );
+        }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-      child: LineChart(
-        LineChartData(
-          gridData: FlGridData(
-            show: true,
-            drawVerticalLine: false,
-            horizontalInterval: 5,
-            getDrawingHorizontalLine: (value) {
-              return FlLine(
-                color: AppColors.textTertiary,
-                strokeWidth: 1,
-              );
-            },
-          ),
-        titlesData: FlTitlesData(
-          show: true,
-          rightTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false),
-          ),
-          topTitles: const AxisTitles(
-            sideTitles: SideTitles(showTitles: false),
-          ),
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 40, // 增加预留空间
-              interval: 1,
-              getTitlesWidget: (value, meta) {
-                if (value.toInt() < dailyForecast!.length) {
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 4.0),
-                    child: Text(
-                      _formatDate(dailyForecast![value.toInt()].forecasttime ?? ''),
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 10, // 减小字体大小
-                      ),
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  );
-                }
-                return const Text('');
-              },
-            ),
-          ),
-          leftTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              interval: 5,
-              reservedSize: 40,
-              getTitlesWidget: (value, meta) {
-                return Text(
-                  '${value.toInt()}℃',
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 12,
-                  ),
-                );
-              },
-            ),
-          ),
-        ),
-        borderData: FlBorderData(
-          show: false,
-        ),
-        minX: 0,
-        maxX: (dailyForecast!.length - 1).toDouble(),
-        minY: _getMinTemperature() - 5,
-        maxY: _getMaxTemperature() + 5,
-        lineBarsData: [
+        // 准备图表数据
+        final lineBarsData = [
           // High temperature line
-          LineChartBarData(
+          ChartStyles.createLineChartBarData(
             spots: _getHighTemperatureSpots(),
-            isCurved: true,
             color: AppColors.highTemp,
-            barWidth: 3,
-            isStrokeCapRound: true,
-            dotData: FlDotData(
-              show: true,
-              getDotPainter: (spot, percent, barData, index) {
-                return FlDotCirclePainter(
-                  radius: 4,
-                  color: AppColors.highTemp,
-                  strokeWidth: 2,
-                  strokeColor: AppColors.textPrimary,
-                );
-              },
-            ),
-            belowBarData: BarAreaData(show: false),
+            isCurved: true,
+            showDataLabels: true,
+            showBelowArea: false,
           ),
           // Low temperature line
-          LineChartBarData(
+          ChartStyles.createLineChartBarData(
             spots: _getLowTemperatureSpots(),
-            isCurved: true,
             color: AppColors.lowTemp,
-            barWidth: 3,
-            isStrokeCapRound: true,
-            dotData: FlDotData(
-              show: true,
-              getDotPainter: (spot, percent, barData, index) {
-                return FlDotCirclePainter(
-                  radius: 4,
-                  color: AppColors.lowTemp,
-                  strokeWidth: 2,
-                  strokeColor: AppColors.textPrimary,
-                );
-              },
-            ),
-            belowBarData: BarAreaData(show: false),
+            isCurved: true,
+            showDataLabels: true,
+            showBelowArea: false,
           ),
-        ],
-        ),
-      ),
-    );
+        ];
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+          child: Column(
+            children: [
+              Expanded(
+                child: LineChart(
+                  LineChartData(
+                    gridData: ChartStyles.getGridData(
+                      showVertical: false,
+                      horizontalInterval: 5,
+                    ),
+                    titlesData: FlTitlesData(
+                      show: true,
+                      rightTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      topTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: ChartStyles.bottomTitlesReservedSize,
+                          interval: 1,
+                          getTitlesWidget: (value, meta) {
+                            if (value.toInt() < dailyForecast!.length) {
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 4.0),
+                                child: Text(
+                                  _formatDate(
+                                    dailyForecast![value.toInt()]
+                                            .forecasttime ??
+                                        '',
+                                  ),
+                                  style: ChartStyles.getAxisLabelStyle(),
+                                  textAlign: TextAlign.center,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              );
+                            }
+                            return const Text('');
+                          },
+                        ),
+                      ),
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          interval: 5,
+                          reservedSize: ChartStyles.leftTitlesReservedSize,
+                          getTitlesWidget: (value, meta) {
+                            return Text(
+                              '${value.toInt()}℃',
+                              style: ChartStyles.getYAxisLabelStyle(),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    borderData: ChartStyles.getBorderData(),
+                    minX: 0,
+                    maxX: (dailyForecast!.length - 1).toDouble(),
+                    minY: _getMinTemperature() - 5,
+                    maxY: _getMaxTemperature() + 5,
+                    lineBarsData: lineBarsData,
+                    // 显示数据标签
+                    lineTouchData: ChartStyles.getM3TouchDataWithLabels(),
+                    showingTooltipIndicators:
+                        ChartStyles.generateShowingIndicators(
+                          lineBarsData: lineBarsData,
+                          interval: dailyForecast!.length > 7 ? 2 : 1,
+                        ),
+                  ),
+                ),
+              ),
+              // 图例
+              ChartStyles.buildLegendContainer(
+                items: [
+                  MapEntry('最高温度', AppColors.highTemp),
+                  MapEntry('最低温度', AppColors.lowTemp),
+                ],
+                padding: const EdgeInsets.only(top: 4, bottom: 4),
+              ),
+            ],
+          ),
+        );
       },
     );
   }

@@ -3,6 +3,7 @@ import 'package:fl_chart/fl_chart.dart';
 import '../models/weather_model.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_constants.dart';
+import '../constants/chart_styles.dart';
 
 class Forecast15dChart extends StatelessWidget {
   final List<DailyWeather>? forecast15d;
@@ -19,7 +20,7 @@ class Forecast15dChart extends StatelessWidget {
     final chartData = _prepareChartData(forecast15d!);
 
     return SizedBox(
-      height: 200,
+      height: 280,
       child: Card(
         elevation: AppColors.cardElevation,
         shadowColor: AppColors.cardShadowColor,
@@ -50,203 +51,119 @@ class Forecast15dChart extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Expanded(
-                child: LineChart(
-                  LineChartData(
-                    gridData: FlGridData(
-                      show: true,
-                      drawVerticalLine: false,
-                      horizontalInterval: 5,
-                      getDrawingHorizontalLine: (value) {
-                        return FlLine(
-                          color: AppColors.dividerColor,
-                          strokeWidth: 0.5,
-                        );
-                      },
-                    ),
-                    titlesData: FlTitlesData(
-                      show: true,
-                      rightTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false),
-                      ),
-                      topTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false),
-                      ),
-                      bottomTitles: AxisTitles(
-                        sideTitles: SideTitles(
-                          showTitles: true,
-                          reservedSize: 30,
-                          interval: 2,
-                          getTitlesWidget: (value, meta) {
-                            if (value.toInt() >= 0 &&
-                                value.toInt() < chartData.length) {
-                              final day = chartData[value.toInt()];
-                              return Padding(
-                                padding: const EdgeInsets.only(top: 8),
-                                child: Text(
-                                  day['date'],
-                                  style: TextStyle(
-                                    color: AppColors.textSecondary,
-                                    fontSize: 10,
-                                  ),
-                                ),
-                              );
-                            }
-                            return const Text('');
-                          },
-                        ),
-                      ),
-                      leftTitles: AxisTitles(
-                        sideTitles: SideTitles(
-                          showTitles: true,
-                          interval: 10,
-                          reservedSize: 40,
-                          getTitlesWidget: (value, meta) {
-                            return Text(
-                              '${value.toInt()}℃',
-                              style: TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 10,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                    borderData: FlBorderData(
-                      show: true,
-                      border: Border.all(
-                        color: AppColors.borderColor,
-                        width: 0.5,
-                      ),
-                    ),
-                    minX: 0,
-                    maxX: (chartData.length - 1).toDouble(),
-                    minY: _getMinTemperature(chartData) - 5,
-                    maxY: _getMaxTemperature(chartData) + 5,
-                    lineBarsData: [
+                child: Builder(
+                  builder: (context) {
+                    // 准备图表数据
+                    final lineBarsData = [
                       // 最高温度线
-                      LineChartBarData(
+                      ChartStyles.createLineChartBarData(
                         spots: chartData.asMap().entries.map((entry) {
                           return FlSpot(
                             entry.key.toDouble(),
                             entry.value['maxTemp'],
                           );
                         }).toList(),
-                        isCurved: true,
                         color: AppColors.highTemp,
-                        barWidth: 3,
-                        isStrokeCapRound: true,
-                        dotData: FlDotData(
-                          show: true,
-                          getDotPainter: (spot, percent, barData, index) {
-                            return FlDotCirclePainter(
-                              radius: 4,
-                              color: AppColors.highTemp,
-                              strokeWidth: 2,
-                              strokeColor: AppColors.cardBackground,
-                            );
-                          },
-                        ),
-                        belowBarData: BarAreaData(show: false),
+                        isCurved: true,
+                        showDataLabels: true,
+                        showBelowArea: false,
                       ),
                       // 最低温度线
-                      LineChartBarData(
+                      ChartStyles.createLineChartBarData(
                         spots: chartData.asMap().entries.map((entry) {
                           return FlSpot(
                             entry.key.toDouble(),
                             entry.value['minTemp'],
                           );
                         }).toList(),
-                        isCurved: true,
                         color: AppColors.lowTemp,
-                        barWidth: 3,
-                        isStrokeCapRound: true,
-                        dotData: FlDotData(
-                          show: true,
-                          getDotPainter: (spot, percent, barData, index) {
-                            return FlDotCirclePainter(
-                              radius: 4,
-                              color: AppColors.lowTemp,
-                              strokeWidth: 2,
-                              strokeColor: AppColors.cardBackground,
-                            );
-                          },
+                        isCurved: true,
+                        showDataLabels: true,
+                        showBelowArea: false,
+                      ),
+                    ];
+
+                    return LineChart(
+                      LineChartData(
+                        gridData: ChartStyles.getGridData(
+                          showVertical: false,
+                          horizontalInterval: 5,
                         ),
-                        belowBarData: BarAreaData(show: false),
-                      ),
-                    ],
-                    lineTouchData: LineTouchData(
-                      enabled: true,
-                      touchTooltipData: LineTouchTooltipData(
-                        getTooltipItems: (touchedSpots) {
-                          return touchedSpots.map((touchedSpot) {
-                            final index = touchedSpot.x.toInt();
-                            if (index >= 0 && index < chartData.length) {
-                              final day = chartData[index];
-                              final isMaxTemp = touchedSpot.barIndex == 0;
-                              return LineTooltipItem(
-                                isMaxTemp
-                                    ? '最高: ${day['maxTemp']}℃'
-                                    : '最低: ${day['minTemp']}℃',
-                                TextStyle(
-                                  color: AppColors.textPrimary,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                children: [
-                                  TextSpan(
-                                    text: '\n${day['date']}',
-                                    style: TextStyle(
-                                      color: AppColors.textSecondary,
-                                      fontSize: 10,
+                        titlesData: FlTitlesData(
+                          show: true,
+                          rightTitles: const AxisTitles(
+                            sideTitles: SideTitles(showTitles: false),
+                          ),
+                          topTitles: const AxisTitles(
+                            sideTitles: SideTitles(showTitles: false),
+                          ),
+                          bottomTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize:
+                                  ChartStyles.bottomTitlesReservedSize,
+                              interval: 2,
+                              getTitlesWidget: (value, meta) {
+                                if (value.toInt() >= 0 &&
+                                    value.toInt() < chartData.length) {
+                                  final day = chartData[value.toInt()];
+                                  return Padding(
+                                    padding: const EdgeInsets.only(top: 8),
+                                    child: Text(
+                                      day['date'],
+                                      style: ChartStyles.getAxisLabelStyle(),
                                     ),
-                                  ),
-                                ],
-                              );
-                            }
-                            return null;
-                          }).toList();
-                        },
+                                  );
+                                }
+                                return const Text('');
+                              },
+                            ),
+                          ),
+                          leftTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              interval: 10,
+                              reservedSize: ChartStyles.leftTitlesReservedSize,
+                              getTitlesWidget: (value, meta) {
+                                return Text(
+                                  '${value.toInt()}℃',
+                                  style: ChartStyles.getYAxisLabelStyle(),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                        borderData: ChartStyles.getBorderData(),
+                        minX: 0,
+                        maxX: (chartData.length - 1).toDouble(),
+                        minY: _getMinTemperature(chartData) - 5,
+                        maxY: _getMaxTemperature(chartData) + 5,
+                        lineBarsData: lineBarsData,
+                        // 显示数据标签
+                        lineTouchData: ChartStyles.getM3TouchDataWithLabels(),
+                        showingTooltipIndicators:
+                            ChartStyles.generateShowingIndicators(
+                              lineBarsData: lineBarsData,
+                              interval: chartData.length > 10 ? 2 : 1,
+                            ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: 8),
               // 图例
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _buildLegendItem('最高温度', AppColors.highTemp),
-                  const SizedBox(width: 24),
-                  _buildLegendItem('最低温度', AppColors.lowTemp),
+              ChartStyles.buildLegendContainer(
+                items: [
+                  MapEntry('最高温度', AppColors.highTemp),
+                  MapEntry('最低温度', AppColors.lowTemp),
                 ],
+                padding: const EdgeInsets.symmetric(vertical: 4),
               ),
             ],
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildLegendItem(String label, Color color) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 12,
-          height: 3,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-        const SizedBox(width: 6),
-        Text(
-          label,
-          style: TextStyle(color: AppColors.textSecondary, fontSize: 10),
-        ),
-      ],
     );
   }
 

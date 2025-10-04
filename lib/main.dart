@@ -765,22 +765,41 @@ class MainCitiesScreen extends StatelessWidget {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
+          // Material Design 3: 弹窗样式
           backgroundColor: AppColors.backgroundSecondary,
-          shape: AppColors.dialogShape,
-          title: Row(
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
+          ),
+          elevation: 3,
+          icon: Icon(
+            Icons.add_location_alt_rounded,
+            color: AppColors.accentGreen,
+            size: 32,
+          ),
+          title: Column(
             children: [
-              Text('添加城市', style: TextStyle(color: AppColors.textPrimary)),
-              Spacer(),
+              Text(
+                '添加城市',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 4),
               Text(
                 '直辖市 · 省会',
                 style: TextStyle(
                   color: AppColors.textSecondary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.normal,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400,
                 ),
               ),
             ],
           ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+          contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
           content: SizedBox(
             width: double.maxFinite,
             height: 400, // 固定高度防止溢出
@@ -789,25 +808,41 @@ class MainCitiesScreen extends StatelessWidget {
               children: [
                 TextField(
                   controller: searchController,
-                  style: TextStyle(color: AppColors.textPrimary),
+                  style: TextStyle(color: AppColors.textPrimary, fontSize: 15),
                   decoration: InputDecoration(
                     hintText: '搜索城市名称（如：北京、上海）',
-                    hintStyle: TextStyle(color: AppColors.textSecondary),
-                    prefixIcon: Icon(
-                      Icons.search,
+                    hintStyle: TextStyle(
                       color: AppColors.textSecondary,
+                      fontSize: 15,
                     ),
+                    prefixIcon: Icon(
+                      Icons.search_rounded,
+                      color: AppColors.textSecondary,
+                      size: 22,
+                    ),
+                    filled: true,
+                    fillColor: AppColors.borderColor.withOpacity(0.05),
+                    // Material Design 3: 更大的圆角
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(16),
                       borderSide: BorderSide(color: AppColors.borderColor),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.borderColor),
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: AppColors.borderColor.withOpacity(0.5),
+                      ),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.accentBlue),
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(
+                        color: AppColors.primaryBlue,
+                        width: 2,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
                     ),
                   ),
                   onChanged: (value) async {
@@ -865,23 +900,26 @@ class MainCitiesScreen extends StatelessWidget {
                           (c) => c.id == city.id,
                         );
 
+                        // Material Design 3: 列表项样式
                         return Container(
-                          margin: const EdgeInsets.only(bottom: 4),
+                          margin: const EdgeInsets.only(bottom: 6),
                           decoration: BoxDecoration(
                             color: isMainCity
-                                ? AppColors.accentGreen.withOpacity(0.1)
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(8),
-                            border: isMainCity
-                                ? Border.all(
-                                    color: AppColors.accentGreen.withOpacity(
-                                      0.3,
-                                    ),
-                                  )
-                                : null,
+                                ? AppColors.accentGreen.withOpacity(0.15)
+                                : AppColors.borderColor.withOpacity(0.03),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isMainCity
+                                  ? AppColors.accentGreen
+                                  : AppColors.borderColor.withOpacity(0.2),
+                              width: isMainCity ? 1.5 : 1,
+                            ),
                           ),
                           child: ListTile(
-                            dense: true,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 4,
+                            ),
                             title: Row(
                               children: [
                                 Text(
@@ -891,8 +929,8 @@ class MainCitiesScreen extends StatelessWidget {
                                         ? AppColors.accentGreen
                                         : AppColors.textPrimary,
                                     fontWeight: isMainCity
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
+                                        ? FontWeight.w600
+                                        : FontWeight.w500,
                                     fontSize: 15,
                                   ),
                                 ),
@@ -908,14 +946,14 @@ class MainCitiesScreen extends StatelessWidget {
                             ),
                             trailing: isMainCity
                                 ? Icon(
-                                    Icons.check_circle,
+                                    Icons.check_circle_rounded,
                                     color: AppColors.accentGreen,
-                                    size: 20,
+                                    size: 22,
                                   )
                                 : Icon(
-                                    Icons.add_circle_outline,
-                                    color: AppColors.titleBarDecorIconColor,
-                                    size: AppColors.titleBarDecorIconSize,
+                                    Icons.add_circle_outline_rounded,
+                                    color: AppColors.primaryBlue,
+                                    size: 22,
                                   ),
                             onTap: isMainCity
                                 ? null
@@ -933,10 +971,15 @@ class MainCitiesScreen extends StatelessWidget {
                                           context,
                                         ).showSnackBar(
                                           SnackBar(
-                                            content: Text('添加城市失败，请重试'),
+                                            content: const Text('添加城市失败，请重试'),
                                             backgroundColor: AppColors.error,
-                                            duration: Duration(
+                                            duration: const Duration(
                                               milliseconds: 1500,
+                                            ),
+                                            behavior: SnackBarBehavior.floating,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
                                             ),
                                           ),
                                         );
@@ -973,13 +1016,22 @@ class MainCitiesScreen extends StatelessWidget {
               ],
             ),
           ),
+          actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
           actions: [
-            TextButton(
+            FilledButton(
               onPressed: () => Navigator.pop(context),
-              child: Text(
-                '关闭',
-                style: TextStyle(color: AppColors.textSecondary),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.primaryBlue,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 10,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
               ),
+              child: const Text('关闭'),
             ),
           ],
         ),

@@ -231,7 +231,10 @@ class WeatherPageCommon {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: AppColors.standardCardDecoration,
-          child: WeatherChart(dailyForecast: weather?.forecast15d),
+          child: SizedBox(
+            height: 220,
+            child: WeatherChart(dailyForecast: weather?.forecast15d),
+          ),
         ),
         const SizedBox(height: 16),
         // 生活指数
@@ -404,35 +407,52 @@ class WeatherPageCommon {
     showDialog(
       context: context,
       builder: (BuildContext context) {
+        // Material Design 3: 弹窗样式
         return AlertDialog(
           backgroundColor: AppColors.backgroundSecondary,
-          shape: AppColors.dialogShape,
-          title: Row(
-            children: [
-              Icon(
-                Icons.lightbulb_outline,
-                color: AppColors.titleBarIconColor,
-                size: AppColors.titleBarIconSize,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '生活建议',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
           ),
+          elevation: 3,
+          icon: Icon(
+            Icons.lightbulb_outline_rounded,
+            color: AppColors.warning,
+            size: 32,
+          ),
+          title: Text(
+            '生活建议',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 24,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
           content: Text(
             '今日天气适宜外出，建议穿着舒适，注意防晒。',
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 14,
+              height: 1.5,
+            ),
           ),
+          actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
           actions: [
-            TextButton(
+            FilledButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('确定', style: TextStyle(color: AppColors.textPrimary)),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.primaryBlue,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 10,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              child: const Text('确定'),
             ),
           ],
         );

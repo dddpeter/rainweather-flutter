@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/weather_model.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_constants.dart';
+import '../constants/chart_styles.dart';
 import '../providers/theme_provider.dart';
 
 class HourlyChart extends StatelessWidget {
@@ -71,95 +72,87 @@ class HourlyChart extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Expanded(
-                    child: LineChart(
-                      LineChartData(
-                        gridData: FlGridData(
-                          show: true,
-                          drawVerticalLine: false,
-                          horizontalInterval: 5,
-                          getDrawingHorizontalLine: (value) {
-                            return FlLine(
-                              color: AppColors.textTertiary,
-                              strokeWidth: 1,
-                            );
-                          },
-                        ),
-                        titlesData: FlTitlesData(
-                          leftTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: true,
-                              reservedSize: 30,
-                              interval: 5,
-                              getTitlesWidget: (value, meta) {
-                                return Text(
-                                  '${value.toInt()}℃',
-                                  style: TextStyle(
-                                    color: AppColors.textSecondary,
-                                    fontSize: 10,
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                          rightTitles: const AxisTitles(
-                            sideTitles: SideTitles(showTitles: false),
-                          ),
-                          topTitles: const AxisTitles(
-                            sideTitles: SideTitles(showTitles: false),
-                          ),
-                          bottomTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: true,
-                              reservedSize: 30,
-                              getTitlesWidget: (value, meta) {
-                                final index = value.toInt();
-                                if (index >= 0 &&
-                                    index < filteredForecast.length) {
-                                  return Text(
-                                    _formatTime(
-                                      filteredForecast[index].forecasttime ??
-                                          '',
-                                    ),
-                                    style: TextStyle(
-                                      color: AppColors.textSecondary,
-                                      fontSize: 10,
-                                    ),
-                                  );
-                                }
-                                return const Text('');
-                              },
-                            ),
-                          ),
-                        ),
-                        borderData: FlBorderData(show: false),
-                        lineBarsData: [
-                          LineChartBarData(
+                    child: Builder(
+                      builder: (context) {
+                        // 准备图表数据
+                        final lineBarsData = [
+                          ChartStyles.createLineChartBarData(
                             spots: _getTemperatureSpots(filteredForecast),
-                            isCurved: true,
                             color: AppColors.primaryBlue,
-                            barWidth: 3,
-                            isStrokeCapRound: true,
-                            dotData: FlDotData(
-                              show: true,
-                              getDotPainter: (spot, percent, barData, index) {
-                                return FlDotCirclePainter(
-                                  radius: 4,
-                                  color: AppColors.primaryBlue,
-                                  strokeWidth: 2,
-                                  strokeColor:
-                                      AppColors.cardBackground, // 使用卡片背景色作为描边
-                                );
-                              },
-                            ),
-                            belowBarData: BarAreaData(
-                              show: true,
-                              color: AppColors.primaryBlue.withOpacity(0.1),
-                            ),
+                            isCurved: true,
+                            showDataLabels: true,
+                            showBelowArea: true,
+                            belowAreaOpacity: 0.1,
                           ),
-                        ],
-                        minY: _getMinTemperature(filteredForecast) - 5,
-                        maxY: _getMaxTemperature(filteredForecast) + 5,
-                      ),
+                        ];
+
+                        return LineChart(
+                          LineChartData(
+                            gridData: ChartStyles.getGridData(
+                              showVertical: false,
+                              horizontalInterval: 5,
+                            ),
+                            titlesData: FlTitlesData(
+                              leftTitles: AxisTitles(
+                                sideTitles: SideTitles(
+                                  showTitles: true,
+                                  reservedSize:
+                                      ChartStyles.leftTitlesReservedSize,
+                                  interval: 5,
+                                  getTitlesWidget: (value, meta) {
+                                    return Text(
+                                      '${value.toInt()}℃',
+                                      style: ChartStyles.getYAxisLabelStyle(),
+                                    );
+                                  },
+                                ),
+                              ),
+                              rightTitles: const AxisTitles(
+                                sideTitles: SideTitles(showTitles: false),
+                              ),
+                              topTitles: const AxisTitles(
+                                sideTitles: SideTitles(showTitles: false),
+                              ),
+                              bottomTitles: AxisTitles(
+                                sideTitles: SideTitles(
+                                  showTitles: true,
+                                  reservedSize:
+                                      ChartStyles.bottomTitlesReservedSize,
+                                  getTitlesWidget: (value, meta) {
+                                    final index = value.toInt();
+                                    if (index >= 0 &&
+                                        index < filteredForecast.length) {
+                                      return Text(
+                                        _formatTime(
+                                          filteredForecast[index]
+                                                  .forecasttime ??
+                                              '',
+                                        ),
+                                        style: ChartStyles.getAxisLabelStyle(),
+                                      );
+                                    }
+                                    return const Text('');
+                                  },
+                                ),
+                              ),
+                            ),
+                            borderData: ChartStyles.getBorderData(),
+                            lineBarsData: lineBarsData,
+                            minY: _getMinTemperature(filteredForecast) - 5,
+                            maxY: _getMaxTemperature(filteredForecast) + 5,
+                            // 显示数据标签
+                            lineTouchData:
+                                ChartStyles.getM3TouchDataWithLabels(),
+                            showingTooltipIndicators:
+                                ChartStyles.generateShowingIndicators(
+                                  lineBarsData: lineBarsData,
+                                  interval: filteredForecast.length > 12
+                                      ? 3
+                                      : 2,
+                                ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ],

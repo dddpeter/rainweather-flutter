@@ -8,66 +8,60 @@ import '../constants/app_colors.dart';
 class SunMoonWidget extends StatelessWidget {
   final WeatherProvider weatherProvider;
 
-  const SunMoonWidget({
-    Key? key,
-    required this.weatherProvider,
-  }) : super(key: key);
+  const SunMoonWidget({Key? key, required this.weatherProvider})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         final sunMoonData = weatherProvider.sunMoonIndexData;
-        
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.cardBackground,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: AppColors.cardBorder,
-              width: 1,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Card(
+            elevation: AppColors.cardElevation,
+            shadowColor: AppColors.cardShadowColor,
+            color: AppColors.materialCardColor,
+            shape: AppColors.cardShape,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    Icons.wb_sunny,
-                    color: AppColors.warning,
-                    size: 20,
+                  Row(
+                    children: [
+                      Icon(Icons.wb_sunny, color: AppColors.warning, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        '日出日落',
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '日出日落',
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                  const SizedBox(height: 16),
+
+                  // 日出日落信息
+                  if (sunMoonData?.sunAndMoon != null) ...[
+                    _buildSunMoonInfo(sunMoonData!.sunAndMoon!),
+                  ] else ...[
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Text(
+                          '暂无日出日落数据',
+                          style: TextStyle(color: AppColors.textSecondary),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
-              const SizedBox(height: 16),
-              
-              // 日出日落信息
-              if (sunMoonData?.sunAndMoon != null) ...[
-                _buildSunMoonInfo(sunMoonData!.sunAndMoon!),
-              ] else ...[
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Text(
-                      '暂无日出日落数据',
-                      style: TextStyle(color: AppColors.textSecondary),
-                    ),
-                  ),
-                ),
-              ],
-            ],
+            ),
           ),
         );
       },
@@ -107,16 +101,18 @@ class SunMoonWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildSunMoonItem(IconData icon, String label, String value, Color color) {
+  Widget _buildSunMoonItem(
+    IconData icon,
+    String label,
+    String value,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       decoration: BoxDecoration(
         color: color.withOpacity(0.15),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: color.withOpacity(0.4),
-          width: 1,
-        ),
+        border: Border.all(color: color.withOpacity(0.4), width: 1),
       ),
       child: Column(
         children: [

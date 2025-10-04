@@ -26,22 +26,22 @@ class HourlyWeatherWidget extends StatelessWidget {
             child: Center(
               child: Text(
                 '暂无24小时预报数据',
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 16,
-                ),
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 16),
               ),
             ),
           );
         }
 
-        return Container(
-          decoration: AppColors.standardCardDecoration,
+        return Card(
+          elevation: AppColors.cardElevation,
+          shadowColor: AppColors.cardShadowColor,
+          color: AppColors.materialCardColor,
+          shape: AppColors.cardShape,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.all(12), // 16 -> 12 (减少约1/4)
+                padding: const EdgeInsets.all(12),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -56,9 +56,9 @@ class HourlyWeatherWidget extends StatelessWidget {
                     Text(
                       '更多',
                       style: TextStyle(
-                        color: themeProvider.isLightTheme 
-                            ? AppColors.primaryBlue  // 亮色主题使用深蓝色
-                            : AppColors.accentBlue,   // 暗色主题使用亮蓝色
+                        color: themeProvider.isLightTheme
+                            ? AppColors.primaryBlue
+                            : AppColors.accentBlue,
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                       ),
@@ -67,10 +67,10 @@ class HourlyWeatherWidget extends StatelessWidget {
                 ),
               ),
               SizedBox(
-                height: 90, // 100 -> 90 (减少10)
+                height: 90,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 8), // 16 -> 8 (1/2)
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   itemCount: hourlyForecast!.length,
                   itemBuilder: (context, index) {
                     final hour = hourlyForecast![index];
@@ -78,7 +78,7 @@ class HourlyWeatherWidget extends StatelessWidget {
                   },
                 ),
               ),
-              const SizedBox(height: 8), // 16 -> 8 (1/2)
+              const SizedBox(height: 8),
             ],
           ),
         );

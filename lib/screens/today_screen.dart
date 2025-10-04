@@ -29,7 +29,7 @@ class _TodayScreenState extends State<TodayScreen> {
       context.read<WeatherProvider>().initializeWeather();
     });
   }
-  
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -43,10 +43,12 @@ class _TodayScreenState extends State<TodayScreen> {
     if (location == null) {
       return AppConstants.defaultCity;
     }
-    
+
     // 调试信息
-    print('Location debug: district=${location.district}, city=${location.city}, province=${location.province}');
-    
+    print(
+      'Location debug: district=${location.district}, city=${location.city}, province=${location.province}',
+    );
+
     // 优先显示district，如果为空则显示city，最后显示province
     if (location.district.isNotEmpty && location.district != '未知') {
       return location.district;
@@ -66,140 +68,144 @@ class _TodayScreenState extends State<TodayScreen> {
       builder: (context, themeProvider, _) {
         // 确保AppColors使用最新的主题
         AppColors.setThemeProvider(themeProvider);
-        
+
         return Scaffold(
           body: Container(
-            decoration: BoxDecoration(
-              gradient: AppColors.primaryGradient,
-            ),
+            decoration: BoxDecoration(gradient: AppColors.primaryGradient),
             child: Consumer<WeatherProvider>(
               builder: (context, weatherProvider, child) {
-          if (weatherProvider.isLoading && weatherProvider.currentWeather == null) {
-            return Center(
-              child: CircularProgressIndicator(
-                color: AppColors.accentBlue,
-              ),
-            );
-          }
-
-          if (weatherProvider.error != null && weatherProvider.currentWeather == null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 64,
-                    color: AppColors.error,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    weatherProvider.error!,
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 16,
+                if (weatherProvider.isLoading &&
+                    weatherProvider.currentWeather == null) {
+                  return Center(
+                    child: CircularProgressIndicator(
+                      color: AppColors.accentBlue,
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => weatherProvider.forceRefreshWithLocation(),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.accentBlue,
-                      foregroundColor: AppColors.textPrimary,
-                    ),
-                    child: Text('重试'),
-                  ),
-                ],
-              ),
-            );
-          }
+                  );
+                }
 
-          return RefreshIndicator(
-            onRefresh: () => weatherProvider.refreshWeatherData(),
-            color: AppColors.primaryBlue,
-            backgroundColor: AppColors.backgroundSecondary,
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: Column(
-                children: [
-                  _buildTopWeatherSection(weatherProvider),
-                  const SizedBox(height: 16),
-                  SunMoonWidget(weatherProvider: weatherProvider),
-                  const SizedBox(height: 16),
-                  LifeIndexWidget(weatherProvider: weatherProvider),
-                  const SizedBox(height: 16),
-                  _buildHourlyWeather(weatherProvider),
-                  const SizedBox(height: 16),
-                  _buildTemperatureChart(weatherProvider),
-                  const SizedBox(height: 16),
-                  _buildWeatherDetails(weatherProvider),
-                  const SizedBox(height: 80), // Space for bottom buttons
-                ],
-              ),
+                if (weatherProvider.error != null &&
+                    weatherProvider.currentWeather == null) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 64,
+                          color: AppColors.error,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          weatherProvider.error!,
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 16,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () =>
+                              weatherProvider.forceRefreshWithLocation(),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.accentBlue,
+                            foregroundColor: AppColors.textPrimary,
+                          ),
+                          child: Text('重试'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return RefreshIndicator(
+                  onRefresh: () => weatherProvider.refreshWeatherData(),
+                  color: AppColors.primaryBlue,
+                  backgroundColor: AppColors.backgroundSecondary,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Column(
+                      children: [
+                        _buildTopWeatherSection(weatherProvider),
+                        const SizedBox(height: 16),
+                        SunMoonWidget(weatherProvider: weatherProvider),
+                        const SizedBox(height: 16),
+                        LifeIndexWidget(weatherProvider: weatherProvider),
+                        const SizedBox(height: 16),
+                        _buildHourlyWeather(weatherProvider),
+                        const SizedBox(height: 16),
+                        _buildTemperatureChart(weatherProvider),
+                        const SizedBox(height: 16),
+                        _buildWeatherDetails(weatherProvider),
+                        const SizedBox(height: 80), // Space for bottom buttons
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
-          );
-        },
-      ),
-      ),
-      floatingActionButton: Consumer<WeatherProvider>(
-        builder: (context, weatherProvider, child) {
-          return Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(28),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.buttonShadow,
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+          ),
+          floatingActionButton: Consumer<WeatherProvider>(
+            builder: (context, weatherProvider, child) {
+              return Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.buttonShadow,
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(28),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: weatherProvider.isLoading 
-                        ? AppColors.glassBackground.withOpacity(0.8)
-                        : AppColors.glassBackground,
-                    borderRadius: BorderRadius.circular(28),
-                    border: Border.all(
-                      color: AppColors.borderColor,
-                      width: 1,
-                    ),
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(28),
-                      onTap: weatherProvider.isLoading
-                          ? null
-                          : () => weatherProvider.forceRefreshWithLocation(),
-                      child: Center(
-                        child: weatherProvider.isLoading
-                            ? SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.textPrimary),
-                                ),
-                              )
-                            : Icon(
-                                Icons.refresh,
-                                color: AppColors.textPrimary,
-                                size: 24,
-                              ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(28),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    child: Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: weatherProvider.isLoading
+                            ? AppColors.glassBackground.withOpacity(0.8)
+                            : AppColors.glassBackground,
+                        borderRadius: BorderRadius.circular(28),
+                        border: Border.all(
+                          color: AppColors.borderColor,
+                          width: 1,
+                        ),
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(28),
+                          onTap: weatherProvider.isLoading
+                              ? null
+                              : () =>
+                                    weatherProvider.forceRefreshWithLocation(),
+                          child: Center(
+                            child: weatherProvider.isLoading
+                                ? SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        AppColors.textPrimary,
+                                      ),
+                                    ),
+                                  )
+                                : Icon(
+                                    Icons.refresh,
+                                    color: AppColors.textPrimary,
+                                    size: 24,
+                                  ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ),
               );
             },
           ),
@@ -252,7 +258,7 @@ class _TodayScreenState extends State<TodayScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              
+
               // Weather icon, weather text and temperature
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -285,7 +291,7 @@ class _TodayScreenState extends State<TodayScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              
+
               // Weather details in 2 columns
               if (current != null) ...[
                 Row(
@@ -361,16 +367,18 @@ class _TodayScreenState extends State<TodayScreen> {
     );
   }
 
-  Widget _buildCompactWeatherDetail(IconData icon, String label, String value, Color color) {
+  Widget _buildCompactWeatherDetail(
+    IconData icon,
+    String label,
+    String value,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: color.withOpacity(0.3),
-          width: 1,
-        ),
+        border: Border.all(color: color.withOpacity(0.3), width: 1),
       ),
       child: Row(
         children: [
@@ -379,7 +387,7 @@ class _TodayScreenState extends State<TodayScreen> {
           Expanded(
             child: Text(
               label,
-                        style: TextStyle(
+              style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -399,31 +407,37 @@ class _TodayScreenState extends State<TodayScreen> {
     );
   }
 
-
   Widget _buildTemperatureChart(WeatherProvider weatherProvider) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(12),
-      decoration: AppColors.standardCardDecoration,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '7日温度趋势',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-            ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Card(
+        elevation: AppColors.cardElevation,
+        shadowColor: AppColors.cardShadowColor,
+        color: AppColors.materialCardColor,
+        shape: AppColors.cardShape,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '7日温度趋势',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 120,
+                child: WeatherChart(
+                  dailyForecast: weatherProvider.dailyForecast,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 120,
-            child: WeatherChart(
-              dailyForecast: weatherProvider.dailyForecast,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -436,9 +450,7 @@ class _TodayScreenState extends State<TodayScreen> {
         onTap: () {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => const HourlyScreen(),
-            ),
+            MaterialPageRoute(builder: (context) => const HourlyScreen()),
           );
         },
         child: HourlyWeatherWidget(
@@ -453,122 +465,130 @@ class _TodayScreenState extends State<TodayScreen> {
     final weather = weatherProvider.currentWeather;
     final air = weather?.current?.air ?? weather?.air;
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: AppColors.standardCardDecoration,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Card(
+        elevation: AppColors.cardElevation,
+        shadowColor: AppColors.cardShadowColor,
+        color: AppColors.materialCardColor,
+        shape: AppColors.cardShape,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                Icons.info_outline,
-                color: AppColors.titleBarDecorIconColor,
-                size: AppColors.titleBarDecorIconSize,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '详细信息',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          if (air != null) ...[
-            Row(
-              children: [
-                Expanded(
-                  child: _buildCompactDetailItem(
-                    Icons.air,
-                    '空气质量',
-                    '${air.AQI ?? '--'} (${air.levelIndex ?? '未知'})',
-                    AppColors.textPrimary, // 使用主文字色确保可见性
+              Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    color: AppColors.titleBarDecorIconColor,
+                    size: AppColors.titleBarDecorIconSize,
                   ),
-                ),
-                const SizedBox(width: 8),
-                if (weather?.current?.current != null)
-                  Expanded(
-                    child: _buildCompactDetailItem(
-                      Icons.thermostat,
-                      '体感温度',
-                      '${weather!.current!.current!.feelstemperature ?? '--'}℃',
-                      AppColors.textPrimary, // 使用主文字色确保可见性
+                  const SizedBox(width: 8),
+                  Text(
+                    '详细信息',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              if (air != null) ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildCompactDetailItem(
+                        Icons.air,
+                        '空气质量',
+                        '${air.AQI ?? '--'} (${air.levelIndex ?? '未知'})',
+                        AppColors.textPrimary, // 使用主文字色确保可见性
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    if (weather?.current?.current != null)
+                      Expanded(
+                        child: _buildCompactDetailItem(
+                          Icons.thermostat,
+                          '体感温度',
+                          '${weather!.current!.current!.feelstemperature ?? '--'}℃',
+                          AppColors.textPrimary, // 使用主文字色确保可见性
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
               ],
-            ),
-            const SizedBox(height: 8),
-          ],
-          if (weather?.current?.current != null) ...[
-            // 第一行：湿度和气压
-            Row(
-              children: [
-                Expanded(
-                  child: _buildCompactDetailItem(
-                    Icons.water_drop,
-                    '湿度',
-                    '${weather!.current!.current!.humidity ?? '--'}%',
-                    AppColors.textPrimary, // 使用主文字色确保可见性
-                  ),
+              if (weather?.current?.current != null) ...[
+                // 第一行：湿度和气压
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildCompactDetailItem(
+                        Icons.water_drop,
+                        '湿度',
+                        '${weather!.current!.current!.humidity ?? '--'}%',
+                        AppColors.textPrimary, // 使用主文字色确保可见性
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _buildCompactDetailItem(
+                        Icons.compress,
+                        '气压',
+                        '${weather.current!.current!.airpressure ?? '--'}hpa',
+                        AppColors.textPrimary, // 使用主文字色确保可见性
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _buildCompactDetailItem(
-                    Icons.compress,
-                    '气压',
-                    '${weather.current!.current!.airpressure ?? '--'}hpa',
-                    AppColors.textPrimary, // 使用主文字色确保可见性
-                  ),
+                const SizedBox(height: 8),
+
+                // 第二行：风力和能见度
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildCompactDetailItem(
+                        Icons.air,
+                        '风力',
+                        '${weather.current!.current!.winddir ?? '--'} ${weather.current!.current!.windpower ?? ''}',
+                        AppColors.textPrimary, // 使用主文字色确保可见性
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _buildCompactDetailItem(
+                        Icons.visibility,
+                        '能见度',
+                        '${weather.current!.current!.visibility ?? '--'}km',
+                        AppColors.textPrimary, // 使用主文字色确保可见性
+                      ),
+                    ),
+                  ],
                 ),
+                const SizedBox(height: 8),
               ],
-            ),
-            const SizedBox(height: 8),
-            
-            // 第二行：风力和能见度
-            Row(
-              children: [
-                Expanded(
-                  child: _buildCompactDetailItem(
-                    Icons.air,
-                    '风力',
-                    '${weather.current!.current!.winddir ?? '--'} ${weather.current!.current!.windpower ?? ''}',
-                    AppColors.textPrimary, // 使用主文字色确保可见性
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _buildCompactDetailItem(
-                    Icons.visibility,
-                    '能见度',
-                    '${weather.current!.current!.visibility ?? '--'}km',
-                    AppColors.textPrimary, // 使用主文字色确保可见性
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-          ],
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }
 
-
-  Widget _buildCompactDetailItem(IconData icon, String label, String value, Color color) {
+  Widget _buildCompactDetailItem(
+    IconData icon,
+    String label,
+    String value,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: color.withOpacity(0.3),
-          width: 1,
-        ),
+        border: Border.all(color: color.withOpacity(0.3), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -604,8 +624,6 @@ class _TodayScreenState extends State<TodayScreen> {
       ),
     );
   }
-
-
 
   void _showLifeAdviceDialog(WeatherProvider weatherProvider) {
     final weather = weatherProvider.currentWeather;

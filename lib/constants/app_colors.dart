@@ -3,7 +3,7 @@ import '../providers/theme_provider.dart';
 import 'theme_extensions.dart';
 
 /// 应用颜色配置 - 支持亮色和暗色主题
-/// 
+///
 /// 使用指南：
 /// 1. 新代码推荐使用: context.appTheme.textPrimary
 /// 2. 旧代码兼容使用: AppColors.textPrimary (需要 setThemeProvider)
@@ -14,7 +14,8 @@ class AppColors {
 
   /// 从 BuildContext 获取主题扩展（推荐的新方式）
   static AppThemeExtension of(BuildContext context) {
-    return Theme.of(context).extension<AppThemeExtension>() ?? AppThemeExtension.dark();
+    return Theme.of(context).extension<AppThemeExtension>() ??
+        AppThemeExtension.dark();
   }
 
   static void setThemeProvider(ThemeProvider provider) {
@@ -123,73 +124,74 @@ class AppColors {
   // 主题化颜色 - 动态获取
   /// 主色调
   static Color get primaryBlue => _getColor('primary');
-  
+
   /// 文字颜色
   static Color get textPrimary => _getColor('textPrimary');
-  
+
   /// 次要文字颜色
   static Color get textSecondary => _getColor('textSecondary');
-  
+
   /// 辅助文字颜色
   static Color get textTertiary => _getColor('textTertiary');
-  
+
   /// 强调色
   static Color get accentBlue => _getColor('accent');
-  
+
   /// 成功色
   static Color get success => _getColor('success');
-  
+
   /// 警告色
   static Color get warning => _getColor('warning');
-  
+
   /// 错误色
   static Color get error => _getColor('error');
-  
+
   /// 边框颜色
   static Color get borderColor => _getColor('border');
-  
+
   /// 玻璃效果背景色
   static Color get glassBackground => _getColor('glassBackground');
-  
+
   /// 卡片背景色
   static Color get cardBackground => _getColor('cardBackground');
-  
+
   /// 当前tag卡片背景色
-  static Color get currentTagCardBackground => _getColor('currentTagCardBackground');
-  
+  static Color get currentTagCardBackground =>
+      _getColor('currentTagCardBackground');
+
   /// 卡片边框色
   static Color get cardBorder => _getColor('cardBorder');
-  
+
   /// 按钮阴影
   static Color get buttonShadow => _getColor('buttonShadow');
-  
+
   /// 高温色
   static Color get highTemp => _getColor('highTemp');
-  
+
   /// 低温色
   static Color get lowTemp => _getColor('lowTemp');
-  
+
   /// 背景色
   static Color get backgroundPrimary => _getColor('background');
-  
+
   /// 次背景色
   static Color get backgroundSecondary => _getColor('surface');
-  
+
   /// 强调绿色
   static Color get accentGreen => _getColor('success');
-  
+
   /// 分割线颜色
   static Color get dividerColor => _getColor('border');
-  
+
   /// 信息色
   static Color get info => _getColor('primary');
-  
+
   /// 日出颜色
   static Color get sunrise => _getColor('sunrise');
-  
+
   /// 日落颜色
   static Color get sunset => _getColor('sunset');
-  
+
   /// 月亮颜色
   static Color get moon => _getColor('moon');
 
@@ -215,7 +217,7 @@ class AppColors {
   /// 标题栏图标样式
   static const double titleBarIconSize = 24.0;
   static Color get titleBarIconColor => _getColor('textSecondary');
-  
+
   /// 标题栏图标样式（用于装饰图标）
   static const double titleBarDecorIconSize = 20.0;
   static Color get titleBarDecorIconColor => _getColor('textSecondary');
@@ -223,13 +225,14 @@ class AppColors {
   // 底部导航栏样式
   /// 底部导航栏激活状态颜色
   static Color get bottomNavSelectedColor => _getColor('bottomNavSelectedText');
-  
+
   /// 底部导航栏未激活状态颜色
   static Color get bottomNavUnselectedColor => _getColor('textTertiary');
-  
+
   /// 底部导航栏选中项目背景颜色
-  static Color get bottomNavSelectedBackground => _getColor('bottomNavSelectedBg');
-  
+  static Color get bottomNavSelectedBackground =>
+      _getColor('bottomNavSelectedBg');
+
   /// 底部导航栏未选中项目背景颜色
   static Color get bottomNavUnselectedBackground => Colors.transparent;
 
@@ -238,66 +241,45 @@ class AppColors {
   static BoxDecoration get standardCardDecoration => BoxDecoration(
     color: _getColor('cardBackground'),
     borderRadius: BorderRadius.circular(16),
-    border: Border.all(
-      color: _getColor('cardBorder'),
-      width: 1,
-    ),
+    border: Border.all(color: _getColor('cardBorder'), width: 1),
   );
 
   /// 紧凑卡片装饰（用于小卡片）
   static BoxDecoration get compactCardDecoration => BoxDecoration(
     color: _getColor('cardBackground'),
     borderRadius: BorderRadius.circular(12),
-    border: Border.all(
-      color: _getColor('cardBorder'),
-      width: 1,
-    ),
+    border: Border.all(color: _getColor('cardBorder'), width: 1),
   );
 
   /// 小型卡片装饰（用于标签等）
   static BoxDecoration get smallCardDecoration => BoxDecoration(
     color: _getColor('cardBackground'),
     borderRadius: BorderRadius.circular(8),
-    border: Border.all(
-      color: _getColor('cardBorder'),
-      width: 1,
-    ),
+    border: Border.all(color: _getColor('cardBorder'), width: 1),
   );
 
   /// 24小时小卡片装饰（使用主题色渐变边框）
   static BoxDecoration get hourlySmallCardDecoration => BoxDecoration(
     gradient: LinearGradient(
-      colors: [
-        _getColor('cardBackground'),
-        _getColor('cardBackground'),
-      ],
+      colors: [_getColor('cardBackground'), _getColor('cardBackground')],
       stops: const [0.0, 1.0],
     ),
     borderRadius: BorderRadius.circular(8),
-    border: Border.all(
-      color: _getColor('primary'),
-      width: 1.5,
-    ),
+    border: Border.all(color: _getColor('primary'), width: 1.5),
   );
 
   /// 玻璃效果卡片装饰（用于24小时页面的风格）
   static BoxDecoration get glassCardDecoration => BoxDecoration(
     color: _getColor('glassBackground'),
     borderRadius: BorderRadius.circular(16),
-    border: Border.all(
-      color: _getColor('cardBorder'),
-      width: 1,
-    ),
+    border: Border.all(color: _getColor('cardBorder'), width: 1),
   );
 
   /// 带阴影的卡片装饰
   static BoxDecoration get shadowCardDecoration => BoxDecoration(
     color: _getColor('cardBackground'),
     borderRadius: BorderRadius.circular(16),
-    border: Border.all(
-      color: _getColor('cardBorder'),
-      width: 1,
-    ),
+    border: Border.all(color: _getColor('cardBorder'), width: 1),
     boxShadow: [
       BoxShadow(
         color: _getColor('buttonShadow'),
@@ -307,15 +289,34 @@ class AppColors {
     ],
   );
 
+  // ==================== Material Design 卡片样式 ====================
+
+  /// Material 卡片的 elevation（根据主题调整）
+  static double get cardElevation =>
+      _themeProvider?.isLightTheme == true ? 1 : 2;
+
+  /// Material 卡片的形状
+  static RoundedRectangleBorder get cardShape =>
+      RoundedRectangleBorder(borderRadius: BorderRadius.circular(16));
+
+  /// 小卡片的形状
+  static RoundedRectangleBorder get smallCardShape =>
+      RoundedRectangleBorder(borderRadius: BorderRadius.circular(12));
+
+  /// Material 卡片的颜色（使用 cardBackground）
+  static Color get materialCardColor => _getColor('cardBackground');
+
+  /// Material 卡片的阴影颜色（亮色主题用淡色，暗色主题用深色）
+  static Color get cardShadowColor => _themeProvider?.isLightTheme == true
+      ? Colors.black.withOpacity(0.1)
+      : Colors.black.withOpacity(0.3);
+
   // 公共弹窗样式
   /// 标准弹窗装饰
   static BoxDecoration get dialogDecoration => BoxDecoration(
     color: _getColor('surface'),
     borderRadius: BorderRadius.circular(16),
-    border: Border.all(
-      color: _getColor('border'),
-      width: 1,
-    ),
+    border: Border.all(color: _getColor('border'), width: 1),
     boxShadow: [
       BoxShadow(
         color: _getColor('buttonShadow').withOpacity(0.3),
@@ -333,10 +334,7 @@ class AppColors {
   /// 弹窗形状
   static ShapeBorder get dialogShape => RoundedRectangleBorder(
     borderRadius: BorderRadius.circular(16),
-    side: BorderSide(
-      color: _getColor('border'),
-      width: 1,
-    ),
+    side: BorderSide(color: _getColor('border'), width: 1),
   );
 
   // 主题化渐变色
@@ -365,35 +363,35 @@ class AppColors {
   // 天气相关颜色（固定颜色，不随主题变化）
   /// 晴天颜色
   static const Color sunnyColor = Color(0xFFFFD54F);
-  
+
   /// 多云颜色
   static const Color cloudyColor = Color(0xFFBDBDBD);
-  
+
   /// 雨天颜色
   static const Color rainyColor = Color(0xFF64B5F6);
-  
+
   /// 雪天颜色
   static const Color snowyColor = Color(0xFFE1F5FE);
-  
+
   /// 雾天颜色
   static const Color foggyColor = Color(0xFF9E9E9E);
 
   // 空气质量颜色（固定颜色，不随主题变化）
   /// 优
   static const Color airExcellent = Color(0xFF4CAF50);
-  
+
   /// 良
   static const Color airGood = Color(0xFF8BC34A);
-  
+
   /// 轻度污染
   static const Color airLight = Color(0xFFFFC107);
-  
+
   /// 中度污染
   static const Color airModerate = Color(0xFFFF9800);
-  
+
   /// 重度污染
   static const Color airHeavy = Color(0xFFF44336);
-  
+
   /// 严重污染
   static const Color airSevere = Color(0xFF9C27B0);
 }

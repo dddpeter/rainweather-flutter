@@ -7,6 +7,7 @@ import 'screens/today_screen.dart';
 import 'screens/hourly_screen.dart';
 import 'screens/forecast15d_screen.dart';
 import 'screens/city_weather_screen.dart';
+import 'screens/weather_alerts_screen.dart';
 import 'models/city_model.dart';
 import 'constants/app_colors.dart';
 import 'constants/theme_extensions.dart';
@@ -596,6 +597,11 @@ class MainCitiesScreen extends StatelessWidget {
                                                         ),
                                                       ),
                                                     ),
+                                                    // 预警图标
+                                                    _buildCityAlertIcon(
+                                                      context,
+                                                      cityWeather,
+                                                    ),
                                                   ],
                                                 ),
                                                 // Subtitle
@@ -658,6 +664,69 @@ class MainCitiesScreen extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  /// 构建城市预警图标（Material Design 3）
+  Widget _buildCityAlertIcon(BuildContext context, dynamic cityWeather) {
+    if (cityWeather == null) {
+      return const SizedBox.shrink();
+    }
+
+    final alerts = cityWeather.current?.alerts;
+    final hasAlerts = alerts != null && alerts.isNotEmpty;
+
+    if (!hasAlerts) {
+      return const SizedBox.shrink();
+    }
+
+    // M3: Icon button with badge
+    return Container(
+      margin: const EdgeInsets.only(left: 8),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => WeatherAlertsScreen(alerts: alerts),
+                  ),
+                );
+              },
+              borderRadius: BorderRadius.circular(12), // M3: 12px radius
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                child: Icon(
+                  Icons.warning_rounded,
+                  color: AppColors.error,
+                  size: 20,
+                ),
+              ),
+            ),
+          ),
+          // M3: Badge indicator
+          Positioned(
+            right: 2,
+            top: 2,
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                color: AppColors.error,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppColors.materialCardColor,
+                  width: 1.5,
+                ),
+              ),
+              constraints: const BoxConstraints(minWidth: 8, minHeight: 8),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

@@ -75,7 +75,7 @@ class LifeIndexWidget extends StatelessWidget {
               color: AppColors.materialCardColor,
               shape: AppColors.cardShape,
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -97,7 +97,7 @@ class LifeIndexWidget extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                     lifeIndexContent,
                   ],
                 ),
@@ -163,19 +163,19 @@ class LifeIndexWidget extends StatelessWidget {
       surfaceTintColor: color,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(7),
               decoration: BoxDecoration(
                 color: color.withOpacity(0.40), // 图标容器: 0.25 / 0.618 ≈ 0.40
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(9),
               ),
-              child: Icon(icon, color: color, size: 18),
+              child: Icon(icon, color: color, size: 17),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

@@ -399,6 +399,7 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
         elevation: AppColors.cardElevation,
         shadowColor: AppColors.cardShadowColor,
         color: AppColors.materialCardColor,
+        surfaceTintColor: Colors.transparent,
         shape: AppColors.cardShape,
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -410,14 +411,14 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
                   Icon(
                     Icons.info_outline,
                     color: AppColors.titleBarDecorIconColor,
-                    size: AppColors.titleBarDecorIconSize,
+                    size: AppConstants.sectionTitleIconSize,
                   ),
                   const SizedBox(width: 8),
                   Text(
                     '详细信息',
                     style: TextStyle(
                       color: AppColors.textPrimary,
-                      fontSize: 18,
+                      fontSize: AppConstants.sectionTitleFontSize,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -432,7 +433,7 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
                         Icons.air,
                         '空气质量',
                         '${air.AQI ?? '--'} (${air.levelIndex ?? '未知'})',
-                        AppColors.textPrimary, // 使用主文字色确保可见性
+                        AppColors.accentGreen,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -442,7 +443,7 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
                           Icons.thermostat,
                           '体感温度',
                           '${weather!.current!.current!.feelstemperature ?? '--'}℃',
-                          AppColors.textPrimary, // 使用主文字色确保可见性
+                          AppColors.warning,
                         ),
                       ),
                   ],
@@ -458,7 +459,7 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
                         Icons.water_drop,
                         '湿度',
                         '${weather!.current!.current!.humidity ?? '--'}%',
-                        AppColors.textPrimary, // 使用主文字色确保可见性
+                        AppColors.accentBlue,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -467,7 +468,7 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
                         Icons.compress,
                         '气压',
                         '${weather.current!.current!.airpressure ?? '--'}hpa',
-                        AppColors.textPrimary, // 使用主文字色确保可见性
+                        AppColors.moon,
                       ),
                     ),
                   ],
@@ -482,7 +483,7 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
                         Icons.air,
                         '风力',
                         '${weather.current!.current!.winddir ?? '--'} ${weather.current!.current!.windpower ?? ''}',
-                        AppColors.textPrimary, // 使用主文字色确保可见性
+                        AppColors.accentGreen,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -491,7 +492,7 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
                         Icons.visibility,
                         '能见度',
                         '${weather.current!.current!.visibility ?? '--'}km',
-                        AppColors.textPrimary, // 使用主文字色确保可见性
+                        AppColors.sunset,
                       ),
                     ),
                   ],

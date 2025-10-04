@@ -8,6 +8,7 @@ import '../widgets/life_index_widget.dart';
 import '../widgets/app_menu.dart';
 import '../services/weather_service.dart';
 import '../constants/app_colors.dart';
+import '../constants/app_constants.dart';
 import '../screens/hourly_screen.dart';
 
 class WeatherPageCommon {
@@ -68,7 +69,7 @@ class WeatherPageCommon {
                               width: 56,
                               height: 56,
                               decoration: BoxDecoration(
-                                color: weatherProvider.isLoading 
+                                color: weatherProvider.isLoading
                                     ? AppColors.glassBackground.withOpacity(0.8)
                                     : AppColors.glassBackground,
                                 borderRadius: BorderRadius.circular(28),
@@ -81,7 +82,9 @@ class WeatherPageCommon {
                                 color: Colors.transparent,
                                 child: InkWell(
                                   borderRadius: BorderRadius.circular(28),
-                                  onTap: weatherProvider.isLoading ? null : onRefresh,
+                                  onTap: weatherProvider.isLoading
+                                      ? null
+                                      : onRefresh,
                                   child: Center(
                                     child: weatherProvider.isLoading
                                         ? SizedBox(
@@ -89,9 +92,10 @@ class WeatherPageCommon {
                                             height: 20,
                                             child: CircularProgressIndicator(
                                               strokeWidth: 2,
-                                              valueColor: AlwaysStoppedAnimation<Color>(
-                                                AppColors.textPrimary,
-                                              ),
+                                              valueColor:
+                                                  AlwaysStoppedAnimation<Color>(
+                                                    AppColors.textPrimary,
+                                                  ),
                                             ),
                                           )
                                         : Icon(
@@ -121,15 +125,16 @@ class WeatherPageCommon {
   }
 
   /// 构建主要天气信息
-  static Widget _buildMainWeatherInfo(WeatherProvider weatherProvider, WeatherService weatherService) {
+  static Widget _buildMainWeatherInfo(
+    WeatherProvider weatherProvider,
+    WeatherService weatherService,
+  ) {
     final weather = weatherProvider.currentWeather?.current?.current;
     if (weather == null) {
       return Container(
         padding: const EdgeInsets.all(32),
         child: Center(
-          child: CircularProgressIndicator(
-            color: AppColors.textPrimary,
-          ),
+          child: CircularProgressIndicator(color: AppColors.textPrimary),
         ),
       );
     }
@@ -150,10 +155,7 @@ class WeatherPageCommon {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      weatherIcon,
-                      style: const TextStyle(fontSize: 48),
-                    ),
+                    Text(weatherIcon, style: const TextStyle(fontSize: 48)),
                     const SizedBox(height: 8),
                     Text(
                       weatherDesc,
@@ -190,9 +192,7 @@ class WeatherPageCommon {
           ),
           const SizedBox(height: 16),
           // 日出日落信息
-          SunMoonWidget(
-            weatherProvider: weatherProvider,
-          ),
+          SunMoonWidget(weatherProvider: weatherProvider),
         ],
       ),
     );
@@ -208,9 +208,7 @@ class WeatherPageCommon {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => const HourlyScreen(),
-          ),
+          MaterialPageRoute(builder: (context) => const HourlyScreen()),
         );
       },
       child: HourlyWeatherWidget(
@@ -221,7 +219,10 @@ class WeatherPageCommon {
   }
 
   /// 构建天气详情
-  static Widget buildWeatherDetails(BuildContext context, WeatherProvider weatherProvider) {
+  static Widget buildWeatherDetails(
+    BuildContext context,
+    WeatherProvider weatherProvider,
+  ) {
     final weather = weatherProvider.currentWeather;
 
     return Column(
@@ -234,22 +235,32 @@ class WeatherPageCommon {
         ),
         const SizedBox(height: 16),
         // 生活指数
-        LifeIndexWidget(
-          weatherProvider: weatherProvider,
-        ),
+        LifeIndexWidget(weatherProvider: weatherProvider),
         const SizedBox(height: 16),
         // 天气详情
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: AppColors.standardCardDecoration,
-          child: _buildCompactWeatherDetail(context, weatherProvider),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Card(
+            elevation: AppColors.cardElevation,
+            shadowColor: AppColors.cardShadowColor,
+            color: AppColors.materialCardColor,
+            surfaceTintColor: Colors.transparent,
+            shape: AppColors.cardShape,
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: _buildCompactWeatherDetail(context, weatherProvider),
+            ),
+          ),
         ),
       ],
     );
   }
 
   /// 构建紧凑的天气详情
-  static Widget _buildCompactWeatherDetail(BuildContext context, WeatherProvider weatherProvider) {
+  static Widget _buildCompactWeatherDetail(
+    BuildContext context,
+    WeatherProvider weatherProvider,
+  ) {
     final weather = weatherProvider.currentWeather?.current?.current;
     if (weather == null) return const SizedBox.shrink();
 
@@ -259,13 +270,23 @@ class WeatherPageCommon {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              '天气详情',
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+            Row(
+              children: [
+                Icon(
+                  Icons.thermostat,
+                  color: AppColors.accentBlue,
+                  size: AppConstants.sectionTitleIconSize,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '天气详情',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: AppConstants.sectionTitleFontSize,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
             GestureDetector(
               onTap: () => _showLifeAdviceDialog(context),
@@ -280,7 +301,7 @@ class WeatherPageCommon {
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         Row(
           children: [
             Expanded(
@@ -288,13 +309,16 @@ class WeatherPageCommon {
                 '体感温度',
                 '${weather.feelstemperature ?? '--'}°',
                 Icons.thermostat,
+                AppColors.warning,
               ),
             ),
+            const SizedBox(width: 12),
             Expanded(
               child: _buildCompactDetailItem(
                 '湿度',
                 '${weather.humidity ?? '--'}%',
                 Icons.water_drop,
+                AppColors.accentBlue,
               ),
             ),
           ],
@@ -307,13 +331,16 @@ class WeatherPageCommon {
                 '风速',
                 '${weather.windpower ?? '--'}',
                 Icons.air,
+                AppColors.accentGreen,
               ),
             ),
+            const SizedBox(width: 12),
             Expanded(
               child: _buildCompactDetailItem(
                 '气压',
                 '${weather.airpressure ?? '--'}hPa',
                 Icons.speed,
+                AppColors.moon,
               ),
             ),
           ],
@@ -323,38 +350,57 @@ class WeatherPageCommon {
   }
 
   /// 构建紧凑的详情项
-  static Widget _buildCompactDetailItem(String label, String value, IconData icon) {
-    return Column(
-      children: [
-        Icon(
-          icon,
-          color: AppColors.textSecondary,
-          size: 20,
+  static Widget _buildCompactDetailItem(
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
+    return Card(
+      elevation: 0,
+      color: color.withOpacity(0.25), // 内层小卡片: 0.4 × 0.618 ≈ 0.25
+      surfaceTintColor: color,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.40), // 图标容器: 0.25 / 0.618 ≈ 0.40
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: 22),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                letterSpacing: 0.3,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                height: 1.2,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 12,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          value,
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
+      ),
     );
   }
 
   /// 显示生活建议对话框
   static void _showLifeAdviceDialog(BuildContext context) {
-
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -381,20 +427,12 @@ class WeatherPageCommon {
           ),
           content: Text(
             '今日天气适宜外出，建议穿着舒适，注意防晒。',
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                '确定',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                ),
-              ),
+              child: Text('确定', style: TextStyle(color: AppColors.textPrimary)),
             ),
           ],
         );

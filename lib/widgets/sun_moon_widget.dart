@@ -26,7 +26,7 @@ class SunMoonWidget extends StatelessWidget {
             color: AppColors.materialCardColor,
             shape: AppColors.cardShape,
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -48,7 +48,7 @@ class SunMoonWidget extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
 
                   // 日出日落信息
                   if (sunMoonData?.sunAndMoon != null) ...[
@@ -118,18 +118,18 @@ class SunMoonWidget extends StatelessWidget {
       surfaceTintColor: color,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
         child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: color.withOpacity(0.40), // 图标容器: 0.25 / 0.618 ≈ 0.40
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: color, size: 24),
+              child: Icon(icon, color: color, size: 22),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             Text(
               label,
               style: TextStyle(
@@ -139,7 +139,7 @@ class SunMoonWidget extends StatelessWidget {
                 letterSpacing: 0.3,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             Text(
               value,
               style: TextStyle(

@@ -124,7 +124,7 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
                           // 天气提示卡片
                           _buildWeatherTipsCard(weatherProvider),
                           const SizedBox(height: AppConstants.cardSpacing),
-                          SunMoonWidget(weatherProvider: weatherProvider),
+                          const SunMoonWidget(),
                           const SizedBox(height: AppConstants.cardSpacing),
                           LifeIndexWidget(weatherProvider: weatherProvider),
                           const SizedBox(height: AppConstants.cardSpacing),

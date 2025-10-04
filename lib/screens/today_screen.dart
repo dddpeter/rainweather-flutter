@@ -224,7 +224,7 @@ class _TodayScreenState extends State<TodayScreen> with WidgetsBindingObserver {
                         // 天气提示卡片
                         _buildWeatherTipsCard(weatherProvider),
                         const SizedBox(height: AppConstants.cardSpacing),
-                        SunMoonWidget(weatherProvider: weatherProvider),
+                        const SunMoonWidget(),
                         const SizedBox(height: AppConstants.cardSpacing),
                         LifeIndexWidget(weatherProvider: weatherProvider),
                         const SizedBox(height: AppConstants.cardSpacing),
@@ -870,8 +870,8 @@ class _TodayScreenState extends State<TodayScreen> with WidgetsBindingObserver {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: color.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.2), width: 1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.15), width: 1),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -879,8 +879,8 @@ class _TodayScreenState extends State<TodayScreen> with WidgetsBindingObserver {
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(8),
+              color: color.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(6),
             ),
             child: Icon(icon, color: color, size: 18),
           ),

@@ -203,73 +203,83 @@ class _SunMoonGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // 第一行
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Row(
-              children: [
-                // 日出
-                Expanded(
-                  child: Center(
-                    child: _GridItem(
-                      label: '日出',
-                      time: sunrise,
-                      color: AppColors.sunrise,
-                      icon: Icons.wb_sunny_outlined,
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        // 根据主题模式选择月落颜色
+        final moonsetColor = themeProvider.isLightTheme
+            ? AppColors
+                  .primaryBlue // 浅色模式使用主题蓝色
+            : AppColors.accentBlue; // 深色模式使用亮蓝色
+
+        return Column(
+          children: [
+            // 第一行
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Row(
+                  children: [
+                    // 日出
+                    Expanded(
+                      child: Center(
+                        child: _GridItem(
+                          label: '日出',
+                          time: sunrise,
+                          color: AppColors.sunrise,
+                          icon: Icons.wb_sunny_outlined,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                // 月出
-                Expanded(
-                  child: Center(
-                    child: _GridItem(
-                      label: '月出',
-                      time: moonrise,
-                      color: AppColors.moon, // 月出 - 使用主题化颜色
-                      icon: Icons.bedtime,
+                    // 月出
+                    Expanded(
+                      child: Center(
+                        child: _GridItem(
+                          label: '月出',
+                          time: moonrise,
+                          color: AppColors.moon, // 月出 - 使用主题化颜色
+                          icon: Icons.bedtime,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
-        // 第二行
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              children: [
-                // 日落
-                Expanded(
-                  child: Center(
-                    child: _GridItem(
-                      label: '日落',
-                      time: sunset,
-                      color: AppColors.sunset,
-                      icon: Icons.wb_twilight_outlined,
+            // 第二行
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    // 日落
+                    Expanded(
+                      child: Center(
+                        child: _GridItem(
+                          label: '日落',
+                          time: sunset,
+                          color: AppColors.sunset,
+                          icon: Icons.wb_twilight_outlined,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                // 月落
-                Expanded(
-                  child: Center(
-                    child: _GridItem(
-                      label: '月落',
-                      time: moonset,
-                      color: AppColors.moon, // 月落 - 使用主题化颜色
-                      icon: Icons.bedtime_off,
+                    // 月落
+                    Expanded(
+                      child: Center(
+                        child: _GridItem(
+                          label: '月落',
+                          time: moonset,
+                          color: moonsetColor, // 月落 - 根据主题模式动态选择颜色
+                          icon: Icons.bedtime_off,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 }

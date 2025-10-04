@@ -46,7 +46,7 @@ class _SunMoonCard extends StatelessWidget {
         surfaceTintColor: Colors.transparent,
         shape: AppColors.cardShape,
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -60,7 +60,7 @@ class _SunMoonCard extends StatelessWidget {
 
               // 田字型布局（带中心月相emoji和月龄）
               SizedBox(
-                height: 120,
+                height: 156,
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
@@ -201,62 +201,66 @@ class _SunMoonGrid extends StatelessWidget {
         children: [
           // 第一行
           Expanded(
-            child: Row(
-              children: [
-                // 日出
-                Expanded(
-                  child: Center(
-                    child: _GridItem(
-                      label: '日出',
-                      time: sunrise,
-                      color: AppColors.sunrise,
-                      icon: Icons.wb_sunny_outlined,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Row(
+                children: [
+                  // 日出
+                  Expanded(
+                    child: Center(
+                      child: _GridItem(
+                        label: '日出',
+                        time: sunrise,
+                        color: AppColors.sunrise,
+                        icon: Icons.wb_sunny_outlined,
+                      ),
                     ),
                   ),
-                ),
-                // 月出
-                Expanded(
-                  child: Center(
-                    child: _GridItem(
-                      label: '月出',
-                      time: moonrise,
-                      color: AppColors.moon, // 月出 - 使用主题化颜色
-                      icon: Icons.nightlight_round_outlined,
-                      iconTransform: Matrix4.rotationZ(-0.5), // 向左倾斜
+                  // 月出
+                  Expanded(
+                    child: Center(
+                      child: _GridItem(
+                        label: '月出',
+                        time: moonrise,
+                        color: AppColors.moon, // 月出 - 使用主题化颜色
+                        icon: Icons.bedtime,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           // 第二行
           Expanded(
-            child: Row(
-              children: [
-                // 日落
-                Expanded(
-                  child: Center(
-                    child: _GridItem(
-                      label: '日落',
-                      time: sunset,
-                      color: AppColors.sunset,
-                      icon: Icons.wb_twilight_outlined,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  // 日落
+                  Expanded(
+                    child: Center(
+                      child: _GridItem(
+                        label: '日落',
+                        time: sunset,
+                        color: AppColors.sunset,
+                        icon: Icons.wb_twilight_outlined,
+                      ),
                     ),
                   ),
-                ),
-                // 月落
-                Expanded(
-                  child: Center(
-                    child: _GridItem(
-                      label: '月落',
-                      time: moonset,
-                      color: AppColors.moon, // 月落 - 使用主题化颜色
-                      icon: Icons.nightlight_round,
-                      iconTransform: Matrix4.rotationZ(0.5), // 向右倾斜
+                  // 月落
+                  Expanded(
+                    child: Center(
+                      child: _GridItem(
+                        label: '月落',
+                        time: moonset,
+                        color: AppColors.moon, // 月落 - 使用主题化颜色
+                        icon: Icons.bedtime_off,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
@@ -270,31 +274,26 @@ class _GridItem extends StatelessWidget {
   final String time;
   final Color color;
   final IconData icon;
-  final Matrix4? iconTransform;
 
   const _GridItem({
     required this.label,
     required this.time,
     required this.color,
     required this.icon,
-    this.iconTransform,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 60,
-      padding: const EdgeInsets.all(4),
+      height: 70,
+      padding: const EdgeInsets.all(8),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Transform(
-                transform: iconTransform ?? Matrix4.identity(),
-                child: Icon(icon, size: 20, color: color),
-              ),
+              Icon(icon, size: 20, color: color),
               const SizedBox(width: 4),
               Text(
                 label,
@@ -358,7 +357,7 @@ class _SunriseSunsetCard extends StatelessWidget {
         surfaceTintColor: Colors.transparent,
         shape: AppColors.cardShape,
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

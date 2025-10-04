@@ -159,7 +159,7 @@ class LifeIndexWidget extends StatelessWidget {
 
     return Card(
       elevation: 0,
-      color: color.withOpacity(0.08),
+      color: color.withOpacity(0.25), // 内层小卡片: 0.4 × 0.618 ≈ 0.25
       surfaceTintColor: color,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: Padding(
@@ -170,7 +170,7 @@ class LifeIndexWidget extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.15),
+                color: color.withOpacity(0.40), // 图标容器: 0.25 / 0.618 ≈ 0.40
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(icon, color: color, size: 18),

@@ -367,40 +367,29 @@ class _TodayScreenState extends State<TodayScreen> {
   ) {
     return Card(
       elevation: 0,
-      color: color.withOpacity(0.08),
+      color: color.withOpacity(0.4), // 外层大卡片
       surfaceTintColor: color,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: color, size: 20),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+            Icon(icon, color: color, size: 18),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
               ),
             ),
-            const SizedBox(width: 6),
+            const Spacer(),
             Text(
               value,
               style: TextStyle(
                 color: AppColors.textPrimary,
-                fontSize: 15,
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -596,7 +585,7 @@ class _TodayScreenState extends State<TodayScreen> {
   ) {
     return Card(
       elevation: 0,
-      color: color.withOpacity(0.06),
+      color: color.withOpacity(0.25), // 内层小卡片: 0.4 × 0.618 ≈ 0.25
       surfaceTintColor: color,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: Padding(
@@ -609,7 +598,7 @@ class _TodayScreenState extends State<TodayScreen> {
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.12),
+                    color: color.withOpacity(0.40), // 图标容器: 0.25 / 0.618 ≈ 0.40
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(icon, color: color, size: 16),

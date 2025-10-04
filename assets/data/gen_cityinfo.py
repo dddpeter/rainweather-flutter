@@ -105,10 +105,18 @@ def get_districts_data() -> List[Dict[str, str]]:
             
             # 添加到最终结果
             for district in districts:
-                weather_code = build_weather_code(district['code'])
+                district_name = district['name']
+                
+                # 如果区县名和城市名相同，使用城市code + "00"
+                if district_name == city_name:
+                    weather_code = build_weather_code(city_code + "00")
+                    print(f"  发现同名: {city_name} == {district_name}, 使用 {weather_code}")
+                else:
+                    weather_code = build_weather_code(district['code'])
+                
                 final_result.append({
                     'id': weather_code,
-                    'name': district['name']
+                    'name': district_name
                 })
                 total_districts += 1
         

@@ -352,7 +352,7 @@ class ChartStyles {
           height: lineHeight,
           decoration: BoxDecoration(
             color: color,
-            borderRadius: BorderRadius.circular(lineHeight / 2),
+            borderRadius: BorderRadius.circular(4),
           ),
         ),
         const SizedBox(width: 6),

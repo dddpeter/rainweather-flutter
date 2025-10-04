@@ -41,6 +41,19 @@ class AppConstants {
   /// 小元素之间的间距
   static const double smallSpacing = 8.0;
 
+  // UI Constants - Border Radius (Material Design 3 标准)
+  /// 标准圆角 - 用于卡片和容器 (8px)
+  static const double borderRadius = 8.0;
+
+  /// 小圆角 - 用于按钮和小元素 (4px)
+  static const double smallBorderRadius = 4.0;
+
+  /// 大圆角 - 用于对话框和特殊元素 (12px)
+  static const double largeBorderRadius = 12.0;
+
+  /// 超大圆角 - 用于底部表单等 (16px)
+  static const double extraLargeBorderRadius = 16.0;
+
   // Weather Icons Mapping
   // 使用兼容性更好的 emoji 图标
   static const Map<String, String> weatherIcons = {

@@ -110,7 +110,7 @@ class HourlyList extends StatelessWidget {
                         color: AppColors.currentTagBorder,
                         width: 1,
                       ),
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       '现在',

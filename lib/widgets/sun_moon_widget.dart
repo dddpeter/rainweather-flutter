@@ -109,7 +109,7 @@ class _SunMoonCard extends StatelessWidget {
                                 ),
                                 decoration: BoxDecoration(
                                   color: AppColors.moon.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(8),
                                   border: Border.all(
                                     color: AppColors.moon.withOpacity(0.3),
                                     width: 1,
@@ -424,7 +424,7 @@ class _SunriseSunsetCard extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: AppColors.warning.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                         color: AppColors.warning.withOpacity(0.3),
                         width: 1,
@@ -505,7 +505,7 @@ class _SunriseSunsetItem extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(8),
             border: Border.all(color: color.withOpacity(0.3), width: 1),
           ),
           child: Text(

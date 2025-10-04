@@ -67,7 +67,7 @@ class _WeatherAlertsScreenState extends State<WeatherAlertsScreen> {
                           onPressed: () => Navigator.of(context).pop(),
                           style: IconButton.styleFrom(
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(8),
                             ),
                           ),
                           icon: Icon(
@@ -162,7 +162,7 @@ class _WeatherAlertsScreenState extends State<WeatherAlertsScreen> {
       color: AppColors.materialCardColor,
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(8),
         side: BorderSide(color: levelColor, width: 2),
       ),
       margin: const EdgeInsets.only(bottom: AppConstants.cardSpacing),
@@ -178,7 +178,7 @@ class _WeatherAlertsScreenState extends State<WeatherAlertsScreen> {
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: levelBgColor,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
                     _getAlertIcon(alert.type),
@@ -209,7 +209,7 @@ class _WeatherAlertsScreenState extends State<WeatherAlertsScreen> {
                             ),
                             decoration: BoxDecoration(
                               color: levelColor,
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
                               '${alert.level ?? "未知"}预警',
@@ -270,7 +270,7 @@ class _WeatherAlertsScreenState extends State<WeatherAlertsScreen> {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: AppColors.borderColor.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -338,7 +338,7 @@ class _WeatherAlertsScreenState extends State<WeatherAlertsScreen> {
                           ),
                           decoration: BoxDecoration(
                             color: levelColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,

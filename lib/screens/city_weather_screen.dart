@@ -121,6 +121,9 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
                         children: [
                           _buildTopWeatherSection(weatherProvider),
                           const SizedBox(height: AppConstants.cardSpacing),
+                          // 详细信息卡片 - 移到头部之下
+                          _buildWeatherDetails(weatherProvider),
+                          const SizedBox(height: AppConstants.cardSpacing),
                           // 天气提示卡片
                           _buildWeatherTipsCard(weatherProvider),
                           const SizedBox(height: AppConstants.cardSpacing),
@@ -131,8 +134,6 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
                           _buildHourlyWeather(weatherProvider),
                           const SizedBox(height: AppConstants.cardSpacing),
                           _buildTemperatureChart(weatherProvider),
-                          const SizedBox(height: AppConstants.cardSpacing),
-                          _buildWeatherDetails(weatherProvider),
                           const SizedBox(
                             height: 80,
                           ), // Space for bottom buttons
@@ -240,119 +241,8 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
                   ),
                 ),
               ],
-
-              const SizedBox(height: 16),
-
-              // Weather details in 2 columns
-              if (current != null) ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildCompactWeatherDetail(
-                        Icons.water_drop,
-                        '湿度',
-                        '${current.humidity ?? '--'}%',
-                        AppColors.textPrimary, // 使用主文字色确保可见性
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _buildCompactWeatherDetail(
-                        Icons.air,
-                        '风力',
-                        '${current.winddir ?? '--'}${current.windpower ?? ''}',
-                        AppColors.accentGreen, // 使用主题色
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildCompactWeatherDetail(
-                        Icons.compress,
-                        '气压',
-                        '${current.airpressure ?? '--'}hpa',
-                        AppColors.textPrimary, // 使用主文字色确保可见性
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _buildCompactWeatherDetail(
-                        Icons.visibility,
-                        '能见度',
-                        '${current.visibility ?? '--'}km',
-                        AppColors.accentGreen, // 使用主题色
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildCompactWeatherDetail(
-                        Icons.thermostat,
-                        '体感温度',
-                        '${current.feelstemperature ?? '--'}℃',
-                        AppColors.textPrimary, // 使用主文字色确保可见性
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _buildCompactWeatherDetail(
-                        Icons.eco,
-                        '空气指数',
-                        '${weather?.current?.air?.AQI ?? '--'}',
-                        AppColors.accentGreen, // 使用主题色
-                      ),
-                    ),
-                  ],
-                ),
-              ],
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCompactWeatherDetail(
-    IconData icon,
-    String label,
-    String value,
-    Color color,
-  ) {
-    return Card(
-      elevation: 0,
-      color: color.withOpacity(0.4), // 外层大卡片
-      surfaceTintColor: color,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-        child: Row(
-          children: [
-            Icon(icon, color: color, size: 18),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const Spacer(),
-            Text(
-              value,
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -547,7 +437,7 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
       elevation: 0,
       color: color.withOpacity(0.25), // 内层小卡片: 0.4 × 0.618 ≈ 0.25
       surfaceTintColor: color,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
         child: Column(
@@ -559,7 +449,7 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
                     color: color.withOpacity(0.40), // 图标容器: 0.25 / 0.618 ≈ 0.40
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(4),
                   ),
                   child: Icon(icon, color: color, size: 16),
                 ),
@@ -718,7 +608,7 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: color.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color.withOpacity(0.2), width: 1),
       ),
       child: Row(

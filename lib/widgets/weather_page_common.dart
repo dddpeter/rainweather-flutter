@@ -363,7 +363,7 @@ class WeatherPageCommon {
       elevation: 0,
       color: color.withOpacity(0.25), // 内层小卡片: 0.4 × 0.618 ≈ 0.25
       surfaceTintColor: color,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
         child: Column(
@@ -372,7 +372,7 @@ class WeatherPageCommon {
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: color.withOpacity(0.40), // 图标容器: 0.25 / 0.618 ≈ 0.40
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(icon, color: color, size: 22),
             ),
@@ -411,9 +411,7 @@ class WeatherPageCommon {
         return AlertDialog(
           backgroundColor: AppColors.backgroundSecondary,
           surfaceTintColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
           elevation: 3,
           icon: Icon(
             Icons.lightbulb_outline_rounded,
@@ -449,7 +447,7 @@ class WeatherPageCommon {
                   vertical: 10,
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
               child: const Text('确定'),

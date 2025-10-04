@@ -51,7 +51,7 @@ class CustomBottomNavigation extends StatelessWidget {
                         color: Colors.transparent,
                         child: InkWell(
                           onTap: () => onTap(index),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(8),
                           child: Ink(
                             padding: const EdgeInsets.symmetric(
                               vertical: 6,
@@ -61,7 +61,7 @@ class CustomBottomNavigation extends StatelessWidget {
                               color: isSelected
                                   ? AppColors.bottomNavSelectedBackground
                                   : AppColors.bottomNavUnselectedBackground,
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(8),
                             ),
                             child: Column(
                               mainAxisSize: MainAxisSize.min,

@@ -231,7 +231,7 @@ class _Forecast15dScreenState extends State<Forecast15dScreen> {
                         color: isToday
                             ? AppColors.accentBlue.withOpacity(0.2)
                             : AppColors.accentGreen.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(1),
                         border: Border.all(
                           color: isToday
                               ? AppColors.accentBlue.withOpacity(0.5)

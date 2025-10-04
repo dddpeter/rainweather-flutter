@@ -162,7 +162,7 @@ class _HourlyScreenState extends State<HourlyScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
             color: AppColors.glassBackground,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(8),
             border: Border.all(color: AppColors.cardBorder, width: 1),
           ),
           child: Text(

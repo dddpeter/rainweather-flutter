@@ -42,7 +42,7 @@ class HourlyWeatherWidget extends StatelessWidget {
           shape: AppColors.cardShape,
           child: InkWell(
             onTap: onTap,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

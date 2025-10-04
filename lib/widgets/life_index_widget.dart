@@ -161,7 +161,7 @@ class LifeIndexWidget extends StatelessWidget {
       elevation: 0,
       color: color.withOpacity(0.25), // 内层小卡片: 0.4 × 0.618 ≈ 0.25
       surfaceTintColor: color,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         child: Row(
@@ -171,7 +171,7 @@ class LifeIndexWidget extends StatelessWidget {
               padding: const EdgeInsets.all(7),
               decoration: BoxDecoration(
                 color: color.withOpacity(0.40), // 图标容器: 0.25 / 0.618 ≈ 0.40
-                borderRadius: BorderRadius.circular(9),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(icon, color: color, size: 17),
             ),

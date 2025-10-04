@@ -387,7 +387,7 @@ class MainCitiesScreen extends StatelessWidget {
                                     begin: Alignment.centerRight,
                                     end: Alignment.centerLeft,
                                   ),
-                                  borderRadius: BorderRadius.circular(16),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                                 alignment: Alignment.centerRight,
                                 padding: const EdgeInsets.only(right: 20),
@@ -422,7 +422,7 @@ class MainCitiesScreen extends StatelessWidget {
                                     begin: Alignment.centerLeft,
                                     end: Alignment.centerRight,
                                   ),
-                                  borderRadius: BorderRadius.circular(16),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                                 alignment: Alignment.centerLeft,
                                 padding: const EdgeInsets.only(left: 20),
@@ -495,7 +495,7 @@ class MainCitiesScreen extends StatelessWidget {
                                         ),
                                       );
                                     },
-                                    borderRadius: BorderRadius.circular(16),
+                                    borderRadius: BorderRadius.circular(8),
                                     child: Padding(
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 16,
@@ -699,7 +699,7 @@ class MainCitiesScreen extends StatelessWidget {
                   ),
                 );
               },
-              borderRadius: BorderRadius.circular(12), // M3: 12px radius
+              borderRadius: BorderRadius.circular(8), // Material Design 3 标准
               child: Container(
                 padding: const EdgeInsets.all(6),
                 child: Icon(
@@ -839,9 +839,7 @@ class MainCitiesScreen extends StatelessWidget {
           // Material Design 3: 弹窗样式
           backgroundColor: AppColors.backgroundSecondary,
           surfaceTintColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
           elevation: 3,
           icon: Icon(
             Icons.add_location_alt_rounded,
@@ -895,17 +893,17 @@ class MainCitiesScreen extends StatelessWidget {
                     fillColor: AppColors.borderColor.withOpacity(0.05),
                     // Material Design 3: 更大的圆角
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(color: AppColors.borderColor),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(
                         color: AppColors.borderColor.withOpacity(0.5),
                       ),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(
                         color: AppColors.primaryBlue,
                         width: 2,
@@ -978,7 +976,7 @@ class MainCitiesScreen extends StatelessWidget {
                             color: isMainCity
                                 ? AppColors.accentGreen.withOpacity(0.15)
                                 : AppColors.borderColor.withOpacity(0.03),
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(8),
                             border: Border.all(
                               color: isMainCity
                                   ? AppColors.accentGreen
@@ -1050,7 +1048,7 @@ class MainCitiesScreen extends StatelessWidget {
                                             behavior: SnackBarBehavior.floating,
                                             shape: RoundedRectangleBorder(
                                               borderRadius:
-                                                  BorderRadius.circular(12),
+                                                  BorderRadius.circular(8),
                                             ),
                                           ),
                                         );
@@ -1099,7 +1097,7 @@ class MainCitiesScreen extends StatelessWidget {
                   vertical: 10,
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(4),
                 ),
               ),
               child: const Text('关闭'),
@@ -1374,7 +1372,7 @@ class _SplashScreenState extends State<SplashScreen>
                             height: 120,
                             decoration: BoxDecoration(
                               color: AppColors.cardBackground,
-                              borderRadius: BorderRadius.circular(30),
+                              borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: AppColors.cardBorder,
                                 width: 2,
@@ -1434,7 +1432,7 @@ class _SplashScreenState extends State<SplashScreen>
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     color: AppColors.cardBackground,
-                    borderRadius: BorderRadius.circular(15),
+                    borderRadius: BorderRadius.circular(4),
                     border: Border.all(color: AppColors.cardBorder, width: 1),
                   ),
                   child: Column(

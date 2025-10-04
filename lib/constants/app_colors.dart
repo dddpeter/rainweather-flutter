@@ -245,21 +245,21 @@ class AppColors {
   /// 标准卡片装饰
   static BoxDecoration get standardCardDecoration => BoxDecoration(
     color: _getColor('cardBackground'),
-    borderRadius: BorderRadius.circular(16),
+    borderRadius: BorderRadius.circular(8),
     border: Border.all(color: _getColor('cardBorder'), width: 1),
   );
 
   /// 紧凑卡片装饰（用于小卡片）
   static BoxDecoration get compactCardDecoration => BoxDecoration(
     color: _getColor('cardBackground'),
-    borderRadius: BorderRadius.circular(12),
+    borderRadius: BorderRadius.circular(8),
     border: Border.all(color: _getColor('cardBorder'), width: 1),
   );
 
   /// 小型卡片装饰（用于标签等）
   static BoxDecoration get smallCardDecoration => BoxDecoration(
     color: _getColor('cardBackground'),
-    borderRadius: BorderRadius.circular(8),
+    borderRadius: BorderRadius.circular(4),
     border: Border.all(color: _getColor('cardBorder'), width: 1),
   );
 
@@ -269,21 +269,21 @@ class AppColors {
       colors: [_getColor('cardBackground'), _getColor('cardBackground')],
       stops: const [0.0, 1.0],
     ),
-    borderRadius: BorderRadius.circular(8),
+    borderRadius: BorderRadius.circular(4),
     border: Border.all(color: _getColor('primary'), width: 1.5),
   );
 
   /// 玻璃效果卡片装饰（用于24小时页面的风格）
   static BoxDecoration get glassCardDecoration => BoxDecoration(
     color: _getColor('glassBackground'),
-    borderRadius: BorderRadius.circular(16),
+    borderRadius: BorderRadius.circular(8),
     border: Border.all(color: _getColor('cardBorder'), width: 1),
   );
 
   /// 带阴影的卡片装饰
   static BoxDecoration get shadowCardDecoration => BoxDecoration(
     color: _getColor('cardBackground'),
-    borderRadius: BorderRadius.circular(16),
+    borderRadius: BorderRadius.circular(8),
     border: Border.all(color: _getColor('cardBorder'), width: 1),
     boxShadow: [
       BoxShadow(
@@ -302,11 +302,11 @@ class AppColors {
 
   /// Material 卡片的形状
   static RoundedRectangleBorder get cardShape =>
-      RoundedRectangleBorder(borderRadius: BorderRadius.circular(16));
+      RoundedRectangleBorder(borderRadius: BorderRadius.circular(8));
 
   /// 小卡片的形状
   static RoundedRectangleBorder get smallCardShape =>
-      RoundedRectangleBorder(borderRadius: BorderRadius.circular(12));
+      RoundedRectangleBorder(borderRadius: BorderRadius.circular(4));
 
   /// Material 卡片的颜色（使用 cardBackground）
   static Color get materialCardColor => _getColor('cardBackground');
@@ -320,7 +320,7 @@ class AppColors {
   /// 标准弹窗装饰
   static BoxDecoration get dialogDecoration => BoxDecoration(
     color: _getColor('surface'),
-    borderRadius: BorderRadius.circular(16),
+    borderRadius: BorderRadius.circular(12),
     border: Border.all(color: _getColor('border'), width: 1),
     boxShadow: [
       BoxShadow(
@@ -338,7 +338,7 @@ class AppColors {
 
   /// 弹窗形状
   static ShapeBorder get dialogShape => RoundedRectangleBorder(
-    borderRadius: BorderRadius.circular(16),
+    borderRadius: BorderRadius.circular(12),
     side: BorderSide(color: _getColor('border'), width: 1),
   );
 

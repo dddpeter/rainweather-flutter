@@ -12,9 +12,7 @@ class AppMenu extends StatelessWidget {
       builder: (context, themeProvider, child) {
         return PopupMenuButton<String>(
           // Material Design 3: 圆角和阴影
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           elevation: 3,
           color: AppColors.backgroundSecondary,
           surfaceTintColor: Colors.transparent,
@@ -92,7 +90,7 @@ class AppMenu extends StatelessWidget {
               backgroundColor: AppColors.backgroundSecondary,
               surfaceTintColor: Colors.transparent,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(28), // M3: 更大的圆角
+                borderRadius: BorderRadius.circular(12), // Material Design 3 标准
               ),
               elevation: 3,
               title: Text(
@@ -154,7 +152,7 @@ class AppMenu extends StatelessWidget {
                       vertical: 10,
                     ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                   ),
                   child: const Text('确定'),
@@ -186,7 +184,7 @@ class AppMenu extends StatelessWidget {
             color: isSelected
                 ? AppColors.primaryBlue.withOpacity(0.15)
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(16), // M3: 更大的圆角
+            borderRadius: BorderRadius.circular(8), // M3: 更大的圆角
             border: isSelected
                 ? Border.all(
                     color: AppColors.primaryBlue,
@@ -249,7 +247,7 @@ class AppMenu extends StatelessWidget {
           backgroundColor: AppColors.backgroundSecondary,
           surfaceTintColor: Colors.transparent,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(12),
           ),
           elevation: 3,
           icon: Icon(
@@ -315,7 +313,7 @@ class AppMenu extends StatelessWidget {
                   vertical: 10,
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
               child: const Text('确定'),

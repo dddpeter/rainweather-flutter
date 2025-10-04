@@ -462,128 +462,120 @@ class MainCitiesScreen extends StatelessWidget {
                                   );
                                 },
                                 borderRadius: BorderRadius.circular(16),
-                                child: Stack(
-                                  children: [
-                                    // 主要内容
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 12,
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          // 城市名
-                                          SizedBox(
-                                            width: 70,
-                                            child: Text(
-                                              city.name,
-                                              style: TextStyle(
-                                                color: AppColors.textPrimary,
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                              overflow: TextOverflow.ellipsis,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 12,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            // Title
+                                            Row(
+                                              children: [
+                                                // 定位图标（如果是当前定位城市）
+                                                if (isCurrentLocation) ...[
+                                    Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: () async {
+                                          // 点击定位图标，更新当前位置数据
+                                          await _updateCurrentLocation(context, weatherProvider);
+                                        },
+                                        borderRadius: BorderRadius.circular(10),
+                                        child: Ink(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.accentGreen.withOpacity(0.2),
+                                            borderRadius: BorderRadius.circular(10),
+                                            border: Border.all(
+                                              color: AppColors.accentGreen.withOpacity(0.5),
+                                              width: 1,
                                             ),
                                           ),
-                                          const SizedBox(width: 8),
-                                          // 天气信息（单行显示）
-                                          if (cityWeather != null)
-                                            Expanded(
-                                              child: _buildCompactWeatherInfo(
-                                                cityWeather,
-                                                weatherProvider,
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons.my_location,
+                                                color: AppColors.accentGreen,
+                                                size: 14,
                                               ),
-                                            )
-                                          else if (weatherProvider.isLoadingCitiesWeather)
-                                            Expanded(
-                                              child: Row(
-                                                children: [
-                                                  SizedBox(
-                                                    width: 14,
-                                                    height: 14,
-                                                    child: CircularProgressIndicator(
-                                                      strokeWidth: 2,
-                                                      valueColor:
-                                                          AlwaysStoppedAnimation<Color>(
-                                                        AppColors.textSecondary,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  SizedBox(width: 6),
-                                                  Text(
-                                                    '加载中...',
-                                                    style: TextStyle(
-                                                      color: AppColors.textSecondary,
-                                                      fontSize: 12,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            )
-                                          else
-                                            Expanded(child: SizedBox()),
-                                          const SizedBox(width: 8),
-                                          // 右箭头
-                                          Icon(
-                                            Icons.arrow_forward_ios,
-                                            color: AppColors.textSecondary,
-                                            size: 16,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    // 当前位置标签（右上角）
-                                    if (isCurrentLocation)
-                                      Positioned(
-                                        top: 8,
-                                        right: 36,
-                                        child: Material(
-                                          color: Colors.transparent,
-                                          child: InkWell(
-                                            onTap: () async {
-                                              await _updateCurrentLocation(
-                                                context,
-                                                weatherProvider,
-                                              );
-                                            },
-                                            borderRadius: BorderRadius.circular(8),
-                                            child: Ink(
-                                              padding: const EdgeInsets.symmetric(
-                                                horizontal: 6,
-                                                vertical: 2,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                color: AppColors.accentGreen.withOpacity(0.2),
-                                                borderRadius: BorderRadius.circular(8),
-                                                border: Border.all(
-                                                  color: AppColors.accentGreen.withOpacity(0.5),
-                                                  width: 1,
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                '当前位置',
+                                                style: TextStyle(
+                                                  color: AppColors.accentGreen,
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.bold,
                                                 ),
                                               ),
-                                              child: Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Icon(
-                                                    Icons.my_location,
-                                                    color: AppColors.accentGreen,
-                                                    size: 11,
-                                                  ),
-                                                  const SizedBox(width: 3),
-                                                  Text(
-                                                    '定位',
-                                                    style: TextStyle(
-                                                      color: AppColors.accentGreen,
-                                                      fontSize: 10,
-                                                      fontWeight: FontWeight.bold,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
+                                            ],
                                           ),
                                         ),
                                       ),
-                                  ],
+                                    ),
+                                                    const SizedBox(width: 8),
+                                                  ],
+                                                  Expanded(
+                                                    child: Text(
+                                                      city.name,
+                                                      style: TextStyle(
+                                                        color: AppColors.textPrimary,
+                                                        fontSize: 18,
+                                                        fontWeight: FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              // Subtitle
+                                              if (cityWeather != null ||
+                                                  weatherProvider.isLoadingCitiesWeather)
+                                                const SizedBox(height: 8),
+                                              if (cityWeather != null)
+                                                _buildCityWeatherInfo(
+                                                  cityWeather,
+                                                  weatherProvider,
+                                                )
+                                              else if (weatherProvider.isLoadingCitiesWeather)
+                                                Row(
+                                                  children: [
+                                                    SizedBox(
+                                                      width: 16,
+                                                      height: 16,
+                                                      child: CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                        valueColor:
+                                                            AlwaysStoppedAnimation<Color>(
+                                                          AppColors.textSecondary,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    SizedBox(width: 8),
+                                                    Text(
+                                                      '加载中...',
+                                                      style: TextStyle(
+                                                        color: AppColors.textSecondary,
+                                                        fontSize: 12,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                      // Trailing icon
+                                      Icon(
+                                        Icons.arrow_forward_ios,
+                                        color: AppColors.textSecondary,
+                                        size: 16,
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
@@ -603,48 +595,7 @@ class MainCitiesScreen extends StatelessWidget {
     );
   }
 
-  // 紧凑型单行天气信息（用于城市列表）
-  Widget _buildCompactWeatherInfo(
-      dynamic cityWeather, WeatherProvider weatherProvider) {
-    final current = cityWeather?.current?.current;
-    if (current == null) return const SizedBox.shrink();
-
-    return Row(
-      children: [
-        // 天气描述
-        Text(
-          current.weather ?? '晴',
-          style: TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 13,
-          ),
-        ),
-        const SizedBox(width: 8),
-        // 温度
-        Text(
-          '${current.temperature ?? '--'}℃',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(width: 8),
-        // 风力
-        if (current.windpower != null)
-          Text(
-            '${current.windpower}',
-            style: TextStyle(
-              color: AppColors.accentBlue,
-              fontSize: 12,
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildCityWeatherInfo(
-      dynamic cityWeather, WeatherProvider weatherProvider) {
+  Widget _buildCityWeatherInfo(dynamic cityWeather, WeatherProvider weatherProvider) {
     final current = cityWeather?.current?.current;
     if (current == null) return const SizedBox.shrink();
 

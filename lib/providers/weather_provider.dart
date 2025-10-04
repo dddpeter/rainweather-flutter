@@ -670,7 +670,7 @@ class WeatherProvider extends ChangeNotifier {
 
     try {
       print(
-        'Force refresh: clearing current location cache and getting fresh location',
+        'Force refresh: clearing ALL cache and getting fresh data',
       );
 
       // Clear current location cache
@@ -687,6 +687,17 @@ class WeatherProvider extends ChangeNotifier {
           'Cleared current location weather cache: ${_currentLocation!.district}',
         );
       }
+
+      // 清空所有主要城市的天气缓存
+      for (var city in _mainCities) {
+        final weatherKey = '${city.name}:${AppConstants.weatherAllKey}';
+        await _databaseService.deleteWeatherData(weatherKey);
+        print('Cleared weather cache for main city: ${city.name}');
+      }
+
+      // 清空内存中的主要城市天气数据
+      _mainCitiesWeather.clear();
+      print('Cleared all main cities weather cache');
 
       // Force get fresh location
       LocationModel? location = await _locationService.getCurrentLocation();
@@ -738,7 +749,7 @@ class WeatherProvider extends ChangeNotifier {
         print('Force refresh failed: $_error');
       }
 
-      // Also refresh main cities weather
+      // 强制刷新所有主要城市天气（从API重新获取）
       await refreshMainCitiesWeather();
     } catch (e) {
       if (e is LocationException) {

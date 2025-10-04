@@ -105,15 +105,15 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
                       child: Column(
                         children: [
                           _buildTopWeatherSection(weatherProvider),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: AppConstants.cardSpacing),
                           SunMoonWidget(weatherProvider: weatherProvider),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: AppConstants.cardSpacing),
                           LifeIndexWidget(weatherProvider: weatherProvider),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: AppConstants.cardSpacing),
                           _buildHourlyWeather(weatherProvider),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: AppConstants.cardSpacing),
                           _buildTemperatureChart(weatherProvider),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: AppConstants.cardSpacing),
                           _buildWeatherDetails(weatherProvider),
                           const SizedBox(
                             height: 80,

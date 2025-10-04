@@ -31,6 +31,16 @@ class AppConstants {
   static const double sectionTitleFontSize = 16.0;
   static const double sectionTitleIconSize = 20.0;
 
+  // UI Constants - Spacing (Material Design 3)
+  /// 大卡片之间的标准间距（20px符合M3规范，视觉舒适）
+  static const double cardSpacing = 20.0;
+
+  /// 卡片内部元素之间的间距
+  static const double cardInnerSpacing = 16.0;
+
+  /// 小元素之间的间距
+  static const double smallSpacing = 8.0;
+
   // Weather Icons Mapping
   static const Map<String, String> weatherIcons = {
     '大雨': '🌧️',

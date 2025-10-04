@@ -4,6 +4,7 @@ import '../providers/weather_provider.dart';
 import '../providers/theme_provider.dart';
 import '../models/weather_model.dart';
 import '../constants/app_colors.dart';
+import '../constants/app_constants.dart';
 import '../widgets/forecast15d_chart.dart';
 
 class Forecast15dScreen extends StatefulWidget {
@@ -166,9 +167,10 @@ class _Forecast15dScreenState extends State<Forecast15dScreen> {
                       // Temperature Trend Chart
                       SliverToBoxAdapter(
                         child: Container(
-                          margin: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
+                          margin: const EdgeInsets.only(
+                            left: 16,
+                            right: 16,
+                            top: AppConstants.cardSpacing,
                           ),
                           child: Forecast15dChart(forecast15d: forecast15d),
                         ),

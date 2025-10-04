@@ -32,16 +32,15 @@ class _HourlyScreenState extends State<HourlyScreen> {
       builder: (context, themeProvider, _) {
         // 确保AppColors使用最新的主题
         AppColors.setThemeProvider(themeProvider);
-        
+
         return Scaffold(
           body: Container(
-            decoration: BoxDecoration(
-              gradient: AppColors.primaryGradient,
-            ),
+            decoration: BoxDecoration(gradient: AppColors.primaryGradient),
             child: SafeArea(
               child: Consumer<WeatherProvider>(
                 builder: (context, weatherProvider, child) {
-                  if (weatherProvider.isLoading && weatherProvider.currentWeather == null) {
+                  if (weatherProvider.isLoading &&
+                      weatherProvider.currentWeather == null) {
                     return Center(
                       child: CircularProgressIndicator(
                         color: AppColors.textPrimary,
@@ -79,7 +78,8 @@ class _HourlyScreenState extends State<HourlyScreen> {
                           ),
                           const SizedBox(height: 24),
                           ElevatedButton(
-                            onPressed: () => weatherProvider.forceRefreshWithLocation(),
+                            onPressed: () =>
+                                weatherProvider.forceRefreshWithLocation(),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primaryBlue,
                               foregroundColor: AppColors.textPrimary,
@@ -108,12 +108,12 @@ class _HourlyScreenState extends State<HourlyScreen> {
                           children: [
                             // Header
                             _buildHeader(location, weatherProvider),
-                            const SizedBox(height: 24),
-                            
+                            const SizedBox(height: AppConstants.cardSpacing),
+
                             // 24小时温度趋势图
                             HourlyChart(hourlyForecast: hourlyForecast),
-                            const SizedBox(height: 24),
-                            
+                            const SizedBox(height: AppConstants.cardSpacing),
+
                             // 24小时天气列表
                             HourlyList(
                               hourlyForecast: hourlyForecast,
@@ -133,7 +133,10 @@ class _HourlyScreenState extends State<HourlyScreen> {
     );
   }
 
-  Widget _buildHeader(LocationModel? location, WeatherProvider weatherProvider) {
+  Widget _buildHeader(
+    LocationModel? location,
+    WeatherProvider weatherProvider,
+  ) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -151,10 +154,7 @@ class _HourlyScreenState extends State<HourlyScreen> {
             const SizedBox(height: 4),
             Text(
               '24小时预报',
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 16,
-              ),
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 16),
             ),
           ],
         ),
@@ -163,10 +163,7 @@ class _HourlyScreenState extends State<HourlyScreen> {
           decoration: BoxDecoration(
             color: AppColors.glassBackground,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: AppColors.cardBorder,
-              width: 1,
-            ),
+            border: Border.all(color: AppColors.cardBorder, width: 1),
           ),
           child: Text(
             _getCurrentTime(),
@@ -180,7 +177,6 @@ class _HourlyScreenState extends State<HourlyScreen> {
       ],
     );
   }
-
 
   String _getDisplayCity(LocationModel? location) {
     if (location == null) {
@@ -201,5 +197,4 @@ class _HourlyScreenState extends State<HourlyScreen> {
     final now = DateTime.now();
     return '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
   }
-
 }

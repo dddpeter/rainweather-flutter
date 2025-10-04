@@ -445,6 +445,24 @@ class MainCitiesScreen extends StatelessWidget {
                               ),
                               confirmDismiss: (direction) async {
                                 if (direction == DismissDirection.endToStart) {
+                                  // 禁止删除当前位置城市（因为它会自动重新出现）
+                                  if (isCurrentLocation) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text('当前位置城市无法删除'),
+                                          backgroundColor:
+                                              AppColors.textSecondary,
+                                          duration: Duration(
+                                            milliseconds: 1500,
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                    return false;
+                                  }
                                   return await _showDeleteCityDialog(
                                     context,
                                     weatherProvider,
@@ -712,10 +730,36 @@ class MainCitiesScreen extends StatelessWidget {
   void _showAddCityDialog(
     BuildContext context,
     WeatherProvider weatherProvider,
-  ) {
+  ) async {
     final TextEditingController searchController = TextEditingController();
     List<CityModel> searchResults = [];
     bool isSearching = false;
+
+    // 直辖市和省会城市列表
+    final defaultCityNames = [
+      '北京', '上海', '天津', '重庆', // 直辖市
+      '哈尔滨', '长春', '沈阳', '呼和浩特', '石家庄', '太原', '西安', // 北方省会
+      '济南', '郑州', '南京', '武汉', '杭州', '合肥', '福州', '南昌', // 中部省会
+      '长沙', '贵阳', '成都', '广州', '昆明', '南宁', '海口', // 南方省会
+      '兰州', '西宁', '银川', '乌鲁木齐', '拉萨', // 西部省会
+    ];
+
+    // 预加载默认城市
+    isSearching = true;
+    final allDefaultCities = <CityModel>[];
+    for (final cityName in defaultCityNames) {
+      final results = await weatherProvider.searchCities(cityName);
+      if (results.isNotEmpty) {
+        // 找到精确匹配的城市
+        final exactMatch = results.firstWhere(
+          (city) => city.name == cityName,
+          orElse: () => results.first,
+        );
+        allDefaultCities.add(exactMatch);
+      }
+    }
+    searchResults = allDefaultCities;
+    isSearching = false;
 
     showDialog(
       context: context,
@@ -723,7 +767,20 @@ class MainCitiesScreen extends StatelessWidget {
         builder: (context, setState) => AlertDialog(
           backgroundColor: AppColors.backgroundSecondary,
           shape: AppColors.dialogShape,
-          title: Text('添加城市', style: TextStyle(color: AppColors.textPrimary)),
+          title: Row(
+            children: [
+              Text('添加城市', style: TextStyle(color: AppColors.textPrimary)),
+              Spacer(),
+              Text(
+                '直辖市 · 省会',
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.normal,
+                ),
+              ),
+            ],
+          ),
           content: SizedBox(
             width: double.maxFinite,
             height: 400, // 固定高度防止溢出
@@ -764,8 +821,26 @@ class MainCitiesScreen extends StatelessWidget {
                         isSearching = false;
                       });
                     } else {
+                      // 恢复显示默认城市
                       setState(() {
-                        searchResults = [];
+                        isSearching = true;
+                      });
+                      final allDefaultCities = <CityModel>[];
+                      for (final cityName in defaultCityNames) {
+                        final results = await weatherProvider.searchCities(
+                          cityName,
+                        );
+                        if (results.isNotEmpty) {
+                          final exactMatch = results.firstWhere(
+                            (city) => city.name == cityName,
+                            orElse: () => results.first,
+                          );
+                          allDefaultCities.add(exactMatch);
+                        }
+                      }
+                      setState(() {
+                        searchResults = allDefaultCities;
+                        isSearching = false;
                       });
                     }
                   },
@@ -807,20 +882,29 @@ class MainCitiesScreen extends StatelessWidget {
                           ),
                           child: ListTile(
                             dense: true,
-                            title: Text(
-                              city.name,
-                              style: TextStyle(
-                                color: isMainCity
-                                    ? AppColors.accentGreen
-                                    : AppColors.textPrimary,
-                                fontWeight: isMainCity
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                              ),
-                            ),
-                            subtitle: Text(
-                              '城市ID: ${city.id}',
-                              style: TextStyle(color: AppColors.textSecondary),
+                            title: Row(
+                              children: [
+                                Text(
+                                  city.name,
+                                  style: TextStyle(
+                                    color: isMainCity
+                                        ? AppColors.accentGreen
+                                        : AppColors.textPrimary,
+                                    fontWeight: isMainCity
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  city.id,
+                                  style: TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
                             ),
                             trailing: isMainCity
                                 ? Icon(
@@ -838,37 +922,41 @@ class MainCitiesScreen extends StatelessWidget {
                                 : () async {
                                     final success = await weatherProvider
                                         .addMainCity(city);
-                                    if (success && context.mounted) {
-                                      Navigator.pop(context);
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text('已添加城市: ${city.name}'),
-                                          backgroundColor:
-                                              AppColors.accentGreen,
-                                          duration: const Duration(
-                                            milliseconds: 1500,
+                                    if (success) {
+                                      // 刷新UI显示已添加状态
+                                      setState(() {});
+                                      // 显示添加成功提示（在弹窗内使用轻量级提示）
+                                    } else {
+                                      // 显示添加失败提示
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text('添加城市失败，请重试'),
+                                            backgroundColor: AppColors.error,
+                                            duration: Duration(
+                                              milliseconds: 1500,
+                                            ),
                                           ),
-                                        ),
-                                      );
-                                    } else if (context.mounted) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text('添加城市失败，请重试'),
-                                          backgroundColor: AppColors.error,
-                                          duration: Duration(
-                                            milliseconds: 1500,
-                                          ),
-                                        ),
-                                      );
+                                        );
+                                      }
                                     }
                                   },
                           ),
                         );
                       },
+                    ),
+                  )
+                else if (searchController.text.isEmpty && searchResults.isEmpty)
+                  Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Text(
+                      '正在加载城市列表...',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 14,
+                      ),
                     ),
                   )
                 else if (searchController.text.isNotEmpty)
@@ -889,7 +977,7 @@ class MainCitiesScreen extends StatelessWidget {
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: Text(
-                '取消',
+                '关闭',
                 style: TextStyle(color: AppColors.textSecondary),
               ),
             ),

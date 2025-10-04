@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
-import '../providers/weather_provider.dart';
 import '../constants/app_colors.dart';
 
 class AppMenu extends StatelessWidget {
@@ -47,18 +46,6 @@ class AppMenu extends StatelessWidget {
               ),
             ),
             const PopupMenuDivider(),
-            // 清理缓存
-            PopupMenuItem<String>(
-              value: 'clear_cache',
-              child: Row(
-                children: [
-                  Icon(Icons.clear_all, color: AppColors.error, size: 20),
-                  const SizedBox(width: 12),
-                  Text('清理缓存', style: TextStyle(color: AppColors.textPrimary)),
-                ],
-              ),
-            ),
-            const PopupMenuDivider(),
             // 版本信息
             PopupMenuItem<String>(
               value: 'about',
@@ -84,9 +71,6 @@ class AppMenu extends StatelessWidget {
     switch (value) {
       case 'theme':
         _showThemeDialog(context);
-        break;
-      case 'clear_cache':
-        _showClearCacheDialog(context);
         break;
       case 'about':
         _showAboutDialog(context);
@@ -251,86 +235,6 @@ class AppMenu extends StatelessWidget {
               Navigator.of(context).pop();
             },
           ),
-        );
-      },
-    );
-  }
-
-  void _showClearCacheDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        // Material Design 3: 弹窗样式
-        return AlertDialog(
-          backgroundColor: AppColors.backgroundSecondary,
-          surfaceTintColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
-          ),
-          elevation: 3,
-          icon: Icon(Icons.warning_rounded, color: AppColors.warning, size: 32),
-          title: Text(
-            '清理缓存',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 24,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
-          content: Text(
-            '确定要清理天气缓存数据吗？这将删除所有已保存的天气数据，但保留城市列表和设置。',
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 14,
-              height: 1.5,
-            ),
-          ),
-          actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.textSecondary,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 10,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-              child: const Text('取消'),
-            ),
-            FilledButton(
-              onPressed: () async {
-                await context.read<WeatherProvider>().clearWeatherCache();
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text('缓存已清理'),
-                    backgroundColor: AppColors.success,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                );
-              },
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.error,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 10,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-              child: const Text('确定'),
-            ),
-          ],
         );
       },
     );

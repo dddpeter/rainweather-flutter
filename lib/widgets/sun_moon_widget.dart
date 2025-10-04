@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/sun_moon_index_model.dart';
 import '../providers/weather_provider.dart';
+import '../providers/theme_provider.dart';
 import '../constants/app_colors.dart';
 
 class SunMoonWidget extends StatelessWidget {
@@ -34,96 +35,106 @@ class _SunMoonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sun = sunAndMoon.sun;
-    final moon = sunAndMoon.moon;
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        // 确保AppColors使用最新的主题
+        AppColors.setThemeProvider(themeProvider);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Card(
-        elevation: AppColors.cardElevation,
-        shadowColor: AppColors.cardShadowColor,
-        color: AppColors.materialCardColor,
-        surfaceTintColor: Colors.transparent,
-        shape: AppColors.cardShape,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 标题
-              _buildSectionTitle(
-                icon: Icons.wb_sunny_outlined,
-                title: '日出日落',
-                color: AppColors.sunrise,
-              ),
-              const SizedBox(height: 16),
+        final sun = sunAndMoon.sun;
+        final moon = sunAndMoon.moon;
 
-              // 田字型布局（带中心月相emoji和月龄）
-              SizedBox(
-                height: 156,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    _SunMoonGrid(
-                      sunrise: sun?.sunrise ?? '--',
-                      sunset: sun?.sunset ?? '--',
-                      moonrise: moon?.moonrise ?? '--',
-                      moonset: moon?.moonset ?? '--',
-                      moonAge: moon?.moonage,
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Card(
+            elevation: AppColors.cardElevation,
+            shadowColor: AppColors.cardShadowColor,
+            color: AppColors.materialCardColor,
+            surfaceTintColor: Colors.transparent,
+            shape: AppColors.cardShape,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 标题
+                  _buildSectionTitle(
+                    icon: Icons.wb_sunny_outlined,
+                    title: '日出日落',
+                    color: AppColors.sunrise,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // 田字型布局（带中心月相emoji和月龄）
+                  SizedBox(
+                    height: 156,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        _SunMoonGrid(
+                          sunrise: sun?.sunrise ?? '--',
+                          sunset: sun?.sunset ?? '--',
+                          moonrise: moon?.moonrise ?? '--',
+                          moonset: moon?.moonset ?? '--',
+                          moonAge: moon?.moonage,
+                        ),
+                        // 中心的月相emoji和月龄信息
+                        if (moon?.moonage != null)
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // 月相emoji
+                              Container(
+                                width: 50,
+                                height: 50,
+                                decoration: BoxDecoration(
+                                  color: AppColors.moon,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    _getMoonPhaseEmoji(moon?.moonage),
+                                    style: const TextStyle(
+                                      fontSize: 40,
+                                      height: 1,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              // 月相名称
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.moon.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: AppColors.moon.withOpacity(0.3),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Text(
+                                  moon?.moonage ?? '月相',
+                                  style: TextStyle(
+                                    color: AppColors.moon,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
                     ),
-                    // 中心的月相emoji和月龄信息
-                    if (moon?.moonage != null)
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // 月相emoji
-                          Container(
-                            width: 50,
-                            height: 50,
-                            decoration: BoxDecoration(
-                              color: AppColors.moon,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Center(
-                              child: Text(
-                                _getMoonPhaseEmoji(moon?.moonage),
-                                style: const TextStyle(fontSize: 40, height: 1),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          // 月相名称
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.moon.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: AppColors.moon.withOpacity(0.3),
-                                width: 1,
-                              ),
-                            ),
-                            child: Text(
-                              moon?.moonage ?? '月相',
-                              style: TextStyle(
-                                color: AppColors.moon,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -192,79 +203,73 @@ class _SunMoonGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: [
-          // 第一行
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Row(
-                children: [
-                  // 日出
-                  Expanded(
-                    child: Center(
-                      child: _GridItem(
-                        label: '日出',
-                        time: sunrise,
-                        color: AppColors.sunrise,
-                        icon: Icons.wb_sunny_outlined,
-                      ),
+    return Column(
+      children: [
+        // 第一行
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Row(
+              children: [
+                // 日出
+                Expanded(
+                  child: Center(
+                    child: _GridItem(
+                      label: '日出',
+                      time: sunrise,
+                      color: AppColors.sunrise,
+                      icon: Icons.wb_sunny_outlined,
                     ),
                   ),
-                  // 月出
-                  Expanded(
-                    child: Center(
-                      child: _GridItem(
-                        label: '月出',
-                        time: moonrise,
-                        color: AppColors.moon, // 月出 - 使用主题化颜色
-                        icon: Icons.bedtime,
-                      ),
+                ),
+                // 月出
+                Expanded(
+                  child: Center(
+                    child: _GridItem(
+                      label: '月出',
+                      time: moonrise,
+                      color: AppColors.moon, // 月出 - 使用主题化颜色
+                      icon: Icons.bedtime,
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-          // 第二行
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                children: [
-                  // 日落
-                  Expanded(
-                    child: Center(
-                      child: _GridItem(
-                        label: '日落',
-                        time: sunset,
-                        color: AppColors.sunset,
-                        icon: Icons.wb_twilight_outlined,
-                      ),
+        ),
+        // 第二行
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                // 日落
+                Expanded(
+                  child: Center(
+                    child: _GridItem(
+                      label: '日落',
+                      time: sunset,
+                      color: AppColors.sunset,
+                      icon: Icons.wb_twilight_outlined,
                     ),
                   ),
-                  // 月落
-                  Expanded(
-                    child: Center(
-                      child: _GridItem(
-                        label: '月落',
-                        time: moonset,
-                        color: AppColors.moon, // 月落 - 使用主题化颜色
-                        icon: Icons.bedtime_off,
-                      ),
+                ),
+                // 月落
+                Expanded(
+                  child: Center(
+                    child: _GridItem(
+                      label: '月落',
+                      time: moonset,
+                      color: AppColors.moon, // 月落 - 使用主题化颜色
+                      icon: Icons.bedtime_off,
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -327,123 +332,130 @@ class _SunriseSunsetCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final today = forecast15d.first;
-    final sunriseSunset = today.sunrise_sunset;
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        // 确保AppColors使用最新的主题
+        AppColors.setThemeProvider(themeProvider);
 
-    if (sunriseSunset == null || !sunriseSunset.contains('|')) {
-      return const SizedBox.shrink();
-    }
+        final today = forecast15d.first;
+        final sunriseSunset = today.sunrise_sunset;
 
-    // 解析日出日落时间 "06:48|18:34"
-    final times = sunriseSunset.split('|');
-    if (times.length != 2) return const SizedBox.shrink();
+        if (sunriseSunset == null || !sunriseSunset.contains('|')) {
+          return const SizedBox.shrink();
+        }
 
-    final sunrise = times[0]; // "06:48"
-    final sunset = times[1]; // "18:34"
+        // 解析日出日落时间 "06:48|18:34"
+        final times = sunriseSunset.split('|');
+        if (times.length != 2) return const SizedBox.shrink();
 
-    // 计算白昼时长
-    final sunriseMinutes = _parseTime(sunrise);
-    final sunsetMinutes = _parseTime(sunset);
-    final dayDuration = sunsetMinutes - sunriseMinutes;
-    final hours = dayDuration ~/ 60;
-    final minutes = dayDuration % 60;
+        final sunrise = times[0]; // "06:48"
+        final sunset = times[1]; // "18:34"
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Card(
-        elevation: AppColors.cardElevation,
-        shadowColor: AppColors.cardShadowColor,
-        color: AppColors.materialCardColor,
-        surfaceTintColor: Colors.transparent,
-        shape: AppColors.cardShape,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 标题
-              Row(
+        // 计算白昼时长
+        final sunriseMinutes = _parseTime(sunrise);
+        final sunsetMinutes = _parseTime(sunset);
+        final dayDuration = sunsetMinutes - sunriseMinutes;
+        final hours = dayDuration ~/ 60;
+        final minutes = dayDuration % 60;
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Card(
+            elevation: AppColors.cardElevation,
+            shadowColor: AppColors.cardShadowColor,
+            color: AppColors.materialCardColor,
+            surfaceTintColor: Colors.transparent,
+            shape: AppColors.cardShape,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    Icons.wb_sunny_outlined,
-                    size: 20,
-                    color: AppColors.warning,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '日出日落',
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // 日出日落信息
-              Row(
-                children: [
-                  Expanded(
-                    child: _SunriseSunsetItem(
-                      label: '日出',
-                      time: sunrise,
-                      color: AppColors.sunrise,
-                      icon: Icons.wb_sunny_outlined,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _SunriseSunsetItem(
-                      label: '日落',
-                      time: sunset,
-                      color: AppColors.sunset,
-                      icon: Icons.wb_twilight_outlined,
-                    ),
-                  ),
-                ],
-              ),
-
-              // 白昼时长
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.warning.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: AppColors.warning.withOpacity(0.3),
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.schedule_outlined,
-                      size: 16,
-                      color: AppColors.warning,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '白昼时长 ${hours}小时${minutes}分钟',
-                      style: TextStyle(
+                  // 标题
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.wb_sunny_outlined,
+                        size: 20,
                         color: AppColors.warning,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '日出日落',
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // 日出日落信息
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _SunriseSunsetItem(
+                          label: '日出',
+                          time: sunrise,
+                          color: AppColors.sunrise,
+                          icon: Icons.wb_sunny_outlined,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _SunriseSunsetItem(
+                          label: '日落',
+                          time: sunset,
+                          color: AppColors.sunset,
+                          icon: Icons.wb_twilight_outlined,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // 白昼时长
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.warning.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.warning.withOpacity(0.3),
+                        width: 1,
                       ),
                     ),
-                  ],
-                ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.schedule_outlined,
+                          size: 16,
+                          color: AppColors.warning,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '白昼时长 ${hours}小时${minutes}分钟',
+                          style: TextStyle(
+                            color: AppColors.warning,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

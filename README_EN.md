@@ -13,15 +13,19 @@ A Flutter weather application refactored from the original Android project. This
 - **Temperature Charts**: Interactive charts showing temperature trends
 - **Air Quality**: Displays air quality index (AQI) with color-coded levels
 - **Main Cities**: Quick access to weather for major Chinese cities
+- **Sun & Moon Info**: Precise sunrise/sunset times and moon phase information
+- **Moon Phases**: Real-time moon phase emojis and moon age display
+- **Life Index**: Clothing, health, and activity recommendations
 
 ### UI/UX Features
-- **Dark Theme**: Modern dark theme with blue and green accent colors
-- **Unified Card Design**: Consistent glass-morphism card style across all pages
+- **Material Design 3**: Strictly follows Google Material Design 3 guidelines
+- **Theme System**: Complete light/dark theme support with smooth transitions
+- **Unified Card Design**: Consistent Material Design card style across all pages
 - **Responsive Design**: Adapts to different screen sizes
 - **Pull-to-Refresh**: Easy data refresh with pull gesture
 - **Loading States**: Smooth loading indicators and error handling
-- **Weather Icons**: Custom weather icons for different conditions
-- **Gradient Backgrounds**: Dynamic backgrounds based on weather conditions
+- **Rich Weather Icons**: 45 weather types with better emoji compatibility
+- **Clear Visual Hierarchy**: Optimized font sizes and spacing design
 - **Interactive Charts**: Touch-enabled temperature trend charts
 
 ### Technical Features
@@ -219,6 +223,25 @@ This Flutter app is a complete refactor of the original Android weather app with
 3. Make your changes
 4. Add tests if applicable
 5. Submit a pull request
+
+## Changelog
+
+### v1.2.0 (Latest)
+- ✨ **Material Design 3 Optimization**: Complete upgrade to Material Design 3 guidelines
+- 🌅 **Sun & Moon Cards**: New sunrise/sunset and moonrise/moonset information display
+- 🌙 **Moon Phase Feature**: Real-time moon phase emoji display and moon age information
+- 💡 **Life Index**: Clothing, health, and activity recommendation indices
+- 🎨 **UI Improvements**: Unified card styling, optimized font sizes and spacing
+- 🌈 **Weather Icons**: Expanded to 45 weather types with better compatibility
+- 🔧 **Code Optimization**: Fixed theme adaptation issues and improved code quality
+
+### v1.1.0
+- 🎨 **Theme System**: Complete light/dark theme support
+- 📱 **Responsive Design**: Optimized mobile experience
+- 🔄 **State Management**: Refactored using Provider pattern
+
+### v1.0.0
+- 🚀 **Initial Release**: Basic weather functionality implementation
 
 ## License
 

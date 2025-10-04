@@ -1377,11 +1377,56 @@ class _SplashScreenState extends State<SplashScreen>
                                 color: AppColors.cardBorder,
                                 width: 2,
                               ),
+                              // 添加阴影效果
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                  spreadRadius: 2,
+                                ),
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 8),
+                                  spreadRadius: 4,
+                                ),
+                              ],
                             ),
-                            child: Icon(
-                              Icons.wb_sunny,
-                              size: 60,
-                              color: AppColors.textPrimary,
+                            child: Container(
+                              margin: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                // 图标背景渐变
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Colors.white.withOpacity(0.9),
+                                    Colors.grey.withOpacity(0.1),
+                                  ],
+                                ),
+                                // 图标边框
+                                border: Border.all(
+                                  color: Colors.grey.withOpacity(0.3),
+                                  width: 1,
+                                ),
+                                // 图标阴影
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.15),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                    spreadRadius: 1,
+                                  ),
+                                ],
+                              ),
+                              child: Image.asset(
+                                'assets/images/app_icon.png',
+                                width: 60,
+                                height: 60,
+                                fit: BoxFit.contain,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 30),

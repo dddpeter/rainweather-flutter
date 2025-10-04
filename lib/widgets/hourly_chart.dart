@@ -78,7 +78,7 @@ class HourlyChart extends StatelessWidget {
                         final lineBarsData = [
                           ChartStyles.createLineChartBarData(
                             spots: _getTemperatureSpots(filteredForecast),
-                            color: AppColors.primaryBlue,
+                            color: AppColors.temperatureChart,
                             isCurved: true,
                             showDataLabels: true,
                             showBelowArea: true,

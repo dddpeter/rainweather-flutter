@@ -167,11 +167,20 @@ class AppColors {
   /// 按钮阴影
   static Color get buttonShadow => _getColor('buttonShadow');
 
-  /// 高温色
-  static Color get highTemp => _getColor('highTemp');
+  /// 高温色 - 深色模式使用橙红色，浅色模式使用红色
+  static Color get highTemp => _themeProvider?.isLightTheme == true
+      ? const Color(0xFFD32F2F) // 浅色模式：红色
+      : const Color(0xFFFF5722); // 深色模式：橙红色
 
-  /// 低温色
-  static Color get lowTemp => _getColor('lowTemp');
+  /// 低温色 - 深色模式使用亮蓝色，浅色模式使用主题蓝色
+  static Color get lowTemp => _themeProvider?.isLightTheme == true
+      ? const Color(0xFF012d78) // 浅色模式：主题蓝色
+      : const Color(0xFF8edafc); // 深色模式：亮蓝色
+
+  /// 温度图表色 - 深色模式使用亮蓝色，浅色模式使用主题蓝色
+  static Color get temperatureChart => _themeProvider?.isLightTheme == true
+      ? const Color(0xFF012d78) // 浅色模式：主题蓝色
+      : const Color(0xFF8edafc); // 深色模式：亮蓝色
 
   /// 背景色
   static Color get backgroundPrimary => _getColor('background');

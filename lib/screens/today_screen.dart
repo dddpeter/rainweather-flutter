@@ -129,6 +129,9 @@ class _TodayScreenState extends State<TodayScreen> {
                       children: [
                         _buildTopWeatherSection(weatherProvider),
                         const SizedBox(height: AppConstants.cardSpacing),
+                        // 天气提示卡片
+                        _buildWeatherTipsCard(weatherProvider),
+                        const SizedBox(height: AppConstants.cardSpacing),
                         SunMoonWidget(weatherProvider: weatherProvider),
                         const SizedBox(height: AppConstants.cardSpacing),
                         LifeIndexWidget(weatherProvider: weatherProvider),
@@ -283,6 +286,21 @@ class _TodayScreenState extends State<TodayScreen> {
                   ),
                 ],
               ),
+
+              // 农历日期 - Material Design 3
+              if (weather?.current?.nongLi != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  weather!.current!.nongLi!,
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+
               const SizedBox(height: 16),
 
               // Weather details in 2 columns
@@ -680,5 +698,147 @@ class _TodayScreenState extends State<TodayScreen> {
     }
 
     return const SizedBox(width: 40); // 占位保持对称
+  }
+
+  /// 构建天气提示卡片（Material Design 3）
+  Widget _buildWeatherTipsCard(WeatherProvider weatherProvider) {
+    final weather = weatherProvider.currentWeather;
+    final tips = weather?.current?.tips;
+    final current = weather?.current?.current;
+
+    if (tips == null && current == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Card(
+        elevation: AppColors.cardElevation,
+        shadowColor: AppColors.cardShadowColor,
+        color: AppColors.materialCardColor,
+        surfaceTintColor: Colors.transparent,
+        shape: AppColors.cardShape,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 标题
+              Row(
+                children: [
+                  Icon(
+                    Icons.lightbulb_rounded,
+                    color: AppColors.warning,
+                    size: AppConstants.sectionTitleIconSize,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '今日提醒',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: AppConstants.sectionTitleFontSize,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // 天气提示
+              if (tips != null) ...[
+                _buildTipItem(Icons.wb_sunny_rounded, tips, AppColors.warning),
+                const SizedBox(height: 12),
+              ],
+
+              // 穿衣建议
+              if (current?.temperature != null)
+                _buildTipItem(
+                  Icons.checkroom_rounded,
+                  _getClothingSuggestion(
+                    current!.temperature!,
+                    current.weather,
+                  ),
+                  AppColors.primaryBlue,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 构建提示项
+  Widget _buildTipItem(IconData icon, String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.2), width: 1),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: color, size: 18),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 14,
+                height: 1.5,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 根据温度和天气生成穿衣建议
+  String _getClothingSuggestion(String temperature, String? weather) {
+    try {
+      final temp = int.parse(temperature);
+      final hasRain = weather?.contains('雨') ?? false;
+      final hasSnow = weather?.contains('雪') ?? false;
+
+      String suggestion = '';
+
+      // 温度建议
+      if (temp >= 30) {
+        suggestion = '天气炎热，建议穿短袖、短裤等清凉透气的衣服';
+      } else if (temp >= 25) {
+        suggestion = '天气温暖，适合穿短袖、薄长裤等夏季服装';
+      } else if (temp >= 20) {
+        suggestion = '天气舒适，建议穿长袖衬衫、薄外套等';
+      } else if (temp >= 15) {
+        suggestion = '天气微凉，建议穿夹克、薄毛衣等';
+      } else if (temp >= 10) {
+        suggestion = '天气较冷，建议穿厚外套、毛衣等保暖衣物';
+      } else if (temp >= 0) {
+        suggestion = '天气寒冷，建议穿棉衣、羽绒服等厚实保暖的衣服';
+      } else {
+        suggestion = '天气严寒，建议穿加厚羽绒服、保暖内衣等防寒衣物';
+      }
+
+      // 天气补充建议
+      if (hasRain) {
+        suggestion += '，记得带伞☂️';
+      } else if (hasSnow) {
+        suggestion += '，注意防滑保暖❄️';
+      }
+
+      return suggestion;
+    } catch (e) {
+      return '根据天气情况适当增减衣物';
+    }
   }
 }

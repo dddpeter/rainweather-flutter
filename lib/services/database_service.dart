@@ -422,6 +422,32 @@ class DatabaseService {
           .toList();
 
       // If we have a current location, handle it dynamically
+      print('🔍 Database: Processing current location: $currentLocationName');
+      print('🔍 Database: Cities before processing: ${cities.length}');
+
+      // 强制添加当前城市到列表顶部（用于测试）
+      if (currentLocationName != null && currentLocationName.isNotEmpty) {
+        // 先移除可能存在的当前城市
+        cities.removeWhere(
+          (city) =>
+              city.name == currentLocationName ||
+              city.id == 'virtual_current_location',
+        );
+
+        // 创建虚拟当前城市
+        final virtualCurrentLocation = CityModel(
+          id: 'virtual_current_location',
+          name: currentLocationName,
+          isMainCity: false,
+          sortOrder: -1,
+          createdAt: DateTime.now(),
+        );
+        cities.insert(0, virtualCurrentLocation);
+        print(
+          '🔍 Database: Force added virtual current city: $currentLocationName',
+        );
+      }
+
       if (currentLocationName != null) {
         // Check if current location is already in the main cities list
         final currentLocationIndex = cities.indexWhere(
@@ -432,9 +458,40 @@ class DatabaseService {
           // Current location was manually added by user, move it to the front
           final currentLocation = cities.removeAt(currentLocationIndex);
           cities.insert(0, currentLocation);
+          print(
+            'Current location "$currentLocationName" moved to front (was manually added)',
+          );
         } else {
           // Current location is NOT in main cities list, find it from all cities and add dynamically
-          final currentLocationCity = await getCityByName(currentLocationName);
+          CityModel? currentLocationCity = await getCityByName(
+            currentLocationName,
+          );
+
+          // 如果找不到精确匹配，尝试查找相关城市
+          if (currentLocationCity == null) {
+            print(
+              'Exact match not found for "$currentLocationName", trying fuzzy search...',
+            );
+
+            // 尝试查找包含该名称的城市
+            final db = await database;
+            final List<Map<String, dynamic>> maps = await db.query(
+              'cities',
+              where: 'name LIKE ? OR name LIKE ?',
+              whereArgs: [
+                '%$currentLocationName%',
+                '%${currentLocationName.replaceAll('区', '')}%',
+              ],
+              limit: 5,
+            );
+
+            if (maps.isNotEmpty) {
+              // 选择第一个匹配的城市
+              currentLocationCity = CityModel.fromMap(maps.first);
+              print('Found fuzzy match: ${currentLocationCity.name}');
+            }
+          }
+
           if (currentLocationCity != null) {
             // Create a dynamic city object (not marked as main city in database)
             final dynamicCurrentLocation = currentLocationCity.copyWith(
@@ -443,11 +500,29 @@ class DatabaseService {
             );
             cities.insert(0, dynamicCurrentLocation);
             print(
-              'Current location "$currentLocationName" added dynamically (not saved to database)',
+              'Current location "${currentLocationCity.name}" added dynamically (not saved to database)',
             );
           } else {
+            // 如果找不到匹配的城市，创建一个虚拟的当前城市
             print(
-              'Warning: Current location city "$currentLocationName" not found in database',
+              'Creating virtual current location city for "$currentLocationName"',
+            );
+            final virtualCurrentLocation = CityModel(
+              id: 'virtual_current_location',
+              name: currentLocationName,
+              isMainCity: false,
+              sortOrder: -1,
+              createdAt: DateTime.now(),
+            );
+            cities.insert(0, virtualCurrentLocation);
+            print(
+              'Virtual current location "$currentLocationName" added to list',
+            );
+            print(
+              '🔍 Database: Cities after adding virtual city: ${cities.length}',
+            );
+            print(
+              '🔍 Database: First city: ${cities.isNotEmpty ? cities.first.name : "None"}',
             );
           }
         }

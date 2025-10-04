@@ -367,9 +367,20 @@ class MainCitiesScreen extends StatelessWidget {
                             final cityWeather = weatherProvider.getCityWeather(
                               city.name,
                             );
+                            // 判断是否是当前城市：名称匹配或者是虚拟当前城市
+                            final currentLocationName = weatherProvider
+                                .getCurrentLocationCityName();
                             final isCurrentLocation =
-                                weatherProvider.getCurrentLocationCityName() ==
-                                city.name;
+                                (currentLocationName != null &&
+                                    currentLocationName == city.name) ||
+                                city.id == 'virtual_current_location';
+
+                            // 调试信息
+                            print('🔍 City: ${city.name}, ID: ${city.id}');
+                            print(
+                              '🔍 Current location name: $currentLocationName',
+                            );
+                            print('🔍 Is current location: $isCurrentLocation');
 
                             return Dismissible(
                               key: Key('${city.id}_dismissible'),
@@ -466,6 +477,24 @@ class MainCitiesScreen extends StatelessWidget {
                                     }
                                     return false;
                                   }
+                                  // 禁止删除虚拟当前城市
+                                  if (city.id == 'virtual_current_location') {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text('当前位置城市无法删除'),
+                                          backgroundColor:
+                                              AppColors.textSecondary,
+                                          duration: Duration(
+                                            milliseconds: 1500,
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                    return false;
+                                  }
                                   return await _showDeleteCityDialog(
                                     context,
                                     weatherProvider,
@@ -511,92 +540,130 @@ class MainCitiesScreen extends StatelessWidget {
                                                 // Title
                                                 Row(
                                                   children: [
-                                                    // 定位图标（如果是当前定位城市）
-                                                    if (isCurrentLocation) ...[
-                                                      Material(
-                                                        color:
-                                                            Colors.transparent,
-                                                        child: InkWell(
-                                                          onTap: () async {
-                                                            // 点击定位图标，更新当前位置数据
-                                                            await _updateCurrentLocation(
-                                                              context,
-                                                              weatherProvider,
-                                                            );
-                                                          },
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                10,
-                                                              ),
-                                                          child: Ink(
-                                                            padding:
-                                                                const EdgeInsets.symmetric(
-                                                                  horizontal: 6,
-                                                                  vertical: 2,
-                                                                ),
-                                                            decoration: BoxDecoration(
+                                                    // 城市名称和定位图标
+                                                    Expanded(
+                                                      child: Row(
+                                                        children: [
+                                                          Text(
+                                                            city.name,
+                                                            style: TextStyle(
                                                               color: AppColors
-                                                                  .accentGreen
-                                                                  .withOpacity(
-                                                                    0.2,
-                                                                  ),
-                                                              borderRadius:
-                                                                  BorderRadius.circular(
-                                                                    10,
-                                                                  ),
-                                                              border: Border.all(
-                                                                color: AppColors
-                                                                    .accentGreen
-                                                                    .withOpacity(
-                                                                      0.5,
-                                                                    ),
-                                                                width: 1,
-                                                              ),
-                                                            ),
-                                                            child: Row(
-                                                              mainAxisSize:
-                                                                  MainAxisSize
-                                                                      .min,
-                                                              children: [
-                                                                Icon(
-                                                                  Icons
-                                                                      .my_location,
-                                                                  color: AppColors
-                                                                      .accentGreen,
-                                                                  size: 14,
-                                                                ),
-                                                                const SizedBox(
-                                                                  width: 4,
-                                                                ),
-                                                                Text(
-                                                                  '当前位置',
-                                                                  style: TextStyle(
-                                                                    color: AppColors
-                                                                        .accentGreen,
-                                                                    fontSize:
-                                                                        10,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold,
-                                                                  ),
-                                                                ),
-                                                              ],
+                                                                  .textPrimary,
+                                                              fontSize: 18,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
                                                             ),
                                                           ),
-                                                        ),
-                                                      ),
-                                                      const SizedBox(width: 8),
-                                                    ],
-                                                    Expanded(
-                                                      child: Text(
-                                                        city.name,
-                                                        style: TextStyle(
-                                                          color: AppColors
-                                                              .textPrimary,
-                                                          fontSize: 18,
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                        ),
+                                                          // 定位图标（如果是当前定位城市）
+                                                          if (isCurrentLocation) ...[
+                                                            const SizedBox(
+                                                              width: 8,
+                                                            ),
+                                                            // 调试信息
+                                                            Builder(
+                                                              builder: (context) {
+                                                                print(
+                                                                  '🎯 Showing location icon for: ${city.name}',
+                                                                );
+                                                                return const SizedBox.shrink();
+                                                              },
+                                                            ),
+                                                            Material(
+                                                              color: Colors
+                                                                  .transparent,
+                                                              child: InkWell(
+                                                                onTap: () async {
+                                                                  // 点击定位图标，更新当前位置数据
+                                                                  await _updateCurrentLocation(
+                                                                    context,
+                                                                    weatherProvider,
+                                                                  );
+                                                                },
+                                                                borderRadius:
+                                                                    BorderRadius.circular(
+                                                                      12,
+                                                                    ),
+                                                                child: Container(
+                                                                  padding:
+                                                                      const EdgeInsets.symmetric(
+                                                                        horizontal:
+                                                                            8,
+                                                                        vertical:
+                                                                            4,
+                                                                      ),
+                                                                  decoration: BoxDecoration(
+                                                                    color: AppColors
+                                                                        .accentGreen
+                                                                        .withOpacity(
+                                                                          0.15,
+                                                                        ),
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                          12,
+                                                                        ),
+                                                                    border: Border.all(
+                                                                      color: AppColors
+                                                                          .accentGreen
+                                                                          .withOpacity(
+                                                                            0.6,
+                                                                          ),
+                                                                      width:
+                                                                          1.5,
+                                                                    ),
+                                                                    // 添加阴影效果
+                                                                    boxShadow: [
+                                                                      BoxShadow(
+                                                                        color: AppColors
+                                                                            .accentGreen
+                                                                            .withOpacity(
+                                                                              0.2,
+                                                                            ),
+                                                                        blurRadius:
+                                                                            4,
+                                                                        offset:
+                                                                            const Offset(
+                                                                              0,
+                                                                              2,
+                                                                            ),
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                  child: Row(
+                                                                    mainAxisSize:
+                                                                        MainAxisSize
+                                                                            .min,
+                                                                    children: [
+                                                                      Icon(
+                                                                        Icons
+                                                                            .my_location,
+                                                                        color: AppColors
+                                                                            .accentGreen,
+                                                                        size:
+                                                                            16,
+                                                                      ),
+                                                                      const SizedBox(
+                                                                        width:
+                                                                            6,
+                                                                      ),
+                                                                      Text(
+                                                                        '当前位置',
+                                                                        style: TextStyle(
+                                                                          color:
+                                                                              AppColors.accentGreen,
+                                                                          fontSize:
+                                                                              11,
+                                                                          fontWeight:
+                                                                              FontWeight.bold,
+                                                                        ),
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ],
                                                       ),
                                                     ),
                                                     // 预警图标
@@ -682,52 +749,30 @@ class MainCitiesScreen extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    // M3: Icon button with badge
+    // Icon button without badge
     return Container(
       margin: const EdgeInsets.only(left: 8),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => WeatherAlertsScreen(alerts: alerts),
-                  ),
-                );
-              },
-              borderRadius: BorderRadius.circular(8), // Material Design 3 标准
-              child: Container(
-                padding: const EdgeInsets.all(6),
-                child: Icon(
-                  Icons.warning_rounded,
-                  color: AppColors.error,
-                  size: 20,
-                ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => WeatherAlertsScreen(alerts: alerts),
               ),
+            );
+          },
+          borderRadius: BorderRadius.circular(8), // Material Design 3 标准
+          child: Container(
+            padding: const EdgeInsets.all(6),
+            child: Icon(
+              Icons.warning_rounded,
+              color: AppColors.error,
+              size: 20,
             ),
           ),
-          // M3: Badge indicator
-          Positioned(
-            right: 2,
-            top: 2,
-            child: Container(
-              padding: const EdgeInsets.all(2),
-              decoration: BoxDecoration(
-                color: AppColors.error,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.materialCardColor,
-                  width: 1.5,
-                ),
-              ),
-              constraints: const BoxConstraints(minWidth: 8, minHeight: 8),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

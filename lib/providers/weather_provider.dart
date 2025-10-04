@@ -520,10 +520,23 @@ class WeatherProvider extends ChangeNotifier {
       final currentLocationName =
           _currentLocation?.district ?? _originalLocation?.district;
 
+      print('🔍 loadMainCities - currentLocationName: $currentLocationName');
+      print(
+        '🔍 loadMainCities - _currentLocation: ${_currentLocation?.district}',
+      );
+      print(
+        '🔍 loadMainCities - _originalLocation: ${_originalLocation?.district}',
+      );
+
       // Load main cities with current location first (this will handle adding current location if needed)
       _mainCities = await _cityService.getMainCitiesWithCurrentLocationFirst(
         currentLocationName,
       );
+
+      print('🔍 loadMainCities - loaded ${_mainCities.length} cities');
+      for (int i = 0; i < _mainCities.length; i++) {
+        print('🔍 loadMainCities - city[$i]: ${_mainCities[i].name}');
+      }
       notifyListeners();
     } catch (e) {
       print('Error loading main cities: $e');
@@ -532,7 +545,21 @@ class WeatherProvider extends ChangeNotifier {
 
   /// Get current location city name
   String? getCurrentLocationCityName() {
-    return _currentLocation?.district ?? _originalLocation?.district;
+    // 优先使用区级名称，如果为空则使用城市名称
+    String? currentName =
+        _currentLocation?.district ?? _originalLocation?.district;
+
+    // 如果区级名称为空，使用城市名称
+    if (currentName == null || currentName.isEmpty) {
+      currentName = _currentLocation?.city ?? _originalLocation?.city;
+    }
+
+    print('🔍 getCurrentLocationCityName: $currentName');
+    print('🔍 _currentLocation?.district: ${_currentLocation?.district}');
+    print('🔍 _originalLocation?.district: ${_originalLocation?.district}');
+    print('🔍 _currentLocation?.city: ${_currentLocation?.city}');
+    print('🔍 _originalLocation?.city: ${_originalLocation?.city}');
+    return currentName;
   }
 
   /// Add a city to main cities

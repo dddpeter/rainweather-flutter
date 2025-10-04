@@ -651,40 +651,20 @@ class _TodayScreenState extends State<TodayScreen> with WidgetsBindingObserver {
     );
 
     if (hasAlerts) {
-      return Stack(
-        children: [
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => WeatherAlertsScreen(alerts: alerts),
-                ),
-              );
-            },
-            icon: Icon(
-              Icons.warning_rounded,
-              color: AppColors.error,
-              size: AppColors.titleBarIconSize,
+      return IconButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => WeatherAlertsScreen(alerts: alerts),
             ),
-          ),
-          Positioned(
-            right: 6,
-            top: 6,
-            child: Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                color: AppColors.error,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.backgroundPrimary,
-                  width: 1.5,
-                ),
-              ),
-            ),
-          ),
-        ],
+          );
+        },
+        icon: Icon(
+          Icons.warning_rounded,
+          color: AppColors.error,
+          size: AppColors.titleBarIconSize,
+        ),
       );
     }
 

@@ -8,26 +8,32 @@ class WeatherService {
   static WeatherService? _instance;
   final Dio _dio;
   final CityDataService _cityDataService = CityDataService.getInstance();
-  
-  WeatherService._() : _dio = Dio(BaseOptions(
-    connectTimeout: const Duration(seconds: 10),
-    receiveTimeout: const Duration(seconds: 10),
-    headers: {
-      'Accept': 'application/json',
-      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.85 Safari/537.36 Edg/90.0.818.49',
-    },
-  ));
-  
+
+  WeatherService._()
+    : _dio = Dio(
+        BaseOptions(
+          connectTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 10),
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent':
+                'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.85 Safari/537.36 Edg/90.0.818.49',
+          },
+        ),
+      );
+
   static WeatherService getInstance() {
     _instance ??= WeatherService._();
     return _instance!;
   }
-  
+
   /// Get weather data for a specific city
   Future<WeatherModel?> getWeatherData(String cityId) async {
     try {
-      final response = await _dio.get('${AppConstants.weatherApiBaseUrl}$cityId');
-      
+      final response = await _dio.get(
+        '${AppConstants.weatherApiBaseUrl}$cityId',
+      );
+
       if (response.statusCode == 200) {
         final data = response.data;
         if (data is Map<String, dynamic> && data.containsKey('data')) {
@@ -43,38 +49,50 @@ class WeatherService {
       return null;
     }
   }
-  
+
   /// Get weather data for a location
-  Future<WeatherModel?> getWeatherDataForLocation(LocationModel location) async {
+  Future<WeatherModel?> getWeatherDataForLocation(
+    LocationModel location,
+  ) async {
     String cityId = _getCityIdFromLocation(location);
+    print('Weather data - Location: ${location.district}, CityID: $cityId');
+
     if (cityId.isNotEmpty) {
-      return await getWeatherData(cityId);
+      final result = await getWeatherData(cityId);
+      if (result == null) {
+        print('Weather data - Failed to fetch data for cityId: $cityId');
+      }
+      return result;
+    } else {
+      print(
+        'Weather data - Failed to find cityId for location: ${location.district}',
+      );
     }
     return null;
   }
-  
+
   /// Get city ID from location
   String _getCityIdFromLocation(LocationModel location) {
     // Ensure city data is loaded
     _cityDataService.loadCityData();
-    
+
     // Try to find city ID by district first
     String? cityId = _cityDataService.findCityIdByName(location.district);
-    
+
     // If not found, try by city
     if (cityId == null && location.city.isNotEmpty) {
       cityId = _cityDataService.findCityIdByName(location.city);
     }
-    
+
     // If still not found, try by province
     if (cityId == null && location.province.isNotEmpty) {
       cityId = _cityDataService.findCityIdByName(location.province);
     }
-    
+
     // Return found city ID or default
     return cityId ?? AppConstants.defaultCityId;
   }
-  
+
   /// Get 7-day weather forecast
   Future<List<DailyWeather>?> get7DayForecast(String cityId) async {
     try {
@@ -89,7 +107,7 @@ class WeatherService {
       return null;
     }
   }
-  
+
   /// Get 24-hour weather forecast
   Future<List<HourlyWeather>?> get24HourForecast(String cityId) async {
     try {
@@ -100,13 +118,14 @@ class WeatherService {
       return null;
     }
   }
-  
+
   /// Get weather icon for weather type
   String getWeatherIcon(String? weatherType) {
     if (weatherType == null || weatherType.isEmpty) return '☀️';
-    return AppConstants.weatherIcons[weatherType] ?? '☀️'; // Default to sunny emoji
+    return AppConstants.weatherIcons[weatherType] ??
+        '☀️'; // Default to sunny emoji
   }
-  
+
   /// Get weather image for weather type (day/night)
   String getWeatherImage(String? weatherType, bool isDay) {
     if (weatherType == null || weatherType.isEmpty) {
@@ -118,7 +137,7 @@ class WeatherService {
       return AppConstants.nightWeatherImages[weatherType] ?? 'q0.png';
     }
   }
-  
+
   /// Get air quality level
   String getAirQualityLevel(int? aqi) {
     if (aqi == null) return '未知';
@@ -129,7 +148,7 @@ class WeatherService {
     if (aqi <= 300) return '重度污染';
     return '严重污染';
   }
-  
+
   /// Check if it's day time
   bool isDayTime() {
     final now = DateTime.now();

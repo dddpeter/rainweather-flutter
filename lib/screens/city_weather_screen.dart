@@ -145,8 +145,9 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  GestureDetector(
+                  InkWell(
                     onTap: () => Navigator.of(context).pop(),
+                    borderRadius: BorderRadius.circular(20),
                     child: Padding(
                       padding: const EdgeInsets.all(8),
                       child: Icon(
@@ -363,17 +364,15 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
     final weatherService = WeatherService.getInstance();
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      child: GestureDetector(
+      child: HourlyWeatherWidget(
+        hourlyForecast: weatherProvider.currentWeather?.forecast24h,
+        weatherService: weatherService,
         onTap: () {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => HourlyScreen()),
           );
         },
-        child: HourlyWeatherWidget(
-          hourlyForecast: weatherProvider.currentWeather?.forecast24h,
-          weatherService: weatherService,
-        ),
       ),
     );
   }

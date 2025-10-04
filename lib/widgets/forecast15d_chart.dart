@@ -6,10 +6,7 @@ import '../constants/app_colors.dart';
 class Forecast15dChart extends StatelessWidget {
   final List<DailyWeather>? forecast15d;
 
-  const Forecast15dChart({
-    super.key,
-    this.forecast15d,
-  });
+  const Forecast15dChart({super.key, this.forecast15d});
 
   @override
   Widget build(BuildContext context) {
@@ -19,188 +16,204 @@ class Forecast15dChart extends StatelessWidget {
 
     // 准备图表数据
     final chartData = _prepareChartData(forecast15d!);
-    
-    return Container(
+
+    return SizedBox(
       height: 200,
-      padding: const EdgeInsets.all(16),
-      decoration: AppColors.standardCardDecoration,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '15日温度趋势',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: LineChart(
-              LineChartData(
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  horizontalInterval: 5,
-                  getDrawingHorizontalLine: (value) {
-                    return FlLine(
-                      color: AppColors.dividerColor,
-                      strokeWidth: 0.5,
-                    );
-                  },
+      child: Card(
+        elevation: AppColors.cardElevation,
+        shadowColor: AppColors.cardShadowColor,
+        color: AppColors.materialCardColor,
+        shape: AppColors.cardShape,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '15日温度趋势',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
                 ),
-                titlesData: FlTitlesData(
-                  show: true,
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 30,
-                      interval: 2,
-                      getTitlesWidget: (value, meta) {
-                        if (value.toInt() >= 0 && value.toInt() < chartData.length) {
-                          final day = chartData[value.toInt()];
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 8),
-                            child: Text(
-                              day['date'],
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: LineChart(
+                  LineChartData(
+                    gridData: FlGridData(
+                      show: true,
+                      drawVerticalLine: false,
+                      horizontalInterval: 5,
+                      getDrawingHorizontalLine: (value) {
+                        return FlLine(
+                          color: AppColors.dividerColor,
+                          strokeWidth: 0.5,
+                        );
+                      },
+                    ),
+                    titlesData: FlTitlesData(
+                      show: true,
+                      rightTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      topTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 30,
+                          interval: 2,
+                          getTitlesWidget: (value, meta) {
+                            if (value.toInt() >= 0 &&
+                                value.toInt() < chartData.length) {
+                              final day = chartData[value.toInt()];
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: Text(
+                                  day['date'],
+                                  style: TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              );
+                            }
+                            return const Text('');
+                          },
+                        ),
+                      ),
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          interval: 10,
+                          reservedSize: 40,
+                          getTitlesWidget: (value, meta) {
+                            return Text(
+                              '${value.toInt()}℃',
                               style: TextStyle(
                                 color: AppColors.textSecondary,
                                 fontSize: 10,
                               ),
-                            ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    borderData: FlBorderData(
+                      show: true,
+                      border: Border.all(
+                        color: AppColors.borderColor,
+                        width: 0.5,
+                      ),
+                    ),
+                    minX: 0,
+                    maxX: (chartData.length - 1).toDouble(),
+                    minY: _getMinTemperature(chartData) - 5,
+                    maxY: _getMaxTemperature(chartData) + 5,
+                    lineBarsData: [
+                      // 最高温度线
+                      LineChartBarData(
+                        spots: chartData.asMap().entries.map((entry) {
+                          return FlSpot(
+                            entry.key.toDouble(),
+                            entry.value['maxTemp'],
                           );
-                        }
-                        return const Text('');
-                      },
-                    ),
-                  ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      interval: 10,
-                      reservedSize: 40,
-                      getTitlesWidget: (value, meta) {
-                        return Text(
-                          '${value.toInt()}℃',
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 10,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-                borderData: FlBorderData(
-                  show: true,
-                  border: Border.all(
-                    color: AppColors.borderColor,
-                    width: 0.5,
-                  ),
-                ),
-                minX: 0,
-                maxX: (chartData.length - 1).toDouble(),
-                minY: _getMinTemperature(chartData) - 5,
-                maxY: _getMaxTemperature(chartData) + 5,
-                lineBarsData: [
-                  // 最高温度线
-                  LineChartBarData(
-                    spots: chartData.asMap().entries.map((entry) {
-                      return FlSpot(entry.key.toDouble(), entry.value['maxTemp']);
-                    }).toList(),
-                    isCurved: true,
-                    color: AppColors.highTemp,
-                    barWidth: 3,
-                    isStrokeCapRound: true,
-                    dotData: FlDotData(
-                      show: true,
-                      getDotPainter: (spot, percent, barData, index) {
-                        return FlDotCirclePainter(
-                          radius: 4,
-                          color: AppColors.highTemp,
-                          strokeWidth: 2,
-                          strokeColor: AppColors.cardBackground,
-                        );
-                      },
-                    ),
-                    belowBarData: BarAreaData(show: false),
-                  ),
-                  // 最低温度线
-                  LineChartBarData(
-                    spots: chartData.asMap().entries.map((entry) {
-                      return FlSpot(entry.key.toDouble(), entry.value['minTemp']);
-                    }).toList(),
-                    isCurved: true,
-                    color: AppColors.lowTemp,
-                    barWidth: 3,
-                    isStrokeCapRound: true,
-                    dotData: FlDotData(
-                      show: true,
-                      getDotPainter: (spot, percent, barData, index) {
-                        return FlDotCirclePainter(
-                          radius: 4,
-                          color: AppColors.lowTemp,
-                          strokeWidth: 2,
-                          strokeColor: AppColors.cardBackground,
-                        );
-                      },
-                    ),
-                    belowBarData: BarAreaData(show: false),
-                  ),
-                ],
-                lineTouchData: LineTouchData(
-                  enabled: true,
-                  touchTooltipData: LineTouchTooltipData(
-                    getTooltipItems: (touchedSpots) {
-                      return touchedSpots.map((touchedSpot) {
-                        final index = touchedSpot.x.toInt();
-                        if (index >= 0 && index < chartData.length) {
-                          final day = chartData[index];
-                          final isMaxTemp = touchedSpot.barIndex == 0;
-                          return LineTooltipItem(
-                            isMaxTemp ? '最高: ${day['maxTemp']}℃' : '最低: ${day['minTemp']}℃',
-                            TextStyle(
-                              color: AppColors.textPrimary,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            children: [
-                              TextSpan(
-                                text: '\n${day['date']}',
-                                style: TextStyle(
-                                  color: AppColors.textSecondary,
-                                  fontSize: 10,
+                        }).toList(),
+                        isCurved: true,
+                        color: AppColors.highTemp,
+                        barWidth: 3,
+                        isStrokeCapRound: true,
+                        dotData: FlDotData(
+                          show: true,
+                          getDotPainter: (spot, percent, barData, index) {
+                            return FlDotCirclePainter(
+                              radius: 4,
+                              color: AppColors.highTemp,
+                              strokeWidth: 2,
+                              strokeColor: AppColors.cardBackground,
+                            );
+                          },
+                        ),
+                        belowBarData: BarAreaData(show: false),
+                      ),
+                      // 最低温度线
+                      LineChartBarData(
+                        spots: chartData.asMap().entries.map((entry) {
+                          return FlSpot(
+                            entry.key.toDouble(),
+                            entry.value['minTemp'],
+                          );
+                        }).toList(),
+                        isCurved: true,
+                        color: AppColors.lowTemp,
+                        barWidth: 3,
+                        isStrokeCapRound: true,
+                        dotData: FlDotData(
+                          show: true,
+                          getDotPainter: (spot, percent, barData, index) {
+                            return FlDotCirclePainter(
+                              radius: 4,
+                              color: AppColors.lowTemp,
+                              strokeWidth: 2,
+                              strokeColor: AppColors.cardBackground,
+                            );
+                          },
+                        ),
+                        belowBarData: BarAreaData(show: false),
+                      ),
+                    ],
+                    lineTouchData: LineTouchData(
+                      enabled: true,
+                      touchTooltipData: LineTouchTooltipData(
+                        getTooltipItems: (touchedSpots) {
+                          return touchedSpots.map((touchedSpot) {
+                            final index = touchedSpot.x.toInt();
+                            if (index >= 0 && index < chartData.length) {
+                              final day = chartData[index];
+                              final isMaxTemp = touchedSpot.barIndex == 0;
+                              return LineTooltipItem(
+                                isMaxTemp
+                                    ? '最高: ${day['maxTemp']}℃'
+                                    : '最低: ${day['minTemp']}℃',
+                                TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                              ),
-                            ],
-                          );
-                        }
-                        return null;
-                      }).toList();
-                    },
+                                children: [
+                                  TextSpan(
+                                    text: '\n${day['date']}',
+                                    style: TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                ],
+                              );
+                            }
+                            return null;
+                          }).toList();
+                        },
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          // 图例
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildLegendItem('最高温度', AppColors.highTemp),
-              const SizedBox(width: 24),
-              _buildLegendItem('最低温度', AppColors.lowTemp),
+              const SizedBox(height: 8),
+              // 图例
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildLegendItem('最高温度', AppColors.highTemp),
+                  const SizedBox(width: 24),
+                  _buildLegendItem('最低温度', AppColors.lowTemp),
+                ],
+              ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -220,10 +233,7 @@ class Forecast15dChart extends StatelessWidget {
         const SizedBox(width: 6),
         Text(
           label,
-          style: TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 10,
-          ),
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 10),
         ),
       ],
     );
@@ -234,7 +244,7 @@ class Forecast15dChart extends StatelessWidget {
       final maxTemp = _parseTemperature(day.temperature_am ?? '0');
       final minTemp = _parseTemperature(day.temperature_pm ?? '0');
       final date = _formatDate(day.forecasttime ?? '');
-      
+
       return {
         'maxTemp': maxTemp.toDouble(),
         'minTemp': minTemp.toDouble(),
@@ -267,11 +277,15 @@ class Forecast15dChart extends StatelessWidget {
 
   double _getMinTemperature(List<Map<String, dynamic>> data) {
     if (data.isEmpty) return 0;
-    return data.map((d) => d['minTemp'] as double).reduce((a, b) => a < b ? a : b);
+    return data
+        .map((d) => d['minTemp'] as double)
+        .reduce((a, b) => a < b ? a : b);
   }
 
   double _getMaxTemperature(List<Map<String, dynamic>> data) {
     if (data.isEmpty) return 0;
-    return data.map((d) => d['maxTemp'] as double).reduce((a, b) => a > b ? a : b);
+    return data
+        .map((d) => d['maxTemp'] as double)
+        .reduce((a, b) => a > b ? a : b);
   }
 }

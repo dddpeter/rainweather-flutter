@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/weather_provider.dart';
@@ -42,89 +41,89 @@ class _HourlyScreenState extends State<HourlyScreen> {
             child: SafeArea(
               child: Consumer<WeatherProvider>(
                 builder: (context, weatherProvider, child) {
-              if (weatherProvider.isLoading && weatherProvider.currentWeather == null) {
-                return Center(
-                  child: CircularProgressIndicator(
-                    color: AppColors.textPrimary,
-                  ),
-                );
-              }
-
-              if (weatherProvider.error != null) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.error_outline,
+                  if (weatherProvider.isLoading && weatherProvider.currentWeather == null) {
+                    return Center(
+                      child: CircularProgressIndicator(
                         color: AppColors.textPrimary,
-                        size: 64,
                       ),
-                      const SizedBox(height: 16),
-                      Text(
-                        '加载失败',
-                        style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        weatherProvider.error!,
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 14,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 24),
-                      ElevatedButton(
-                        onPressed: () => weatherProvider.forceRefreshWithLocation(),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryBlue,
-                          foregroundColor: AppColors.textPrimary,
-                        ),
-                        child: const Text('重试'),
-                      ),
-                    ],
-                  ),
-                );
-              }
+                    );
+                  }
 
-              final weather = weatherProvider.currentWeather;
-              final location = weatherProvider.currentLocation;
-              final hourlyForecast = weather?.forecast24h ?? [];
+                  if (weatherProvider.error != null) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            color: AppColors.error,
+                            size: 64,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            '加载失败',
+                            style: TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            weatherProvider.error!,
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 14,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 24),
+                          ElevatedButton(
+                            onPressed: () => weatherProvider.forceRefreshWithLocation(),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryBlue,
+                              foregroundColor: AppColors.textPrimary,
+                            ),
+                            child: const Text('重试'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
 
-              return RefreshIndicator(
-                onRefresh: () => weatherProvider.refreshWeatherData(),
-                color: AppColors.primaryBlue,
-                backgroundColor: AppColors.backgroundSecondary,
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Header
-                        _buildHeader(location, weatherProvider),
-                        const SizedBox(height: 24),
-                        
-                        // 24小时温度趋势图
-                        HourlyChart(hourlyForecast: hourlyForecast),
-                        const SizedBox(height: 24),
-                        
-                        // 24小时天气列表
-                        HourlyList(
-                          hourlyForecast: hourlyForecast,
-                          weatherService: WeatherService.getInstance(),
+                  final weather = weatherProvider.currentWeather;
+                  final location = weatherProvider.currentLocation;
+                  final hourlyForecast = weather?.forecast24h ?? [];
+
+                  return RefreshIndicator(
+                    onRefresh: () => weatherProvider.refreshWeatherData(),
+                    color: AppColors.primaryBlue,
+                    backgroundColor: AppColors.backgroundSecondary,
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Header
+                            _buildHeader(location, weatherProvider),
+                            const SizedBox(height: 24),
+                            
+                            // 24小时温度趋势图
+                            HourlyChart(hourlyForecast: hourlyForecast),
+                            const SizedBox(height: 24),
+                            
+                            // 24小时天气列表
+                            HourlyList(
+                              hourlyForecast: hourlyForecast,
+                              weatherService: WeatherService.getInstance(),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
-              );
+                  );
                 },
               ),
             ),

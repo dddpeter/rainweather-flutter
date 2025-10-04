@@ -8,26 +8,27 @@ import '../providers/theme_provider.dart';
 class HourlyChart extends StatelessWidget {
   final List<HourlyWeather>? hourlyForecast;
 
-  const HourlyChart({
-    super.key,
-    required this.hourlyForecast,
-  });
+  const HourlyChart({super.key, required this.hourlyForecast});
 
   @override
   Widget build(BuildContext context) {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         if (hourlyForecast == null || hourlyForecast!.isEmpty) {
-          return Container(
+          return SizedBox(
             height: 200,
-            padding: const EdgeInsets.all(16),
-            decoration: AppColors.standardCardDecoration,
-            child: Center(
-              child: Text(
-                '暂无24小时数据',
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 16,
+            child: Card(
+              elevation: AppColors.cardElevation,
+              shadowColor: AppColors.cardShadowColor,
+              color: AppColors.materialCardColor,
+              shape: AppColors.cardShape,
+              child: Center(
+                child: Text(
+                  '暂无24小时数据',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 16,
+                  ),
                 ),
               ),
             ),
@@ -37,110 +38,122 @@ class HourlyChart extends StatelessWidget {
         // 过滤显示当前时间前2小时、当前时间和当前时间后21小时的数据
         final filteredForecast = _filterHourlyForecast(hourlyForecast!);
 
-        return Container(
+        return SizedBox(
           height: 200,
-          padding: const EdgeInsets.all(16),
-          decoration: AppColors.standardCardDecoration,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '24小时温度趋势',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: LineChart(
-                  LineChartData(
-                    gridData: FlGridData(
-                      show: true,
-                      drawVerticalLine: false,
-                      horizontalInterval: 5,
-                      getDrawingHorizontalLine: (value) {
-                        return FlLine(
-                          color: AppColors.textTertiary,
-                          strokeWidth: 1,
-                        );
-                      },
+          child: Card(
+            elevation: AppColors.cardElevation,
+            shadowColor: AppColors.cardShadowColor,
+            color: AppColors.materialCardColor,
+            shape: AppColors.cardShape,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '24小时温度趋势',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
                     ),
-                    titlesData: FlTitlesData(
-                      leftTitles: AxisTitles(
-                        sideTitles: SideTitles(
-                          showTitles: true,
-                          reservedSize: 30,
-                          interval: 5,
-                          getTitlesWidget: (value, meta) {
-                            return Text(
-                              '${value.toInt()}℃',
-                              style: TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 10,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      rightTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false),
-                      ),
-                      topTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false),
-                      ),
-                      bottomTitles: AxisTitles(
-                        sideTitles: SideTitles(
-                          showTitles: true,
-                          reservedSize: 30,
-                          getTitlesWidget: (value, meta) {
-                            final index = value.toInt();
-                            if (index >= 0 && index < filteredForecast.length) {
-                              return Text(
-                                _formatTime(filteredForecast[index].forecasttime ?? ''),
-                                style: TextStyle(
-                                  color: AppColors.textSecondary,
-                                  fontSize: 10,
-                                ),
-                              );
-                            }
-                            return const Text('');
-                          },
-                        ),
-                      ),
-                    ),
-                    borderData: FlBorderData(show: false),
-                    lineBarsData: [
-                      LineChartBarData(
-                        spots: _getTemperatureSpots(filteredForecast),
-                        isCurved: true,
-                        color: AppColors.primaryBlue,
-                        barWidth: 3,
-                        isStrokeCapRound: true,
-                        dotData: FlDotData(
-                          show: true,
-                          getDotPainter: (spot, percent, barData, index) {
-                            return FlDotCirclePainter(
-                              radius: 4,
-                              color: AppColors.primaryBlue,
-                              strokeWidth: 2,
-                              strokeColor: AppColors.cardBackground, // 使用卡片背景色作为描边
-                            );
-                          },
-                        ),
-                        belowBarData: BarAreaData(
-                          show: true,
-                          color: AppColors.primaryBlue.withOpacity(0.1),
-                        ),
-                      ),
-                    ],
-                    minY: _getMinTemperature(filteredForecast) - 5,
-                    maxY: _getMaxTemperature(filteredForecast) + 5,
                   ),
-                ),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: LineChart(
+                      LineChartData(
+                        gridData: FlGridData(
+                          show: true,
+                          drawVerticalLine: false,
+                          horizontalInterval: 5,
+                          getDrawingHorizontalLine: (value) {
+                            return FlLine(
+                              color: AppColors.textTertiary,
+                              strokeWidth: 1,
+                            );
+                          },
+                        ),
+                        titlesData: FlTitlesData(
+                          leftTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: 30,
+                              interval: 5,
+                              getTitlesWidget: (value, meta) {
+                                return Text(
+                                  '${value.toInt()}℃',
+                                  style: TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 10,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          rightTitles: const AxisTitles(
+                            sideTitles: SideTitles(showTitles: false),
+                          ),
+                          topTitles: const AxisTitles(
+                            sideTitles: SideTitles(showTitles: false),
+                          ),
+                          bottomTitles: AxisTitles(
+                            sideTitles: SideTitles(
+                              showTitles: true,
+                              reservedSize: 30,
+                              getTitlesWidget: (value, meta) {
+                                final index = value.toInt();
+                                if (index >= 0 &&
+                                    index < filteredForecast.length) {
+                                  return Text(
+                                    _formatTime(
+                                      filteredForecast[index].forecasttime ??
+                                          '',
+                                    ),
+                                    style: TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 10,
+                                    ),
+                                  );
+                                }
+                                return const Text('');
+                              },
+                            ),
+                          ),
+                        ),
+                        borderData: FlBorderData(show: false),
+                        lineBarsData: [
+                          LineChartBarData(
+                            spots: _getTemperatureSpots(filteredForecast),
+                            isCurved: true,
+                            color: AppColors.primaryBlue,
+                            barWidth: 3,
+                            isStrokeCapRound: true,
+                            dotData: FlDotData(
+                              show: true,
+                              getDotPainter: (spot, percent, barData, index) {
+                                return FlDotCirclePainter(
+                                  radius: 4,
+                                  color: AppColors.primaryBlue,
+                                  strokeWidth: 2,
+                                  strokeColor:
+                                      AppColors.cardBackground, // 使用卡片背景色作为描边
+                                );
+                              },
+                            ),
+                            belowBarData: BarAreaData(
+                              show: true,
+                              color: AppColors.primaryBlue.withOpacity(0.1),
+                            ),
+                          ),
+                        ],
+                        minY: _getMinTemperature(filteredForecast) - 5,
+                        maxY: _getMaxTemperature(filteredForecast) + 5,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         );
       },
@@ -204,33 +217,33 @@ class HourlyChart extends StatelessWidget {
   List<HourlyWeather> _filterHourlyForecast(List<HourlyWeather> forecast) {
     final now = DateTime.now();
     final currentHour = now.hour;
-    
+
     // 计算时间范围：当前时间前2小时到当前时间后21小时
     final startHour = (currentHour - 2 + 24) % 24; // 前2小时
     final endHour = (currentHour + 21) % 24; // 后21小时
-    
+
     List<HourlyWeather> filtered = [];
-    
+
     for (final hour in forecast) {
       final timeStr = hour.forecasttime ?? '';
       if (timeStr.isEmpty) continue;
-      
+
       try {
         // 解析时间字符串，支持 HH:mm 格式
         int? forecastHour;
-        
+
         if (timeStr.contains(':')) {
           final parts = timeStr.split(':');
           if (parts.length >= 2) {
             forecastHour = int.parse(parts[0]);
           }
         }
-        
+
         if (forecastHour == null) continue;
-        
+
         // 检查是否在时间范围内（考虑跨天情况）
         bool shouldInclude = false;
-        
+
         if (startHour <= endHour) {
           // 不跨天：startHour <= hour <= endHour
           shouldInclude = forecastHour >= startHour && forecastHour <= endHour;
@@ -238,7 +251,7 @@ class HourlyChart extends StatelessWidget {
           // 跨天：hour >= startHour || hour <= endHour
           shouldInclude = forecastHour >= startHour || forecastHour <= endHour;
         }
-        
+
         if (shouldInclude) {
           filtered.add(hour);
         }
@@ -247,14 +260,14 @@ class HourlyChart extends StatelessWidget {
         continue;
       }
     }
-    
+
     // 按时间排序
     filtered.sort((a, b) {
       final hourA = _parseHour(a.forecasttime ?? '');
       final hourB = _parseHour(b.forecasttime ?? '');
       return hourA.compareTo(hourB);
     });
-    
+
     return filtered;
   }
 

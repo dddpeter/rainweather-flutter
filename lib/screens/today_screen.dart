@@ -244,17 +244,8 @@ class _TodayScreenState extends State<TodayScreen> {
                       ),
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () => _showLifeAdviceDialog(weatherProvider),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Icon(
-                        Icons.lightbulb_outline,
-                        color: AppColors.titleBarDecorIconColor,
-                        size: AppColors.titleBarDecorIconSize,
-                      ),
-                    ),
-                  ),
+                  // 右侧占位，保持对称
+                  const SizedBox(width: 40),
                 ],
               ),
               const SizedBox(height: 16),
@@ -446,17 +437,15 @@ class _TodayScreenState extends State<TodayScreen> {
     final weatherService = WeatherService.getInstance();
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      child: GestureDetector(
+      child: HourlyWeatherWidget(
+        hourlyForecast: weatherProvider.currentWeather?.forecast24h,
+        weatherService: weatherService,
         onTap: () {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const HourlyScreen()),
           );
         },
-        child: HourlyWeatherWidget(
-          hourlyForecast: weatherProvider.currentWeather?.forecast24h,
-          weatherService: weatherService,
-        ),
       ),
     );
   }
@@ -622,83 +611,6 @@ class _TodayScreenState extends State<TodayScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  void _showLifeAdviceDialog(WeatherProvider weatherProvider) {
-    final weather = weatherProvider.currentWeather;
-    final tips = weather?.current?.tips ?? weather?.tips ?? '今天天气不错，适合外出活动';
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: AppColors.backgroundSecondary,
-          shape: AppColors.dialogShape,
-          title: Row(
-            children: [
-              Icon(
-                Icons.lightbulb_outline,
-                color: AppColors.titleBarIconColor,
-                size: AppColors.titleBarIconSize,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '生活建议',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          content: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.accentGreen.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppColors.accentGreen.withOpacity(0.3),
-                width: 1,
-              ),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  Icons.chat_bubble_outline,
-                  color: AppColors.accentGreen,
-                  size: 18,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    tips,
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 14,
-                      height: 1.5,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                '确定',
-                style: TextStyle(
-                  color: AppColors.accentGreen,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
     );
   }
 }

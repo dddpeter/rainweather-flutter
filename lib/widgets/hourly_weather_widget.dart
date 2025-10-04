@@ -8,11 +8,13 @@ import '../providers/theme_provider.dart';
 class HourlyWeatherWidget extends StatelessWidget {
   final List<HourlyWeather>? hourlyForecast;
   final WeatherService weatherService;
+  final VoidCallback? onTap;
 
   const HourlyWeatherWidget({
     super.key,
     required this.hourlyForecast,
     required this.weatherService,
+    this.onTap,
   });
 
   @override
@@ -37,49 +39,53 @@ class HourlyWeatherWidget extends StatelessWidget {
           shadowColor: AppColors.cardShadowColor,
           color: AppColors.materialCardColor,
           shape: AppColors.cardShape,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '24小时预报',
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '24小时预报',
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    Text(
-                      '更多',
-                      style: TextStyle(
-                        color: themeProvider.isLightTheme
-                            ? AppColors.primaryBlue
-                            : AppColors.accentBlue,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
+                      Text(
+                        '更多',
+                        style: TextStyle(
+                          color: themeProvider.isLightTheme
+                              ? AppColors.primaryBlue
+                              : AppColors.accentBlue,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              SizedBox(
-                height: 90,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  itemCount: hourlyForecast!.length,
-                  itemBuilder: (context, index) {
-                    final hour = hourlyForecast![index];
-                    return _buildHourlyItem(hour, index);
-                  },
+                SizedBox(
+                  height: 90,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    itemCount: hourlyForecast!.length,
+                    itemBuilder: (context, index) {
+                      final hour = hourlyForecast![index];
+                      return _buildHourlyItem(hour, index);
+                    },
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-            ],
+                const SizedBox(height: 8),
+              ],
+            ),
           ),
         );
       },

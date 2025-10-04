@@ -20,15 +20,20 @@ class HourlyList extends StatelessWidget {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         if (hourlyForecast == null || hourlyForecast!.isEmpty) {
-          return Container(
-            padding: const EdgeInsets.all(16),
-            decoration: AppColors.standardCardDecoration,
-            child: Center(
-              child: Text(
-                '暂无24小时预报数据',
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 16,
+          return Card(
+            elevation: AppColors.cardElevation,
+            shadowColor: AppColors.cardShadowColor,
+            color: AppColors.materialCardColor,
+            shape: AppColors.cardShape,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Center(
+                child: Text(
+                  '暂无24小时预报数据',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 16,
+                  ),
                 ),
               ),
             ),
@@ -38,8 +43,11 @@ class HourlyList extends StatelessWidget {
         // 过滤显示当前时间前2小时、当前时间和当前时间后21小时的数据
         final filteredForecast = _filterHourlyForecast(hourlyForecast!);
 
-        return Container(
-          decoration: AppColors.standardCardDecoration,
+        return Card(
+          elevation: AppColors.cardElevation,
+          shadowColor: AppColors.cardShadowColor,
+          color: AppColors.materialCardColor,
+          shape: AppColors.cardShape,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -58,10 +66,8 @@ class HourlyList extends StatelessWidget {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: filteredForecast.length,
-                separatorBuilder: (context, index) => Divider(
-                  color: AppColors.cardBorder,
-                  height: 1,
-                ),
+                separatorBuilder: (context, index) =>
+                    Divider(color: AppColors.cardBorder, height: 1),
                 itemBuilder: (context, index) {
                   final hour = filteredForecast[index];
                   return _buildHourlyItem(hour, index);
@@ -79,7 +85,7 @@ class HourlyList extends StatelessWidget {
     final temperature = _parseTemperature(hour.temperature ?? '');
     final weatherIcon = weatherService.getWeatherIcon(hour.weather ?? '晴');
     final isCurrentHour = _isCurrentHour(time);
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -105,7 +111,10 @@ class HourlyList extends StatelessWidget {
                 if (isCurrentHour)
                   Container(
                     margin: const EdgeInsets.only(top: 2),
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.currentTagBackground,
                       border: Border.all(
@@ -126,18 +135,15 @@ class HourlyList extends StatelessWidget {
               ],
             ),
           ),
-          
+
           // 天气图标
           SizedBox(
             width: 50,
             child: Center(
-              child: Text(
-                weatherIcon,
-                style: const TextStyle(fontSize: 24),
-              ),
+              child: Text(weatherIcon, style: const TextStyle(fontSize: 24)),
             ),
           ),
-          
+
           // 温度
           SizedBox(
             width: 60,
@@ -150,7 +156,7 @@ class HourlyList extends StatelessWidget {
               ),
             ),
           ),
-          
+
           // 天气描述
           Expanded(
             child: Text(
@@ -162,16 +168,13 @@ class HourlyList extends StatelessWidget {
               ),
             ),
           ),
-          
+
           // 风向风力
           SizedBox(
             width: 80,
             child: Text(
               '${hour.windDir ?? '--'}${hour.windPower ?? ''}',
-              style: TextStyle(
-                color: AppColors.textTertiary,
-                fontSize: 12,
-              ),
+              style: TextStyle(color: AppColors.textTertiary, fontSize: 12),
               textAlign: TextAlign.right,
             ),
           ),
@@ -210,7 +213,7 @@ class HourlyList extends StatelessWidget {
     try {
       final now = DateTime.now();
       final currentHour = now.hour;
-      
+
       if (timeStr.contains(':')) {
         final parts = timeStr.split(':');
         if (parts.length >= 2) {
@@ -228,33 +231,33 @@ class HourlyList extends StatelessWidget {
   List<HourlyWeather> _filterHourlyForecast(List<HourlyWeather> forecast) {
     final now = DateTime.now();
     final currentHour = now.hour;
-    
+
     // 计算时间范围：当前时间前2小时到当前时间后21小时
     final startHour = (currentHour - 2 + 24) % 24; // 前2小时
     final endHour = (currentHour + 21) % 24; // 后21小时
-    
+
     List<HourlyWeather> filtered = [];
-    
+
     for (final hour in forecast) {
       final timeStr = hour.forecasttime ?? '';
       if (timeStr.isEmpty) continue;
-      
+
       try {
         // 解析时间字符串，支持 HH:mm 格式
         int? forecastHour;
-        
+
         if (timeStr.contains(':')) {
           final parts = timeStr.split(':');
           if (parts.length >= 2) {
             forecastHour = int.parse(parts[0]);
           }
         }
-        
+
         if (forecastHour == null) continue;
-        
+
         // 检查是否在时间范围内（考虑跨天情况）
         bool shouldInclude = false;
-        
+
         if (startHour <= endHour) {
           // 不跨天：startHour <= hour <= endHour
           shouldInclude = forecastHour >= startHour && forecastHour <= endHour;
@@ -262,7 +265,7 @@ class HourlyList extends StatelessWidget {
           // 跨天：hour >= startHour || hour <= endHour
           shouldInclude = forecastHour >= startHour || forecastHour <= endHour;
         }
-        
+
         if (shouldInclude) {
           filtered.add(hour);
         }
@@ -271,14 +274,14 @@ class HourlyList extends StatelessWidget {
         continue;
       }
     }
-    
+
     // 按时间排序
     filtered.sort((a, b) {
       final hourA = _parseHour(a.forecasttime ?? '');
       final hourB = _parseHour(b.forecasttime ?? '');
       return hourA.compareTo(hourB);
     });
-    
+
     return filtered;
   }
 

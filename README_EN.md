@@ -226,7 +226,24 @@ This Flutter app is a complete refactor of the original Android weather app with
 
 ## Changelog
 
-### v1.3.0 (Latest)
+### v1.4.0 (Latest)
+- 🎨 **Small Card Icon Redesign**: Diversified color scheme for life index and detail card icons
+- 🎨 **Semantic Color Design**: Detail card icons use meaningful colors based on their function
+- 🎨 **Dark Theme Optimization**: Enhanced icon background opacity for better readability in dark mode
+- 🎨 **Consistent Styling**: All small cards now match the today's tips card design
+
+**Card Spacing Optimization**
+- 📏 **Material Design 3 Compliance**: Updated card spacing to M3 recommended minimum (12dp)
+- 📏 **Public Style Management**: Created unified card spacing styles for all pages
+- 📏 **Modern Visual Design**: More compact and contemporary visual effects
+- 📏 **Enhanced Information Density**: Improved user experience with better space utilization
+
+**Theme Adaptation Improvements**
+- 🌓 **Dark Theme Enhancement**: Further reduced small card background opacity in dark mode
+- 🌓 **Better Contrast**: Ensured better contrast and readability on dark backgrounds
+- 🌓 **Comprehensive Theme Support**: Improved theme adaptation for all card components
+
+### v1.3.0
 - 🎨 **Header Design Optimization**: Unified deep blue header background for today and city weather screens
 - 🎨 **Consistent Visual Design**: Both light and dark themes use dark header backgrounds for visual consistency
 - 🎨 **Enhanced Readability**: White text and icons on dark header background for better visibility

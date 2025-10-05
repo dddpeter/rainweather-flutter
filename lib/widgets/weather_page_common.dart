@@ -24,7 +24,12 @@ class WeatherPageCommon {
       width: double.infinity,
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 16.0),
+          padding: EdgeInsets.fromLTRB(
+            AppConstants.screenHorizontalPadding,
+            8.0,
+            AppConstants.screenHorizontalPadding,
+            16.0,
+          ),
           child: Column(
             children: [
               // 城市名称和菜单
@@ -192,7 +197,7 @@ class WeatherPageCommon {
           ),
           const SizedBox(height: 16),
           // 日出日落信息
-          SunMoonWidget(weatherProvider: weatherProvider),
+          const SunMoonWidget(),
         ],
       ),
     );
@@ -242,7 +247,9 @@ class WeatherPageCommon {
         const SizedBox(height: 16),
         // 天气详情
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppConstants.screenHorizontalPadding,
+          ),
           child: Card(
             elevation: AppColors.cardElevation,
             shadowColor: AppColors.cardShadowColor,

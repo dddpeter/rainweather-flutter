@@ -104,17 +104,22 @@ class _HourlyScreenState extends State<HourlyScreen> {
                     child: SingleChildScrollView(
                       physics: const AlwaysScrollableScrollPhysics(),
                       child: Padding(
-                        padding: const EdgeInsets.all(16.0),
+                        padding: EdgeInsets.fromLTRB(
+                          AppConstants.screenHorizontalPadding,
+                          16.0,
+                          AppConstants.screenHorizontalPadding,
+                          16.0,
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             // Header
                             _buildHeader(location, weatherProvider),
-                            const SizedBox(height: AppConstants.cardSpacing),
+                            AppColors.cardSpacingWidget,
 
                             // 24小时温度趋势图
                             HourlyChart(hourlyForecast: hourlyForecast),
-                            const SizedBox(height: AppConstants.cardSpacing),
+                            AppColors.cardSpacingWidget,
 
                             // 24小时天气列表
                             HourlyList(

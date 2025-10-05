@@ -32,8 +32,11 @@ class AppConstants {
   static const double sectionTitleIconSize = 20.0;
 
   // UI Constants - Spacing (Material Design 3)
-  /// 大卡片之间的标准间距（20px符合M3规范，视觉舒适）
-  static const double cardSpacing = 20.0;
+  /// 屏幕边距 - 符合Material Design 3推荐标准
+  static const double screenHorizontalPadding = 8.0;
+
+  /// 大卡片之间的最小间距（12dp符合M3最小推荐值）
+  static const double cardSpacing = 12.0;
 
   /// 卡片内部元素之间的间距
   static const double cardInnerSpacing = 16.0;

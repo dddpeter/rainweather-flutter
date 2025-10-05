@@ -8,6 +8,7 @@ import '../services/weather_service.dart';
 import '../services/forecast15d_service.dart';
 import '../services/location_service.dart';
 import '../services/database_service.dart';
+import '../services/weather_alert_service.dart';
 import '../services/city_service.dart';
 import '../services/city_data_service.dart';
 import '../services/sun_moon_index_service.dart';
@@ -21,6 +22,7 @@ class WeatherProvider extends ChangeNotifier {
   final LocationService _locationService = LocationService.getInstance();
   final DatabaseService _databaseService = DatabaseService.getInstance();
   final CityService _cityService = CityService.getInstance();
+  final WeatherAlertService _alertService = WeatherAlertService.instance;
 
   // 获取CityDataService实例
   CityDataService get _cityDataService => CityDataService.getInstance();
@@ -495,6 +497,14 @@ class WeatherProvider extends ChangeNotifier {
 
           // 保存到缓存
           await _databaseService.putWeatherData(weatherKey, weather);
+
+          // 分析天气提醒
+          try {
+            await _alertService.analyzeWeather(weather, cityLocation);
+            print('🏙️ WeatherProvider: 已分析 $cityName 的天气提醒');
+          } catch (e) {
+            print('🏙️ WeatherProvider: 分析 $cityName 天气提醒失败 - $e');
+          }
 
           // 通知UI更新
           notifyListeners();

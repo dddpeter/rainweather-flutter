@@ -49,6 +49,9 @@ dependencies:
       path: workmanager
       ref: main
   
+  # Local Notifications
+  flutter_local_notifications: ^17.2.3
+  
   # UI Enhancements
   flutter_svg: ^2.0.10+1
   lottie: ^3.1.2

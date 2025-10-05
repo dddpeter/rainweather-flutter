@@ -344,6 +344,12 @@ class AppColors {
 
   // ==================== Material Design 卡片样式 ====================
 
+  /// 卡片间距样式 - Material Design 3 推荐的最小间距
+  static const double cardSpacing = 12.0;
+
+  /// 卡片间距Widget - 用于大卡片之间的标准间距
+  static Widget get cardSpacingWidget => const SizedBox(height: cardSpacing);
+
   /// Material 卡片的 elevation（根据主题调整）
   static double get cardElevation =>
       _themeProvider?.isLightTheme == true ? 1 : 2;

@@ -68,7 +68,9 @@ class LifeIndexWidget extends StatelessWidget {
 
         if (showContainer) {
           return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppConstants.screenHorizontalPadding,
+            ),
             child: Card(
               elevation: AppColors.cardElevation,
               shadowColor: AppColors.cardShadowColor,
@@ -139,11 +141,11 @@ class LifeIndexWidget extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: 4), // 减小间隙
           child: Row(
             children: [
-              Expanded(child: _buildLifeIndexItem(row[0])),
+              Expanded(child: _buildLifeIndexItem(row[0], context)),
               const SizedBox(width: 4), // 减小间隙
               Expanded(
                 child: row.length > 1
-                    ? _buildLifeIndexItem(row[1])
+                    ? _buildLifeIndexItem(row[1], context)
                     : const SizedBox(), // 如果只有一项，用空容器占位
               ),
             ],
@@ -153,19 +155,22 @@ class LifeIndexWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildLifeIndexItem(LifeIndex lifeIndex) {
-    Color color = _getLifeIndexColor(lifeIndex.indexTypeCh ?? '');
+  Widget _buildLifeIndexItem(LifeIndex lifeIndex, BuildContext context) {
+    Color color = _getLifeIndexColor(lifeIndex.indexTypeCh ?? '', context);
     IconData icon = _getLifeIndexIcon(lifeIndex.indexTypeCh ?? '');
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final backgroundOpacity = themeProvider.isLightTheme ? 0.08 : 0.25;
+    final iconBackgroundOpacity = themeProvider.isLightTheme ? 0.12 : 0.3;
 
     return Builder(
       builder: (context) => InkWell(
         onTap: () => _showLifeIndexDialog(context, lifeIndex),
         borderRadius: BorderRadius.circular(8),
-        child: Card(
-          elevation: 0,
-          color: color.withOpacity(0.25), // 内层小卡片: 0.4 × 0.618 ≈ 0.25
-          surfaceTintColor: color,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        child: Container(
+          decoration: BoxDecoration(
+            color: color.withOpacity(backgroundOpacity), // 根据主题调整透明度
+            borderRadius: BorderRadius.circular(4), // 与今日提醒保持一致
+          ),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
             child: Column(
@@ -176,13 +181,14 @@ class LifeIndexWidget extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: AppColors
-                            .cardThemeBlueIconBackgroundColor, // 使用主题蓝色图标背景
+                        color: color.withOpacity(
+                          iconBackgroundOpacity,
+                        ), // 根据主题调整透明度
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Icon(
                         icon,
-                        color: AppColors.cardThemeBlueIconColor, // 使用主题蓝色图标颜色
+                        color: color, // 使用对应指数的颜色作为图标颜色
                         size: 16,
                       ),
                     ),
@@ -238,8 +244,37 @@ class LifeIndexWidget extends StatelessWidget {
     }
   }
 
-  Color _getLifeIndexColor(String indexType) {
-    return AppColors.cardThemeBlue; // 使用主题蓝色
+  Color _getLifeIndexColor(String indexType, BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+
+    switch (indexType) {
+      case '穿衣指数':
+        return themeProvider.isLightTheme
+            ? const Color(0xFFE53E3E) // 亮色模式：深红色
+            : const Color(0xFFFF6B6B); // 暗色模式：亮红色
+      case '感冒指数':
+        return themeProvider.isLightTheme
+            ? const Color(0xFF2E7D32) // 亮色模式：深绿色
+            : const Color(0xFF4CAF50); // 暗色模式：亮绿色
+      case '化妆指数':
+        return themeProvider.isLightTheme
+            ? const Color(0xFF7B1FA2) // 亮色模式：深紫色
+            : const Color(0xFFBA68C8); // 暗色模式：亮紫色
+      case '紫外线强度指数':
+        return themeProvider.isLightTheme
+            ? const Color(0xFFE65100) // 亮色模式：深橙色
+            : const Color(0xFFFF9800); // 暗色模式：亮橙色
+      case '洗车指数':
+        return themeProvider.isLightTheme
+            ? const Color(0xFF1565C0) // 亮色模式：深蓝色
+            : const Color(0xFF42A5F5); // 暗色模式：亮蓝色
+      case '运动指数':
+        return themeProvider.isLightTheme
+            ? const Color(0xFFD84315) // 亮色模式：深橙红色
+            : const Color(0xFFFF7043); // 暗色模式：亮橙红色
+      default:
+        return AppColors.cardThemeBlue; // 默认使用主题蓝色
+    }
   }
 
   /// 截断指标名称，最多显示5个字，超过则去掉末尾的"指数"

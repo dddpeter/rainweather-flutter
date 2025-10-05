@@ -5,6 +5,8 @@ import '../constants/app_colors.dart';
 import '../screens/weather_animation_test_screen.dart';
 import '../screens/weather_layout_test_screen.dart';
 import '../screens/gps_location_test_screen.dart';
+import '../screens/weather_alert_settings_screen.dart';
+import '../screens/weather_alert_test_screen.dart';
 
 class AppMenu extends StatelessWidget {
   const AppMenu({super.key});
@@ -43,6 +45,42 @@ class AppMenu extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   Text('主题设置', style: TextStyle(color: AppColors.textPrimary)),
+                ],
+              ),
+            ),
+            // 天气提醒设置
+            PopupMenuItem<String>(
+              value: 'weather_alert_settings',
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.notifications_active,
+                    color: AppColors.warning,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    '天气提醒设置',
+                    style: TextStyle(color: AppColors.textPrimary),
+                  ),
+                ],
+              ),
+            ),
+            // 天气提醒测试
+            PopupMenuItem<String>(
+              value: 'weather_alert_test',
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.bug_report,
+                    color: AppColors.accentGreen,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    '天气提醒测试',
+                    style: TextStyle(color: AppColors.textPrimary),
+                  ),
                 ],
               ),
             ),
@@ -133,6 +171,12 @@ class AppMenu extends StatelessWidget {
       case 'gps_location_test':
         _navigateToGpsLocationTest(context);
         break;
+      case 'weather_alert_settings':
+        _navigateToWeatherAlertSettings(context);
+        break;
+      case 'weather_alert_test':
+        _navigateToWeatherAlertTest(context);
+        break;
       case 'about':
         _showAboutDialog(context);
         break;
@@ -159,6 +203,22 @@ class AppMenu extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const GpsLocationTestScreen()),
+    );
+  }
+
+  void _navigateToWeatherAlertSettings(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const WeatherAlertSettingsScreen(),
+      ),
+    );
+  }
+
+  void _navigateToWeatherAlertTest(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const WeatherAlertTestScreen()),
     );
   }
 

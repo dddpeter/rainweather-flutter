@@ -130,7 +130,9 @@ class _WeatherAlertsScreenState extends State<WeatherAlertsScreen> {
                   // Alerts List
                   Expanded(
                     child: ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppConstants.screenHorizontalPadding,
+                      ),
                       itemCount: alerts.length,
                       itemBuilder: (context, index) {
                         final alert = alerts[index];
@@ -165,7 +167,7 @@ class _WeatherAlertsScreenState extends State<WeatherAlertsScreen> {
         borderRadius: BorderRadius.circular(8),
         side: BorderSide(color: levelColor, width: 2),
       ),
-      margin: const EdgeInsets.only(bottom: AppConstants.cardSpacing),
+      margin: EdgeInsets.only(bottom: AppColors.cardSpacing),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

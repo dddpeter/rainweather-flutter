@@ -4,6 +4,7 @@ import '../models/sun_moon_index_model.dart';
 import '../providers/weather_provider.dart';
 import '../providers/theme_provider.dart';
 import '../constants/app_colors.dart';
+import '../constants/app_constants.dart';
 
 class SunMoonWidget extends StatelessWidget {
   const SunMoonWidget({super.key});
@@ -44,7 +45,9 @@ class _SunMoonCard extends StatelessWidget {
         final moon = sunAndMoon.moon;
 
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: EdgeInsets.symmetric(
+            horizontal: AppConstants.screenHorizontalPadding,
+          ),
           child: Card(
             elevation: AppColors.cardElevation,
             shadowColor: AppColors.cardShadowColor,
@@ -369,7 +372,9 @@ class _SunriseSunsetCard extends StatelessWidget {
         final minutes = dayDuration % 60;
 
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: EdgeInsets.symmetric(
+            horizontal: AppConstants.screenHorizontalPadding,
+          ),
           child: Card(
             elevation: AppColors.cardElevation,
             shadowColor: AppColors.cardShadowColor,

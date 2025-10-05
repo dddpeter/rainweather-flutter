@@ -13,6 +13,8 @@ import '../widgets/sun_moon_widget.dart';
 import '../widgets/life_index_widget.dart';
 import '../widgets/weather_animation_widget.dart';
 import '../widgets/app_menu.dart';
+import '../widgets/weather_alert_widget.dart';
+import '../services/weather_alert_service.dart';
 import 'hourly_screen.dart';
 import 'weather_alerts_screen.dart';
 
@@ -25,11 +27,14 @@ class TodayScreen extends StatefulWidget {
 
 class _TodayScreenState extends State<TodayScreen> with WidgetsBindingObserver {
   bool _isVisible = false;
+  final WeatherAlertService _alertService = WeatherAlertService.instance;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // 初始化天气提醒服务
+    _alertService.initialize();
     // 移除重复的initializeWeather调用，由启动画面统一处理
     // WidgetsBinding.instance.addPostFrameCallback((_) {
     //   context.read<WeatherProvider>().initializeWeather();
@@ -216,7 +221,18 @@ class _TodayScreenState extends State<TodayScreen> with WidgetsBindingObserver {
                 }
 
                 return RefreshIndicator(
-                  onRefresh: () => weatherProvider.refreshWeatherData(),
+                  onRefresh: () async {
+                    await weatherProvider.refreshWeatherData();
+                    // 刷新天气数据后分析提醒
+                    if (weatherProvider.currentWeather != null &&
+                        weatherProvider.currentLocation != null) {
+                      await _alertService.analyzeWeather(
+                        weatherProvider.currentWeather!,
+                        weatherProvider.currentLocation!,
+                      );
+                      setState(() {}); // 刷新UI显示提醒
+                    }
+                  },
                   color: AppColors.primaryBlue,
                   backgroundColor: AppColors.backgroundSecondary,
                   child: SingleChildScrollView(
@@ -224,19 +240,30 @@ class _TodayScreenState extends State<TodayScreen> with WidgetsBindingObserver {
                     child: Column(
                       children: [
                         _buildTopWeatherSection(weatherProvider),
-                        const SizedBox(height: AppConstants.cardSpacing),
-                        // 详细信息卡片 - 移到头部之下
+                        AppColors.cardSpacingWidget,
+                        // 天气提醒卡片 - 放在详细信息卡片之前
+                        _buildWeatherAlertCard(weatherProvider),
+                        // 只有在有提醒时才显示间距
+                        if (_alertService
+                            .getAlertsForCity(
+                              _getDisplayCity(weatherProvider.currentLocation),
+                            )
+                            .isNotEmpty)
+                          AppColors.cardSpacingWidget,
+                        // 24小时天气
+                        _buildHourlyWeather(weatherProvider),
+                        AppColors.cardSpacingWidget,
+                        // 详细信息卡片
                         _buildWeatherDetails(weatherProvider),
-                        const SizedBox(height: AppConstants.cardSpacing),
+                        AppColors.cardSpacingWidget,
+                        // 生活指数
+                        LifeIndexWidget(weatherProvider: weatherProvider),
+                        AppColors.cardSpacingWidget,
                         // 天气提示卡片
                         _buildWeatherTipsCard(weatherProvider),
-                        const SizedBox(height: AppConstants.cardSpacing),
+                        AppColors.cardSpacingWidget,
                         const SunMoonWidget(),
-                        const SizedBox(height: AppConstants.cardSpacing),
-                        LifeIndexWidget(weatherProvider: weatherProvider),
-                        const SizedBox(height: AppConstants.cardSpacing),
-                        _buildHourlyWeather(weatherProvider),
-                        const SizedBox(height: AppConstants.cardSpacing),
+                        AppColors.cardSpacingWidget,
                         _buildTemperatureChart(weatherProvider),
                         const SizedBox(height: 80), // Space for bottom buttons
                       ],
@@ -417,7 +444,9 @@ class _TodayScreenState extends State<TodayScreen> with WidgetsBindingObserver {
 
   Widget _buildTemperatureChart(WeatherProvider weatherProvider) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppConstants.screenHorizontalPadding,
+      ),
       child: Card(
         elevation: AppColors.cardElevation,
         shadowColor: AppColors.cardShadowColor,
@@ -463,7 +492,9 @@ class _TodayScreenState extends State<TodayScreen> with WidgetsBindingObserver {
   Widget _buildHourlyWeather(WeatherProvider weatherProvider) {
     final weatherService = WeatherService.getInstance();
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppConstants.screenHorizontalPadding,
+      ),
       child: HourlyWeatherWidget(
         hourlyForecast: weatherProvider.currentWeather?.forecast24h,
         weatherService: weatherService,
@@ -482,7 +513,9 @@ class _TodayScreenState extends State<TodayScreen> with WidgetsBindingObserver {
     final air = weather?.current?.air ?? weather?.air;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppConstants.screenHorizontalPadding,
+      ),
       child: Card(
         elevation: AppColors.cardElevation,
         shadowColor: AppColors.cardShadowColor,
@@ -599,11 +632,17 @@ class _TodayScreenState extends State<TodayScreen> with WidgetsBindingObserver {
     String value,
     Color color,
   ) {
-    return Card(
-      elevation: 0,
-      color: color.withOpacity(0.25), // 内层小卡片: 0.4 × 0.618 ≈ 0.25
-      surfaceTintColor: color,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    // 根据图标类型获取对应的颜色
+    Color iconColor = _getDetailItemIconColor(icon);
+    final themeProvider = context.read<ThemeProvider>();
+    final backgroundOpacity = themeProvider.isLightTheme ? 0.08 : 0.25;
+    final iconBackgroundOpacity = themeProvider.isLightTheme ? 0.12 : 0.3;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: iconColor.withOpacity(backgroundOpacity), // 根据主题调整透明度
+        borderRadius: BorderRadius.circular(4), // 与今日提醒保持一致
+      ),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
         child: Column(
@@ -614,13 +653,14 @@ class _TodayScreenState extends State<TodayScreen> with WidgetsBindingObserver {
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: AppColors
-                        .cardThemeBlueIconBackgroundColor, // 使用主题蓝色图标背景
+                    color: iconColor.withOpacity(
+                      iconBackgroundOpacity,
+                    ), // 根据主题调整透明度
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Icon(
                     icon,
-                    color: AppColors.cardThemeBlueIconColor, // 使用主题蓝色图标颜色
+                    color: iconColor, // 使用图标颜色
                     size: 16,
                   ),
                 ),
@@ -657,33 +697,75 @@ class _TodayScreenState extends State<TodayScreen> with WidgetsBindingObserver {
   }
 
   Widget _buildAlertButton(WeatherProvider weatherProvider) {
-    final alerts = weatherProvider.currentWeather?.current?.alerts;
-    final hasAlerts = alerts != null && alerts.isNotEmpty;
+    // 获取当前城市的提醒
+    final currentCity = _getDisplayCity(weatherProvider.currentLocation);
+    final smartAlerts = _alertService.getAlertsForCity(currentCity);
+    final originalAlerts = weatherProvider.currentWeather?.current?.alerts;
+
+    // 合并智能提醒和原始预警
+    final allAlerts = <dynamic>[];
+    if (smartAlerts.isNotEmpty) {
+      allAlerts.addAll(smartAlerts);
+    }
+    if (originalAlerts != null && originalAlerts.isNotEmpty) {
+      allAlerts.addAll(originalAlerts);
+    }
 
     // 调试信息
     print(
-      'TodayScreen _buildAlertButton: hasAlerts=$hasAlerts, alerts=$alerts',
+      'TodayScreen _buildAlertButton: smartAlerts=${smartAlerts.length}, originalAlerts=${originalAlerts?.length ?? 0}',
     );
 
-    if (hasAlerts) {
-      return IconButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => WeatherAlertsScreen(alerts: alerts),
-            ),
-          );
+    if (allAlerts.isNotEmpty) {
+      return CompactWeatherAlertWidget(
+        alerts: smartAlerts,
+        onTap: () {
+          if (smartAlerts.isNotEmpty) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    WeatherAlertDetailScreen(alerts: smartAlerts),
+              ),
+            );
+          } else if (originalAlerts != null && originalAlerts.isNotEmpty) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    WeatherAlertsScreen(alerts: originalAlerts),
+              ),
+            );
+          }
         },
-        icon: Icon(
-          Icons.warning_rounded,
-          color: context.read<ThemeProvider>().getColor('headerIconColor'),
-          size: AppColors.titleBarIconSize,
-        ),
       );
     }
 
     return const SizedBox(width: 40); // 占位保持对称
+  }
+
+  /// 构建天气提醒卡片
+  Widget _buildWeatherAlertCard(WeatherProvider weatherProvider) {
+    // 获取当前城市的提醒
+    final currentCity = _getDisplayCity(weatherProvider.currentLocation);
+    final alerts = _alertService.getAlertsForCity(currentCity);
+
+    // 如果没有提醒，返回空组件
+    if (alerts.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return WeatherAlertWidget(
+      alerts: alerts,
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => WeatherAlertDetailScreen(alerts: alerts),
+          ),
+        );
+      },
+    );
   }
 
   /// 构建天气提示卡片（Material Design 3）
@@ -697,7 +779,9 @@ class _TodayScreenState extends State<TodayScreen> with WidgetsBindingObserver {
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppConstants.screenHorizontalPadding,
+      ),
       child: Card(
         elevation: AppColors.cardElevation,
         shadowColor: AppColors.cardShadowColor,
@@ -755,10 +839,14 @@ class _TodayScreenState extends State<TodayScreen> with WidgetsBindingObserver {
 
   /// 构建提示项
   Widget _buildTipItem(IconData icon, String text, Color color) {
+    final themeProvider = context.read<ThemeProvider>();
+    final backgroundOpacity = themeProvider.isLightTheme ? 0.08 : 0.25;
+    final iconBackgroundOpacity = themeProvider.isLightTheme ? 0.12 : 0.3;
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withOpacity(backgroundOpacity),
         borderRadius: BorderRadius.circular(4),
         border: Border.all(color: color.withOpacity(0.15), width: 1),
       ),
@@ -768,7 +856,7 @@ class _TodayScreenState extends State<TodayScreen> with WidgetsBindingObserver {
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
+              color: color.withOpacity(iconBackgroundOpacity),
               borderRadius: BorderRadius.circular(4),
             ),
             child: Icon(icon, color: color, size: 18),
@@ -787,6 +875,36 @@ class _TodayScreenState extends State<TodayScreen> with WidgetsBindingObserver {
         ],
       ),
     );
+  }
+
+  /// 根据图标类型获取对应的颜色
+  Color _getDetailItemIconColor(IconData icon) {
+    final themeProvider = context.read<ThemeProvider>();
+
+    switch (icon) {
+      case Icons.air:
+        return themeProvider.isLightTheme
+            ? const Color(0xFF1565C0) // 亮色模式：深蓝色
+            : const Color(0xFF42A5F5); // 暗色模式：亮蓝色
+      case Icons.thermostat:
+        return themeProvider.isLightTheme
+            ? const Color(0xFFE53E3E) // 亮色模式：深红色
+            : const Color(0xFFFF6B6B); // 暗色模式：亮红色
+      case Icons.water_drop:
+        return themeProvider.isLightTheme
+            ? const Color(0xFF0277BD) // 亮色模式：深青色
+            : const Color(0xFF29B6F6); // 暗色模式：亮青色
+      case Icons.compress:
+        return themeProvider.isLightTheme
+            ? const Color(0xFF7B1FA2) // 亮色模式：深紫色
+            : const Color(0xFFBA68C8); // 暗色模式：亮紫色
+      case Icons.visibility:
+        return themeProvider.isLightTheme
+            ? const Color(0xFF2E7D32) // 亮色模式：深绿色
+            : const Color(0xFF4CAF50); // 暗色模式：亮绿色
+      default:
+        return AppColors.cardThemeBlue; // 默认使用主题蓝色
+    }
   }
 
   /// 根据温度和天气生成穿衣建议

@@ -11,12 +11,21 @@ import 'screens/city_weather_screen.dart';
 import 'screens/weather_alerts_screen.dart';
 import 'models/city_model.dart';
 import 'constants/app_colors.dart';
+import 'constants/app_constants.dart';
 import 'constants/theme_extensions.dart';
 import 'services/location_service.dart';
+import 'services/notification_service.dart';
 import 'widgets/custom_bottom_navigation_v2.dart';
 import 'utils/app_state_manager.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // 初始化通知服务
+  final notificationService = NotificationService.instance;
+  await notificationService.initialize();
+  await notificationService.requestPermissions();
+
   runApp(const RainWeatherApp());
 }
 
@@ -588,7 +597,9 @@ class MainCitiesScreen extends StatelessWidget {
                         }
 
                         return ReorderableListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: AppConstants.screenHorizontalPadding,
+                          ),
                           itemCount: cities.length,
                           onReorder: (oldIndex, newIndex) async {
                             // Handle reordering
@@ -925,6 +936,7 @@ class MainCitiesScreen extends StatelessWidget {
                                                     _buildCityAlertIcon(
                                                       context,
                                                       cityWeather,
+                                                      city.name,
                                                     ),
                                                   ],
                                                 ),
@@ -992,15 +1004,19 @@ class MainCitiesScreen extends StatelessWidget {
   }
 
   /// 构建城市预警图标（Material Design 3）
-  Widget _buildCityAlertIcon(BuildContext context, dynamic cityWeather) {
+  Widget _buildCityAlertIcon(
+    BuildContext context,
+    dynamic cityWeather,
+    String cityName,
+  ) {
     if (cityWeather == null) {
       return const SizedBox.shrink();
     }
 
     final alerts = cityWeather.current?.alerts;
-    final hasAlerts = alerts != null && alerts.isNotEmpty;
+    final hasOriginalAlerts = alerts != null && alerts.isNotEmpty;
 
-    if (!hasAlerts) {
+    if (!hasOriginalAlerts) {
       return const SizedBox.shrink();
     }
 

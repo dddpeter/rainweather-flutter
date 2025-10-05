@@ -157,7 +157,7 @@ class _Forecast15dScreenState extends State<Forecast15dScreen> {
                                   color: AppColors.textSecondary.withOpacity(
                                     0.8,
                                   ),
-                                  fontSize: 14,
+                                  fontSize: AppConstants.sectionTitleFontSize,
                                 ),
                               ),
                             ],
@@ -167,10 +167,10 @@ class _Forecast15dScreenState extends State<Forecast15dScreen> {
                       // Temperature Trend Chart
                       SliverToBoxAdapter(
                         child: Container(
-                          margin: const EdgeInsets.only(
-                            left: 16,
-                            right: 16,
-                            top: AppConstants.cardSpacing,
+                          margin: EdgeInsets.only(
+                            left: AppConstants.screenHorizontalPadding,
+                            right: AppConstants.screenHorizontalPadding,
+                            top: 8, // 减少与副标题的间距
                           ),
                           child: Forecast15dChart(forecast15d: forecast15d),
                         ),
@@ -206,7 +206,10 @@ class _Forecast15dScreenState extends State<Forecast15dScreen> {
     final isTomorrow = index == 1;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppConstants.screenHorizontalPadding,
+        vertical: 4,
+      ),
       child: Card(
         elevation: AppColors.cardElevation,
         shadowColor: AppColors.cardShadowColor,
@@ -249,7 +252,7 @@ class _Forecast15dScreenState extends State<Forecast15dScreen> {
                           color: isToday
                               ? AppColors.textPrimary
                               : AppColors.accentGreen,
-                          fontSize: 10,
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
                         textAlign: TextAlign.center,
@@ -260,7 +263,7 @@ class _Forecast15dScreenState extends State<Forecast15dScreen> {
                       day.forecasttime ?? '',
                       style: TextStyle(
                         color: AppColors.textPrimary,
-                        fontSize: 12,
+                        fontSize: 14,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -270,7 +273,7 @@ class _Forecast15dScreenState extends State<Forecast15dScreen> {
                         day.sunrise_sunset!,
                         style: TextStyle(
                           color: AppColors.textSecondary,
-                          fontSize: 9,
+                          fontSize: 10,
                         ),
                       ),
                     ],
@@ -340,7 +343,7 @@ class _Forecast15dScreenState extends State<Forecast15dScreen> {
           period,
           style: TextStyle(
             color: AppColors.textSecondary,
-            fontSize: 10,
+            fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -349,12 +352,12 @@ class _Forecast15dScreenState extends State<Forecast15dScreen> {
           children: [
             // Weather icon
             Container(
-              width: 20, // 固定宽度
-              height: 20, // 固定高度
+              width: 24, // 增大宽度
+              height: 24, // 增大高度
               alignment: Alignment.center, // 居中对齐
               child: Text(
                 weatherProvider.getWeatherIcon(weather),
-                style: TextStyle(fontSize: 16),
+                style: TextStyle(fontSize: 20), // 增大图标大小
                 textAlign: TextAlign.center, // 文字居中
                 overflow: TextOverflow.visible, // 允许溢出但控制在容器内
               ),
@@ -365,7 +368,7 @@ class _Forecast15dScreenState extends State<Forecast15dScreen> {
               '$temperature℃',
               style: TextStyle(
                 color: AppColors.textPrimary,
-                fontSize: 16,
+                fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -377,7 +380,7 @@ class _Forecast15dScreenState extends State<Forecast15dScreen> {
           weather,
           style: TextStyle(
             color: AppColors.textPrimary,
-            fontSize: 11,
+            fontSize: 13,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -385,7 +388,7 @@ class _Forecast15dScreenState extends State<Forecast15dScreen> {
         if (windDir.isNotEmpty || windPower.isNotEmpty)
           Text(
             '$windDir$windPower',
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 9),
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 10),
           ),
       ],
     );

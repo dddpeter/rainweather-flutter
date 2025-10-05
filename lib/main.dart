@@ -14,6 +14,7 @@ import 'constants/app_colors.dart';
 import 'constants/theme_extensions.dart';
 import 'services/location_service.dart';
 import 'widgets/custom_bottom_navigation_v2.dart';
+import 'utils/app_state_manager.dart';
 
 void main() {
   runApp(const RainWeatherApp());
@@ -758,7 +759,7 @@ class MainCitiesScreen extends StatelessWidget {
                                 return false;
                               },
                               child: Padding(
-                                key: Key(city.id),
+                                key: Key('${city.id}_padding'),
                                 padding: const EdgeInsets.only(bottom: 12),
                                 child: Card(
                                   elevation: AppColors.cardElevation,
@@ -1587,15 +1588,37 @@ class _SplashScreenState extends State<SplashScreen>
 
       if (permissionStatus == LocationPermissionResult.granted) {
         setState(() {
-          _statusMessage = '权限已获取，正在加载天气数据...';
+          _statusMessage = '权限已获取，正在定位...';
         });
+
+        // 权限已获取，立即尝试定位
+        try {
+          final location = await locationService.getCurrentLocation();
+          if (location != null) {
+            setState(() {
+              _statusMessage = '定位成功，正在加载天气数据...';
+            });
+            print('🚀 启动画面：定位成功 ${location.district}');
+          } else {
+            setState(() {
+              _statusMessage = '定位失败，使用默认位置...';
+            });
+            print('⚠️ 启动画面：定位失败，将使用默认位置');
+          }
+        } catch (e) {
+          setState(() {
+            _statusMessage = '定位出错，使用默认位置...';
+          });
+          print('❌ 启动画面：定位出错 $e');
+        }
       } else {
         setState(() {
-          _statusMessage = '权限未获取，使用北京天气...';
+          _statusMessage = '权限未获取，使用默认位置...';
         });
+        print('⚠️ 启动画面：权限未获取，将使用默认位置');
       }
 
-      // 无论是否有权限都初始化天气数据
+      // 初始化天气数据（包含定位逻辑）
       await weatherProvider.initializeWeather();
 
       if (!mounted) return;
@@ -1608,6 +1631,12 @@ class _SplashScreenState extends State<SplashScreen>
       await Future.delayed(const Duration(milliseconds: 500));
 
       if (mounted) {
+        // 标记应用完全启动
+        AppStateManager().markAppFullyStarted();
+
+        // 打印状态信息（调试用）
+        print('🚀 启动画面：应用完全启动，跳转到主界面');
+
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const MainScreen()),
         );
@@ -1643,6 +1672,7 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   void dispose() {
+    print('🔄 SplashScreen dispose called');
     _animationController.dispose();
     super.dispose();
   }

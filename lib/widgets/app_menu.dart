@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
 import '../constants/app_colors.dart';
 import '../screens/weather_animation_test_screen.dart';
-import '../screens/extreme_weather_test_screen.dart';
 import '../screens/weather_layout_test_screen.dart';
 import '../screens/weather_animation_theme_test_screen.dart';
 import '../screens/gps_location_test_screen.dart';
@@ -58,20 +57,6 @@ class AppMenu extends StatelessWidget {
                   const SizedBox(width: 12),
                   Text(
                     '天气动画测试',
-                    style: TextStyle(color: AppColors.textPrimary),
-                  ),
-                ],
-              ),
-            ),
-            // 极端天气测试
-            PopupMenuItem<String>(
-              value: 'extreme_weather_test',
-              child: Row(
-                children: [
-                  Icon(Icons.flash_on, color: AppColors.warning, size: 20),
-                  const SizedBox(width: 12),
-                  Text(
-                    '极端天气测试',
                     style: TextStyle(color: AppColors.textPrimary),
                   ),
                 ],
@@ -157,9 +142,6 @@ class AppMenu extends StatelessWidget {
       case 'weather_test':
         _navigateToWeatherTest(context);
         break;
-      case 'extreme_weather_test':
-        _navigateToExtremeWeatherTest(context);
-        break;
       case 'weather_layout_test':
         _navigateToWeatherLayoutTest(context);
         break;
@@ -181,13 +163,6 @@ class AppMenu extends StatelessWidget {
       MaterialPageRoute(
         builder: (context) => const WeatherAnimationTestScreen(),
       ),
-    );
-  }
-
-  void _navigateToExtremeWeatherTest(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const ExtremeWeatherTestScreen()),
     );
   }
 

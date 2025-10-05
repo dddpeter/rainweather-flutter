@@ -30,9 +30,10 @@ class _TodayScreenState extends State<TodayScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<WeatherProvider>().initializeWeather();
-    });
+    // 移除重复的initializeWeather调用，由启动画面统一处理
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   context.read<WeatherProvider>().initializeWeather();
+    // });
   }
 
   @override

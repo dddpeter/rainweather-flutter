@@ -117,6 +117,17 @@ class _GpsLocationTestScreenState extends State<GpsLocationTestScreen> {
                           _buildLocationDetails(_testResult!['final_location']),
                         ),
                         const SizedBox(height: 12),
+                        if (_testResult!['location_method'] != null) ...[
+                          _buildResultCard(
+                            '定位方式',
+                            '📍 ${_testResult!['location_method']}',
+                            Colors.blue,
+                            _buildLocationMethodDetails(
+                              _testResult!['location_method'],
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
                       ],
                       if (_testResult!['errors'].isNotEmpty) ...[
                         _buildResultCard(
@@ -196,12 +207,40 @@ class _GpsLocationTestScreenState extends State<GpsLocationTestScreen> {
   }
 
   Widget _buildGpsPositionDetails(Map<String, dynamic> position) {
+    // 安全地处理 accuracy 字段，可能是数字或字符串
+    String accuracyText = '';
+    if (position['accuracy'] != null) {
+      if (position['accuracy'] is num) {
+        accuracyText = '${(position['accuracy'] as num).toStringAsFixed(1)} 米';
+      } else {
+        accuracyText = position['accuracy'].toString();
+      }
+    } else {
+      accuracyText = '未知';
+    }
+
+    // 安全地处理纬度和经度字段
+    String latitudeText = '';
+    String longitudeText = '';
+
+    if (position['latitude'] != null && position['latitude'] is num) {
+      latitudeText = (position['latitude'] as num).toStringAsFixed(6);
+    } else {
+      latitudeText = position['latitude']?.toString() ?? '未知';
+    }
+
+    if (position['longitude'] != null && position['longitude'] is num) {
+      longitudeText = (position['longitude'] as num).toStringAsFixed(6);
+    } else {
+      longitudeText = position['longitude']?.toString() ?? '未知';
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('纬度: ${position['latitude']?.toStringAsFixed(6)}'),
-        Text('经度: ${position['longitude']?.toStringAsFixed(6)}'),
-        Text('精度: ${position['accuracy']?.toStringAsFixed(1)} 米'),
+        Text('纬度: $latitudeText'),
+        Text('经度: $longitudeText'),
+        Text('精度: $accuracyText'),
         Text('时间: ${position['timestamp'] ?? '未知'}'),
       ],
     );
@@ -230,6 +269,44 @@ class _GpsLocationTestScreenState extends State<GpsLocationTestScreen> {
         Text('区县: ${location.district}'),
         Text('街道: ${location.street.isNotEmpty ? location.street : '未知'}'),
         Text('行政代码: ${location.adcode}'),
+      ],
+    );
+  }
+
+  Widget _buildLocationMethodDetails(String method) {
+    String description;
+    String accuracy;
+    IconData icon;
+
+    switch (method) {
+      case 'GPS定位':
+        description = '使用GPS卫星信号定位';
+        accuracy = '精度较高，通常在10-50米';
+        icon = Icons.satellite;
+        break;
+      case 'IP定位':
+        description = '使用网络IP地址定位';
+        accuracy = '精度较低，通常在1-10公里。当GPS定位成功但位置信息为"未知"时，系统会自动使用IP定位作为备用方案';
+        icon = Icons.wifi;
+        break;
+      default:
+        description = '未知定位方式';
+        accuracy = '精度未知';
+        icon = Icons.location_on;
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 16, color: Colors.blue),
+            const SizedBox(width: 8),
+            Text(description),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text('精度: $accuracy'),
       ],
     );
   }

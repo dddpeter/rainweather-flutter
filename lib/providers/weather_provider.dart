@@ -12,6 +12,7 @@ import '../services/city_service.dart';
 import '../services/city_data_service.dart';
 import '../services/sun_moon_index_service.dart';
 import '../constants/app_constants.dart';
+import '../utils/app_state_manager.dart';
 
 class WeatherProvider extends ChangeNotifier {
   final WeatherService _weatherService = WeatherService.getInstance();
@@ -77,6 +78,17 @@ class WeatherProvider extends ChangeNotifier {
 
   /// Initialize weather data
   Future<void> initializeWeather() async {
+    final appStateManager = AppStateManager();
+
+    // 检查是否可以初始化
+    if (!appStateManager.canFetchWeatherData()) {
+      print('🚫 WeatherProvider: 应用状态不允许初始化，跳过');
+      return;
+    }
+
+    // 标记开始初始化
+    appStateManager.markInitializationStarted();
+
     try {
       await _databaseService.initDatabase();
 
@@ -86,8 +98,22 @@ class WeatherProvider extends ChangeNotifier {
       // 清理过期缓存数据
       await _cleanupExpiredCache();
 
-      // 先尝试获取真实位置，如果失败再加载缓存数据
-      LocationModel? realLocation = await _locationService.getCurrentLocation();
+      // 检查是否可以执行定位
+      LocationModel? realLocation;
+      if (appStateManager.canPerformLocation()) {
+        // 先检查是否已有缓存的位置
+        LocationModel? cachedLocation = _locationService.getCachedLocation();
+        if (cachedLocation != null) {
+          print('🔄 WeatherProvider: 使用缓存的位置 ${cachedLocation.district}');
+          realLocation = cachedLocation;
+        } else {
+          print('🔄 WeatherProvider: 开始获取真实位置');
+          realLocation = await _locationService.getCurrentLocation();
+          appStateManager.markLocationCompleted();
+        }
+      } else {
+        print('🚫 WeatherProvider: 不允许定位，使用缓存或默认位置');
+      }
 
       if (realLocation != null) {
         // 如果获得了真实位置，直接使用它，不使用缓存
@@ -124,9 +150,15 @@ class WeatherProvider extends ChangeNotifier {
 
       // 异步加载主要城市天气数据
       _loadMainCitiesWeather();
+
+      // 标记初始化完成
+      appStateManager.markInitializationCompleted();
     } catch (e) {
       print('Database initialization failed: $e');
       // Continue without database for testing
+
+      // 即使出错也要标记初始化完成
+      appStateManager.markInitializationCompleted();
     }
   }
 
@@ -166,6 +198,14 @@ class WeatherProvider extends ChangeNotifier {
 
   /// Refresh weather data (without re-requesting permission)
   Future<void> refreshWeatherData() async {
+    final appStateManager = AppStateManager();
+
+    // 检查是否可以刷新数据
+    if (!appStateManager.canFetchWeatherData()) {
+      print('🚫 WeatherProvider: 应用状态不允许刷新天气数据，跳过');
+      return;
+    }
+
     _setLoading(true);
     _error = null;
 

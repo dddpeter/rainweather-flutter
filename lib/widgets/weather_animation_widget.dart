@@ -98,6 +98,7 @@ class _WeatherAnimationWidgetState extends State<WeatherAnimationWidget>
 
   @override
   void dispose() {
+    print('🔄 WeatherAnimationWidget dispose called');
     _mainController.dispose();
     _particleController.dispose();
     _cloudController.dispose();

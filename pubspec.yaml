@@ -2,7 +2,7 @@ name: rainweather_flutter
 description: "知雨天气2 - 智能天气预报应用"
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 1.4.0+4
 
 environment:
   sdk: ^3.9.2

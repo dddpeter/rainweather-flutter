@@ -6,6 +6,7 @@ import '../screens/weather_animation_test_screen.dart';
 import '../screens/extreme_weather_test_screen.dart';
 import '../screens/weather_layout_test_screen.dart';
 import '../screens/weather_animation_theme_test_screen.dart';
+import '../screens/gps_location_test_screen.dart';
 
 class AppMenu extends StatelessWidget {
   const AppMenu({super.key});
@@ -108,6 +109,24 @@ class AppMenu extends StatelessWidget {
                 ],
               ),
             ),
+            // GPS定位测试
+            PopupMenuItem<String>(
+              value: 'gps_location_test',
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.location_searching,
+                    color: AppColors.accentGreen,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'GPS定位测试',
+                    style: TextStyle(color: AppColors.textPrimary),
+                  ),
+                ],
+              ),
+            ),
             const PopupMenuDivider(),
             // 版本信息
             PopupMenuItem<String>(
@@ -147,6 +166,9 @@ class AppMenu extends StatelessWidget {
       case 'weather_animation_theme_test':
         _navigateToWeatherAnimationThemeTest(context);
         break;
+      case 'gps_location_test':
+        _navigateToGpsLocationTest(context);
+        break;
       case 'about':
         _showAboutDialog(context);
         break;
@@ -182,6 +204,13 @@ class AppMenu extends StatelessWidget {
       MaterialPageRoute(
         builder: (context) => const WeatherAnimationThemeTestScreen(),
       ),
+    );
+  }
+
+  void _navigateToGpsLocationTest(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const GpsLocationTestScreen()),
     );
   }
 

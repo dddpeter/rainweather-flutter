@@ -15,6 +15,10 @@ class LocationModel {
   final double lat;
   final double lng;
 
+  /// Indicates if this location might be from a proxy/VPN
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  bool isProxyDetected;
+
   LocationModel({
     required this.address,
     required this.country,
@@ -26,6 +30,7 @@ class LocationModel {
     required this.town,
     required this.lat,
     required this.lng,
+    this.isProxyDetected = false,
   });
 
   factory LocationModel.fromJson(Map<String, dynamic> json) =>

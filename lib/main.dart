@@ -9,8 +9,6 @@ import 'screens/hourly_screen.dart';
 import 'screens/forecast15d_screen.dart';
 import 'screens/city_weather_screen.dart';
 import 'screens/weather_alerts_screen.dart';
-import 'screens/weather_animation_test_screen.dart';
-import 'screens/extreme_weather_test_screen.dart';
 import 'models/city_model.dart';
 import 'constants/app_colors.dart';
 import 'constants/theme_extensions.dart';
@@ -237,8 +235,97 @@ class _MainScreenState extends State<MainScreen> {
                                 borderRadius: BorderRadius.circular(28),
                                 onTap: weatherProvider.isLoading
                                     ? null
-                                    : () => weatherProvider
-                                          .forceRefreshWithLocation(),
+                                    : () async {
+                                        try {
+                                          // 显示刷新开始提示
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Row(
+                                                children: [
+                                                  SizedBox(
+                                                    width: 16,
+                                                    height: 16,
+                                                    child: CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                      valueColor:
+                                                          AlwaysStoppedAnimation<
+                                                            Color
+                                                          >(
+                                                            AppColors
+                                                                .textPrimary,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                  SizedBox(width: 12),
+                                                  Text('正在刷新位置和天气数据...'),
+                                                ],
+                                              ),
+                                              duration: Duration(seconds: 2),
+                                              behavior:
+                                                  SnackBarBehavior.floating,
+                                            ),
+                                          );
+
+                                          // 执行强制刷新
+                                          await weatherProvider
+                                              .forceRefreshWithLocation();
+
+                                          // 显示刷新完成提示
+                                          if (context.mounted) {
+                                            final location =
+                                                weatherProvider.currentLocation;
+                                            final locationName =
+                                                location?.district ?? '当前位置';
+
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  '刷新完成 - $locationName',
+                                                ),
+                                                backgroundColor:
+                                                    AppColors.accentGreen,
+                                                duration: Duration(
+                                                  milliseconds: 2000,
+                                                ),
+                                                behavior:
+                                                    SnackBarBehavior.floating,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                        } catch (e) {
+                                          // 显示刷新失败提示
+                                          if (context.mounted) {
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  '刷新失败: ${e.toString()}',
+                                                ),
+                                                backgroundColor:
+                                                    AppColors.error,
+                                                duration: Duration(
+                                                  milliseconds: 2000,
+                                                ),
+                                                behavior:
+                                                    SnackBarBehavior.floating,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                        }
+                                      },
                                 child: Center(
                                   child: weatherProvider.isLoading
                                       ? SizedBox(
@@ -266,88 +353,7 @@ class _MainScreenState extends State<MainScreen> {
                     );
                   },
                 )
-              : _currentIndex == 3
-              ? null
-              : FloatingActionButton(
-                  onPressed: () {
-                    showModalBottomSheet(
-                      context: context,
-                      backgroundColor: AppColors.materialCardColor,
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.vertical(
-                          top: Radius.circular(20),
-                        ),
-                      ),
-                      builder: (context) => Container(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // 拖拽指示器
-                            Container(
-                              width: 40,
-                              height: 4,
-                              decoration: BoxDecoration(
-                                color: AppColors.textSecondary.withOpacity(0.3),
-                                borderRadius: BorderRadius.circular(2),
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            Text(
-                              '选择测试页面',
-                              style: TextStyle(
-                                color: AppColors.textPrimary,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            // 测试选项
-                            ListTile(
-                              leading: Icon(
-                                Icons.grid_view,
-                                color: AppColors.primaryBlue,
-                              ),
-                              title: Text('所有天气动画'),
-                              subtitle: Text('查看所有天气类型的动画效果'),
-                              onTap: () {
-                                Navigator.pop(context);
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const WeatherAnimationTestScreen(),
-                                  ),
-                                );
-                              },
-                            ),
-                            ListTile(
-                              leading: Icon(
-                                Icons.flash_on,
-                                color: AppColors.warning,
-                              ),
-                              title: Text('极端天气动画'),
-                              subtitle: Text('专门测试极端天气的增强动画'),
-                              onTap: () {
-                                Navigator.pop(context);
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const ExtremeWeatherTestScreen(),
-                                  ),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                  backgroundColor: AppColors.primaryBlue,
-                  child: const Icon(Icons.animation, color: Colors.white),
-                  tooltip: '天气动画测试',
-                ),
+              : null,
         );
       },
     );
@@ -409,8 +415,105 @@ class MainCitiesScreen extends StatelessWidget {
                                     IconButton(
                                       onPressed: weatherProvider.isLoading
                                           ? null
-                                          : () => weatherProvider
-                                                .forceRefreshWithLocation(),
+                                          : () async {
+                                              try {
+                                                // 显示刷新开始提示
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  SnackBar(
+                                                    content: Row(
+                                                      children: [
+                                                        SizedBox(
+                                                          width: 16,
+                                                          height: 16,
+                                                          child: CircularProgressIndicator(
+                                                            strokeWidth: 2,
+                                                            valueColor:
+                                                                AlwaysStoppedAnimation<
+                                                                  Color
+                                                                >(
+                                                                  AppColors
+                                                                      .textPrimary,
+                                                                ),
+                                                          ),
+                                                        ),
+                                                        SizedBox(width: 12),
+                                                        Text('正在刷新位置和天气数据...'),
+                                                      ],
+                                                    ),
+                                                    duration: Duration(
+                                                      seconds: 2,
+                                                    ),
+                                                    behavior: SnackBarBehavior
+                                                        .floating,
+                                                  ),
+                                                );
+
+                                                // 执行强制刷新
+                                                await weatherProvider
+                                                    .forceRefreshWithLocation();
+
+                                                // 显示刷新完成提示
+                                                if (context.mounted) {
+                                                  final location =
+                                                      weatherProvider
+                                                          .currentLocation;
+                                                  final locationName =
+                                                      location?.district ??
+                                                      '当前位置';
+
+                                                  ScaffoldMessenger.of(
+                                                    context,
+                                                  ).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(
+                                                        '刷新完成 - $locationName',
+                                                      ),
+                                                      backgroundColor:
+                                                          AppColors.accentGreen,
+                                                      duration: Duration(
+                                                        milliseconds: 2000,
+                                                      ),
+                                                      behavior: SnackBarBehavior
+                                                          .floating,
+                                                      shape: RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              8,
+                                                            ),
+                                                      ),
+                                                    ),
+                                                  );
+                                                }
+                                              } catch (e) {
+                                                // 显示刷新失败提示
+                                                if (context.mounted) {
+                                                  ScaffoldMessenger.of(
+                                                    context,
+                                                  ).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(
+                                                        '刷新失败: ${e.toString()}',
+                                                      ),
+                                                      backgroundColor:
+                                                          AppColors.error,
+                                                      duration: Duration(
+                                                        milliseconds: 2000,
+                                                      ),
+                                                      behavior: SnackBarBehavior
+                                                          .floating,
+                                                      shape: RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              8,
+                                                            ),
+                                                      ),
+                                                    ),
+                                                  );
+                                                }
+                                              }
+                                            },
                                       icon: weatherProvider.isLoading
                                           ? SizedBox(
                                               width: 20,
@@ -1305,6 +1408,7 @@ class MainCitiesScreen extends StatelessWidget {
   }
 
   /// Show delete city dialog
+
   /// 更新当前位置数据
   Future<void> _updateCurrentLocation(
     BuildContext context,

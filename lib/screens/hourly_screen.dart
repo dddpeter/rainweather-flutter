@@ -78,8 +78,10 @@ class _HourlyScreenState extends State<HourlyScreen> {
                           ),
                           const SizedBox(height: 24),
                           ElevatedButton(
-                            onPressed: () =>
-                                weatherProvider.forceRefreshWithLocation(),
+                            onPressed: () => _handleRefreshWithFeedback(
+                              context,
+                              weatherProvider,
+                            ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primaryBlue,
                               foregroundColor: AppColors.textPrimary,
@@ -196,5 +198,73 @@ class _HourlyScreenState extends State<HourlyScreen> {
   String _getCurrentTime() {
     final now = DateTime.now();
     return '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+  }
+
+  /// 处理刷新按钮点击，显示反馈信息
+  Future<void> _handleRefreshWithFeedback(
+    BuildContext context,
+    WeatherProvider weatherProvider,
+  ) async {
+    try {
+      // 显示刷新开始提示
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              SizedBox(width: 12),
+              Text('正在刷新位置和天气数据...'),
+            ],
+          ),
+          duration: Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+
+      // 执行强制刷新
+      await weatherProvider.forceRefreshWithLocation();
+
+      // 显示刷新完成提示
+      if (context.mounted) {
+        final location = weatherProvider.currentLocation;
+        final locationName = location?.district ?? '当前位置';
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('刷新完成 - $locationName'),
+            backgroundColor: AppColors.accentGreen,
+            duration: Duration(milliseconds: 2000),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      // 显示刷新失败提示
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('刷新失败: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+            duration: Duration(milliseconds: 2000),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+      }
+    }
   }
 }

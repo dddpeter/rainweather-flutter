@@ -199,8 +199,10 @@ class _TodayScreenState extends State<TodayScreen> with WidgetsBindingObserver {
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton(
-                          onPressed: () =>
-                              weatherProvider.forceRefreshWithLocation(),
+                          onPressed: () => _handleRefreshWithFeedback(
+                            context,
+                            weatherProvider,
+                          ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.accentBlue,
                             foregroundColor: AppColors.textPrimary,
@@ -278,15 +280,55 @@ class _TodayScreenState extends State<TodayScreen> with WidgetsBindingObserver {
                   const AppMenu(), // 菜单按钮
                   Expanded(
                     child: Center(
-                      child: Text(
-                        _getDisplayCity(location),
-                        style: TextStyle(
-                          color: context.read<ThemeProvider>().getColor(
-                            'headerTextPrimary',
+                      child: Column(
+                        children: [
+                          Text(
+                            _getDisplayCity(location),
+                            style: TextStyle(
+                              color: context.read<ThemeProvider>().getColor(
+                                'headerTextPrimary',
+                              ),
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
+                          if (location?.isProxyDetected == true) ...[
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.orange.withOpacity(0.5),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.warning_amber_rounded,
+                                    color: Colors.orange,
+                                    size: 12,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '可能使用代理',
+                                    style: TextStyle(
+                                      color: Colors.orange,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
                   ),
@@ -782,6 +824,74 @@ class _TodayScreenState extends State<TodayScreen> with WidgetsBindingObserver {
       return suggestion;
     } catch (e) {
       return '根据天气情况适当增减衣物';
+    }
+  }
+
+  /// 处理刷新按钮点击，显示反馈信息
+  Future<void> _handleRefreshWithFeedback(
+    BuildContext context,
+    WeatherProvider weatherProvider,
+  ) async {
+    try {
+      // 显示刷新开始提示
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              SizedBox(width: 12),
+              Text('正在刷新位置和天气数据...'),
+            ],
+          ),
+          duration: Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+
+      // 执行强制刷新
+      await weatherProvider.forceRefreshWithLocation();
+
+      // 显示刷新完成提示
+      if (context.mounted) {
+        final location = weatherProvider.currentLocation;
+        final locationName = location?.district ?? '当前位置';
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('刷新完成 - $locationName'),
+            backgroundColor: AppColors.accentGreen,
+            duration: Duration(milliseconds: 2000),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      // 显示刷新失败提示
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('刷新失败: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+            duration: Duration(milliseconds: 2000),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+      }
     }
   }
 }

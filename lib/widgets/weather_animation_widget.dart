@@ -135,26 +135,30 @@ class _WeatherAnimationWidgetState extends State<WeatherAnimationWidget>
         return _buildFewCloudsAnimation();
       case '阴':
         return _buildOvercastAnimation();
-      case '小雨':
-      case '中雨':
-      case '阵雨':
       case '毛毛雨':
-        return _buildRainAnimation();
+        return _buildDrizzleAnimation();
+      case '小雨':
+        return _buildLightRainAnimation();
+      case '阵雨':
+        return _buildShowerRainAnimation();
+      case '中雨':
+        return _buildMediumRainAnimation();
       case '大雨':
-        return _buildHeavyRainAnimation(50);
+        return _buildHeavyRainAnimation(60);
       case '暴雨':
-        return _buildHeavyRainAnimation(100);
+        return _buildHeavyRainAnimation(120);
       case '大暴雨':
-        return _buildHeavyRainAnimation(180);
+        return _buildHeavyRainAnimation(200);
       case '特大暴雨':
-        return _buildHeavyRainAnimation(250);
+        return _buildExtremeHeavyRainAnimation();
       case '雷阵雨':
         return _buildThunderstormAnimation();
       case '雷阵雨伴有冰雹':
         return _buildThunderstormWithHailAnimation();
       case '小雪':
+        return _buildLightSnowAnimation();
       case '阵雪':
-        return _buildSnowAnimation();
+        return _buildShowerSnowAnimation();
       case '中雪':
         return _buildMediumSnowAnimation();
       case '大雪':
@@ -274,13 +278,61 @@ class _WeatherAnimationWidgetState extends State<WeatherAnimationWidget>
     );
   }
 
-  // 雨天动画
-  Widget _buildRainAnimation() {
+  // 毛毛雨动画 - 最轻的雨
+  Widget _buildDrizzleAnimation() {
+    return AnimatedBuilder(
+      animation: Listenable.merge([_mainAnimation, _particleController]),
+      builder: (context, child) {
+        return CustomPaint(
+          painter: DrizzlePainter(
+            _mainAnimation.value,
+            _particleAnimation.value,
+          ),
+          size: Size(widget.size, widget.size),
+        );
+      },
+    );
+  }
+
+  // 小雨动画
+  Widget _buildLightRainAnimation() {
     return AnimatedBuilder(
       animation: Listenable.merge([_mainAnimation, _particleController]),
       builder: (context, child) {
         return CustomPaint(
           painter: RainPainter(_mainAnimation.value, _particleAnimation.value),
+          size: Size(widget.size, widget.size),
+        );
+      },
+    );
+  }
+
+  // 阵雨动画
+  Widget _buildShowerRainAnimation() {
+    return AnimatedBuilder(
+      animation: Listenable.merge([_mainAnimation, _particleController]),
+      builder: (context, child) {
+        return CustomPaint(
+          painter: ShowerRainPainter(
+            _mainAnimation.value,
+            _particleAnimation.value,
+          ),
+          size: Size(widget.size, widget.size),
+        );
+      },
+    );
+  }
+
+  // 中雨动画
+  Widget _buildMediumRainAnimation() {
+    return AnimatedBuilder(
+      animation: Listenable.merge([_mainAnimation, _particleController]),
+      builder: (context, child) {
+        return CustomPaint(
+          painter: MediumRainPainter(
+            _mainAnimation.value,
+            _particleAnimation.value,
+          ),
           size: Size(widget.size, widget.size),
         );
       },
@@ -301,6 +353,38 @@ class _WeatherAnimationWidgetState extends State<WeatherAnimationWidget>
   }
 
   // 雪天动画
+  // 小雪动画
+  Widget _buildLightSnowAnimation() {
+    return AnimatedBuilder(
+      animation: Listenable.merge([_mainAnimation, _particleController]),
+      builder: (context, child) {
+        return CustomPaint(
+          painter: LightSnowPainter(
+            _mainAnimation.value,
+            _particleAnimation.value,
+          ),
+          size: Size(widget.size, widget.size),
+        );
+      },
+    );
+  }
+
+  // 阵雪动画
+  Widget _buildShowerSnowAnimation() {
+    return AnimatedBuilder(
+      animation: Listenable.merge([_mainAnimation, _particleController]),
+      builder: (context, child) {
+        return CustomPaint(
+          painter: ShowerSnowPainter(
+            _mainAnimation.value,
+            _particleAnimation.value,
+          ),
+          size: Size(widget.size, widget.size),
+        );
+      },
+    );
+  }
+
   Widget _buildSnowAnimation() {
     return AnimatedBuilder(
       animation: Listenable.merge([_mainAnimation, _particleController]),
@@ -491,6 +575,22 @@ class _WeatherAnimationWidgetState extends State<WeatherAnimationWidget>
             _mainAnimation.value,
             _particleAnimation.value,
             particleCount,
+          ),
+          size: Size(widget.size, widget.size),
+        );
+      },
+    );
+  }
+
+  // 特大暴雨动画 - 更极端的视觉效果
+  Widget _buildExtremeHeavyRainAnimation() {
+    return AnimatedBuilder(
+      animation: Listenable.merge([_mainAnimation, _particleController]),
+      builder: (context, child) {
+        return CustomPaint(
+          painter: ExtremeHeavyRainPainter(
+            _mainAnimation.value,
+            _particleAnimation.value,
           ),
           size: Size(widget.size, widget.size),
         );
@@ -965,14 +1065,14 @@ class RainPainter extends CustomPainter {
       ..strokeWidth = 2.0
       ..style = PaintingStyle.stroke;
 
-    for (int i = 0; i < 50; i++) {
-      final x = (i * 7.0) % size.width;
+    for (int i = 0; i < 25; i++) {
+      final x = (i * 12.0) % size.width;
       final y =
-          (particleAnimationValue * size.height * 0.484 + i * 12) %
+          (particleAnimationValue * size.height * 0.484 + i * 15) %
               (size.height * 0.484) +
           size.height * 0.3;
 
-      canvas.drawLine(Offset(x, y), Offset(x + 0.5, y + 2), rainPaint);
+      canvas.drawLine(Offset(x, y), Offset(x + 0.3, y + 1.5), rainPaint);
     }
   }
 
@@ -2440,39 +2540,69 @@ class HeavyRainPainter extends CustomPainter {
     final rightSmallCloud = Offset(size.width / 2 + 35, size.height * 0.25);
     _drawCloud(canvas, rightSmallCloud, 12, darkCloudPaint);
 
-    // 绘制密集的雨滴 - 调整位置
+    // 绘制密集的雨滴 - 根据粒子数量调整视觉效果
     final rainPaint = Paint()
       ..color = WeatherAnimationColors.withOpacity(
         WeatherAnimationColors.rainColor,
-        0.8,
+        particleCount > 200 ? 0.9 : 0.8, // 特大暴雨更不透明
       )
-      ..strokeWidth = 2.5
+      ..strokeWidth = particleCount > 200
+          ? 3.0
+          : 2.5 // 特大暴雨更粗
       ..style = PaintingStyle.stroke;
 
+    // 根据粒子数量调整间距
+    final spacing = particleCount > 200 ? 3.0 : 4.0;
+
     for (int i = 0; i < particleCount; i++) {
-      final x = (i * 4.0) % size.width;
+      final x = (i * spacing) % size.width;
       final y =
           (particleAnimationValue * size.height * 0.484 + i * 12) %
               (size.height * 0.484) +
           size.height * 0.3;
 
-      canvas.drawLine(Offset(x, y), Offset(x + 1, y + 3), rainPaint);
+      // 根据粒子数量调整雨滴长度
+      final rainLength = particleCount > 200 ? 4.0 : 3.0;
+      canvas.drawLine(Offset(x, y), Offset(x + 1, y + rainLength), rainPaint);
     }
 
-    // 绘制雨滴溅起的水花
+    // 绘制雨滴溅起的水花 - 根据粒子数量调整水花效果
     final splashPaint = Paint()
       ..color = WeatherAnimationColors.withOpacity(
         WeatherAnimationColors.rainColor,
-        0.4,
+        particleCount > 200 ? 0.6 : 0.4, // 特大暴雨水花更明显
       )
       ..style = PaintingStyle.fill;
 
-    for (int i = 0; i < 20; i++) {
-      final x = (i * 20.0) % size.width;
+    // 根据粒子数量调整水花数量
+    final splashCount = particleCount > 200 ? 30 : 20;
+    final splashSpacing = particleCount > 200 ? 15.0 : 20.0;
+
+    for (int i = 0; i < splashCount; i++) {
+      final x = (i * splashSpacing) % size.width;
       final y = size.height * 0.8;
-      final splashSize = 2.0 + math.sin(animationValue * 4 * math.pi + i) * 1.0;
+      final splashSize =
+          (particleCount > 200 ? 3.0 : 2.0) +
+          math.sin(animationValue * 4 * math.pi + i) * 1.0;
 
       canvas.drawCircle(Offset(x, y), splashSize, splashPaint);
+    }
+
+    // 特大暴雨和大暴雨添加额外的雨帘效果
+    if (particleCount > 150) {
+      final curtainPaint = Paint()
+        ..color = WeatherAnimationColors.withOpacity(
+          WeatherAnimationColors.rainColor,
+          0.2,
+        )
+        ..style = PaintingStyle.fill;
+
+      for (int i = 0; i < 3; i++) {
+        final x = i * size.width / 2;
+        final height = size.height * 0.4;
+        final curtainRect = Rect.fromLTWH(x, size.height * 0.3, 2, height);
+        canvas.drawRect(curtainRect, curtainPaint);
+      }
     }
   }
 
@@ -2498,6 +2628,570 @@ class HeavyRainPainter extends CustomPainter {
       ),
     );
 
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+// 毛毛雨绘制器 - 最轻的雨
+class DrizzlePainter extends CustomPainter {
+  final double animationValue;
+  final double particleAnimationValue;
+
+  DrizzlePainter(this.animationValue, this.particleAnimationValue);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // 绘制云朵 - 毛毛雨云朵较小，使用主题感知的颜色
+    final cloudPaint = Paint()
+      ..color = WeatherAnimationColors.withOpacity(
+        WeatherAnimationColors.cloudColor,
+        0.6,
+      )
+      ..style = PaintingStyle.fill;
+
+    final cloudCenter = Offset(size.width / 2, size.height * 0.2);
+    _drawCloud(canvas, cloudCenter, 20, cloudPaint);
+
+    // 绘制毛毛雨滴 - 非常轻，几乎看不见
+    final rainPaint = Paint()
+      ..color = WeatherAnimationColors.withOpacity(
+        WeatherAnimationColors.rainColor,
+        0.4,
+      )
+      ..strokeWidth = 1.0
+      ..style = PaintingStyle.stroke;
+
+    for (int i = 0; i < 15; i++) {
+      final x = (i * 15.0) % size.width;
+      final y =
+          (particleAnimationValue * size.height * 0.484 + i * 20) %
+              (size.height * 0.484) +
+          size.height * 0.3;
+
+      canvas.drawLine(Offset(x, y), Offset(x + 0.2, y + 1), rainPaint);
+    }
+  }
+
+  void _drawCloud(Canvas canvas, Offset center, double radius, Paint paint) {
+    final path = Path();
+    path.addOval(Rect.fromCircle(center: center, radius: radius));
+    path.addOval(
+      Rect.fromCircle(
+        center: Offset(center.dx - radius * 0.7, center.dy),
+        radius: radius * 0.8,
+      ),
+    );
+    path.addOval(
+      Rect.fromCircle(
+        center: Offset(center.dx + radius * 0.7, center.dy),
+        radius: radius * 0.8,
+      ),
+    );
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+// 阵雨绘制器
+class ShowerRainPainter extends CustomPainter {
+  final double animationValue;
+  final double particleAnimationValue;
+
+  ShowerRainPainter(this.animationValue, this.particleAnimationValue);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // 绘制云朵 - 阵雨云朵，使用主题感知的颜色
+    final cloudPaint = Paint()
+      ..color = WeatherAnimationColors.withOpacity(
+        WeatherAnimationColors.cloudColor,
+        0.8,
+      )
+      ..style = PaintingStyle.fill;
+
+    final cloudCenter = Offset(size.width / 2, size.height * 0.2);
+    _drawCloud(canvas, cloudCenter, 25, cloudPaint);
+
+    // 绘制更深色的小云朵
+    final darkCloudPaint = Paint()
+      ..color = WeatherAnimationColors.withOpacity(
+        WeatherAnimationColors.cloudShadowColor,
+        0.95,
+      )
+      ..style = PaintingStyle.fill;
+
+    // 左侧小云朵
+    final leftSmallCloud = Offset(size.width / 2 - 30, size.height * 0.15);
+    _drawCloud(canvas, leftSmallCloud, 15, darkCloudPaint);
+
+    // 右侧小云朵
+    final rightSmallCloud = Offset(size.width / 2 + 35, size.height * 0.25);
+    _drawCloud(canvas, rightSmallCloud, 12, darkCloudPaint);
+
+    // 绘制阵雨雨滴 - 间歇性，密度变化
+    final rainPaint = Paint()
+      ..color = WeatherAnimationColors.withOpacity(
+        WeatherAnimationColors.rainColor,
+        0.8,
+      )
+      ..strokeWidth = 2.0
+      ..style = PaintingStyle.stroke;
+
+    // 阵雨效果：根据动画值调整粒子数量
+    final intensity = (math.sin(animationValue * 3 * math.pi) + 1) / 2;
+    final particleCount = (35 * intensity).round() + 10; // 10-45个粒子
+
+    for (int i = 0; i < particleCount; i++) {
+      final x = (i * 5.0) % size.width;
+      final y =
+          (particleAnimationValue * size.height * 0.484 + i * 8) %
+              (size.height * 0.484) +
+          size.height * 0.3;
+
+      canvas.drawLine(Offset(x, y), Offset(x + 0.6, y + 2), rainPaint);
+    }
+  }
+
+  void _drawCloud(Canvas canvas, Offset center, double radius, Paint paint) {
+    final path = Path();
+    path.addOval(Rect.fromCircle(center: center, radius: radius));
+    path.addOval(
+      Rect.fromCircle(
+        center: Offset(center.dx - radius * 0.7, center.dy),
+        radius: radius * 0.8,
+      ),
+    );
+    path.addOval(
+      Rect.fromCircle(
+        center: Offset(center.dx + radius * 0.7, center.dy),
+        radius: radius * 0.8,
+      ),
+    );
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+// 小雪绘制器
+class LightSnowPainter extends CustomPainter {
+  final double animationValue;
+  final double particleAnimationValue;
+
+  LightSnowPainter(this.animationValue, this.particleAnimationValue);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // 绘制云朵 - 小雪云朵较小
+    final cloudPaint = Paint()
+      ..color = WeatherAnimationColors.withOpacity(
+        WeatherAnimationColors.cloudColor,
+        0.8,
+      )
+      ..style = PaintingStyle.fill;
+
+    final cloudCenter = Offset(size.width / 2, size.height * 0.2);
+    _drawCloud(canvas, cloudCenter, 25, cloudPaint);
+
+    // 绘制小雪雪花 - 数量少，飘得慢
+    final snowPaint = Paint()
+      ..color = WeatherAnimationColors.withOpacity(
+        WeatherAnimationColors.snowColor,
+        0.9,
+      )
+      ..style = PaintingStyle.fill;
+
+    for (int i = 0; i < 15; i++) {
+      final x = (i * 20.0) % size.width;
+      final y =
+          (particleAnimationValue * size.height * 0.484 * 0.5 + i * 15) %
+              (size.height * 0.484) +
+          size.height * 0.3;
+
+      _drawSnowflake(canvas, Offset(x, y), 1.5, snowPaint);
+    }
+  }
+
+  void _drawCloud(Canvas canvas, Offset center, double radius, Paint paint) {
+    final path = Path();
+    path.addOval(Rect.fromCircle(center: center, radius: radius));
+    path.addOval(
+      Rect.fromCircle(
+        center: Offset(center.dx - radius * 0.7, center.dy),
+        radius: radius * 0.8,
+      ),
+    );
+    path.addOval(
+      Rect.fromCircle(
+        center: Offset(center.dx + radius * 0.7, center.dy),
+        radius: radius * 0.8,
+      ),
+    );
+    canvas.drawPath(path, paint);
+  }
+
+  void _drawSnowflake(Canvas canvas, Offset center, double size, Paint paint) {
+    final path = Path();
+    // 绘制简单的六角星形雪花
+    for (int i = 0; i < 6; i++) {
+      final angle = i * math.pi / 3;
+      final x = center.dx + math.cos(angle) * size;
+      final y = center.dy + math.sin(angle) * size;
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+    path.close();
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+// 阵雪绘制器
+class ShowerSnowPainter extends CustomPainter {
+  final double animationValue;
+  final double particleAnimationValue;
+
+  ShowerSnowPainter(this.animationValue, this.particleAnimationValue);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // 绘制云朵 - 阵雪云朵
+    final cloudPaint = Paint()
+      ..color = WeatherAnimationColors.withOpacity(
+        WeatherAnimationColors.cloudColor,
+        0.8,
+      )
+      ..style = PaintingStyle.fill;
+
+    final cloudCenter = Offset(size.width / 2, size.height * 0.2);
+    _drawCloud(canvas, cloudCenter, 25, cloudPaint);
+
+    // 绘制更深色的小云朵
+    final darkCloudPaint = Paint()
+      ..color = WeatherAnimationColors.withOpacity(
+        WeatherAnimationColors.cloudShadowColor,
+        0.95,
+      )
+      ..style = PaintingStyle.fill;
+
+    // 左侧小云朵
+    final leftSmallCloud = Offset(size.width / 2 - 30, size.height * 0.15);
+    _drawCloud(canvas, leftSmallCloud, 15, darkCloudPaint);
+
+    // 右侧小云朵
+    final rightSmallCloud = Offset(size.width / 2 + 35, size.height * 0.25);
+    _drawCloud(canvas, rightSmallCloud, 12, darkCloudPaint);
+
+    // 绘制阵雪雪花 - 间歇性，密度变化
+    final snowPaint = Paint()
+      ..color = WeatherAnimationColors.withOpacity(
+        WeatherAnimationColors.snowColor,
+        0.9,
+      )
+      ..style = PaintingStyle.fill;
+
+    // 阵雪效果：根据动画值调整粒子数量，减少粒子数目
+    final intensity = (math.sin(animationValue * 2 * math.pi) + 1) / 2;
+    final particleCount = (15 * intensity).round() + 8; // 8-23个粒子，比原来少
+
+    for (int i = 0; i < particleCount; i++) {
+      final x = (i * 18.0) % size.width; // 增加间距
+      final y =
+          (particleAnimationValue * size.height * 0.484 * 0.8 + i * 15) %
+              (size.height * 0.484) +
+          size.height * 0.3;
+
+      _drawSnowflake(canvas, Offset(x, y), 2.0, snowPaint);
+    }
+  }
+
+  void _drawCloud(Canvas canvas, Offset center, double radius, Paint paint) {
+    final path = Path();
+    path.addOval(Rect.fromCircle(center: center, radius: radius));
+    path.addOval(
+      Rect.fromCircle(
+        center: Offset(center.dx - radius * 0.7, center.dy),
+        radius: radius * 0.8,
+      ),
+    );
+    path.addOval(
+      Rect.fromCircle(
+        center: Offset(center.dx + radius * 0.7, center.dy),
+        radius: radius * 0.8,
+      ),
+    );
+    canvas.drawPath(path, paint);
+  }
+
+  void _drawSnowflake(Canvas canvas, Offset center, double size, Paint paint) {
+    // 绘制六角雪花形状 - 阵雪版本
+    final linePaint = Paint()
+      ..color = paint.color
+      ..strokeWidth = 0.8
+      ..style = PaintingStyle.stroke;
+
+    // 绘制六条主射线
+    for (int i = 0; i < 6; i++) {
+      final angle = i * math.pi / 3;
+      final endX = center.dx + math.cos(angle) * size;
+      final endY = center.dy + math.sin(angle) * size;
+
+      canvas.drawLine(center, Offset(endX, endY), linePaint);
+
+      // 在每条射线上添加分支
+      final branchLength = size * 0.4;
+      final branchX1 = center.dx + math.cos(angle) * size * 0.6;
+      final branchY1 = center.dy + math.sin(angle) * size * 0.6;
+      final branchX2 = center.dx + math.cos(angle + math.pi / 6) * branchLength;
+      final branchY2 = center.dy + math.sin(angle + math.pi / 6) * branchLength;
+      final branchX3 = center.dx + math.cos(angle - math.pi / 6) * branchLength;
+      final branchY3 = center.dy + math.sin(angle - math.pi / 6) * branchLength;
+
+      canvas.drawLine(
+        Offset(branchX1, branchY1),
+        Offset(branchX2, branchY2),
+        linePaint,
+      );
+      canvas.drawLine(
+        Offset(branchX1, branchY1),
+        Offset(branchX3, branchY3),
+        linePaint,
+      );
+    }
+
+    // 绘制中心点
+    canvas.drawCircle(center, size * 0.15, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+// 中雨绘制器
+class MediumRainPainter extends CustomPainter {
+  final double animationValue;
+  final double particleAnimationValue;
+
+  MediumRainPainter(this.animationValue, this.particleAnimationValue);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // 绘制云朵 - 中雨云朵，使用主题感知的颜色
+    final cloudPaint = Paint()
+      ..color = WeatherAnimationColors.withOpacity(
+        WeatherAnimationColors.cloudColor,
+        0.8,
+      )
+      ..style = PaintingStyle.fill;
+
+    final cloudCenter = Offset(size.width / 2, size.height * 0.2);
+    _drawCloud(canvas, cloudCenter, 25, cloudPaint);
+
+    // 绘制更深色的小云朵
+    final darkCloudPaint = Paint()
+      ..color = WeatherAnimationColors.withOpacity(
+        WeatherAnimationColors.cloudShadowColor,
+        0.95,
+      )
+      ..style = PaintingStyle.fill;
+
+    // 左侧小云朵
+    final leftSmallCloud = Offset(size.width / 2 - 30, size.height * 0.15);
+    _drawCloud(canvas, leftSmallCloud, 15, darkCloudPaint);
+
+    // 右侧小云朵
+    final rightSmallCloud = Offset(size.width / 2 + 35, size.height * 0.25);
+    _drawCloud(canvas, rightSmallCloud, 12, darkCloudPaint);
+
+    // 绘制中雨雨滴 - 比小雨多，比大雨少
+    final rainPaint = Paint()
+      ..color = WeatherAnimationColors.withOpacity(
+        WeatherAnimationColors.rainColor,
+        0.8,
+      )
+      ..strokeWidth = 2.2
+      ..style = PaintingStyle.stroke;
+
+    for (int i = 0; i < 40; i++) {
+      final x = (i * 6.0) % size.width;
+      final y =
+          (particleAnimationValue * size.height * 0.484 + i * 10) %
+              (size.height * 0.484) +
+          size.height * 0.3;
+
+      canvas.drawLine(Offset(x, y), Offset(x + 0.8, y + 2.5), rainPaint);
+    }
+  }
+
+  void _drawCloud(Canvas canvas, Offset center, double radius, Paint paint) {
+    final path = Path();
+    path.addOval(Rect.fromCircle(center: center, radius: radius));
+    path.addOval(
+      Rect.fromCircle(
+        center: Offset(center.dx - radius * 0.7, center.dy),
+        radius: radius * 0.8,
+      ),
+    );
+    path.addOval(
+      Rect.fromCircle(
+        center: Offset(center.dx + radius * 0.7, center.dy),
+        radius: radius * 0.8,
+      ),
+    );
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+// 特大暴雨绘制器 - 参考暴雨效果，调整粒子和地面水花
+class ExtremeHeavyRainPainter extends CustomPainter {
+  final double animationValue;
+  final double particleAnimationValue;
+
+  ExtremeHeavyRainPainter(this.animationValue, this.particleAnimationValue);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // 绘制云朵 - 参考暴雨的云朵布局，保持一致性
+    final cloudPaint = Paint()
+      ..color = WeatherAnimationColors.withOpacity(
+        WeatherAnimationColors.cloudColor,
+        0.8,
+      )
+      ..style = PaintingStyle.fill;
+
+    // 主云朵
+    final mainCloudCenter = Offset(size.width / 2, size.height * 0.2);
+    _drawCloud(canvas, mainCloudCenter, 25, cloudPaint);
+
+    // 绘制更深色的小云朵
+    final darkCloudPaint = Paint()
+      ..color = WeatherAnimationColors.withOpacity(
+        WeatherAnimationColors.cloudShadowColor,
+        0.95,
+      )
+      ..style = PaintingStyle.fill;
+
+    // 左侧小云朵
+    final leftSmallCloud = Offset(size.width / 2 - 30, size.height * 0.15);
+    _drawCloud(canvas, leftSmallCloud, 15, darkCloudPaint);
+
+    // 右侧小云朵
+    final rightSmallCloud = Offset(size.width / 2 + 35, size.height * 0.25);
+    _drawCloud(canvas, rightSmallCloud, 12, darkCloudPaint);
+
+    // 绘制密集的雨滴 - 比暴雨更密集，但比原来少一些
+    final rainPaint = Paint()
+      ..color = WeatherAnimationColors.withOpacity(
+        WeatherAnimationColors.rainColor,
+        0.9,
+      )
+      ..strokeWidth = 3.0
+      ..style = PaintingStyle.stroke;
+
+    for (int i = 0; i < 160; i++) {
+      // 调整粒子数量，与暴雨区分
+      final x = (i * 3.0) % size.width; // 调整间距
+      final y =
+          (particleAnimationValue * size.height * 0.484 + i * 10) %
+              (size.height * 0.484) +
+          size.height * 0.3;
+
+      // 根据粒子数量调整雨滴长度
+      final rainLength = 4.0;
+      canvas.drawLine(Offset(x, y), Offset(x + 1, y + rainLength), rainPaint);
+    }
+
+    // 绘制雨滴溅起的水花 - 比暴雨更明显
+    final splashPaint = Paint()
+      ..color = WeatherAnimationColors.withOpacity(
+        WeatherAnimationColors.rainColor,
+        0.7, // 提高水花透明度
+      )
+      ..style = PaintingStyle.fill;
+
+    for (int i = 0; i < 35; i++) {
+      // 增加水花数量
+      final x = (i * 15.0) % size.width;
+      final y = size.height * 0.8;
+      final splashSize = 3.5 + math.sin(animationValue * 4 * math.pi + i) * 1.5;
+
+      canvas.drawCircle(Offset(x, y), splashSize, splashPaint);
+    }
+
+    // 特大暴雨添加雨帘效果
+    final curtainPaint = Paint()
+      ..color = WeatherAnimationColors.withOpacity(
+        WeatherAnimationColors.rainColor,
+        0.25,
+      )
+      ..style = PaintingStyle.fill;
+
+    for (int i = 0; i < 4; i++) {
+      final x = i * size.width / 3;
+      final height = size.height * 0.4;
+      final curtainRect = Rect.fromLTWH(x, size.height * 0.3, 2, height);
+      canvas.drawRect(curtainRect, curtainPaint);
+    }
+
+    // 绘制地面水流效果 - 新增特效
+    final waterFlowPaint = Paint()
+      ..color = WeatherAnimationColors.withOpacity(
+        WeatherAnimationColors.rainColor,
+        0.5,
+      )
+      ..style = PaintingStyle.fill;
+
+    for (int i = 0; i < 6; i++) {
+      final x = i * size.width / 5;
+      final height = 2.0 + math.sin(animationValue * 2 * math.pi + i) * 1.0;
+      final waterRect = Rect.fromLTWH(
+        x,
+        size.height * 0.85,
+        size.width / 5,
+        height,
+      );
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(waterRect, const Radius.circular(1)),
+        waterFlowPaint,
+      );
+    }
+  }
+
+  void _drawCloud(Canvas canvas, Offset center, double radius, Paint paint) {
+    final path = Path();
+    path.addOval(Rect.fromCircle(center: center, radius: radius));
+    path.addOval(
+      Rect.fromCircle(
+        center: Offset(center.dx - radius * 0.7, center.dy),
+        radius: radius * 0.8,
+      ),
+    );
+    path.addOval(
+      Rect.fromCircle(
+        center: Offset(center.dx + radius * 0.7, center.dy),
+        radius: radius * 0.8,
+      ),
+    );
+    path.addOval(
+      Rect.fromCircle(
+        center: Offset(center.dx, center.dy - radius * 0.5),
+        radius: radius * 0.6,
+      ),
+    );
     canvas.drawPath(path, paint);
   }
 

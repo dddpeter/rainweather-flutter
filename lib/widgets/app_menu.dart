@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
 import '../constants/app_colors.dart';
+import '../constants/app_version.dart';
 import '../screens/weather_animation_test_screen.dart';
 import '../screens/weather_layout_test_screen.dart';
 import '../screens/gps_location_test_screen.dart';
@@ -444,7 +445,7 @@ class AppMenu extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '知雨天气',
+                AppVersion.appName,
                 style: TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: 18,
@@ -453,7 +454,7 @@ class AppMenu extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                '版本: 1.0.0',
+                '版本: ${AppVersion.version} (构建 ${AppVersion.buildNumber})',
                 style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 14,
@@ -462,7 +463,7 @@ class AppMenu extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                '一款简洁美观的天气应用',
+                AppVersion.description,
                 style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 14,
@@ -471,7 +472,7 @@ class AppMenu extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                '© 2024 知雨天气. All rights reserved.',
+                AppVersion.copyright,
                 style: TextStyle(color: AppColors.textTertiary, fontSize: 12),
               ),
             ],

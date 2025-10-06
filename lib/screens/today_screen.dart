@@ -1,5 +1,4 @@
 import 'dart:ui';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/weather_provider.dart';
@@ -81,7 +80,14 @@ class _TodayScreenState extends State<TodayScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    // 这个回调在应用生命周期变化时被调用，但不适合我们的场景
+
+    // 当应用从后台恢复时，刷新定位和天气数据
+    if (state == AppLifecycleState.resumed) {
+      print('📍 TodayScreen: 应用从后台恢复，准备刷新定位');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _refreshCurrentLocationAndWeather();
+      });
+    }
   }
 
   /// 定位成功回调

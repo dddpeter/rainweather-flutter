@@ -16,6 +16,7 @@ import '../constants/app_constants.dart';
 import '../utils/app_state_manager.dart';
 import '../utils/city_name_matcher.dart';
 import '../services/location_change_notifier.dart';
+import 'dart:async';
 
 class WeatherProvider extends ChangeNotifier {
   final WeatherService _weatherService = WeatherService.getInstance();
@@ -52,6 +53,10 @@ class WeatherProvider extends ChangeNotifier {
   Map<String, WeatherModel> _mainCitiesWeather = {};
   bool _isLoadingCitiesWeather = false;
   bool _hasPerformedInitialMainCitiesRefresh = false; // 是否已经进行过首次主要城市刷新
+
+  // 定时刷新
+  Timer? _refreshTimer;
+  static const Duration _refreshInterval = Duration(minutes: 30); // 30分钟刷新一次
 
   // Dynamic cities list
   List<CityModel> _mainCities = [];
@@ -581,6 +586,42 @@ class WeatherProvider extends ChangeNotifier {
     }
   }
 
+  /// 启动定时刷新
+  void _startPeriodicRefresh() {
+    _stopPeriodicRefresh(); // 先停止现有的定时器
+
+    _refreshTimer = Timer.periodic(_refreshInterval, (timer) {
+      print('⏰ WeatherProvider: 定时刷新触发');
+      _performPeriodicRefresh();
+    });
+
+    print('⏰ WeatherProvider: 定时刷新已启动，间隔 ${_refreshInterval.inMinutes} 分钟');
+  }
+
+  /// 停止定时刷新
+  void _stopPeriodicRefresh() {
+    _refreshTimer?.cancel();
+    _refreshTimer = null;
+    print('⏰ WeatherProvider: 定时刷新已停止');
+  }
+
+  /// 执行定时刷新
+  Future<void> _performPeriodicRefresh() async {
+    try {
+      print('⏰ WeatherProvider: 开始执行定时刷新');
+
+      // 刷新当前定位天气数据
+      await refreshWeatherData();
+
+      // 刷新主要城市天气数据
+      await refreshMainCitiesWeather();
+
+      print('⏰ WeatherProvider: 定时刷新完成');
+    } catch (e) {
+      print('❌ WeatherProvider: 定时刷新失败: $e');
+    }
+  }
+
   /// Initialize cities from JSON and load main cities
   Future<void> initializeCities() async {
     _isLoadingCities = true;
@@ -1090,6 +1131,9 @@ class WeatherProvider extends ChangeNotifier {
 
         _error = null;
 
+        // 启动定时刷新
+        _startPeriodicRefresh();
+
         // 通知所有监听器定位成功
         print('📍 WeatherProvider: 准备发送定位成功通知');
         LocationChangeNotifier().notifyLocationSuccess(newLocation);
@@ -1367,5 +1411,12 @@ class WeatherProvider extends ChangeNotifier {
 
     // Return found city ID or default
     return cityId ?? AppConstants.defaultCityId;
+  }
+
+  @override
+  void dispose() {
+    // 停止定时刷新
+    _stopPeriodicRefresh();
+    super.dispose();
   }
 }

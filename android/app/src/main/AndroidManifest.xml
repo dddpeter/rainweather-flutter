@@ -52,6 +52,10 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- 百度定位 AK -->
+        <meta-data
+            android:name="com.baidu.lbsapi.API_KEY"
+            android:value="6gzLA6FpAfvzIkFij3NpqUPl3n0Suv4f"/>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

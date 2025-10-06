@@ -8,7 +8,7 @@
 
 ### 核心功能
 - 🌤️ **实时天气数据**：从 weatherol.cn API 获取准确的天气信息
-- 📍 **智能定位**：GPS 自动定位和 IP 定位双重保障
+- 📍 **智能定位**：百度定位 + GPS 自动定位和 IP 定位多重保障
 - 📊 **多维度预报**：24小时逐时预报 + 15天每日预报
 - 📈 **交互式图表**：温度趋势可视化展示
 - 🌫️ **空气质量**：实时 AQI 指数和等级显示
@@ -64,10 +64,11 @@ lib/
 │   ├── city_weather_screen.dart # 城市天气页面
 │   └── main_cities_screen.dart  # 主要城市页面
 ├── services/          # 业务逻辑和 API
-│   ├── weather_service.dart     # 天气 API 服务
-│   ├── location_service.dart    # 定位服务
-│   ├── database_service.dart    # 数据库服务
-│   └── city_service.dart        # 城市数据服务
+│   ├── weather_service.dart        # 天气 API 服务
+│   ├── location_service.dart       # 定位服务（原生GPS）
+│   ├── baidu_location_service.dart # 百度定位服务
+│   ├── database_service.dart       # 数据库服务
+│   └── city_service.dart           # 城市数据服务
 └── widgets/           # 可重用组件
     ├── weather_chart.dart       # 7日温度图表
     ├── hourly_chart.dart        # 24小时温度图表
@@ -87,6 +88,7 @@ lib/
 - **http** ^1.2.2 - HTTP 请求
 
 ### 定位服务
+- **flutter_bmflocation** ^3.7.0 - 百度定位服务（高精度定位）
 - **geolocator** ^14.0.2 - GPS 定位
 - **permission_handler** ^12.0.1 - 权限管理
 
@@ -227,6 +229,26 @@ Consumer<ThemeProvider>(
 - ✅ 下拉刷新支持
 
 ## 🔧 最近更新
+
+### v1.5.0 (2025-01)
+
+**百度定位集成**
+- 🎯 集成百度定位SDK，提供更高精度的定位服务
+- 🎯 支持iOS和Android双平台百度定位
+- 🎯 百度定位与原有定位服务无缝集成，自动降级
+- 🎯 提供完整的定位权限管理和隐私政策同意流程
+
+**启动流程优化**
+- ⚡ 移除自定义SplashScreen，使用原生启动画面
+- ⚡ 应用启动直接进入主界面，减少等待时间
+- ⚡ 优化初始化流程，提升启动速度
+- ⚡ 更流畅的用户体验
+
+**定位服务增强**
+- 📍 百度定位提供更准确的位置信息
+- 📍 支持高精度定位模式（GPS + 网络定位）
+- 📍 智能错误处理和降级方案
+- 📍 详细的定位日志和调试信息
 
 ### v1.4.0 (2025-01)
 

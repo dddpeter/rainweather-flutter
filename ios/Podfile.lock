@@ -1,5 +1,13 @@
 PODS:
+  - BMKLocationKit (2.1.3)
   - Flutter (1.0.0)
+  - flutter_bmflocation (3.7.0):
+    - BMKLocationKit (~> 2.1.3)
+    - Flutter
+  - flutter_local_notifications (0.0.1):
+    - Flutter
+  - geocoding_ios (1.0.5):
+    - Flutter
   - geolocator_apple (1.2.0):
     - Flutter
     - FlutterMacOS
@@ -20,7 +28,11 @@ PODS:
     - Flutter
 
 DEPENDENCIES:
+  - BMKLocationKit
   - Flutter (from `Flutter`)
+  - flutter_bmflocation (from `.symlinks/plugins/flutter_bmflocation/ios`)
+  - flutter_local_notifications (from `.symlinks/plugins/flutter_local_notifications/ios`)
+  - geocoding_ios (from `.symlinks/plugins/geocoding_ios/ios`)
   - geolocator_apple (from `.symlinks/plugins/geolocator_apple/darwin`)
   - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
@@ -29,9 +41,19 @@ DEPENDENCIES:
   - sqflite_darwin (from `.symlinks/plugins/sqflite_darwin/darwin`)
   - workmanager_apple (from `.symlinks/plugins/workmanager_apple/ios`)
 
+SPEC REPOS:
+  trunk:
+    - BMKLocationKit
+
 EXTERNAL SOURCES:
   Flutter:
     :path: Flutter
+  flutter_bmflocation:
+    :path: ".symlinks/plugins/flutter_bmflocation/ios"
+  flutter_local_notifications:
+    :path: ".symlinks/plugins/flutter_local_notifications/ios"
+  geocoding_ios:
+    :path: ".symlinks/plugins/geocoding_ios/ios"
   geolocator_apple:
     :path: ".symlinks/plugins/geolocator_apple/darwin"
   package_info_plus:
@@ -48,7 +70,11 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/workmanager_apple/ios"
 
 SPEC CHECKSUMS:
+  BMKLocationKit: 79689c9898474cbad4a93a5f0cc06c8c97fa2b02
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
+  flutter_bmflocation: f53a4bad68d0f0078dae79e92a1a9fd9b22e8487
+  flutter_local_notifications: 4cde75091f6327eb8517fa068a0a5950212d2086
+  geocoding_ios: eafacae6ad11a1eb56681f7d11df602a5fd49416
   geolocator_apple: 66b711889fd333205763b83c9dcf0a57a28c7afd
   package_info_plus: c0502532a26c7662a62a356cebe2692ec5fe4ec4
   path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
@@ -57,6 +83,6 @@ SPEC CHECKSUMS:
   sqflite_darwin: 5a7236e3b501866c1c9befc6771dfd73ffb8702d
   workmanager_apple: 7bac258335c310689a641e2d66e88d4845d372e9
 
-PODFILE CHECKSUM: e30f02f9d1c72c47bb6344a0a748c9d268180865
+PODFILE CHECKSUM: 60f41aca00f54d2c61731557a19fe26e857688e7
 
 COCOAPODS: 1.16.1

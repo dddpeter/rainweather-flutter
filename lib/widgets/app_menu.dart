@@ -7,6 +7,7 @@ import '../screens/weather_layout_test_screen.dart';
 import '../screens/gps_location_test_screen.dart';
 import '../screens/weather_alert_settings_screen.dart';
 import '../screens/weather_alert_test_screen.dart';
+import '../screens/baidu_location_test_screen.dart';
 
 class AppMenu extends StatelessWidget {
   const AppMenu({super.key});
@@ -135,6 +136,24 @@ class AppMenu extends StatelessWidget {
                 ],
               ),
             ),
+            // 百度定位测试
+            PopupMenuItem<String>(
+              value: 'baidu_location_test',
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.my_location,
+                    color: AppColors.primaryBlue,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    '百度定位测试',
+                    style: TextStyle(color: AppColors.textPrimary),
+                  ),
+                ],
+              ),
+            ),
             const PopupMenuDivider(),
             // 版本信息
             PopupMenuItem<String>(
@@ -171,6 +190,9 @@ class AppMenu extends StatelessWidget {
       case 'gps_location_test':
         _navigateToGpsLocationTest(context);
         break;
+      case 'baidu_location_test':
+        _navigateToBaiduLocationTest(context);
+        break;
       case 'weather_alert_settings':
         _navigateToWeatherAlertSettings(context);
         break;
@@ -203,6 +225,13 @@ class AppMenu extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const GpsLocationTestScreen()),
+    );
+  }
+
+  void _navigateToBaiduLocationTest(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const BaiduLocationTestScreen()),
     );
   }
 

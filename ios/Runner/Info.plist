@@ -46,8 +46,12 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>需要定位以提供核心功能</string>
+	<string>需要定位权限以展示您的位置</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>后台轨迹记录需要始终定位</string>
+	<string>App 需要持续定位用于轨迹记录</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
 </dict>
 </plist>

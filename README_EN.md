@@ -8,7 +8,7 @@ A Flutter weather application refactored from the original Android project. This
 
 ### Core Functionality
 - **Real-time Weather Data**: Fetches current weather conditions from weatherol.cn API
-- **Location Services**: Uses GPS to automatically detect user location
+- **Smart Location Services**: Baidu Location + GPS automatic location detection and IP-based location fallback
 - **Weather Forecasts**: 24-hour hourly forecast and 15-day daily forecast
 - **Temperature Charts**: Interactive charts showing temperature trends
 - **Air Quality**: Displays air quality index (AQI) with color-coded levels
@@ -53,9 +53,11 @@ lib/
 ### Core Dependencies
 - **provider**: State management
 - **dio**: HTTP client for API requests
-- **geolocator**: Location services
+- **flutter_bmflocation**: Baidu Location SDK for high-precision location services
+- **geolocator**: GPS location services
 - **sqflite**: Local database storage
 - **fl_chart**: Interactive charts
+- **permission_handler**: Permission management
 
 ### UI Dependencies
 - **cached_network_image**: Image caching
@@ -226,7 +228,27 @@ This Flutter app is a complete refactor of the original Android weather app with
 
 ## Changelog
 
-### v1.4.0 (Latest)
+### v1.5.0 (Latest)
+
+**Baidu Location Integration**
+- 🎯 Integrated Baidu Location SDK for higher precision location services
+- 🎯 Support for both iOS and Android platforms
+- 🎯 Seamless integration with existing location services with automatic fallback
+- 🎯 Complete location permission management and privacy policy consent flow
+
+**Startup Flow Optimization**
+- ⚡ Removed custom SplashScreen, using native splash screen
+- ⚡ App starts directly into main interface, reducing wait time
+- ⚡ Optimized initialization process for faster startup
+- ⚡ Smoother user experience
+
+**Enhanced Location Services**
+- 📍 Baidu Location provides more accurate location information
+- 📍 Support for high-precision mode (GPS + network positioning)
+- 📍 Smart error handling and fallback strategies
+- 📍 Detailed location logs and debugging information
+
+### v1.4.0
 - 🎨 **Small Card Icon Redesign**: Diversified color scheme for life index and detail card icons
 - 🎨 **Semantic Color Design**: Detail card icons use meaningful colors based on their function
 - 🎨 **Dark Theme Optimization**: Enhanced icon background opacity for better readability in dark mode

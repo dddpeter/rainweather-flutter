@@ -15,6 +15,7 @@ import 'constants/app_constants.dart';
 import 'constants/theme_extensions.dart';
 import 'services/location_service.dart';
 import 'services/notification_service.dart';
+import 'services/baidu_location_service.dart';
 import 'widgets/custom_bottom_navigation_v2.dart';
 import 'utils/app_state_manager.dart';
 
@@ -25,6 +26,26 @@ void main() async {
   final notificationService = NotificationService.instance;
   await notificationService.initialize();
   await notificationService.requestPermissions();
+
+  // 全局设置百度定位隐私政策同意
+  try {
+    print('🔧 全局设置百度定位隐私政策同意');
+    final baiduLocationService = BaiduLocationService.getInstance();
+    await baiduLocationService.setGlobalPrivacyAgreement();
+    print('✅ 百度定位隐私政策同意设置成功');
+  } catch (e) {
+    print('❌ 百度定位隐私政策同意设置失败: $e');
+  }
+
+  // 请求定位权限（参照demo）
+  try {
+    print('🔧 请求定位权限');
+    final locationService = LocationService.getInstance();
+    await locationService.requestLocationPermission();
+    print('✅ 定位权限请求完成');
+  } catch (e) {
+    print('❌ 定位权限请求失败: $e');
+  }
 
   runApp(const RainWeatherApp());
 }
@@ -66,7 +87,7 @@ class RainWeatherApp extends StatelessWidget {
                   theme: _buildLightTheme(themeProvider),
                   darkTheme: _buildDarkTheme(themeProvider),
                   themeMode: _getThemeMode(themeProvider.themeMode),
-                  home: const SplashScreen(),
+                  home: const MainScreen(),
                 );
               },
             ),
@@ -182,6 +203,19 @@ class _MainScreenState extends State<MainScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    // 标记应用完全启动
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AppStateManager().markAppFullyStarted();
+      print('🚀 应用完全启动，直接进入主界面');
+
+      // 初始化天气数据
+      context.read<WeatherProvider>().initializeWeather();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     // 使用Consumer监听主题变化，确保整个MainScreen在主题切换时重建
     return Consumer<ThemeProvider>(
@@ -199,6 +233,15 @@ class _MainScreenState extends State<MainScreen> {
                 _currentIndex = index;
                 // 通知WeatherProvider当前标签页变化
                 context.read<WeatherProvider>().setCurrentTabIndex(index);
+
+                // 如果切换到今日天气页面（索引0），且是首次进入，进行定位
+                if (index == 0) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    context
+                        .read<WeatherProvider>()
+                        .performLocationAfterEntering();
+                  });
+                }
               });
             },
             items: const [
@@ -1540,361 +1583,5 @@ class MainCitiesScreen extends StatelessWidget {
           ),
         ) ??
         false;
-  }
-}
-
-class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
-
-  @override
-  State<SplashScreen> createState() => _SplashScreenState();
-}
-
-class _SplashScreenState extends State<SplashScreen>
-    with TickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<double> _scaleAnimation;
-
-  bool _isLoading = true;
-  String _statusMessage = '正在初始化...';
-  bool _showPermissionDialog = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _setupAnimations();
-    _initializeApp();
-  }
-
-  void _setupAnimations() {
-    _animationController = AnimationController(
-      duration: const Duration(seconds: 2),
-      vsync: this,
-    );
-
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
-    );
-
-    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.elasticOut),
-    );
-
-    _animationController.forward();
-  }
-
-  Future<void> _initializeApp() async {
-    try {
-      // 等待动画完成
-      await Future.delayed(const Duration(milliseconds: 500));
-
-      // 检查权限
-      setState(() {
-        _statusMessage = '检查定位权限...';
-      });
-
-      final context = this.context;
-      final weatherProvider = Provider.of<WeatherProvider>(
-        context,
-        listen: false,
-      );
-      final locationService = LocationService.getInstance();
-
-      // 主动请求定位权限
-      setState(() {
-        _statusMessage = '请求定位权限...';
-      });
-
-      final permissionStatus = await locationService
-          .requestLocationPermission();
-
-      if (!mounted) return;
-
-      if (permissionStatus == LocationPermissionResult.granted) {
-        setState(() {
-          _statusMessage = '权限已获取，正在定位...';
-        });
-
-        // 权限已获取，立即尝试定位
-        try {
-          final location = await locationService.getCurrentLocation();
-          if (location != null) {
-            setState(() {
-              _statusMessage = '定位成功，正在加载天气数据...';
-            });
-            print('🚀 启动画面：定位成功 ${location.district}');
-          } else {
-            setState(() {
-              _statusMessage = '定位失败，使用默认位置...';
-            });
-            print('⚠️ 启动画面：定位失败，将使用默认位置');
-          }
-        } catch (e) {
-          setState(() {
-            _statusMessage = '定位出错，使用默认位置...';
-          });
-          print('❌ 启动画面：定位出错 $e');
-        }
-      } else {
-        setState(() {
-          _statusMessage = '权限被拒绝，使用默认位置...';
-        });
-        print('⚠️ 启动画面：权限被拒绝，将使用默认位置');
-      }
-
-      // 初始化天气数据（包含定位逻辑）
-      await weatherProvider.initializeWeather();
-
-      if (!mounted) return;
-
-      setState(() {
-        _statusMessage = '加载完成';
-      });
-
-      // 延迟一下再跳转到主界面
-      await Future.delayed(const Duration(milliseconds: 500));
-
-      if (mounted) {
-        // 标记应用完全启动
-        AppStateManager().markAppFullyStarted();
-
-        // 打印状态信息（调试用）
-        print('🚀 启动画面：应用完全启动，跳转到主界面');
-
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const MainScreen()),
-        );
-      }
-    } catch (e) {
-      setState(() {
-        _statusMessage = '初始化失败，请重试';
-        _showPermissionDialog = true;
-      });
-    }
-  }
-
-  void _requestPermissionAgain() async {
-    setState(() {
-      _showPermissionDialog = false;
-      _statusMessage = '重新请求权限...';
-    });
-
-    await _initializeApp();
-  }
-
-  void _skipPermission() {
-    setState(() {
-      _showPermissionDialog = false;
-      _statusMessage = '跳过权限，使用默认位置...';
-    });
-
-    // 直接跳转到主界面，让应用使用默认位置
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => const MainScreen()),
-    );
-  }
-
-  @override
-  void dispose() {
-    print('🔄 SplashScreen dispose called');
-    _animationController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(gradient: AppColors.primaryGradient),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Logo 和动画
-              AnimatedBuilder(
-                animation: _animationController,
-                builder: (context, child) {
-                  return Transform.scale(
-                    scale: _scaleAnimation.value,
-                    child: Opacity(
-                      opacity: _fadeAnimation.value,
-                      child: Column(
-                        children: [
-                          // 应用图标
-                          Container(
-                            width: 120,
-                            height: 120,
-                            decoration: BoxDecoration(
-                              color: AppColors.cardBackground,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: AppColors.cardBorder,
-                                width: 2,
-                              ),
-                              // 添加阴影效果
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 4),
-                                  spreadRadius: 2,
-                                ),
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
-                                  blurRadius: 16,
-                                  offset: const Offset(0, 8),
-                                  spreadRadius: 4,
-                                ),
-                              ],
-                            ),
-                            child: Container(
-                              margin: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                                // 图标背景渐变
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    Colors.white.withOpacity(0.9),
-                                    Colors.grey.withOpacity(0.1),
-                                  ],
-                                ),
-                                // 图标边框
-                                border: Border.all(
-                                  color: Colors.grey.withOpacity(0.3),
-                                  width: 1,
-                                ),
-                                // 图标阴影
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.15),
-                                    blurRadius: 6,
-                                    offset: const Offset(0, 2),
-                                    spreadRadius: 1,
-                                  ),
-                                ],
-                              ),
-                              child: Image.asset(
-                                'assets/images/app_icon.png',
-                                width: 60,
-                                height: 60,
-                                fit: BoxFit.contain,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 30),
-                          // 应用名称
-                          Text(
-                            '知雨天气2',
-                            style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            '智能天气预报应用',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-
-              const SizedBox(height: 60),
-
-              // 加载指示器
-              if (_isLoading) ...[
-                CircularProgressIndicator(color: AppColors.textPrimary),
-                const SizedBox(height: 20),
-                Text(
-                  _statusMessage,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: AppColors.textSecondary,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-
-              // 权限对话框
-              if (_showPermissionDialog) ...[
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 40),
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: AppColors.cardBackground,
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: AppColors.cardBorder, width: 1),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.location_on,
-                        size: 48,
-                        color: AppColors.textPrimary,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        '初始化失败',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        '应用初始化失败，您可以重试或跳过权限直接使用。',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textSecondary,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 20),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextButton(
-                              onPressed: _skipPermission,
-                              style: TextButton.styleFrom(
-                                backgroundColor: AppColors.cardBackground,
-                                foregroundColor: AppColors.textSecondary,
-                              ),
-                              child: Text('跳过'),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: _requestPermissionAgain,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.accentBlue,
-                                foregroundColor: AppColors.textPrimary,
-                              ),
-                              child: Text('重试'),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }

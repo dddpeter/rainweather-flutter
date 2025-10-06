@@ -4,6 +4,7 @@ import '../models/location_model.dart';
 import 'geocoding_service.dart';
 import 'enhanced_geocoding_service.dart';
 import 'ip_location_service.dart';
+import 'baidu_location_service.dart';
 
 enum LocationPermissionResult { granted, denied, deniedForever, error }
 
@@ -21,6 +22,8 @@ class LocationService {
   final GeocodingService _geocodingService = GeocodingService.getInstance();
   final EnhancedGeocodingService _enhancedGeocodingService =
       EnhancedGeocodingService.getInstance();
+  final BaiduLocationService _baiduLocationService =
+      BaiduLocationService.getInstance();
 
   LocationService._();
 
@@ -121,7 +124,31 @@ class LocationService {
   /// Get current location with proxy detection
   Future<LocationModel?> getCurrentLocation() async {
     try {
-      // ① 检查权限（参考方案：3行代码搞定）
+      // ① 优先尝试百度定位（添加超时）
+      print('📍 尝试百度定位...');
+      try {
+        LocationModel? baiduLocation = await _baiduLocationService
+            .getCurrentLocation()
+            .timeout(
+              const Duration(seconds: 8),
+              onTimeout: () {
+                print('⏰ 百度定位超时，切换到GPS定位');
+                return null;
+              },
+            );
+        if (baiduLocation != null) {
+          print('✅ 百度定位成功: ${baiduLocation.district}');
+          _cachedLocation = baiduLocation;
+          return baiduLocation;
+        }
+      } catch (e) {
+        print('❌ 百度定位失败: $e，尝试GPS定位');
+      }
+
+      // ② 百度定位失败，尝试GPS定位
+      print('📍 尝试GPS定位...');
+
+      // 检查权限（参考方案：3行代码搞定）
       LocationPermission permission = await Geolocator.checkPermission();
       bool ok =
           permission == LocationPermission.always ||
@@ -137,16 +164,14 @@ class LocationService {
         return await _tryIpLocationWithProxyDetection();
       }
 
-      // ② 检查位置服务
+      // ③ 检查位置服务
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         print('位置服务未开启，尝试IP定位');
         return await _tryIpLocationWithProxyDetection();
       }
 
-      print('尝试GPS定位...');
-
-      // ③ 拿位置（参考方案：单次定位）
+      // ④ 拿位置（参考方案：单次定位）
       try {
         Position position = await getCurrentPositionChinaOptimized(
           accuracy: LocationAccuracy.medium, // 使用中等精度，平衡速度和准确性
@@ -180,17 +205,17 @@ class LocationService {
             print('⚠️ GPS定位成功但位置信息为"未知"，尝试IP定位作为备用');
             // 继续执行IP定位逻辑
           } else {
-            print('GPS定位成功: ${location.district}');
+            print('✅ GPS定位成功: ${location.district}');
             _cachedLocation = location;
             return location;
           }
         }
       } catch (e) {
-        print('GPS定位失败: $e，尝试IP定位');
+        print('❌ GPS定位失败: $e，尝试IP定位');
       }
 
-      // If GPS fails, try IP location but with proxy detection
-      print('GPS定位失败，尝试IP定位...');
+      // ⑤ 如果GPS也失败，尝试IP定位
+      print('📍 尝试IP定位...');
       return await _tryIpLocationWithProxyDetection();
     } catch (e) {
       print('定位服务错误: $e');
@@ -722,8 +747,43 @@ class LocationService {
     }
   }
 
+  /// 使用百度定位获取当前位置
+  Future<LocationModel?> getCurrentLocationWithBaidu() async {
+    try {
+      print('📍 使用百度定位获取当前位置...');
+      LocationModel? location = await _baiduLocationService
+          .getCurrentLocation();
+      if (location != null) {
+        print('✅ 百度定位成功: ${location.district}');
+        _cachedLocation = location;
+        return location;
+      } else {
+        print('❌ 百度定位失败');
+        return null;
+      }
+    } catch (e) {
+      print('❌ 百度定位错误: $e');
+      return null;
+    }
+  }
+
+  /// 检查百度定位服务状态
+  Future<Map<String, dynamic>> checkBaiduLocationStatus() async {
+    try {
+      return await _baiduLocationService.getLocationCapabilities();
+    } catch (e) {
+      return {
+        'error': e.toString(),
+        'serviceAvailable': false,
+        'statusDescription': '无法检查百度定位状态',
+        'recommendation': '请检查网络连接和权限设置',
+      };
+    }
+  }
+
   /// Cleanup resources
   void cleanup() {
     _cachedLocation = null;
+    _baiduLocationService.cleanup();
   }
 }

@@ -44,6 +44,7 @@ class WeatherProvider extends ChangeNotifier {
   LocationModel? _originalLocation;
   bool _isShowingCityWeather = false; // 标记当前是否显示城市天气数据
   int _currentTabIndex = 0; // 当前标签页索引
+  bool _hasPerformedInitialLocation = false; // 是否已经进行过首次定位
 
   // 主要城市天气数据
   Map<String, WeatherModel> _mainCitiesWeather = {};
@@ -100,21 +101,28 @@ class WeatherProvider extends ChangeNotifier {
       // 清理过期缓存数据
       await _cleanupExpiredCache();
 
-      // 检查是否可以执行定位
+      // 先使用缓存的位置，不进行实时定位
       LocationModel? realLocation;
-      if (appStateManager.canPerformLocation()) {
-        // 先检查是否已有缓存的位置
-        LocationModel? cachedLocation = _locationService.getCachedLocation();
-        if (cachedLocation != null) {
-          print('🔄 WeatherProvider: 使用缓存的位置 ${cachedLocation.district}');
-          realLocation = cachedLocation;
-        } else {
-          print('🔄 WeatherProvider: 开始获取真实位置');
-          realLocation = await _locationService.getCurrentLocation();
-          appStateManager.markLocationCompleted();
-        }
+      LocationModel? cachedLocation = _locationService.getCachedLocation();
+      if (cachedLocation != null) {
+        print('🔄 WeatherProvider: 使用缓存的位置 ${cachedLocation.district}');
+        realLocation = cachedLocation;
       } else {
-        print('🚫 WeatherProvider: 不允许定位，使用缓存或默认位置');
+        print('🔄 WeatherProvider: 无缓存位置，使用默认位置');
+        // 使用默认位置（北京）
+        realLocation = LocationModel(
+          lat: 39.9042,
+          lng: 116.4074,
+          address: '北京市东城区',
+          country: '中国',
+          province: '北京市',
+          city: '北京市',
+          district: '东城区',
+          street: '天安门广场',
+          adcode: '110101',
+          town: '',
+          isProxyDetected: false,
+        );
       }
 
       if (realLocation != null) {
@@ -966,6 +974,95 @@ class WeatherProvider extends ChangeNotifier {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         restoreCurrentLocationWeather();
       });
+    }
+  }
+
+  /// 为指定位置加载天气数据
+  Future<void> _loadWeatherDataForLocation(LocationModel location) async {
+    try {
+      print('🔄 WeatherProvider: 为位置 ${location.district} 加载天气数据');
+
+      // 获取天气数据
+      final weather = await _weatherService.getWeatherDataForLocation(location);
+
+      if (weather != null) {
+        // 更新当前天气数据
+        _currentWeather = weather;
+        _currentLocationWeather = weather;
+        _originalLocation = location;
+        _isShowingCityWeather = false;
+
+        // 更新预报数据
+        _hourlyForecast = weather.forecast24h;
+        _dailyForecast = weather.forecast15d?.take(7).toList();
+        _forecast15d = weather.forecast15d;
+
+        print('✅ WeatherProvider: 位置 ${location.district} 天气数据加载成功');
+      } else {
+        print('❌ WeatherProvider: 位置 ${location.district} 天气数据加载失败');
+      }
+    } catch (e) {
+      print('❌ WeatherProvider: 加载位置天气数据异常: $e');
+    }
+  }
+
+  /// 在进入今日天气页面后进行定位
+  Future<void> performLocationAfterEntering() async {
+    // 如果已经进行过首次定位，则不再执行
+    if (_hasPerformedInitialLocation) {
+      print('🔄 WeatherProvider: 已经进行过首次定位，跳过');
+      return;
+    }
+
+    print('🔄 WeatherProvider: 首次进入今日天气页面，开始定位...');
+
+    try {
+      // 显示定位状态
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+
+      // 尝试获取当前位置
+      LocationModel? newLocation = await _locationService
+          .getCurrentLocation()
+          .timeout(
+            const Duration(seconds: 15),
+            onTimeout: () {
+              print('⏰ WeatherProvider: 定位超时');
+              return null;
+            },
+          );
+
+      if (newLocation != null) {
+        print('✅ WeatherProvider: 定位成功 ${newLocation.district}');
+
+        // 更新位置
+        _currentLocation = newLocation;
+        _locationService.setCachedLocation(newLocation);
+
+        // 清理默认位置的缓存数据
+        await clearDefaultLocationCache();
+
+        // 重新加载主要城市列表
+        await loadMainCities();
+
+        // 获取新位置的天气数据
+        await _loadWeatherDataForLocation(newLocation);
+
+        // 标记已经进行过首次定位
+        _hasPerformedInitialLocation = true;
+
+        _error = null;
+      } else {
+        print('❌ WeatherProvider: 定位失败');
+        _error = '定位失败，请检查网络连接和位置权限';
+      }
+    } catch (e) {
+      print('❌ WeatherProvider: 定位异常: $e');
+      _error = '定位失败: $e';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 

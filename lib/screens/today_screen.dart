@@ -45,12 +45,12 @@ class _TodayScreenState extends State<TodayScreen> with WidgetsBindingObserver {
   /// 刷新当前定位和天气数据
   Future<void> _refreshCurrentLocationAndWeather() async {
     try {
-      print('🔄 TodayScreen: 首次进入，开始刷新当前定位和天气数据');
+      print('🔄 TodayScreen: 首次进入，开始定位和刷新天气数据');
 
       final weatherProvider = context.read<WeatherProvider>();
 
-      // 刷新当前定位的天气数据（不需要await，因为方法返回void）
-      weatherProvider.restoreCurrentLocationWeather();
+      // 调用新的定位方法（内部会检查是否首次定位）
+      await weatherProvider.performLocationAfterEntering();
 
       print('✅ TodayScreen: 当前定位和天气数据刷新完成');
     } catch (e) {

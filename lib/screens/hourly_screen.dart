@@ -34,6 +34,39 @@ class _HourlyScreenState extends State<HourlyScreen> {
         AppColors.setThemeProvider(themeProvider);
 
         return Scaffold(
+          // 右下角浮动返回按钮（仅在作为二级页面时显示）
+          floatingActionButton: Navigator.canPop(context)
+              ? Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.buttonShadow,
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Material(
+                    color: AppColors.cardBackground,
+                    borderRadius: BorderRadius.circular(28),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(28),
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        width: 56,
+                        height: 56,
+                        alignment: Alignment.center,
+                        child: Icon(
+                          Icons.arrow_back,
+                          color: AppColors.textPrimary,
+                          size: 24,
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              : null,
           body: Container(
             decoration: BoxDecoration(gradient: AppColors.primaryGradient),
             child: SafeArea(

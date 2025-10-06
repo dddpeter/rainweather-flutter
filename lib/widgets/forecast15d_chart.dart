@@ -144,7 +144,6 @@ class Forecast15dChart extends StatelessWidget {
                         showingTooltipIndicators:
                             ChartStyles.generateShowingIndicators(
                               lineBarsData: lineBarsData,
-                              interval: chartData.length > 10 ? 2 : 1,
                             ),
                       ),
                     );

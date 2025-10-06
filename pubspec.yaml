@@ -81,5 +81,5 @@ flutter:
     - assets/images/backgroud.png
     - assets/images/splash.jpg
     - assets/icons/
-    - assets/cities.json
+    - assets/data/city.json
     - assets/data/

@@ -146,9 +146,6 @@ class HourlyChart extends StatelessWidget {
                             showingTooltipIndicators:
                                 ChartStyles.generateShowingIndicators(
                                   lineBarsData: lineBarsData,
-                                  interval: filteredForecast.length > 12
-                                      ? 3
-                                      : 2,
                                 ),
                           ),
                         );

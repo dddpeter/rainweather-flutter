@@ -256,26 +256,22 @@ class ChartStyles {
 
   /// 生成显示所有数据点标签的指示器列表
   /// 配合 LineChartData 的 showingTooltipIndicators 使用
-  /// interval: 显示标签的间隔（1=显示所有，2=每隔一个显示）
+  /// 现在默认显示所有数据点，不再使用间隔
   static List<ShowingTooltipIndicators> generateShowingIndicators({
     required List<LineChartBarData> lineBarsData,
-    int interval = 2,
+    int interval = 1, // 默认显示所有数据点
   }) {
     final List<ShowingTooltipIndicators> result = [];
 
     for (int barIndex = 0; barIndex < lineBarsData.length; barIndex++) {
       final bar = lineBarsData[barIndex];
-      // 为每个数据点创建指示器，根据interval控制显示密度
+      // 为每个数据点创建指示器，现在显示所有数据点
       for (int spotIndex = 0; spotIndex < bar.spots.length; spotIndex++) {
-        // 对于数据点较少的情况，显示所有点
-        // 对于数据点较多的情况，按interval间隔显示
-        if (bar.spots.length <= 7 || spotIndex % interval == 0) {
-          result.add(
-            ShowingTooltipIndicators([
-              LineBarSpot(bar, barIndex, bar.spots[spotIndex]),
-            ]),
-          );
-        }
+        result.add(
+          ShowingTooltipIndicators([
+            LineBarSpot(bar, barIndex, bar.spots[spotIndex]),
+          ]),
+        );
       }
     }
 

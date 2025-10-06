@@ -114,7 +114,6 @@ class WeatherChart extends StatelessWidget {
                     showingTooltipIndicators:
                         ChartStyles.generateShowingIndicators(
                           lineBarsData: lineBarsData,
-                          interval: dailyForecast!.length > 7 ? 2 : 1,
                         ),
                   ),
                 ),

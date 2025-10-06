@@ -105,88 +105,140 @@ class _Forecast15dScreenState extends State<Forecast15dScreen> {
                     );
                   }
 
-                  return CustomScrollView(
-                    slivers: [
-                      // Header
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    '15日预报',
-                                    style: TextStyle(
-                                      color: AppColors.textPrimary,
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
+                  return RefreshIndicator(
+                    onRefresh: () async {
+                      // 显示刷新提示
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Row(
+                              children: [
+                                SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      AppColors.textPrimary,
                                     ),
                                   ),
-                                  const Spacer(),
-                                  IconButton(
-                                    onPressed: weatherProvider.isLoading
-                                        ? null
-                                        : () => weatherProvider
-                                              .refresh15DayForecast(),
-                                    icon: weatherProvider.isLoading
-                                        ? SizedBox(
-                                            width: 20,
-                                            height: 20,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              valueColor:
-                                                  AlwaysStoppedAnimation<Color>(
-                                                    AppColors.textPrimary,
-                                                  ),
-                                            ),
-                                          )
-                                        : Icon(
-                                            Icons.refresh,
-                                            color: AppColors.titleBarIconColor,
-                                            size: AppColors.titleBarIconSize,
-                                          ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                '${weatherProvider.currentLocation?.district ?? '未知地区'} 未来15天天气预报',
-                                style: TextStyle(
-                                  color: AppColors.textSecondary.withOpacity(
-                                    0.8,
-                                  ),
-                                  fontSize: AppConstants.sectionTitleFontSize,
                                 ),
-                              ),
-                            ],
+                                SizedBox(width: 12),
+                                Text('正在刷新15日预报数据...'),
+                              ],
+                            ),
+                            duration: Duration(seconds: 2),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+
+                      await weatherProvider.refresh15DayForecast();
+
+                      // 显示刷新完成提示
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('15日预报数据刷新完成'),
+                            backgroundColor: AppColors.accentGreen,
+                            duration: Duration(milliseconds: 1500),
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                    color: AppColors.primaryBlue,
+                    backgroundColor: AppColors.backgroundSecondary,
+                    child: CustomScrollView(
+                      slivers: [
+                        // Header
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      '15日预报',
+                                      style: TextStyle(
+                                        color: AppColors.textPrimary,
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    IconButton(
+                                      onPressed: weatherProvider.isLoading
+                                          ? null
+                                          : () => weatherProvider
+                                                .refresh15DayForecast(),
+                                      icon: weatherProvider.isLoading
+                                          ? SizedBox(
+                                              width: 20,
+                                              height: 20,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                valueColor:
+                                                    AlwaysStoppedAnimation<
+                                                      Color
+                                                    >(AppColors.textPrimary),
+                                              ),
+                                            )
+                                          : Icon(
+                                              Icons.refresh,
+                                              color:
+                                                  AppColors.titleBarIconColor,
+                                              size: AppColors.titleBarIconSize,
+                                            ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  '${weatherProvider.currentLocation?.district ?? '未知地区'} 未来15天天气预报',
+                                  style: TextStyle(
+                                    color: AppColors.textSecondary.withOpacity(
+                                      0.8,
+                                    ),
+                                    fontSize: AppConstants.sectionTitleFontSize,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                      // Temperature Trend Chart
-                      SliverToBoxAdapter(
-                        child: Container(
-                          margin: EdgeInsets.only(
-                            left: AppConstants.screenHorizontalPadding,
-                            right: AppConstants.screenHorizontalPadding,
-                            top: 8, // 减少与副标题的间距
+                        // Temperature Trend Chart
+                        SliverToBoxAdapter(
+                          child: Container(
+                            margin: EdgeInsets.only(
+                              left: AppConstants.screenHorizontalPadding,
+                              right: AppConstants.screenHorizontalPadding,
+                              top: 8, // 减少与副标题的间距
+                            ),
+                            child: Forecast15dChart(forecast15d: forecast15d),
                           ),
-                          child: Forecast15dChart(forecast15d: forecast15d),
                         ),
-                      ),
-                      // Forecast List
-                      SliverList(
-                        delegate: SliverChildBuilderDelegate((context, index) {
-                          final day = forecast15d[index];
-                          return _buildForecastCard(
-                            day,
-                            weatherProvider,
+                        // Forecast List
+                        SliverList(
+                          delegate: SliverChildBuilderDelegate((
+                            context,
                             index,
-                          );
-                        }, childCount: forecast15d.length),
-                      ),
-                    ],
+                          ) {
+                            final day = forecast15d[index];
+                            return _buildForecastCard(
+                              day,
+                              weatherProvider,
+                              index,
+                            );
+                          }, childCount: forecast15d.length),
+                        ),
+                      ],
+                    ),
                   );
                 },
               ),

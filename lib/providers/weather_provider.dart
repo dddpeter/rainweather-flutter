@@ -49,6 +49,7 @@ class WeatherProvider extends ChangeNotifier {
   // 主要城市天气数据
   Map<String, WeatherModel> _mainCitiesWeather = {};
   bool _isLoadingCitiesWeather = false;
+  bool _hasPerformedInitialMainCitiesRefresh = false; // 是否已经进行过首次主要城市刷新
 
   // Dynamic cities list
   List<CityModel> _mainCities = [];
@@ -64,6 +65,8 @@ class WeatherProvider extends ChangeNotifier {
   String? get error => _error;
   Map<String, WeatherModel> get mainCitiesWeather => _mainCitiesWeather;
   bool get isLoadingCitiesWeather => _isLoadingCitiesWeather;
+  bool get hasPerformedInitialMainCitiesRefresh =>
+      _hasPerformedInitialMainCitiesRefresh;
 
   // 日出日落和生活指数数据getters
   SunMoonIndexData? get sunMoonIndexData => _sunMoonIndexData;
@@ -457,6 +460,7 @@ class WeatherProvider extends ChangeNotifier {
       print('Error loading main cities weather: $e');
     } finally {
       _isLoadingCitiesWeather = false;
+      _hasPerformedInitialMainCitiesRefresh = true; // 标记首次刷新已完成
       notifyListeners();
     }
   }
@@ -532,6 +536,25 @@ class WeatherProvider extends ChangeNotifier {
   Future<void> refreshMainCitiesWeather() async {
     _mainCitiesWeather.clear();
     await _loadMainCitiesWeather();
+  }
+
+  /// 首次进入主要城市列表时主动刷新天气数据
+  Future<void> performInitialMainCitiesRefresh() async {
+    // 如果已经进行过首次刷新，则跳过
+    if (_hasPerformedInitialMainCitiesRefresh) {
+      print('🏙️ WeatherProvider: 主要城市天气数据已经刷新过，跳过');
+      return;
+    }
+
+    print('🏙️ WeatherProvider: 首次进入主要城市列表，开始刷新天气数据...');
+
+    // 确保主要城市列表已加载
+    if (_mainCities.isEmpty) {
+      await loadMainCities();
+    }
+
+    // 刷新主要城市天气数据
+    await refreshMainCitiesWeather();
   }
 
   /// 清理过期缓存数据

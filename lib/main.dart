@@ -276,95 +276,9 @@ class _MainScreenState extends State<MainScreen> {
                                 onTap: weatherProvider.isLoading
                                     ? null
                                     : () async {
-                                        try {
-                                          // 显示刷新开始提示
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Row(
-                                                children: [
-                                                  SizedBox(
-                                                    width: 16,
-                                                    height: 16,
-                                                    child: CircularProgressIndicator(
-                                                      strokeWidth: 2,
-                                                      valueColor:
-                                                          AlwaysStoppedAnimation<
-                                                            Color
-                                                          >(
-                                                            AppColors
-                                                                .textPrimary,
-                                                          ),
-                                                    ),
-                                                  ),
-                                                  SizedBox(width: 12),
-                                                  Text('正在刷新位置和天气数据...'),
-                                                ],
-                                              ),
-                                              duration: Duration(seconds: 2),
-                                              behavior:
-                                                  SnackBarBehavior.floating,
-                                            ),
-                                          );
-
-                                          // 执行强制刷新
-                                          await weatherProvider
-                                              .forceRefreshWithLocation();
-
-                                          // 显示刷新完成提示
-                                          if (context.mounted) {
-                                            final location =
-                                                weatherProvider.currentLocation;
-                                            final locationName =
-                                                location?.district ?? '当前位置';
-
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              SnackBar(
-                                                content: Text(
-                                                  '刷新完成 - $locationName',
-                                                ),
-                                                backgroundColor:
-                                                    AppColors.accentGreen,
-                                                duration: Duration(
-                                                  milliseconds: 2000,
-                                                ),
-                                                behavior:
-                                                    SnackBarBehavior.floating,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(8),
-                                                ),
-                                              ),
-                                            );
-                                          }
-                                        } catch (e) {
-                                          // 显示刷新失败提示
-                                          if (context.mounted) {
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              SnackBar(
-                                                content: Text(
-                                                  '刷新失败: ${e.toString()}',
-                                                ),
-                                                backgroundColor:
-                                                    AppColors.error,
-                                                duration: Duration(
-                                                  milliseconds: 2000,
-                                                ),
-                                                behavior:
-                                                    SnackBarBehavior.floating,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(8),
-                                                ),
-                                              ),
-                                            );
-                                          }
-                                        }
+                                        // 执行强制刷新（不显示Toast提示）
+                                        await weatherProvider
+                                            .forceRefreshWithLocation();
                                       },
                                 child: Center(
                                   child: weatherProvider.isLoading

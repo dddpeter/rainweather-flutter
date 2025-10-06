@@ -1,10 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Modify this file to customize your launch splash screen -->
+<!-- 启动画面 - 深蓝色背景 + 放大图标 + 浮出效果 (Android 5.0+) -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="?android:colorBackground" />
+    <!-- 深蓝色背景 -->
+    <item android:drawable="@color/launch_background" />
 
-    <!-- 使用应用图标作为启动页面图标 -->
-    <item>
+    <!-- 图标阴影层（浮出效果） -->
+    <item
+        android:width="180dp"
+        android:height="180dp"
+        android:gravity="center">
+        <shape android:shape="oval">
+            <solid android:color="#20000000" />
+        </shape>
+    </item>
+
+    <!-- 应用图标（放大至160dp） -->
+    <item
+        android:width="160dp"
+        android:height="160dp"
+        android:gravity="center">
         <bitmap
             android:gravity="center"
             android:src="@mipmap/ic_launcher" />

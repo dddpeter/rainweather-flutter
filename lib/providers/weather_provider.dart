@@ -15,6 +15,7 @@ import '../services/sun_moon_index_service.dart';
 import '../constants/app_constants.dart';
 import '../utils/app_state_manager.dart';
 import '../utils/city_name_matcher.dart';
+import '../services/location_change_notifier.dart';
 
 class WeatherProvider extends ChangeNotifier {
   final WeatherService _weatherService = WeatherService.getInstance();
@@ -297,6 +298,16 @@ class WeatherProvider extends ChangeNotifier {
       }
     } finally {
       _setLoading(false);
+
+      // 如果定位成功，通知所有监听器
+      if (_currentLocation != null && _error == null) {
+        print('📍 WeatherProvider: refreshWeatherData 准备发送定位成功通知');
+        LocationChangeNotifier().notifyLocationSuccess(_currentLocation!);
+      } else {
+        print(
+          '📍 WeatherProvider: refreshWeatherData 跳过通知 - 位置: ${_currentLocation?.district}, 错误: $_error',
+        );
+      }
     }
   }
 
@@ -1078,9 +1089,17 @@ class WeatherProvider extends ChangeNotifier {
         _hasPerformedInitialLocation = true;
 
         _error = null;
+
+        // 通知所有监听器定位成功
+        print('📍 WeatherProvider: 准备发送定位成功通知');
+        LocationChangeNotifier().notifyLocationSuccess(newLocation);
       } else {
         print('❌ WeatherProvider: 定位失败');
         _error = '定位失败，请检查网络连接和位置权限';
+
+        // 通知所有监听器定位失败
+        print('📍 WeatherProvider: 准备发送定位失败通知');
+        LocationChangeNotifier().notifyLocationFailed(_error!);
       }
     } catch (e) {
       print('❌ WeatherProvider: 定位异常: $e');

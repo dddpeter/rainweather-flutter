@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/weather_provider.dart';
@@ -15,6 +16,7 @@ import '../widgets/weather_animation_widget.dart';
 import '../widgets/app_menu.dart';
 import '../widgets/weather_alert_widget.dart';
 import '../services/weather_alert_service.dart';
+import '../services/location_change_notifier.dart';
 import 'hourly_screen.dart';
 import 'weather_alerts_screen.dart';
 
@@ -25,7 +27,8 @@ class TodayScreen extends StatefulWidget {
   State<TodayScreen> createState() => _TodayScreenState();
 }
 
-class _TodayScreenState extends State<TodayScreen> with WidgetsBindingObserver {
+class _TodayScreenState extends State<TodayScreen>
+    with WidgetsBindingObserver, LocationChangeListener {
   bool _isVisible = false;
   final WeatherAlertService _alertService = WeatherAlertService.instance;
 
@@ -35,6 +38,13 @@ class _TodayScreenState extends State<TodayScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     // 初始化天气提醒服务
     _alertService.initialize();
+
+    // 添加定位变化监听器
+    print('📍 TodayScreen: 开始注册定位变化监听器');
+    LocationChangeNotifier().addListener(this);
+    print('📍 TodayScreen: 定位变化监听器注册完成');
+    // 调试：打印当前监听器状态
+    LocationChangeNotifier().debugPrintStatus();
 
     // 首次进入今日天气页面时，自动刷新当前定位和数据
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -61,6 +71,10 @@ class _TodayScreenState extends State<TodayScreen> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    // 移除定位变化监听器
+    print('📍 TodayScreen: 开始移除定位变化监听器');
+    LocationChangeNotifier().removeListener(this);
+    print('📍 TodayScreen: 定位变化监听器移除完成');
     super.dispose();
   }
 
@@ -68,6 +82,62 @@ class _TodayScreenState extends State<TodayScreen> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     // 这个回调在应用生命周期变化时被调用，但不适合我们的场景
+  }
+
+  /// 定位成功回调
+  @override
+  void onLocationSuccess(LocationModel newLocation) {
+    print('📍 TodayScreen: 收到定位成功通知 ${newLocation.district}');
+    print(
+      '📍 TodayScreen: 定位详情 - 城市: ${newLocation.city}, 区县: ${newLocation.district}, 省份: ${newLocation.province}',
+    );
+    print('📍 TodayScreen: 页面可见状态: $_isVisible');
+
+    // 如果页面可见，刷新天气数据
+    if (_isVisible) {
+      print('📍 TodayScreen: 页面可见，准备刷新天气数据');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _refreshWeatherData();
+      });
+    } else {
+      print('📍 TodayScreen: 页面不可见，跳过刷新');
+    }
+  }
+
+  /// 定位失败回调
+  @override
+  void onLocationFailed(String error) {
+    print('❌ TodayScreen: 收到定位失败通知 $error');
+    print('❌ TodayScreen: 页面可见状态: $_isVisible');
+
+    // 如果页面可见，可以显示错误信息
+    if (_isVisible) {
+      print('❌ TodayScreen: 页面可见，显示错误信息');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('定位失败: $error'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      });
+    } else {
+      print('❌ TodayScreen: 页面不可见，跳过显示错误信息');
+    }
+  }
+
+  /// 刷新天气数据
+  Future<void> _refreshWeatherData() async {
+    try {
+      print('🔄 TodayScreen: 开始刷新天气数据');
+      final weatherProvider = context.read<WeatherProvider>();
+      print('🔄 TodayScreen: 调用 WeatherProvider.refreshWeatherData()');
+      await weatherProvider.refreshWeatherData();
+      print('✅ TodayScreen: 天气数据刷新完成');
+    } catch (e) {
+      print('❌ TodayScreen: 刷新天气数据失败: $e');
+      print('❌ TodayScreen: 错误堆栈: ${StackTrace.current}');
+    }
   }
 
   @override

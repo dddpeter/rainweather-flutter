@@ -348,15 +348,15 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
               Expanded(
                 child: Row(
                   children: [
-                    // Morning weather
+                    // Morning weather (使用pm数据)
                     Expanded(
                       child: _buildCompactWeatherPeriod(
                         '上午',
-                        day.weather_am ?? '晴',
-                        day.temperature_am ?? '--',
-                        day.weather_am_pic ?? 'd00',
-                        day.winddir_am ?? '',
-                        day.windpower_am ?? '',
+                        day.weather_pm ?? '晴',
+                        day.temperature_pm ?? '--',
+                        day.weather_pm_pic ?? 'n00',
+                        day.winddir_pm ?? '',
+                        day.windpower_pm ?? '',
                         weatherProvider,
                       ),
                     ),
@@ -368,15 +368,15 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
                       color: AppColors.dividerColor,
                     ),
                     const SizedBox(width: 8),
-                    // Evening weather
+                    // Evening weather (使用am数据)
                     Expanded(
                       child: _buildCompactWeatherPeriod(
                         '下午',
-                        day.weather_pm ?? '晴',
-                        day.temperature_pm ?? '--',
-                        day.weather_pm_pic ?? 'n00',
-                        day.winddir_pm ?? '',
-                        day.windpower_pm ?? '',
+                        day.weather_am ?? '晴',
+                        day.temperature_am ?? '--',
+                        day.weather_am_pic ?? 'd00',
+                        day.winddir_am ?? '',
+                        day.windpower_am ?? '',
                         weatherProvider,
                       ),
                     ),

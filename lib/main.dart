@@ -18,6 +18,8 @@ import 'constants/theme_extensions.dart';
 import 'services/location_service.dart';
 import 'services/notification_service.dart';
 import 'services/baidu_location_service.dart';
+import 'services/location_change_notifier.dart';
+import 'models/location_model.dart';
 import 'widgets/custom_bottom_navigation_v2.dart';
 import 'utils/city_name_matcher.dart';
 
@@ -318,8 +320,78 @@ class _MainScreenState extends State<MainScreen> {
 
 // Placeholder screens for other tabs
 
-class MainCitiesScreen extends StatelessWidget {
+class MainCitiesScreen extends StatefulWidget {
   const MainCitiesScreen({super.key});
+
+  @override
+  State<MainCitiesScreen> createState() => _MainCitiesScreenState();
+}
+
+class _MainCitiesScreenState extends State<MainCitiesScreen>
+    with LocationChangeListener {
+  @override
+  void initState() {
+    super.initState();
+    // 添加定位变化监听器
+    LocationChangeNotifier().addListener(this);
+    // 调试：打印当前监听器状态
+    LocationChangeNotifier().debugPrintStatus();
+  }
+
+  @override
+  void dispose() {
+    // 移除定位变化监听器
+    LocationChangeNotifier().removeListener(this);
+    super.dispose();
+  }
+
+  /// 定位成功回调
+  @override
+  void onLocationSuccess(LocationModel newLocation) {
+    print('📍 MainCitiesScreen: 收到定位成功通知 ${newLocation.district}');
+    print(
+      '📍 MainCitiesScreen: 定位详情 - 城市: ${newLocation.city}, 区县: ${newLocation.district}, 省份: ${newLocation.province}',
+    );
+
+    // 刷新主要城市天气数据
+    print('📍 MainCitiesScreen: 准备刷新主要城市天气数据');
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshMainCitiesWeather();
+    });
+  }
+
+  /// 定位失败回调
+  @override
+  void onLocationFailed(String error) {
+    print('❌ MainCitiesScreen: 收到定位失败通知 $error');
+
+    // 可以显示错误信息
+    print('❌ MainCitiesScreen: 准备显示错误信息');
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('定位失败: $error'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    });
+  }
+
+  /// 刷新主要城市天气数据
+  Future<void> _refreshMainCitiesWeather() async {
+    try {
+      print('🔄 MainCitiesScreen: 开始刷新主要城市天气数据');
+      final weatherProvider = context.read<WeatherProvider>();
+      print(
+        '🔄 MainCitiesScreen: 调用 WeatherProvider.refreshMainCitiesWeather()',
+      );
+      await weatherProvider.refreshMainCitiesWeather();
+      print('✅ MainCitiesScreen: 主要城市天气数据刷新完成');
+    } catch (e) {
+      print('❌ MainCitiesScreen: 刷新主要城市天气数据失败: $e');
+      print('❌ MainCitiesScreen: 错误堆栈: ${StackTrace.current}');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

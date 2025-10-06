@@ -79,145 +79,144 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
           child: Scaffold(
             // 右下角浮动返回按钮
             floatingActionButton: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(28),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.buttonShadow,
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Material(
-              color: AppColors.cardBackground,
-              borderRadius: BorderRadius.circular(28),
-              child: InkWell(
+              decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(28),
-                onTap: () {
-                  // 返回时重置到当前定位数据
-                  context
-                      .read<WeatherProvider>()
-                      .restoreCurrentLocationWeather();
-                  Navigator.pop(context);
-                },
-                child: Container(
-                  width: 56,
-                  height: 56,
-                  alignment: Alignment.center,
-                  child: Icon(
-                    Icons.arrow_back,
-                    color: AppColors.textPrimary,
-                    size: 24,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.buttonShadow,
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: AppColors.cardBackground,
+                borderRadius: BorderRadius.circular(28),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(28),
+                  onTap: () {
+                    // 返回时重置到当前定位数据
+                    context
+                        .read<WeatherProvider>()
+                        .restoreCurrentLocationWeather();
+                    Navigator.pop(context);
+                  },
+                  child: Container(
+                    width: 56,
+                    height: 56,
+                    alignment: Alignment.center,
+                    child: Icon(
+                      Icons.arrow_back,
+                      color: AppColors.textPrimary,
+                      size: 24,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          body: Container(
-            decoration: BoxDecoration(gradient: AppColors.primaryGradient),
-            child: SafeArea(
-              child: Consumer<WeatherProvider>(
-                builder: (context, weatherProvider, child) {
-                  if (weatherProvider.isLoading &&
-                      weatherProvider.currentWeather == null) {
-                    return Center(
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          AppColors.textPrimary,
+            body: Container(
+              decoration: BoxDecoration(gradient: AppColors.primaryGradient),
+              child: SafeArea(
+                child: Consumer<WeatherProvider>(
+                  builder: (context, weatherProvider, child) {
+                    if (weatherProvider.isLoading &&
+                        weatherProvider.currentWeather == null) {
+                      return Center(
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            AppColors.textPrimary,
+                          ),
                         ),
-                      ),
-                    );
-                  }
+                      );
+                    }
 
-                  if (weatherProvider.error != null) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.error_outline,
-                            color: AppColors.textPrimary,
-                            size: 64,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            '加载失败',
-                            style: TextStyle(
-                              color: AppColors.textPrimary,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            weatherProvider.error!,
-                            style: TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 14,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 24),
-                          ElevatedButton(
-                            onPressed: () => weatherProvider.getWeatherForCity(
-                              widget.cityName,
-                            ),
-                            child: const Text('重试'),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  return Column(
-                    children: [
-                      // 顶部天气信息区域
-                      _buildTopWeatherSection(weatherProvider),
-
-                      // 标签页
-                      Container(
-                        color: AppColors.backgroundPrimary,
-                        child: TabBar(
-                          controller: _tabController,
-                          indicatorColor: AppColors.primaryBlue,
-                          labelColor: AppColors.textPrimary,
-                          unselectedLabelColor: AppColors.textSecondary,
-                          labelStyle: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          unselectedLabelStyle: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          tabs: const [
-                            Tab(text: '当前天气'),
-                            Tab(text: '24小时&15日'),
-                            Tab(text: '预警信息'),
-                          ],
-                        ),
-                      ),
-
-                      // 标签页内容
-                      Expanded(
-                        child: TabBarView(
-                          controller: _tabController,
+                    if (weatherProvider.error != null) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            _buildCurrentWeatherTab(weatherProvider),
-                            _buildForecastTab(weatherProvider),
-                            _buildAlertsTab(weatherProvider),
+                            Icon(
+                              Icons.error_outline,
+                              color: AppColors.textPrimary,
+                              size: 64,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              '加载失败',
+                              style: TextStyle(
+                                color: AppColors.textPrimary,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              weatherProvider.error!,
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 14,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 24),
+                            ElevatedButton(
+                              onPressed: () => weatherProvider
+                                  .getWeatherForCity(widget.cityName),
+                              child: const Text('重试'),
+                            ),
                           ],
                         ),
-                      ),
-                    ],
-                  );
-                },
+                      );
+                    }
+
+                    return Column(
+                      children: [
+                        // 顶部天气信息区域
+                        _buildTopWeatherSection(weatherProvider),
+
+                        // 标签页
+                        Container(
+                          color: AppColors.backgroundPrimary,
+                          child: TabBar(
+                            controller: _tabController,
+                            indicatorColor: AppColors.primaryBlue,
+                            labelColor: AppColors.textPrimary,
+                            unselectedLabelColor: AppColors.textSecondary,
+                            labelStyle: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            unselectedLabelStyle: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            tabs: const [
+                              Tab(text: '当前天气'),
+                              Tab(text: '24小时&15日'),
+                              Tab(text: '预警信息'),
+                            ],
+                          ),
+                        ),
+
+                        // 标签页内容
+                        Expanded(
+                          child: TabBarView(
+                            controller: _tabController,
+                            children: [
+                              _buildCurrentWeatherTab(weatherProvider),
+                              _buildForecastTab(weatherProvider),
+                              _buildAlertsTab(weatherProvider),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
               ),
             ),
           ),
-        )
-          );
+        );
       },
     );
   }
@@ -1351,15 +1350,15 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
               Expanded(
                 child: Row(
                   children: [
-                    // Morning weather
+                    // Morning weather (使用pm数据)
                     Expanded(
                       child: _buildCompactWeatherPeriod(
                         '上午',
-                        day.weather_am ?? '晴',
-                        day.temperature_am ?? '--',
-                        day.weather_am_pic ?? 'd00',
-                        day.winddir_am ?? '',
-                        day.windpower_am ?? '',
+                        day.weather_pm ?? '晴',
+                        day.temperature_pm ?? '--',
+                        day.weather_pm_pic ?? 'n00',
+                        day.winddir_pm ?? '',
+                        day.windpower_pm ?? '',
                         weatherProvider,
                       ),
                     ),
@@ -1371,15 +1370,15 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
                       color: AppColors.dividerColor,
                     ),
                     const SizedBox(width: 8),
-                    // Evening weather
+                    // Evening weather (使用am数据)
                     Expanded(
                       child: _buildCompactWeatherPeriod(
                         '下午',
-                        day.weather_pm ?? '晴',
-                        day.temperature_pm ?? '--',
-                        day.weather_pm_pic ?? 'n00',
-                        day.winddir_pm ?? '',
-                        day.windpower_pm ?? '',
+                        day.weather_am ?? '晴',
+                        day.temperature_am ?? '--',
+                        day.weather_am_pic ?? 'd00',
+                        day.winddir_am ?? '',
+                        day.windpower_am ?? '',
                         weatherProvider,
                       ),
                     ),

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/weather_provider.dart';
@@ -8,6 +9,7 @@ import '../widgets/hourly_chart.dart';
 import '../widgets/hourly_list.dart';
 import '../constants/app_constants.dart';
 import '../constants/app_colors.dart';
+import '../services/location_change_notifier.dart';
 
 class HourlyScreen extends StatefulWidget {
   const HourlyScreen({super.key});
@@ -72,38 +74,50 @@ class _HourlyScreenState extends State<HourlyScreen>
         AppColors.setThemeProvider(themeProvider);
 
         return Scaffold(
-          // 右下角浮动返回按钮（仅在作为二级页面时显示）
-          floatingActionButton: Navigator.canPop(context)
-              ? Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(28),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.buttonShadow,
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Material(
-                    color: AppColors.cardBackground,
-                    borderRadius: BorderRadius.circular(28),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(28),
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        width: 56,
-                        height: 56,
-                        alignment: Alignment.center,
-                        child: Icon(
-                          Icons.arrow_back,
-                          color: AppColors.textPrimary,
-                          size: 24,
-                        ),
-                      ),
-                    ),
-                  ),
+          // 浮动按钮：调试按钮或返回按钮
+          floatingActionButton: kDebugMode
+              ? FloatingActionButton(
+                  onPressed: () {
+                    print('🧪 HourlyScreen: 测试监听器功能');
+                    LocationChangeNotifier().testNotification();
+                  },
+                  child: const Icon(Icons.bug_report),
+                  tooltip: '测试监听器',
                 )
+              : (Navigator.canPop(context)
+                    ? Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(28),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.buttonShadow,
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Material(
+                          color: AppColors.cardBackground,
+                          borderRadius: BorderRadius.circular(28),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(28),
+                            onTap: () => Navigator.pop(context),
+                            child: Container(
+                              width: 56,
+                              height: 56,
+                              alignment: Alignment.center,
+                              child: Icon(
+                                Icons.arrow_back,
+                                color: AppColors.textPrimary,
+                                size: 24,
+                              ),
+                            ),
+                          ),
+                        ),
+                      )
+                    : null),
+          floatingActionButtonLocation: kDebugMode
+              ? FloatingActionButtonLocation.startFloat
               : null,
           body: Container(
             decoration: BoxDecoration(gradient: AppColors.primaryGradient),

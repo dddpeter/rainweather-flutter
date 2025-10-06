@@ -35,10 +35,27 @@ class _TodayScreenState extends State<TodayScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     // 初始化天气提醒服务
     _alertService.initialize();
-    // 移除重复的initializeWeather调用，由启动画面统一处理
-    // WidgetsBinding.instance.addPostFrameCallback((_) {
-    //   context.read<WeatherProvider>().initializeWeather();
-    // });
+
+    // 首次进入今日天气页面时，自动刷新当前定位和数据
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshCurrentLocationAndWeather();
+    });
+  }
+
+  /// 刷新当前定位和天气数据
+  Future<void> _refreshCurrentLocationAndWeather() async {
+    try {
+      print('🔄 TodayScreen: 首次进入，开始刷新当前定位和天气数据');
+
+      final weatherProvider = context.read<WeatherProvider>();
+
+      // 刷新当前定位的天气数据（不需要await，因为方法返回void）
+      weatherProvider.restoreCurrentLocationWeather();
+
+      print('✅ TodayScreen: 当前定位和天气数据刷新完成');
+    } catch (e) {
+      print('❌ TodayScreen: 刷新当前定位和天气数据失败: $e');
+    }
   }
 
   @override

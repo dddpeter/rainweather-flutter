@@ -29,13 +29,27 @@ class NotificationService {
   Future<void> initialize() async {
     if (_isInitialized) return;
 
+    // Web平台不支持通知功能
+    if (kIsWeb) {
+      print('NotificationService: Web平台不支持通知功能');
+      return;
+    }
+
     try {
       // Android 初始化设置
       const AndroidInitializationSettings initializationSettingsAndroid =
           AndroidInitializationSettings('@mipmap/ic_launcher');
 
-      // iOS 初始化设置
+      // iOS/macOS 初始化设置
       const DarwinInitializationSettings initializationSettingsIOS =
+          DarwinInitializationSettings(
+            requestAlertPermission: true,
+            requestBadgePermission: true,
+            requestSoundPermission: true,
+          );
+
+      // macOS 初始化设置
+      const DarwinInitializationSettings initializationSettingsMacOS =
           DarwinInitializationSettings(
             requestAlertPermission: true,
             requestBadgePermission: true,
@@ -46,6 +60,7 @@ class NotificationService {
           InitializationSettings(
             android: initializationSettingsAndroid,
             iOS: initializationSettingsIOS,
+            macOS: initializationSettingsMacOS,
           );
 
       await _notifications.initialize(
@@ -71,6 +86,11 @@ class NotificationService {
   /// 检查通知权限
   Future<bool> requestPermissions() async {
     try {
+      if (kIsWeb) {
+        // Web平台不支持通知权限
+        return false;
+      }
+
       if (Platform.isAndroid) {
         final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
             _notifications
@@ -88,6 +108,13 @@ class NotificationService {
             >()
             ?.requestPermissions(alert: true, badge: true, sound: true);
         return result ?? false;
+      } else if (Platform.isMacOS) {
+        final bool? result = await _notifications
+            .resolvePlatformSpecificImplementation<
+              MacOSFlutterLocalNotificationsPlugin
+            >()
+            ?.requestPermissions(alert: true, badge: true, sound: true);
+        return result ?? false;
       }
       return false;
     } catch (e) {
@@ -101,6 +128,11 @@ class NotificationService {
   /// 检查是否已授予通知权限
   Future<bool> isPermissionGranted() async {
     try {
+      if (kIsWeb) {
+        // Web平台不支持通知权限
+        return false;
+      }
+
       if (Platform.isAndroid) {
         final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
             _notifications
@@ -115,6 +147,13 @@ class NotificationService {
         final result = await _notifications
             .resolvePlatformSpecificImplementation<
               IOSFlutterLocalNotificationsPlugin
+            >()
+            ?.checkPermissions();
+        return result?.isEnabled ?? false;
+      } else if (Platform.isMacOS) {
+        final result = await _notifications
+            .resolvePlatformSpecificImplementation<
+              MacOSFlutterLocalNotificationsPlugin
             >()
             ?.checkPermissions();
         return result?.isEnabled ?? false;
@@ -319,6 +358,11 @@ class NotificationService {
 
   /// 创建通知渠道 (Android)
   Future<void> createNotificationChannels() async {
+    if (kIsWeb) {
+      // Web平台不支持通知渠道
+      return;
+    }
+
     if (Platform.isAndroid) {
       final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
           _notifications

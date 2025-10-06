@@ -649,7 +649,9 @@ class MainCitiesScreen extends StatelessWidget {
                             print('🔍 Is current location: $isCurrentLocation');
 
                             return Dismissible(
-                              key: Key('${city.id}_dismissible'),
+                              key: ValueKey(
+                                'dismissible_${city.id}_${city.name}_${index}',
+                              ),
                               direction: isCurrentLocation
                                   ? DismissDirection.none
                                   : DismissDirection.endToStart,
@@ -770,7 +772,9 @@ class MainCitiesScreen extends StatelessWidget {
                                 return false;
                               },
                               child: Padding(
-                                key: Key('${city.id}_padding'),
+                                key: ValueKey(
+                                  'padding_${city.id}_${city.name}_${index}',
+                                ),
                                 padding: const EdgeInsets.only(bottom: 12),
                                 child: Card(
                                   elevation: AppColors.cardElevation,
@@ -1597,8 +1601,13 @@ class _SplashScreenState extends State<SplashScreen>
       );
       final locationService = LocationService.getInstance();
 
-      // 检查权限状态，但不强制请求权限
-      final permissionStatus = await locationService.checkLocationPermission();
+      // 主动请求定位权限
+      setState(() {
+        _statusMessage = '请求定位权限...';
+      });
+
+      final permissionStatus = await locationService
+          .requestLocationPermission();
 
       if (!mounted) return;
 
@@ -1629,9 +1638,9 @@ class _SplashScreenState extends State<SplashScreen>
         }
       } else {
         setState(() {
-          _statusMessage = '权限未获取，使用默认位置...';
+          _statusMessage = '权限被拒绝，使用默认位置...';
         });
-        print('⚠️ 启动画面：权限未获取，将使用默认位置');
+        print('⚠️ 启动画面：权限被拒绝，将使用默认位置');
       }
 
       // 初始化天气数据（包含定位逻辑）

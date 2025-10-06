@@ -425,30 +425,24 @@ class DatabaseService {
       print('🔍 Database: Processing current location: $currentLocationName');
       print('🔍 Database: Cities before processing: ${cities.length}');
 
-      // 强制添加当前城市到列表顶部（用于测试）
+      // 检查是否存在与非虚拟城市同名的虚拟城市
+      bool hasNameConflict = false;
       if (currentLocationName != null && currentLocationName.isNotEmpty) {
-        // 先移除可能存在的当前城市
-        cities.removeWhere(
+        hasNameConflict = cities.any(
           (city) =>
-              city.name == currentLocationName ||
-              city.id == 'virtual_current_location',
+              city.name == currentLocationName &&
+              city.id != 'virtual_current_location',
         );
 
-        // 创建虚拟当前城市
-        final virtualCurrentLocation = CityModel(
-          id: 'virtual_current_location',
-          name: currentLocationName,
-          isMainCity: false,
-          sortOrder: -1,
-          createdAt: DateTime.now(),
-        );
-        cities.insert(0, virtualCurrentLocation);
-        print(
-          '🔍 Database: Force added virtual current city: $currentLocationName',
-        );
+        if (hasNameConflict) {
+          print('🔍 Database: 发现名称冲突，跳过虚拟城市创建: $currentLocationName');
+        }
       }
 
-      if (currentLocationName != null) {
+      // 先移除可能存在的虚拟城市，确保只有一个
+      cities.removeWhere((city) => city.id == 'virtual_current_location');
+
+      if (currentLocationName != null && !hasNameConflict) {
         // Check if current location is already in the main cities list
         final currentLocationIndex = cities.indexWhere(
           (city) => city.name == currentLocationName,
@@ -508,7 +502,7 @@ class DatabaseService {
               'Creating virtual current location city for "$currentLocationName"',
             );
             final virtualCurrentLocation = CityModel(
-              id: 'virtual_current_location',
+              id: 'virtual_current_location', // 使用固定ID确保唯一性
               name: currentLocationName,
               isMainCity: false,
               sortOrder: -1,
@@ -528,10 +522,84 @@ class DatabaseService {
         }
       }
 
-      return cities;
+      // 去重：确保没有重复的城市，特别是虚拟城市
+      final uniqueCities = <String, CityModel>{};
+      bool hasVirtualCity = false;
+      final Set<String> existingNames = <String>{};
+
+      // 第一遍：收集所有非虚拟城市的名称
+      for (final city in cities) {
+        if (city.id != 'virtual_current_location') {
+          existingNames.add(city.name);
+        }
+      }
+
+      // 第二遍：处理城市去重
+      for (final city in cities) {
+        final key = '${city.id}_${city.name}';
+
+        // 特殊处理虚拟城市：只允许一个，且不与现有城市名称冲突
+        if (city.id == 'virtual_current_location') {
+          if (!hasVirtualCity && !existingNames.contains(city.name)) {
+            uniqueCities[key] = city;
+            hasVirtualCity = true;
+            print('🔍 Database: 保留虚拟城市: ${city.name}');
+          } else if (existingNames.contains(city.name)) {
+            print('🔍 Database: 移除虚拟城市（名称冲突）: ${city.name}');
+          } else {
+            print('🔍 Database: 移除重复的虚拟城市: ${city.name}');
+          }
+        } else {
+          // 普通城市去重
+          if (!uniqueCities.containsKey(key)) {
+            uniqueCities[key] = city;
+          } else {
+            print('🔍 Database: 发现重复城市，已移除: ${city.name} (${city.id})');
+          }
+        }
+      }
+
+      final finalCities = uniqueCities.values.toList();
+
+      // 确保虚拟城市在列表开头
+      if (hasVirtualCity) {
+        finalCities.sort((a, b) {
+          if (a.id == 'virtual_current_location') return -1;
+          if (b.id == 'virtual_current_location') return 1;
+          return 0;
+        });
+      }
+
+      print('🔍 Database: Cities after deduplication: ${finalCities.length}');
+      print(
+        '🔍 Database: Virtual city count: ${finalCities.where((c) => c.id == 'virtual_current_location').length}',
+      );
+      return finalCities;
     } catch (e) {
       print('Failed to get main cities with current location first: $e');
       return [];
+    }
+  }
+
+  /// Check if current location city is already in main cities list
+  /// 检查当前定位城市是否已在主城市列表中
+  Future<bool> isCurrentLocationInMainCities(
+    String? currentLocationName,
+  ) async {
+    if (currentLocationName == null || currentLocationName.isEmpty) {
+      return false;
+    }
+
+    try {
+      final cities = await getAllCities();
+      return cities.any(
+        (city) =>
+            city.name == currentLocationName &&
+            city.id != 'virtual_current_location',
+      );
+    } catch (e) {
+      print('Error checking if current location is in main cities: $e');
+      return false;
     }
   }
 

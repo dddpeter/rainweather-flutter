@@ -46,8 +46,8 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>需要定位以显示当前位置的天气信息</string>
+	<string>需要定位以提供核心功能</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>需要定位以显示当前位置的天气信息</string>
+	<string>后台轨迹记录需要始终定位</string>
 </dict>
 </plist>

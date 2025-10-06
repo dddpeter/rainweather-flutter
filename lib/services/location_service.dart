@@ -54,6 +54,37 @@ class LocationService {
     }
   }
 
+  /// Get current position with China-optimized settings (without GMS)
+  /// 使用国内优化设置获取当前位置（无 GMS 场景）
+  Future<Position> getCurrentPositionChinaOptimized({
+    LocationAccuracy accuracy = LocationAccuracy.medium,
+    Duration? timeLimit,
+  }) async {
+    return await Geolocator.getCurrentPosition(
+      locationSettings: AndroidSettings(
+        forceLocationManager: true, // 强制走系统 Manager（国内无 GMS 场景）
+        accuracy: accuracy,
+        intervalDuration: const Duration(seconds: 2),
+        distanceFilter: 0,
+        timeLimit: timeLimit,
+      ),
+    );
+  }
+
+  /// Example of new AndroidSettings API usage
+  /// 新 AndroidSettings API 使用示例
+  Future<Position> exampleNewAndroidSettings() async {
+    return await Geolocator.getCurrentPosition(
+      locationSettings: AndroidSettings(
+        // ← 新的 settings 体系
+        forceLocationManager: true, // 等效旧的 forceAndroidLocationManager
+        accuracy: LocationAccuracy.high,
+        intervalDuration: const Duration(seconds: 2),
+        distanceFilter: 0,
+      ),
+    );
+  }
+
   /// Check and request location permissions
   Future<LocationPermissionResult> requestLocationPermission() async {
     try {
@@ -117,11 +148,9 @@ class LocationService {
 
       // ③ 拿位置（参考方案：单次定位）
       try {
-        Position position = await Geolocator.getCurrentPosition(
-          locationSettings: LocationSettings(
-            accuracy: LocationAccuracy.medium, // 使用中等精度，平衡速度和准确性
-            timeLimit: const Duration(seconds: 15), // 15秒超时
-          ),
+        Position position = await getCurrentPositionChinaOptimized(
+          accuracy: LocationAccuracy.medium, // 使用中等精度，平衡速度和准确性
+          timeLimit: const Duration(seconds: 15), // 15秒超时
         );
 
         // Use enhanced geocoding service (geocoding plugin) first
@@ -453,10 +482,8 @@ class LocationService {
       if (!ok) throw '无定位权限';
 
       // ② 拿位置（单次）
-      return await Geolocator.getCurrentPosition(
-        locationSettings: LocationSettings(
-          accuracy: LocationAccuracy.high, // 精度≈10m
-        ),
+      return await getCurrentPositionChinaOptimized(
+        accuracy: LocationAccuracy.high, // 精度≈10m
       );
     } catch (e) {
       print('简化定位失败: $e');
@@ -558,11 +585,9 @@ class LocationService {
         throw Exception('GPS定位权限被拒绝');
       }
 
-      Position position = await Geolocator.getCurrentPosition(
-        locationSettings: LocationSettings(
-          accuracy: LocationAccuracy.high, // 高精度，约10米
-          timeLimit: const Duration(seconds: 10), // 10秒超时
-        ),
+      Position position = await getCurrentPositionChinaOptimized(
+        accuracy: LocationAccuracy.high, // 高精度，约10米
+        timeLimit: const Duration(seconds: 10), // 10秒超时
       );
 
       print('✅ GPS定位成功: ${position.latitude}, ${position.longitude}');
@@ -608,11 +633,9 @@ class LocationService {
     // 方法1.5: 尝试中等精度GPS定位（备用）
     print('📍 尝试方法1.5: 中等精度GPS定位');
     try {
-      Position position = await Geolocator.getCurrentPosition(
-        locationSettings: LocationSettings(
-          accuracy: LocationAccuracy.medium, // 中等精度，约100米
-          timeLimit: const Duration(seconds: 8), // 8秒超时
-        ),
+      Position position = await getCurrentPositionChinaOptimized(
+        accuracy: LocationAccuracy.medium, // 中等精度，约100米
+        timeLimit: const Duration(seconds: 8), // 8秒超时
       );
 
       print('✅ 中等精度GPS定位成功: ${position.latitude}, ${position.longitude}');

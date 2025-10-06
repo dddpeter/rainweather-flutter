@@ -14,7 +14,48 @@ class Forecast15dScreen extends StatefulWidget {
   State<Forecast15dScreen> createState() => _Forecast15dScreenState();
 }
 
-class _Forecast15dScreenState extends State<Forecast15dScreen> {
+class _Forecast15dScreenState extends State<Forecast15dScreen>
+    with WidgetsBindingObserver {
+  Key _chartKey = UniqueKey();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed && mounted) {
+      // 应用恢复时刷新数据
+      context.read<WeatherProvider>().refresh15DayForecast();
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 每次页面显示时刷新15日预报数据
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        // 更新key强制重建子组件
+        setState(() {
+          _chartKey = UniqueKey();
+        });
+
+        // 刷新15日预报数据
+        context.read<WeatherProvider>().refresh15DayForecast();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     // 使用Consumer监听主题变化，确保整个页面在主题切换时重建
@@ -107,48 +148,7 @@ class _Forecast15dScreenState extends State<Forecast15dScreen> {
 
                   return RefreshIndicator(
                     onRefresh: () async {
-                      // 显示刷新提示
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Row(
-                              children: [
-                                SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      AppColors.textPrimary,
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(width: 12),
-                                Text('正在刷新15日预报数据...'),
-                              ],
-                            ),
-                            duration: Duration(seconds: 2),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
-                      }
-
                       await weatherProvider.refresh15DayForecast();
-
-                      // 显示刷新完成提示
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('15日预报数据刷新完成'),
-                            backgroundColor: AppColors.accentGreen,
-                            duration: Duration(milliseconds: 1500),
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                        );
-                      }
                     },
                     color: AppColors.primaryBlue,
                     backgroundColor: AppColors.backgroundSecondary,
@@ -220,22 +220,32 @@ class _Forecast15dScreenState extends State<Forecast15dScreen> {
                               right: AppConstants.screenHorizontalPadding,
                               top: 8, // 减少与副标题的间距
                             ),
-                            child: Forecast15dChart(forecast15d: forecast15d),
+                            child: Forecast15dChart(
+                              key: _chartKey,
+                              forecast15d: forecast15d.skip(1).toList(),
+                            ),
                           ),
                         ),
                         // Forecast List
                         SliverList(
-                          delegate: SliverChildBuilderDelegate((
-                            context,
-                            index,
-                          ) {
-                            final day = forecast15d[index];
-                            return _buildForecastCard(
-                              day,
-                              weatherProvider,
-                              index,
-                            );
-                          }, childCount: forecast15d.length),
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) {
+                              // 跳过第一个对象（昨天），从索引1开始
+                              final actualIndex = index + 1;
+                              if (actualIndex >= forecast15d.length)
+                                return null;
+
+                              final day = forecast15d[actualIndex];
+                              return _buildForecastCard(
+                                day,
+                                weatherProvider,
+                                actualIndex,
+                              );
+                            },
+                            childCount: forecast15d.length > 1
+                                ? forecast15d.length - 1
+                                : 0,
+                          ),
                         ),
                       ],
                     ),
@@ -254,8 +264,9 @@ class _Forecast15dScreenState extends State<Forecast15dScreen> {
     WeatherProvider weatherProvider,
     int index,
   ) {
-    final isToday = index == 0;
-    final isTomorrow = index == 1;
+    // 根据实际日期判断今天和明天
+    final isToday = _isToday(day.forecasttime ?? '');
+    final isTomorrow = _isTomorrow(day.forecasttime ?? '');
 
     return Padding(
       padding: const EdgeInsets.symmetric(
@@ -444,5 +455,129 @@ class _Forecast15dScreenState extends State<Forecast15dScreen> {
           ),
       ],
     );
+  }
+
+  /// 判断是否为今天
+  bool _isToday(String forecastTime) {
+    if (forecastTime.isEmpty) return false;
+
+    try {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+
+      // 尝试解析预报时间
+      DateTime forecastDate;
+      if (forecastTime.contains('-')) {
+        // 格式：2024-10-06 或 10-06
+        final parts = forecastTime.split(' ')[0].split('-');
+        if (parts.length == 3) {
+          // 完整日期格式
+          forecastDate = DateTime(
+            int.parse(parts[0]),
+            int.parse(parts[1]),
+            int.parse(parts[2]),
+          );
+        } else if (parts.length == 2) {
+          // 月-日格式
+          forecastDate = DateTime(
+            now.year,
+            int.parse(parts[0]),
+            int.parse(parts[1]),
+          );
+        } else {
+          return false;
+        }
+      } else if (forecastTime.contains('/')) {
+        // 格式：2024/10/06 或 10/06
+        final parts = forecastTime.split(' ')[0].split('/');
+        if (parts.length == 3) {
+          // 完整日期格式
+          forecastDate = DateTime(
+            int.parse(parts[0]),
+            int.parse(parts[1]),
+            int.parse(parts[2]),
+          );
+        } else if (parts.length == 2) {
+          // 月/日格式
+          forecastDate = DateTime(
+            now.year,
+            int.parse(parts[0]),
+            int.parse(parts[1]),
+          );
+        } else {
+          return false;
+        }
+      } else {
+        return false;
+      }
+
+      return forecastDate.year == today.year &&
+          forecastDate.month == today.month &&
+          forecastDate.day == today.day;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// 判断是否为明天
+  bool _isTomorrow(String forecastTime) {
+    if (forecastTime.isEmpty) return false;
+
+    try {
+      final now = DateTime.now();
+      final tomorrow = DateTime(now.year, now.month, now.day + 1);
+
+      // 尝试解析预报时间
+      DateTime forecastDate;
+      if (forecastTime.contains('-')) {
+        // 格式：2024-10-06 或 10-06
+        final parts = forecastTime.split(' ')[0].split('-');
+        if (parts.length == 3) {
+          // 完整日期格式
+          forecastDate = DateTime(
+            int.parse(parts[0]),
+            int.parse(parts[1]),
+            int.parse(parts[2]),
+          );
+        } else if (parts.length == 2) {
+          // 月-日格式
+          forecastDate = DateTime(
+            now.year,
+            int.parse(parts[0]),
+            int.parse(parts[1]),
+          );
+        } else {
+          return false;
+        }
+      } else if (forecastTime.contains('/')) {
+        // 格式：2024/10/06 或 10/06
+        final parts = forecastTime.split(' ')[0].split('/');
+        if (parts.length == 3) {
+          // 完整日期格式
+          forecastDate = DateTime(
+            int.parse(parts[0]),
+            int.parse(parts[1]),
+            int.parse(parts[2]),
+          );
+        } else if (parts.length == 2) {
+          // 月/日格式
+          forecastDate = DateTime(
+            now.year,
+            int.parse(parts[0]),
+            int.parse(parts[1]),
+          );
+        } else {
+          return false;
+        }
+      } else {
+        return false;
+      }
+
+      return forecastDate.year == tomorrow.year &&
+          forecastDate.month == tomorrow.month &&
+          forecastDate.day == tomorrow.day;
+    } catch (e) {
+      return false;
+    }
   }
 }

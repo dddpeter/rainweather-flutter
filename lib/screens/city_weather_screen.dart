@@ -55,129 +55,144 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
         // 确保AppColors使用最新的主题
         AppColors.setThemeProvider(themeProvider);
 
-        return Scaffold(
-          // 右下角浮动返回按钮
-          floatingActionButton: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(28),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.buttonShadow,
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Material(
-              color: AppColors.cardBackground,
-              borderRadius: BorderRadius.circular(28),
-              child: InkWell(
+        return PopScope(
+          onPopInvoked: (didPop) {
+            if (didPop) {
+              // 手势返回时重置到当前定位数据
+              context.read<WeatherProvider>().restoreCurrentLocationWeather();
+            }
+          },
+          child: Scaffold(
+            // 右下角浮动返回按钮
+            floatingActionButton: Container(
+              decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(28),
-                onTap: () => Navigator.pop(context),
-                child: Container(
-                  width: 56,
-                  height: 56,
-                  alignment: Alignment.center,
-                  child: Icon(
-                    Icons.arrow_back,
-                    color: AppColors.textPrimary,
-                    size: 24,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.buttonShadow,
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: AppColors.cardBackground,
+                borderRadius: BorderRadius.circular(28),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(28),
+                  onTap: () {
+                    // 返回时重置到当前定位数据
+                    context
+                        .read<WeatherProvider>()
+                        .restoreCurrentLocationWeather();
+                    Navigator.pop(context);
+                  },
+                  child: Container(
+                    width: 56,
+                    height: 56,
+                    alignment: Alignment.center,
+                    child: Icon(
+                      Icons.arrow_back,
+                      color: AppColors.textPrimary,
+                      size: 24,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          body: Container(
-            decoration: BoxDecoration(gradient: AppColors.primaryGradient),
-            child: SafeArea(
-              child: Consumer<WeatherProvider>(
-                builder: (context, weatherProvider, child) {
-                  if (weatherProvider.isLoading &&
-                      weatherProvider.currentWeather == null) {
-                    return Center(
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          AppColors.textPrimary,
+            body: Container(
+              decoration: BoxDecoration(gradient: AppColors.primaryGradient),
+              child: SafeArea(
+                child: Consumer<WeatherProvider>(
+                  builder: (context, weatherProvider, child) {
+                    if (weatherProvider.isLoading &&
+                        weatherProvider.currentWeather == null) {
+                      return Center(
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            AppColors.textPrimary,
+                          ),
+                        ),
+                      );
+                    }
+
+                    if (weatherProvider.error != null) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              color: AppColors.textPrimary,
+                              size: 64,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              '加载失败',
+                              style: TextStyle(
+                                color: AppColors.textPrimary,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              weatherProvider.error!,
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 14,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 24),
+                            ElevatedButton(
+                              onPressed: () => weatherProvider
+                                  .getWeatherForCity(widget.cityName),
+                              child: const Text('重试'),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    return RefreshIndicator(
+                      onRefresh: () async {
+                        await weatherProvider.getWeatherForCity(
+                          widget.cityName,
+                        );
+                      },
+                      color: AppColors.primaryBlue,
+                      backgroundColor: AppColors.backgroundSecondary,
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: Column(
+                          children: [
+                            _buildTopWeatherSection(weatherProvider),
+                            AppColors.cardSpacingWidget,
+                            // 24小时天气
+                            _buildHourlyWeather(weatherProvider),
+                            AppColors.cardSpacingWidget,
+                            // 详细信息卡片
+                            _buildWeatherDetails(weatherProvider),
+                            AppColors.cardSpacingWidget,
+                            // 生活指数
+                            LifeIndexWidget(weatherProvider: weatherProvider),
+                            AppColors.cardSpacingWidget,
+                            // 天气提示卡片
+                            _buildWeatherTipsCard(weatherProvider),
+                            AppColors.cardSpacingWidget,
+                            const SunMoonWidget(),
+                            AppColors.cardSpacingWidget,
+                            _buildTemperatureChart(weatherProvider),
+                            const SizedBox(
+                              height: 80,
+                            ), // Space for bottom buttons
+                          ],
                         ),
                       ),
                     );
-                  }
-
-                  if (weatherProvider.error != null) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.error_outline,
-                            color: AppColors.textPrimary,
-                            size: 64,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            '加载失败',
-                            style: TextStyle(
-                              color: AppColors.textPrimary,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            weatherProvider.error!,
-                            style: TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 14,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 24),
-                          ElevatedButton(
-                            onPressed: () => weatherProvider.getWeatherForCity(
-                              widget.cityName,
-                            ),
-                            child: const Text('重试'),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  return RefreshIndicator(
-                    onRefresh: () async {
-                      await weatherProvider.getWeatherForCity(widget.cityName);
-                    },
-                    color: AppColors.primaryBlue,
-                    backgroundColor: AppColors.backgroundSecondary,
-                    child: SingleChildScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      child: Column(
-                        children: [
-                          _buildTopWeatherSection(weatherProvider),
-                          AppColors.cardSpacingWidget,
-                          // 24小时天气
-                          _buildHourlyWeather(weatherProvider),
-                          AppColors.cardSpacingWidget,
-                          // 详细信息卡片
-                          _buildWeatherDetails(weatherProvider),
-                          AppColors.cardSpacingWidget,
-                          // 生活指数
-                          LifeIndexWidget(weatherProvider: weatherProvider),
-                          AppColors.cardSpacingWidget,
-                          // 天气提示卡片
-                          _buildWeatherTipsCard(weatherProvider),
-                          AppColors.cardSpacingWidget,
-                          const SunMoonWidget(),
-                          AppColors.cardSpacingWidget,
-                          _buildTemperatureChart(weatherProvider),
-                          const SizedBox(
-                            height: 80,
-                          ), // Space for bottom buttons
-                        ],
-                      ),
-                    ),
-                  );
-                },
+                  },
+                ),
               ),
             ),
           ),
@@ -213,7 +228,13 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   InkWell(
-                    onTap: () => Navigator.of(context).pop(),
+                    onTap: () {
+                      // 返回时重置到当前定位数据
+                      context
+                          .read<WeatherProvider>()
+                          .restoreCurrentLocationWeather();
+                      Navigator.of(context).pop();
+                    },
                     borderRadius: BorderRadius.circular(20),
                     child: Padding(
                       padding: const EdgeInsets.all(8),

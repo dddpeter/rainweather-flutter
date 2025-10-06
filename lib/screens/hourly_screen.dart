@@ -16,12 +16,50 @@ class HourlyScreen extends StatefulWidget {
   State<HourlyScreen> createState() => _HourlyScreenState();
 }
 
-class _HourlyScreenState extends State<HourlyScreen> {
+class _HourlyScreenState extends State<HourlyScreen>
+    with WidgetsBindingObserver {
+  Key _chartKey = UniqueKey();
+  Key _listKey = UniqueKey();
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<WeatherProvider>().initializeWeather();
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed && mounted) {
+      // 应用恢复时刷新数据
+      context.read<WeatherProvider>().refresh24HourForecast();
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 每次页面显示时刷新24小时预报数据
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        // 更新key强制重建子组件
+        setState(() {
+          _chartKey = UniqueKey();
+          _listKey = UniqueKey();
+        });
+
+        // 刷新24小时预报数据
+        context.read<WeatherProvider>().refresh24HourForecast();
+      }
     });
   }
 
@@ -151,11 +189,15 @@ class _HourlyScreenState extends State<HourlyScreen> {
                             AppColors.cardSpacingWidget,
 
                             // 24小时温度趋势图
-                            HourlyChart(hourlyForecast: hourlyForecast),
+                            HourlyChart(
+                              key: _chartKey,
+                              hourlyForecast: hourlyForecast,
+                            ),
                             AppColors.cardSpacingWidget,
 
                             // 24小时天气列表
                             HourlyList(
+                              key: _listKey,
                               hourlyForecast: hourlyForecast,
                               weatherService: WeatherService.getInstance(),
                             ),
@@ -244,65 +286,11 @@ class _HourlyScreenState extends State<HourlyScreen> {
     WeatherProvider weatherProvider,
   ) async {
     try {
-      // 显示刷新开始提示
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    AppColors.textPrimary,
-                  ),
-                ),
-              ),
-              SizedBox(width: 12),
-              Text('正在刷新位置和天气数据...'),
-            ],
-          ),
-          duration: Duration(seconds: 2),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-
       // 执行强制刷新
       await weatherProvider.forceRefreshWithLocation();
-
-      // 显示刷新完成提示
-      if (context.mounted) {
-        final location = weatherProvider.currentLocation;
-        final locationName = location?.district ?? '当前位置';
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('刷新完成 - $locationName'),
-            backgroundColor: AppColors.accentGreen,
-            duration: Duration(milliseconds: 2000),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        );
-      }
     } catch (e) {
-      // 显示刷新失败提示
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('刷新失败: ${e.toString()}'),
-            backgroundColor: AppColors.error,
-            duration: Duration(milliseconds: 2000),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        );
-      }
+      // 静默处理错误，不显示Toast
+      print('刷新失败: ${e.toString()}');
     }
   }
 }

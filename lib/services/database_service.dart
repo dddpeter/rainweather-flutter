@@ -7,6 +7,7 @@ import '../models/location_model.dart';
 import '../models/city_model.dart';
 import '../models/sun_moon_index_model.dart';
 import '../constants/app_constants.dart';
+import '../utils/city_name_matcher.dart';
 
 class DatabaseService {
   static DatabaseService? _instance;
@@ -430,7 +431,7 @@ class DatabaseService {
       if (currentLocationName != null && currentLocationName.isNotEmpty) {
         hasNameConflict = cities.any(
           (city) =>
-              city.name == currentLocationName &&
+              CityNameMatcher.isCityNameMatch(city.name, currentLocationName) &&
               city.id != 'virtual_current_location',
         );
 
@@ -445,7 +446,8 @@ class DatabaseService {
       if (currentLocationName != null && !hasNameConflict) {
         // Check if current location is already in the main cities list
         final currentLocationIndex = cities.indexWhere(
-          (city) => city.name == currentLocationName,
+          (city) =>
+              CityNameMatcher.isCityNameMatch(city.name, currentLocationName),
         );
 
         if (currentLocationIndex >= 0) {
@@ -594,7 +596,7 @@ class DatabaseService {
       final cities = await getAllCities();
       return cities.any(
         (city) =>
-            city.name == currentLocationName &&
+            CityNameMatcher.isCityNameMatch(city.name, currentLocationName) &&
             city.id != 'virtual_current_location',
       );
     } catch (e) {

@@ -19,6 +19,7 @@ import 'services/location_service.dart';
 import 'services/notification_service.dart';
 import 'services/baidu_location_service.dart';
 import 'widgets/custom_bottom_navigation_v2.dart';
+import 'utils/city_name_matcher.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -482,49 +483,7 @@ class MainCitiesScreen extends StatelessWidget {
                         // 正常显示城市列表
                         return RefreshIndicator(
                           onRefresh: () async {
-                            // 显示刷新提示
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Row(
-                                    children: [
-                                      SizedBox(
-                                        width: 16,
-                                        height: 16,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor:
-                                              AlwaysStoppedAnimation<Color>(
-                                                AppColors.textPrimary,
-                                              ),
-                                        ),
-                                      ),
-                                      SizedBox(width: 12),
-                                      Text('正在刷新主要城市天气数据...'),
-                                    ],
-                                  ),
-                                  duration: Duration(seconds: 2),
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
-                            }
-
                             await weatherProvider.refreshMainCitiesWeather();
-
-                            // 显示刷新完成提示
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('主要城市天气数据刷新完成'),
-                                  backgroundColor: AppColors.accentGreen,
-                                  duration: Duration(milliseconds: 1500),
-                                  behavior: SnackBarBehavior.floating,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
-                              );
-                            }
                           },
                           color: AppColors.primaryBlue,
                           backgroundColor: AppColors.backgroundSecondary,
@@ -569,9 +528,11 @@ class MainCitiesScreen extends StatelessWidget {
                               final currentLocationName = weatherProvider
                                   .getCurrentLocationCityName();
                               final isCurrentLocation =
-                                  (currentLocationName != null &&
-                                      currentLocationName == city.name) ||
-                                  city.id == 'virtual_current_location';
+                                  CityNameMatcher.isCurrentLocationCity(
+                                    city.name,
+                                    currentLocationName,
+                                    city.id,
+                                  );
 
                               // 调试信息
                               print('🔍 City: ${city.name}, ID: ${city.id}');
@@ -766,15 +727,6 @@ class MainCitiesScreen extends StatelessWidget {
                                                             if (isCurrentLocation) ...[
                                                               const SizedBox(
                                                                 width: 8,
-                                                              ),
-                                                              // 调试信息
-                                                              Builder(
-                                                                builder: (context) {
-                                                                  print(
-                                                                    '🎯 Showing location icon for: ${city.name}',
-                                                                  );
-                                                                  return const SizedBox.shrink();
-                                                                },
                                                               ),
                                                               Material(
                                                                 color: Colors
@@ -1370,54 +1322,14 @@ class MainCitiesScreen extends StatelessWidget {
     WeatherProvider weatherProvider,
   ) async {
     try {
-      // 显示加载提示
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    AppColors.textPrimary,
-                  ),
-                ),
-              ),
-              SizedBox(width: 12),
-              Text('正在更新位置信息...'),
-            ],
-          ),
-          duration: Duration(seconds: 2),
-        ),
-      );
-
       // 强制刷新位置和天气数据（清理缓存）
       await weatherProvider.forceRefreshWithLocation();
 
       // 重新加载主要城市列表
       await weatherProvider.loadMainCities();
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('位置信息已更新'),
-            backgroundColor: AppColors.accentGreen,
-            duration: Duration(milliseconds: 1500),
-          ),
-        );
-      }
     } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('更新位置失败: $e'),
-            backgroundColor: AppColors.error,
-            duration: const Duration(milliseconds: 1500),
-          ),
-        );
-      }
+      // 静默处理错误，不显示Toast
+      print('更新位置失败: $e');
     }
   }
 

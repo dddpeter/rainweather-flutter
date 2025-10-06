@@ -41,7 +41,7 @@ class HourlyList extends StatelessWidget {
           );
         }
 
-        // 过滤显示当前时间前2小时、当前时间和当前时间后21小时的数据
+        // 过滤显示24小时预报数据（从当前时间之后的下一个整点开始）
         final filteredForecast = _filterHourlyForecast(hourlyForecast!);
 
         return Card(
@@ -220,14 +220,17 @@ class HourlyList extends StatelessWidget {
     }
   }
 
-  /// 过滤逐小时预报数据，显示当前时间前2小时、当前时间和当前时间后21小时
+  /// 过滤24小时预报数据，从当前时间之后的下一个整点开始，覆盖24个小时
   List<HourlyWeather> _filterHourlyForecast(List<HourlyWeather> forecast) {
+    // 24小时预报逻辑：API数据已经按照正确的时间顺序排列
+    // 从当前时间之后的下一个整点开始，覆盖24个小时
+    // 例如：当前21:25，则显示22:00到次日21:00的24个小时
+
     final now = DateTime.now();
     final currentHour = now.hour;
 
-    // 计算时间范围：当前时间前2小时到当前时间后21小时
-    final startHour = (currentHour - 2 + 24) % 24; // 前2小时
-    final endHour = (currentHour + 21) % 24; // 后21小时
+    // 计算起始小时：当前时间之后的下一个整点
+    final startHour = (currentHour + 1) % 24;
 
     List<HourlyWeather> filtered = [];
 
@@ -248,14 +251,17 @@ class HourlyList extends StatelessWidget {
 
         if (forecastHour == null) continue;
 
-        // 检查是否在时间范围内（考虑跨天情况）
+        // 检查是否在24小时范围内
+        // 从startHour开始，连续24个小时（包含跨天）
         bool shouldInclude = false;
 
-        if (startHour <= endHour) {
-          // 不跨天：startHour <= hour <= endHour
-          shouldInclude = forecastHour >= startHour && forecastHour <= endHour;
+        if (startHour + 23 < 24) {
+          // 不跨天：startHour <= hour <= startHour + 23
+          shouldInclude =
+              forecastHour >= startHour && forecastHour <= startHour + 23;
         } else {
-          // 跨天：hour >= startHour || hour <= endHour
+          // 跨天：hour >= startHour || hour <= (startHour + 23) % 24
+          final endHour = (startHour + 23) % 24;
           shouldInclude = forecastHour >= startHour || forecastHour <= endHour;
         }
 
@@ -268,28 +274,7 @@ class HourlyList extends StatelessWidget {
       }
     }
 
-    // 按时间排序
-    filtered.sort((a, b) {
-      final hourA = _parseHour(a.forecasttime ?? '');
-      final hourB = _parseHour(b.forecasttime ?? '');
-      return hourA.compareTo(hourB);
-    });
-
+    // API数据已经按照正确的时间顺序排列，不需要重新排序
     return filtered;
-  }
-
-  /// 解析时间字符串为小时数
-  int _parseHour(String timeStr) {
-    try {
-      if (timeStr.contains(':')) {
-        final parts = timeStr.split(':');
-        if (parts.length >= 2) {
-          return int.parse(parts[0]);
-        }
-      }
-      return 0;
-    } catch (e) {
-      return 0;
-    }
   }
 }

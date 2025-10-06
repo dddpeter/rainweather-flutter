@@ -69,9 +69,16 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
         // 确保AppColors使用最新的主题
         AppColors.setThemeProvider(themeProvider);
 
-        return Scaffold(
-          // 右下角浮动返回按钮
-          floatingActionButton: Container(
+        return PopScope(
+          onPopInvoked: (didPop) {
+            if (didPop) {
+              // 手势返回时重置到当前定位数据
+              context.read<WeatherProvider>().restoreCurrentLocationWeather();
+            }
+          },
+          child: Scaffold(
+            // 右下角浮动返回按钮
+            floatingActionButton: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(28),
               boxShadow: [
@@ -87,7 +94,13 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
               borderRadius: BorderRadius.circular(28),
               child: InkWell(
                 borderRadius: BorderRadius.circular(28),
-                onTap: () => Navigator.pop(context),
+                onTap: () {
+                  // 返回时重置到当前定位数据
+                  context
+                      .read<WeatherProvider>()
+                      .restoreCurrentLocationWeather();
+                  Navigator.pop(context);
+                },
                 child: Container(
                   width: 56,
                   height: 56,
@@ -203,7 +216,8 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
               ),
             ),
           ),
-        );
+        )
+          );
       },
     );
   }
@@ -235,7 +249,13 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   InkWell(
-                    onTap: () => Navigator.of(context).pop(),
+                    onTap: () {
+                      // 返回时重置到当前定位数据
+                      context
+                          .read<WeatherProvider>()
+                          .restoreCurrentLocationWeather();
+                      Navigator.of(context).pop();
+                    },
                     borderRadius: BorderRadius.circular(20),
                     child: Padding(
                       padding: const EdgeInsets.all(8),
@@ -418,7 +438,9 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppConstants.screenHorizontalPadding,
                 ),
-                child: Forecast15dChart(forecast15d: forecast15d),
+                child: Forecast15dChart(
+                  forecast15d: forecast15d.skip(1).toList(),
+                ),
               ),
               AppColors.cardSpacingWidget,
 
@@ -451,9 +473,11 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
                     ),
                     const SizedBox(height: 12),
 
-                    // 15日预报列表
-                    ...forecast15d.asMap().entries.map((entry) {
-                      final index = entry.key;
+                    // 15日预报列表（跳过第一个对象，即昨天）
+                    ...forecast15d.skip(1).toList().asMap().entries.map((
+                      entry,
+                    ) {
+                      final index = entry.key + 1; // 保持原始索引
                       final day = entry.value;
                       return _buildForecastCard(day, weatherProvider, index);
                     }).toList(),
@@ -1246,8 +1270,9 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
     WeatherProvider weatherProvider,
     int index,
   ) {
-    final isToday = index == 0;
-    final isTomorrow = index == 1;
+    // 根据实际日期判断今天和明天
+    final isToday = _isToday(day.forecasttime ?? '');
+    final isTomorrow = _isTomorrow(day.forecasttime ?? '');
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -1433,6 +1458,130 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
           ),
       ],
     );
+  }
+
+  /// 判断是否为今天
+  bool _isToday(String forecastTime) {
+    if (forecastTime.isEmpty) return false;
+
+    try {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+
+      // 尝试解析预报时间
+      DateTime forecastDate;
+      if (forecastTime.contains('-')) {
+        // 格式：2024-10-06 或 10-06
+        final parts = forecastTime.split(' ')[0].split('-');
+        if (parts.length == 3) {
+          // 完整日期格式
+          forecastDate = DateTime(
+            int.parse(parts[0]),
+            int.parse(parts[1]),
+            int.parse(parts[2]),
+          );
+        } else if (parts.length == 2) {
+          // 月-日格式
+          forecastDate = DateTime(
+            now.year,
+            int.parse(parts[0]),
+            int.parse(parts[1]),
+          );
+        } else {
+          return false;
+        }
+      } else if (forecastTime.contains('/')) {
+        // 格式：2024/10/06 或 10/06
+        final parts = forecastTime.split(' ')[0].split('/');
+        if (parts.length == 3) {
+          // 完整日期格式
+          forecastDate = DateTime(
+            int.parse(parts[0]),
+            int.parse(parts[1]),
+            int.parse(parts[2]),
+          );
+        } else if (parts.length == 2) {
+          // 月/日格式
+          forecastDate = DateTime(
+            now.year,
+            int.parse(parts[0]),
+            int.parse(parts[1]),
+          );
+        } else {
+          return false;
+        }
+      } else {
+        return false;
+      }
+
+      return forecastDate.year == today.year &&
+          forecastDate.month == today.month &&
+          forecastDate.day == today.day;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// 判断是否为明天
+  bool _isTomorrow(String forecastTime) {
+    if (forecastTime.isEmpty) return false;
+
+    try {
+      final now = DateTime.now();
+      final tomorrow = DateTime(now.year, now.month, now.day + 1);
+
+      // 尝试解析预报时间
+      DateTime forecastDate;
+      if (forecastTime.contains('-')) {
+        // 格式：2024-10-06 或 10-06
+        final parts = forecastTime.split(' ')[0].split('-');
+        if (parts.length == 3) {
+          // 完整日期格式
+          forecastDate = DateTime(
+            int.parse(parts[0]),
+            int.parse(parts[1]),
+            int.parse(parts[2]),
+          );
+        } else if (parts.length == 2) {
+          // 月-日格式
+          forecastDate = DateTime(
+            now.year,
+            int.parse(parts[0]),
+            int.parse(parts[1]),
+          );
+        } else {
+          return false;
+        }
+      } else if (forecastTime.contains('/')) {
+        // 格式：2024/10/06 或 10/06
+        final parts = forecastTime.split(' ')[0].split('/');
+        if (parts.length == 3) {
+          // 完整日期格式
+          forecastDate = DateTime(
+            int.parse(parts[0]),
+            int.parse(parts[1]),
+            int.parse(parts[2]),
+          );
+        } else if (parts.length == 2) {
+          // 月/日格式
+          forecastDate = DateTime(
+            now.year,
+            int.parse(parts[0]),
+            int.parse(parts[1]),
+          );
+        } else {
+          return false;
+        }
+      } else {
+        return false;
+      }
+
+      return forecastDate.year == tomorrow.year &&
+          forecastDate.month == tomorrow.month &&
+          forecastDate.day == tomorrow.day;
+    } catch (e) {
+      return false;
+    }
   }
 
   /// 格式化数值，去掉小数位

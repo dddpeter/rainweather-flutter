@@ -14,6 +14,7 @@ import '../services/city_data_service.dart';
 import '../services/sun_moon_index_service.dart';
 import '../constants/app_constants.dart';
 import '../utils/app_state_manager.dart';
+import '../utils/city_name_matcher.dart';
 
 class WeatherProvider extends ChangeNotifier {
   final WeatherService _weatherService = WeatherService.getInstance();
@@ -689,7 +690,8 @@ class WeatherProvider extends ChangeNotifier {
       for (int i = 0; i < reorderedCities.length; i++) {
         final city = reorderedCities[i];
         // Skip current location city as it should always have sortOrder = 0
-        if (currentLocationName != null && city.name == currentLocationName) {
+        if (currentLocationName != null &&
+            CityNameMatcher.isCityNameMatch(city.name, currentLocationName)) {
           continue;
         }
 
@@ -1139,6 +1141,59 @@ class WeatherProvider extends ChangeNotifier {
     } catch (e) {
       _error = 'Error refreshing 15-day forecast: $e';
       print('15-day forecast refresh error: $e');
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  /// 刷新24小时预报数据
+  Future<void> refresh24HourForecast() async {
+    if (_currentLocation == null) return;
+
+    _setLoading(true);
+    _error = null;
+
+    try {
+      print('Refreshing 24-hour forecast for: ${_currentLocation!.district}');
+
+      // 优先使用主天气数据的缓存（包含24小时和15日数据）
+      final weatherKey =
+          '${_currentLocation!.district}:${AppConstants.weatherAllKey}';
+      WeatherModel? cachedWeather = await _databaseService.getWeatherData(
+        weatherKey,
+      );
+
+      if (cachedWeather != null && cachedWeather.forecast24h != null) {
+        // 从主天气数据中获取24小时预报
+        _hourlyForecast = cachedWeather.forecast24h;
+        // 同时更新15日数据，保持一致性
+        _forecast15d = cachedWeather.forecast15d;
+        print(
+          'Using cached weather data (with 24h+15d) for ${_currentLocation!.district}',
+        );
+      } else {
+        // 如果主缓存不存在，从API获取新数据
+        print(
+          'No valid cache found, fetching fresh weather data for ${_currentLocation!.district}',
+        );
+        WeatherModel? weather = await _weatherService.getWeatherDataForLocation(
+          _currentLocation!,
+        );
+
+        if (weather != null) {
+          _hourlyForecast = weather.forecast24h;
+          _forecast15d = weather.forecast15d;
+
+          // 保存到主缓存
+          await _databaseService.putWeatherData(weatherKey, weather);
+          print(
+            'Fresh weather data saved to cache for ${_currentLocation!.district}',
+          );
+        }
+      }
+    } catch (e) {
+      _error = 'Error refreshing 24-hour forecast: $e';
+      print('24-hour forecast refresh error: $e');
     } finally {
       _setLoading(false);
     }

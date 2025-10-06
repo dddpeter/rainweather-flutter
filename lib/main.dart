@@ -10,6 +10,7 @@ import 'screens/forecast15d_screen.dart';
 import 'screens/city_weather_screen.dart';
 import 'screens/weather_alerts_screen.dart';
 import 'screens/app_splash_screen.dart';
+import 'widgets/city_card_skeleton.dart';
 import 'models/city_model.dart';
 import 'constants/app_colors.dart';
 import 'constants/app_constants.dart';
@@ -426,7 +427,11 @@ class MainCitiesScreen extends StatelessWidget {
                   Expanded(
                     child: Consumer<WeatherProvider>(
                       builder: (context, weatherProvider, child) {
-                        if (weatherProvider.isLoadingCities) {
+                        final cities = weatherProvider.mainCities;
+                        final isLoading = weatherProvider.isLoadingCities;
+
+                        // 首次加载（没有数据）：显示加载圈
+                        if (isLoading && cities.isEmpty) {
                           return Center(
                             child: CircularProgressIndicator(
                               color: AppColors.accentBlue,
@@ -434,7 +439,12 @@ class MainCitiesScreen extends StatelessWidget {
                           );
                         }
 
-                        final cities = weatherProvider.mainCities;
+                        // 刷新中（有数据）：显示骨架屏，避免页面抖动
+                        if (isLoading && cities.isNotEmpty) {
+                          return CityCardSkeletonList(itemCount: cities.length);
+                        }
+
+                        // 没有数据且不在加载：显示空状态
                         if (cities.isEmpty) {
                           return Center(
                             child: Column(
@@ -458,6 +468,7 @@ class MainCitiesScreen extends StatelessWidget {
                           );
                         }
 
+                        // 正常显示城市列表
                         return ReorderableListView.builder(
                           padding: EdgeInsets.symmetric(
                             horizontal: AppConstants.screenHorizontalPadding,

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- 应用主题深蓝色（暗色主题） -->
+    <!-- 应用主题颜色 - 暗色模式 -->
     <color name="app_primary_blue">#4A90E2</color>
     
-    <!-- 启动页背景色（深蓝色） -->
+    <!-- 启动页背景色 - 暗色模式（深蓝色） -->
     <color name="launch_background">#012d78</color>
 </resources>
 

@@ -454,15 +454,27 @@ class MainCitiesScreen extends StatelessWidget {
                                 return Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    IconButton(
+                                    TextButton(
                                       onPressed: () => _showAddCityDialog(
                                         context,
                                         weatherProvider,
                                       ),
-                                      icon: Icon(
-                                        Icons.add_location,
-                                        color: AppColors.titleBarIconColor,
-                                        size: AppColors.titleBarIconSize,
+                                      style: TextButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 8,
+                                        ),
+                                        minimumSize: Size.zero,
+                                        tapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                      ),
+                                      child: Text(
+                                        '添加城市',
+                                        style: TextStyle(
+                                          color: AppColors.titleBarIconColor,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                       ),
                                     ),
                                     IconButton(

@@ -9,6 +9,7 @@ import 'screens/hourly_screen.dart';
 import 'screens/forecast15d_screen.dart';
 import 'screens/city_weather_screen.dart';
 import 'screens/weather_alerts_screen.dart';
+import 'screens/app_splash_screen.dart';
 import 'models/city_model.dart';
 import 'constants/app_colors.dart';
 import 'constants/app_constants.dart';
@@ -17,7 +18,6 @@ import 'services/location_service.dart';
 import 'services/notification_service.dart';
 import 'services/baidu_location_service.dart';
 import 'widgets/custom_bottom_navigation_v2.dart';
-import 'utils/app_state_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -87,7 +87,7 @@ class RainWeatherApp extends StatelessWidget {
                   theme: _buildLightTheme(themeProvider),
                   darkTheme: _buildDarkTheme(themeProvider),
                   themeMode: _getThemeMode(themeProvider.themeMode),
-                  home: const MainScreen(),
+                  home: const AppSplashScreen(), // 使用自定义启动页面，支持应用主题
                 );
               },
             ),
@@ -201,19 +201,6 @@ class _MainScreenState extends State<MainScreen> {
     const Forecast15dScreen(),
     const MainCitiesScreen(),
   ];
-
-  @override
-  void initState() {
-    super.initState();
-    // 标记应用完全启动
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      AppStateManager().markAppFullyStarted();
-      print('🚀 应用完全启动，直接进入主界面');
-
-      // 初始化天气数据
-      context.read<WeatherProvider>().initializeWeather();
-    });
-  }
 
   @override
   Widget build(BuildContext context) {

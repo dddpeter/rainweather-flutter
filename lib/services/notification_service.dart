@@ -215,6 +215,9 @@ class NotificationService {
           interruptionLevel: alert.isRequired
               ? InterruptionLevel.critical
               : InterruptionLevel.active,
+          subtitle: '${alert.cityName} - ${_getWeatherTypeText(alert.type)}',
+          threadIdentifier: 'weather_alert_${alert.cityName}',
+          categoryIdentifier: 'WEATHER_ALERT',
         ),
       );
 
@@ -484,5 +487,31 @@ class NotificationService {
     if (_onlyImportantAlerts) parts.add('仅重要');
 
     return parts.isEmpty ? '基础通知' : parts.join('、');
+  }
+
+  /// 获取天气类型文本（用于iOS通知副标题）
+  String _getWeatherTypeText(WeatherAlertType type) {
+    switch (type) {
+      case WeatherAlertType.temperature:
+        return '温度提醒';
+      case WeatherAlertType.rain:
+        return '降雨提醒';
+      case WeatherAlertType.snow:
+        return '降雪提醒';
+      case WeatherAlertType.wind:
+        return '大风提醒';
+      case WeatherAlertType.fog:
+        return '大雾提醒';
+      case WeatherAlertType.dust:
+        return '沙尘提醒';
+      case WeatherAlertType.hail:
+        return '冰雹提醒';
+      case WeatherAlertType.visibility:
+        return '能见度提醒';
+      case WeatherAlertType.airQuality:
+        return '空气质量';
+      case WeatherAlertType.other:
+        return '天气提醒';
+    }
   }
 }

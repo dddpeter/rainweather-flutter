@@ -1,6 +1,8 @@
 import 'dart:ui';
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/weather_provider.dart';
 import '../providers/theme_provider.dart';
@@ -527,7 +529,18 @@ class _TodayScreenState extends State<TodayScreen>
 
                 return RefreshIndicator(
                   onRefresh: () async {
+                    // iOS触觉反馈
+                    if (Platform.isIOS) {
+                      HapticFeedback.mediumImpact();
+                    }
+
                     await weatherProvider.refreshWeatherData();
+
+                    // iOS触觉反馈 - 刷新完成
+                    if (Platform.isIOS) {
+                      HapticFeedback.lightImpact();
+                    }
+
                     // 刷新天气数据后分析提醒
                     if (weatherProvider.currentWeather != null &&
                         weatherProvider.currentLocation != null) {
@@ -539,6 +552,12 @@ class _TodayScreenState extends State<TodayScreen>
                       print(
                         '🔄 TodayScreen: 手动刷新天气提醒完成，新增提醒数量: ${newAlerts.length}',
                       );
+
+                      // iOS触觉反馈 - 有新提醒
+                      if (Platform.isIOS && newAlerts.isNotEmpty) {
+                        HapticFeedback.heavyImpact();
+                      }
+
                       setState(() {}); // 刷新UI显示提醒
                     }
                   },

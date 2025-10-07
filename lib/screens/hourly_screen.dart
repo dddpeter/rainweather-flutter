@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/weather_provider.dart';
 import '../providers/theme_provider.dart';
@@ -169,7 +171,16 @@ class _HourlyScreenState extends State<HourlyScreen>
                   final hourlyForecast = weather?.forecast24h ?? [];
 
                   return RefreshIndicator(
-                    onRefresh: () => weatherProvider.refreshWeatherData(),
+                    onRefresh: () async {
+                      // iOS触觉反馈
+                      if (Platform.isIOS) {
+                        HapticFeedback.mediumImpact();
+                      }
+                      await weatherProvider.refreshWeatherData();
+                      if (Platform.isIOS) {
+                        HapticFeedback.lightImpact();
+                      }
+                    },
                     color: AppColors.primaryBlue,
                     backgroundColor: AppColors.backgroundSecondary,
                     child: SingleChildScrollView(

@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/weather_provider.dart';
 import '../providers/theme_provider.dart';
@@ -148,7 +150,14 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
 
                   return RefreshIndicator(
                     onRefresh: () async {
+                      // iOS触觉反馈
+                      if (Platform.isIOS) {
+                        HapticFeedback.mediumImpact();
+                      }
                       await weatherProvider.refresh15DayForecast();
+                      if (Platform.isIOS) {
+                        HapticFeedback.lightImpact();
+                      }
                     },
                     color: AppColors.primaryBlue,
                     backgroundColor: AppColors.backgroundSecondary,

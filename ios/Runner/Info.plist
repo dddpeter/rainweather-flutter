@@ -45,14 +45,40 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- 状态栏样式 -->
+	<key>UIStatusBarStyle</key>
+	<string>UIStatusBarStyleLightContent</string>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<false/>
+	<!-- 支持的设备方向锁定 -->
+	<key>UIRequiresFullScreen</key>
+	<false/>
+	<!-- 深色模式支持 -->
+	<key>UIUserInterfaceStyle</key>
+	<string>Automatic</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>需要定位权限以展示您的位置</string>
+	<string>知雨天气需要获取您的位置信息，以便为您提供当前所在地的精准天气预报和天气提醒服务</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>App 需要持续定位用于轨迹记录</string>
+	<string>知雨天气需要持续定位权限，以便在后台为您推送实时天气变化提醒</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>知雨天气需要持续定位权限，以便在后台为您推送实时天气变化提醒</string>
+	<key>NSLocationTemporaryUsageDescriptionDictionary</key>
+	<dict>
+		<key>WeatherUpdate</key>
+		<string>临时获取精确位置以更新天气信息</string>
+	</dict>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
+		<string>fetch</string>
+		<string>remote-notification</string>
 	</array>
+	<!-- iOS 14+ 隐私追踪 -->
+	<key>NSUserTrackingUsageDescription</key>
+	<string>知雨天气不会追踪您的个人信息，仅用于改善应用体验</string>
+	<!-- 网络使用说明 -->
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>知雨天气需要网络连接以获取最新的天气数据</string>
 	<!-- 高德地图配置 -->
 	<key>NSAppTransportSecurity</key>
 	<dict>

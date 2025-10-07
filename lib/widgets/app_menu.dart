@@ -442,6 +442,43 @@ class AppMenu extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
+              // 版本更新说明
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryBlue.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '🎉 v${AppVersion.version} 更新内容',
+                      style: TextStyle(
+                        color: AppColors.primaryBlue,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '• 新增腾讯定位服务（最高优先级）\n'
+                      '• 新增高德地图定位服务\n'
+                      '• 集成天地图逆地理编码\n'
+                      '• 统一定位服务测试页面\n'
+                      '• 主要城市列表自动备份恢复\n'
+                      '• 优化城市名称匹配逻辑\n'
+                      '• 修复重新安装后数据恢复',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                        height: 1.6,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
               Text(
                 AppVersion.copyright,
                 style: TextStyle(color: AppColors.textTertiary, fontSize: 12),

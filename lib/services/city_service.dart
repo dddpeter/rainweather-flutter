@@ -79,6 +79,9 @@ class CityService {
         'Initialized $savedCount cities from JSON (total: ${cities.length})',
       );
 
+      // 恢复主要城市列表（如果有备份）
+      await restoreMainCitiesFromPrefs();
+
       // Mark cities as initialized
       await prefs.setBool('cities_initialized', true);
       print('Cities initialization marked as completed');
@@ -140,6 +143,9 @@ class CityService {
         print('Added new main city: ${city.name}');
       }
 
+      // 备份主要城市列表到SharedPreferences
+      await _backupMainCitiesToPrefs();
+
       return true;
     } catch (e) {
       print('Failed to add main city: $e');
@@ -161,6 +167,9 @@ class CityService {
       // Update city status to not main city
       await _databaseService.updateCityMainStatus(cityId, false);
       print('Removed city from main cities: ${city.name}');
+
+      // 备份主要城市列表到SharedPreferences
+      await _backupMainCitiesToPrefs();
 
       return true;
     } catch (e) {
@@ -300,6 +309,49 @@ class CityService {
     } catch (e) {
       print('Failed to check initialization status: $e');
       return false;
+    }
+  }
+
+  /// 备份主要城市列表到SharedPreferences
+  Future<void> _backupMainCitiesToPrefs() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final mainCities = await _databaseService.getMainCities();
+      final mainCityIds = mainCities.map((city) => city.id).toList();
+
+      await prefs.setStringList('main_city_ids', mainCityIds);
+      print('Backed up ${mainCityIds.length} main cities to SharedPreferences');
+    } catch (e) {
+      print('Failed to backup main cities: $e');
+    }
+  }
+
+  /// 从SharedPreferences恢复主要城市列表
+  Future<void> restoreMainCitiesFromPrefs() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final mainCityIds = prefs.getStringList('main_city_ids');
+
+      if (mainCityIds == null || mainCityIds.isEmpty) {
+        print('No main cities backup found, using defaults');
+        return;
+      }
+
+      print('Found ${mainCityIds.length} backed up main cities');
+
+      // 恢复主要城市状态
+      int restoredCount = 0;
+      for (final cityId in mainCityIds) {
+        final city = await _databaseService.getCityById(cityId);
+        if (city != null) {
+          await _databaseService.updateCityMainStatus(cityId, true);
+          restoredCount++;
+        }
+      }
+
+      print('Restored $restoredCount main cities from backup');
+    } catch (e) {
+      print('Failed to restore main cities: $e');
     }
   }
 }

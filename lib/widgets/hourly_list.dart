@@ -74,7 +74,6 @@ class HourlyList extends StatelessWidget {
     final time = _formatTime(hour.forecasttime ?? '');
     final temperature = _parseTemperature(hour.temperature ?? '');
     final weatherIcon = weatherService.getWeatherIcon(hour.weather ?? '晴');
-    final isCurrentHour = _isCurrentHour(time);
 
     return Container(
       padding: EdgeInsets.symmetric(
@@ -101,30 +100,6 @@ class HourlyList extends StatelessWidget {
                     fontWeight: FontWeight.normal,
                   ),
                 ),
-                if (isCurrentHour)
-                  Container(
-                    margin: const EdgeInsets.only(top: 2),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.currentTagBackground,
-                      border: Border.all(
-                        color: AppColors.currentTagBorder,
-                        width: 1,
-                      ),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      '现在',
-                      style: TextStyle(
-                        color: AppColors.currentTag,
-                        fontSize: 9,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
               ],
             ),
           ),
@@ -199,24 +174,6 @@ class HourlyList extends StatelessWidget {
       return double.parse(cleanStr);
     } catch (e) {
       return 0.0;
-    }
-  }
-
-  bool _isCurrentHour(String timeStr) {
-    try {
-      final now = DateTime.now();
-      final currentHour = now.hour;
-
-      if (timeStr.contains(':')) {
-        final parts = timeStr.split(':');
-        if (parts.length >= 2) {
-          final hour = int.parse(parts[0]);
-          return hour == currentHour;
-        }
-      }
-      return false;
-    } catch (e) {
-      return false;
     }
   }
 

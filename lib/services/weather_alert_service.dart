@@ -197,7 +197,6 @@ class WeatherAlertService {
         alerts.add(alert);
       }
     }
-
     return alerts;
   }
 

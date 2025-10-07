@@ -19,9 +19,50 @@ import 'services/location_service.dart';
 import 'services/notification_service.dart';
 import 'services/baidu_location_service.dart';
 import 'services/location_change_notifier.dart';
+import 'services/page_activation_observer.dart';
 import 'models/location_model.dart';
 import 'widgets/custom_bottom_navigation_v2.dart';
 import 'utils/city_name_matcher.dart';
+
+// 全局路由观察者
+final PageActivationObserver _pageActivationObserver = PageActivationObserver();
+
+/// 路由观察者，用于监听页面切换
+class _RouteObserver extends RouteObserver<PageRoute<dynamic>> {
+  final PageActivationObserver _pageActivationObserver;
+
+  _RouteObserver(this._pageActivationObserver);
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    super.didPush(route, previousRoute);
+    _handleRouteChange(route);
+  }
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    super.didPop(route, previousRoute);
+    if (previousRoute != null) {
+      _handleRouteChange(previousRoute);
+    }
+  }
+
+  @override
+  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
+    super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
+    if (newRoute != null) {
+      _handleRouteChange(newRoute);
+    }
+  }
+
+  void _handleRouteChange(Route<dynamic> route) {
+    final routeName = route.settings.name ?? route.runtimeType.toString();
+    print('🔄 RouteObserver: 路由变化 - $routeName');
+
+    // 通知页面激活
+    _pageActivationObserver.notifyPageActivated(routeName);
+  }
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -86,11 +127,12 @@ class RainWeatherApp extends StatelessWidget {
             child: Builder(
               builder: (context) {
                 return MaterialApp(
-                  title: 'Rain Weather',
+                  title: '知雨天气2',
                   debugShowCheckedModeBanner: false,
                   theme: _buildLightTheme(themeProvider),
                   darkTheme: _buildDarkTheme(themeProvider),
                   themeMode: _getThemeMode(themeProvider.themeMode),
+                  navigatorObservers: [_RouteObserver(_pageActivationObserver)],
                   home: const AppSplashScreen(), // 使用自定义启动页面，支持应用主题
                 );
               },
@@ -198,6 +240,8 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
+  final PageActivationObserver _pageActivationObserver =
+      PageActivationObserver();
 
   final List<Widget> _screens = [
     const TodayScreen(),
@@ -214,26 +258,72 @@ class _MainScreenState extends State<MainScreen> {
         // 确保AppColors使用最新的主题
         AppColors.setThemeProvider(themeProvider);
 
+        // 在构建时通知TodayScreen被激活（应用启动时）
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _pageActivationObserver.notifyPageActivated('TodayScreen');
+        });
+
         return Scaffold(
           body: IndexedStack(index: _currentIndex, children: _screens),
           resizeToAvoidBottomInset: false,
           bottomNavigationBar: CustomBottomNavigationV2(
             currentIndex: _currentIndex,
             onTap: (index) {
+              // 通知页面停用（当前页面）
+              switch (_currentIndex) {
+                case 0:
+                  _pageActivationObserver.notifyPageDeactivated('TodayScreen');
+                  break;
+                case 1:
+                  _pageActivationObserver.notifyPageDeactivated('HourlyScreen');
+                  break;
+                case 2:
+                  _pageActivationObserver.notifyPageDeactivated(
+                    'Forecast15dScreen',
+                  );
+                  break;
+                case 3:
+                  _pageActivationObserver.notifyPageDeactivated(
+                    'MainCitiesScreen',
+                  );
+                  break;
+              }
+
               setState(() {
                 _currentIndex = index;
-                // 通知WeatherProvider当前标签页变化
-                context.read<WeatherProvider>().setCurrentTabIndex(index);
-
-                // 如果切换到今日天气页面（索引0），且是首次进入，进行定位
-                if (index == 0) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    context
-                        .read<WeatherProvider>()
-                        .performLocationAfterEntering();
-                  });
-                }
               });
+
+              // 通知页面激活（新页面）
+              switch (index) {
+                case 0:
+                  _pageActivationObserver.notifyPageActivated('TodayScreen');
+                  break;
+                case 1:
+                  _pageActivationObserver.notifyPageActivated('HourlyScreen');
+                  break;
+                case 2:
+                  _pageActivationObserver.notifyPageActivated(
+                    'Forecast15dScreen',
+                  );
+                  break;
+                case 3:
+                  _pageActivationObserver.notifyPageActivated(
+                    'MainCitiesScreen',
+                  );
+                  break;
+              }
+
+              // 通知WeatherProvider当前标签页变化
+              context.read<WeatherProvider>().setCurrentTabIndex(index);
+
+              // 如果切换到今日天气页面（索引0），且是首次进入，进行定位
+              if (index == 0) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  context
+                      .read<WeatherProvider>()
+                      .performLocationAfterEntering();
+                });
+              }
             },
             items: const [
               BottomNavigationItem(icon: Icons.today, label: '今日天气'),

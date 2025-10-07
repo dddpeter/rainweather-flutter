@@ -228,7 +228,25 @@ This Flutter app is a complete refactor of the original Android weather app with
 
 ## Changelog
 
-### v1.5.0 (Latest)
+### v1.6.0 (Latest)
+
+**Weather Alert System**
+- 🚨 New weather alert functionality supporting various alert types including heavy rain, typhoons, and heat waves
+- 🚨 Real-time alert notifications to keep users informed of weather changes
+- 🚨 Alert settings page allowing users to customize alert types and notification methods
+- 🚨 Alert history records for reviewing past weather alerts
+
+**Page Activation Monitoring**
+- 📱 New page activation monitoring service for optimized app performance
+- 📱 Smart page lifecycle management to reduce unnecessary network requests
+- 📱 Enhanced app responsiveness and battery life
+
+**UI/UX Improvements**
+- 🎨 Optimized weather alert card design for better information readability
+- 🎨 Improved alert icons and color schemes for enhanced visual recognition
+- 🎨 Unified alert page design language maintaining overall app consistency
+
+### v1.5.0
 
 **Baidu Location Integration**
 - 🎯 Integrated Baidu Location SDK for higher precision location services

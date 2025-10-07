@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/weather_provider.dart';
@@ -16,6 +17,7 @@ import '../widgets/app_menu.dart';
 import '../widgets/weather_alert_widget.dart';
 import '../services/weather_alert_service.dart';
 import '../services/location_change_notifier.dart';
+import '../services/page_activation_observer.dart';
 import 'hourly_screen.dart';
 import 'weather_alerts_screen.dart';
 
@@ -27,10 +29,15 @@ class TodayScreen extends StatefulWidget {
 }
 
 class _TodayScreenState extends State<TodayScreen>
-    with WidgetsBindingObserver, LocationChangeListener {
+    with WidgetsBindingObserver, LocationChangeListener, PageActivationMixin {
   bool _isVisible = false;
   final WeatherAlertService _alertService = WeatherAlertService.instance;
   bool _isRefreshing = false; // 防止重复刷新
+
+  // 定时刷新相关
+  Timer? _refreshTimer;
+  static const Duration _refreshInterval = Duration(minutes: 30); // 30分钟刷新一次
+  bool _isAppInBackground = false; // 应用是否在后台
 
   @override
   void initState() {
@@ -46,10 +53,70 @@ class _TodayScreenState extends State<TodayScreen>
     // 调试：打印当前监听器状态
     LocationChangeNotifier().debugPrintStatus();
 
+    // 注册页面激活监听器
+    PageActivationObserver().addListener(this);
+
     // 首次进入今日天气页面时，自动刷新当前定位和数据
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _refreshCurrentLocationAndWeather();
     });
+
+    // 启动定时刷新
+    _startPeriodicRefresh();
+  }
+
+  /// 页面被激活时调用（类似Vue的activated）
+  @override
+  void onPageActivated() {
+    print('📱 TodayScreen: 页面被激活，开始刷新天气提醒');
+    _isVisible = true;
+
+    // 延迟执行，确保页面完全激活
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _refreshWeatherAlertsOnActivation();
+    });
+  }
+
+  /// 页面被停用时调用（类似Vue的deactivated）
+  @override
+  void onPageDeactivated() {
+    print('📱 TodayScreen: 页面被停用');
+    _isVisible = false;
+  }
+
+  /// 页面激活时刷新天气提醒
+  Future<void> _refreshWeatherAlertsOnActivation() async {
+    // 防止重复刷新
+    if (_isRefreshing) {
+      return;
+    }
+
+    try {
+      print('📱 TodayScreen: 开始页面激活时的天气提醒刷新');
+
+      final weatherProvider = context.read<WeatherProvider>();
+
+      // 检查是否有有效的天气数据
+      if (weatherProvider.currentWeather != null &&
+          weatherProvider.currentLocation != null) {
+        // 刷新天气提醒
+        final newAlerts = await _alertService.analyzeWeather(
+          weatherProvider.currentWeather!,
+          weatherProvider.currentLocation!,
+        );
+
+        print('📱 TodayScreen: 页面激活刷新完成，新增提醒数量: ${newAlerts.length}');
+
+        // 刷新UI显示提醒
+        if (mounted) {
+          setState(() {});
+        }
+      } else {
+        print('📱 TodayScreen: 天气数据不完整，跳过提醒刷新');
+      }
+    } catch (e) {
+      print('📱 TodayScreen: 页面激活刷新失败: $e');
+    }
   }
 
   /// 刷新当前定位和天气数据
@@ -69,6 +136,22 @@ class _TodayScreenState extends State<TodayScreen>
       // 调用新的定位方法（内部会检查是否首次定位）
       await weatherProvider.performLocationAfterEntering();
 
+      // 刷新天气提醒
+      if (weatherProvider.currentWeather != null &&
+          weatherProvider.currentLocation != null) {
+        print('🔄 TodayScreen: 开始刷新天气提醒');
+        final newAlerts = await _alertService.analyzeWeather(
+          weatherProvider.currentWeather!,
+          weatherProvider.currentLocation!,
+        );
+        print('✅ TodayScreen: 天气提醒刷新完成，新增提醒数量: ${newAlerts.length}');
+        for (int i = 0; i < newAlerts.length; i++) {
+          final alert = newAlerts[i];
+          print('✅ 新增提醒 $i: ${alert.title} - ${alert.cityName}');
+        }
+        setState(() {}); // 刷新UI显示提醒
+      }
+
       print('✅ TodayScreen: 当前定位和天气数据刷新完成');
     } catch (e) {
       print('❌ TodayScreen: 刷新当前定位和天气数据失败: $e');
@@ -77,13 +160,78 @@ class _TodayScreenState extends State<TodayScreen>
     }
   }
 
+  /// 启动定时刷新
+  void _startPeriodicRefresh() {
+    _stopPeriodicRefresh(); // 先停止现有的定时器
+
+    _refreshTimer = Timer.periodic(_refreshInterval, (timer) {
+      print('⏰ TodayScreen: 定时刷新触发');
+      _performPeriodicRefresh();
+    });
+
+    print('⏰ TodayScreen: 定时刷新已启动，间隔 ${_refreshInterval.inMinutes} 分钟');
+  }
+
+  /// 停止定时刷新
+  void _stopPeriodicRefresh() {
+    _refreshTimer?.cancel();
+    _refreshTimer = null;
+    print('⏰ TodayScreen: 定时刷新已停止');
+  }
+
+  /// 执行定时刷新
+  Future<void> _performPeriodicRefresh() async {
+    // 如果应用在后台或正在刷新中，跳过定时刷新
+    if (_isAppInBackground || _isRefreshing) {
+      print('⏰ TodayScreen: 应用在后台或正在刷新中，跳过定时刷新');
+      return;
+    }
+
+    // 如果页面不可见，跳过定时刷新
+    if (!_isVisible) {
+      print('⏰ TodayScreen: 页面不可见，跳过定时刷新');
+      return;
+    }
+
+    try {
+      print('⏰ TodayScreen: 开始执行定时刷新');
+
+      final weatherProvider = context.read<WeatherProvider>();
+
+      // 刷新天气数据
+      await weatherProvider.refreshWeatherData();
+
+      // 刷新天气提醒
+      if (weatherProvider.currentWeather != null &&
+          weatherProvider.currentLocation != null) {
+        print('⏰ TodayScreen: 定时刷新天气提醒');
+        final newAlerts = await _alertService.analyzeWeather(
+          weatherProvider.currentWeather!,
+          weatherProvider.currentLocation!,
+        );
+        print('⏰ TodayScreen: 定时刷新天气提醒完成，新增提醒数量: ${newAlerts.length}');
+        setState(() {}); // 刷新UI显示提醒
+      }
+
+      print('⏰ TodayScreen: 定时刷新完成');
+    } catch (e) {
+      print('❌ TodayScreen: 定时刷新失败: $e');
+    }
+  }
+
   @override
   void dispose() {
+    // 停止定时刷新
+    _stopPeriodicRefresh();
+
     WidgetsBinding.instance.removeObserver(this);
     // 移除定位变化监听器
     print('📍 TodayScreen: 开始移除定位变化监听器');
     LocationChangeNotifier().removeListener(this);
     print('📍 TodayScreen: 定位变化监听器移除完成');
+
+    // 移除页面激活监听器
+    PageActivationObserver().removeListener(this);
     super.dispose();
   }
 
@@ -91,12 +239,37 @@ class _TodayScreenState extends State<TodayScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
 
-    // 当应用从后台恢复时，刷新定位和天气数据
-    if (state == AppLifecycleState.resumed && !_isRefreshing) {
-      print('📍 TodayScreen: 应用从后台恢复，准备刷新定位');
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _refreshCurrentLocationAndWeather();
-      });
+    switch (state) {
+      case AppLifecycleState.resumed:
+        print('📍 TodayScreen: 应用从后台恢复');
+        _isAppInBackground = false;
+        // 恢复定时刷新
+        _startPeriodicRefresh();
+
+        // 刷新定位和天气数据
+        if (!_isRefreshing) {
+          print('📍 TodayScreen: 准备刷新定位和天气数据');
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _refreshCurrentLocationAndWeather();
+          });
+        }
+        break;
+
+      case AppLifecycleState.paused:
+        print('📍 TodayScreen: 应用进入后台');
+        _isAppInBackground = true;
+        // 暂停定时刷新以节省资源
+        _stopPeriodicRefresh();
+        break;
+
+      case AppLifecycleState.detached:
+        print('📍 TodayScreen: 应用被分离');
+        _isAppInBackground = true;
+        _stopPeriodicRefresh();
+        break;
+
+      default:
+        break;
     }
   }
 
@@ -112,8 +285,23 @@ class _TodayScreenState extends State<TodayScreen>
     // 如果页面可见且不在刷新中，刷新天气数据
     if (_isVisible && !_isRefreshing) {
       print('📍 TodayScreen: 页面可见，准备刷新天气数据');
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _refreshWeatherData();
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        await _refreshWeatherData();
+
+        // 刷新天气提醒
+        final weatherProvider = context.read<WeatherProvider>();
+        if (weatherProvider.currentWeather != null &&
+            weatherProvider.currentLocation != null) {
+          print('🔄 TodayScreen onLocationSuccess: 开始刷新天气提醒');
+          final newAlerts = await _alertService.analyzeWeather(
+            weatherProvider.currentWeather!,
+            weatherProvider.currentLocation!,
+          );
+          print(
+            '✅ TodayScreen onLocationSuccess: 天气提醒刷新完成，新增提醒数量: ${newAlerts.length}',
+          );
+          setState(() {}); // 刷新UI显示提醒
+        }
       });
     } else {
       print('📍 TodayScreen: 页面不可见或正在刷新中，跳过刷新');
@@ -183,12 +371,17 @@ class _TodayScreenState extends State<TodayScreen>
   void didUpdateWidget(TodayScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     print('=== TodayScreen didUpdateWidget called ===');
+
+    // 触发页面激活通知
+    triggerPageActivation();
+
     // 简化逻辑：直接尝试恢复，由WeatherProvider内部判断是否需要恢复
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       print(
         'TodayScreen didUpdateWidget - calling restoreCurrentLocationWeather',
       );
-      context.read<WeatherProvider>().restoreCurrentLocationWeather();
+      final weatherProvider = context.read<WeatherProvider>();
+      weatherProvider.restoreCurrentLocationWeather();
     });
   }
 
@@ -338,9 +531,13 @@ class _TodayScreenState extends State<TodayScreen>
                     // 刷新天气数据后分析提醒
                     if (weatherProvider.currentWeather != null &&
                         weatherProvider.currentLocation != null) {
-                      await _alertService.analyzeWeather(
+                      print('🔄 TodayScreen: 手动刷新天气提醒');
+                      final newAlerts = await _alertService.analyzeWeather(
                         weatherProvider.currentWeather!,
                         weatherProvider.currentLocation!,
+                      );
+                      print(
+                        '🔄 TodayScreen: 手动刷新天气提醒完成，新增提醒数量: ${newAlerts.length}',
                       );
                       setState(() {}); // 刷新UI显示提醒
                     }
@@ -862,11 +1059,35 @@ class _TodayScreenState extends State<TodayScreen>
     final currentCity = _getDisplayCity(weatherProvider.currentLocation);
     final alerts = _alertService.getAlertsForCity(currentCity);
 
+    // 添加详细的调试日志
+    print('🔍 _buildWeatherAlertCard: 当前城市: $currentCity');
+    print('🔍 _buildWeatherAlertCard: 获取到的提醒数量: ${alerts.length}');
+
+    // 打印所有提醒的详细信息
+    for (int i = 0; i < alerts.length; i++) {
+      final alert = alerts[i];
+      print(
+        '🔍 提醒 $i: id=${alert.id}, title=${alert.title}, cityName=${alert.cityName}, shouldShow=${alert.shouldShow}, isExpired=${alert.isExpired}, isRead=${alert.isRead}',
+      );
+    }
+
+    // 检查所有提醒（包括不显示的）
+    final allAlerts = _alertService.alerts;
+    print('🔍 _buildWeatherAlertCard: 服务中所有提醒数量: ${allAlerts.length}');
+    for (int i = 0; i < allAlerts.length; i++) {
+      final alert = allAlerts[i];
+      print(
+        '🔍 所有提醒 $i: id=${alert.id}, title=${alert.title}, cityName=${alert.cityName}, shouldShow=${alert.shouldShow}, isExpired=${alert.isExpired}, isRead=${alert.isRead}',
+      );
+    }
+
     // 如果没有提醒，返回空组件
     if (alerts.isEmpty) {
+      print('🔍 _buildWeatherAlertCard: 没有提醒，返回空组件');
       return const SizedBox.shrink();
     }
 
+    print('🔍 _buildWeatherAlertCard: 有提醒，显示提醒卡片');
     return WeatherAlertWidget(
       alerts: alerts,
       onTap: () {

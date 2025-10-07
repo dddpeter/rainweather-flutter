@@ -228,7 +228,23 @@ This Flutter app is a complete refactor of the original Android weather app with
 
 ## Changelog
 
-### v1.6.0 (Latest)
+### v1.9.0 (Latest)
+
+**Home Screen Widget**
+- 🏠 New Android home screen weather widget feature
+- 🖼️ Support for real weather icons (25 weather types)
+- 🎨 Adaptive dark/light theme with frosted glass background
+- 📅 Display 5-day weather forecast (tomorrow to day 6)
+- 🔄 Auto-refresh weather data in background every 5 minutes
+- 📱 Optimized for small screens with adaptive layout
+
+**Feature Improvements**
+- 🔧 Fixed issue requiring two taps on add city button
+- 🔄 Auto-refresh weather on first entry to main cities screen
+- 📐 Widget adapts to all screen sizes without whitespace
+- 🌡️ Unified temperature display using Celsius (℃) symbol
+
+### v1.6.0
 
 **Weather Alert System**
 - 🚨 New weather alert functionality supporting various alert types including heavy rain, typhoons, and heat waves

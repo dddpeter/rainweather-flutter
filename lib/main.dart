@@ -281,6 +281,11 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   final PageActivationObserver _pageActivationObserver =
       PageActivationObserver();
 
+  // 记录应用进入后台的时间
+  DateTime? _appPausedTime;
+  // 自动刷新的时间间隔（5分钟）
+  static const Duration _autoRefreshInterval = Duration(minutes: 5);
+
   final List<Widget> _screens = [
     const TodayScreen(),
     const HourlyScreen(),
@@ -307,10 +312,66 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
 
-    // 检测app从detached状态恢复
-    if (state == AppLifecycleState.resumed) {
-      print('🔄 MainScreen: App从后台恢复，检查状态');
-      _checkAndRecoverAppState();
+    switch (state) {
+      case AppLifecycleState.paused:
+        // 应用进入后台，记录时间
+        _appPausedTime = DateTime.now();
+        print('🔄 MainScreen: App进入后台，记录时间: $_appPausedTime');
+        break;
+
+      case AppLifecycleState.resumed:
+        // 应用从后台恢复
+        print('🔄 MainScreen: App从后台恢复，检查状态');
+
+        // 检查是否需要刷新
+        if (_appPausedTime != null) {
+          final pauseDuration = DateTime.now().difference(_appPausedTime!);
+          print('🔄 MainScreen: 后台时长: ${pauseDuration.inMinutes} 分钟');
+
+          if (pauseDuration >= _autoRefreshInterval) {
+            print(
+              '🔄 MainScreen: 超过${_autoRefreshInterval.inMinutes}分钟，触发自动刷新',
+            );
+            _performAutoRefresh();
+          }
+
+          // 清除记录的时间
+          _appPausedTime = null;
+        }
+
+        // 检查应用状态
+        _checkAndRecoverAppState();
+        break;
+
+      case AppLifecycleState.detached:
+        print('🔄 MainScreen: App被分离');
+        break;
+
+      default:
+        break;
+    }
+  }
+
+  /// 执行自动刷新
+  Future<void> _performAutoRefresh() async {
+    try {
+      final weatherProvider = context.read<WeatherProvider>();
+
+      // 刷新当前天气数据
+      await weatherProvider.forceRefreshWithLocation();
+
+      // 刷新24小时预报
+      await weatherProvider.refresh24HourForecast();
+
+      // 刷新15日预报
+      await weatherProvider.refresh15DayForecast();
+
+      // 刷新主要城市列表
+      await weatherProvider.loadMainCities();
+
+      print('✅ MainScreen: 自动刷新完成');
+    } catch (e) {
+      print('❌ MainScreen: 自动刷新失败: $e');
     }
   }
 
@@ -1267,313 +1328,11 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
     BuildContext context,
     WeatherProvider weatherProvider,
   ) async {
-    final TextEditingController searchController = TextEditingController();
-    List<CityModel> searchResults = [];
-    bool isSearching = false;
-
-    // 直辖市和省会城市列表
-    final defaultCityNames = [
-      '北京', '上海', '天津', '重庆', // 直辖市
-      '哈尔滨', '长春', '沈阳', '呼和浩特', '石家庄', '太原', '西安', // 北方省会
-      '济南', '郑州', '南京', '武汉', '杭州', '合肥', '福州', '南昌', // 中部省会
-      '长沙', '贵阳', '成都', '广州', '昆明', '南宁', '海口', // 南方省会
-      '兰州', '西宁', '银川', '乌鲁木齐', '拉萨', // 西部省会
-    ];
-
-    // 预加载默认城市
-    isSearching = true;
-    final allDefaultCities = <CityModel>[];
-    for (final cityName in defaultCityNames) {
-      final results = await weatherProvider.searchCities(cityName);
-      if (results.isNotEmpty) {
-        // 找到精确匹配的城市
-        final exactMatch = results.firstWhere(
-          (city) => city.name == cityName,
-          orElse: () => results.first,
-        );
-        allDefaultCities.add(exactMatch);
-      }
-    }
-    searchResults = allDefaultCities;
-    isSearching = false;
-
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          // Material Design 3: 弹窗样式
-          backgroundColor: AppColors.backgroundSecondary,
-          surfaceTintColor: Colors.transparent,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-          elevation: 3,
-          icon: Icon(
-            Icons.add_location_alt_rounded,
-            color: AppColors.accentGreen,
-            size: 32,
-          ),
-          title: Column(
-            children: [
-              Text(
-                '添加城市',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '直辖市 · 省会',
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-            ],
-          ),
-          titlePadding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
-          contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
-          content: SizedBox(
-            width: double.maxFinite,
-            height: 400, // 固定高度防止溢出
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: searchController,
-                  style: TextStyle(color: AppColors.textPrimary, fontSize: 15),
-                  decoration: InputDecoration(
-                    hintText: '搜索城市名称（如：北京、上海）',
-                    hintStyle: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 15,
-                    ),
-                    prefixIcon: Icon(
-                      Icons.search_rounded,
-                      color: AppColors.textSecondary,
-                      size: 22,
-                    ),
-                    filled: true,
-                    fillColor: AppColors.borderColor.withOpacity(0.05),
-                    // Material Design 3: 更大的圆角
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: AppColors.borderColor),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(
-                        color: AppColors.borderColor.withOpacity(0.5),
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(
-                        color: AppColors.primaryBlue,
-                        width: 2,
-                      ),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
-                  ),
-                  onChanged: (value) async {
-                    if (value.isNotEmpty) {
-                      setState(() {
-                        isSearching = true;
-                      });
-                      final results = await weatherProvider.searchCities(value);
-                      setState(() {
-                        searchResults = results;
-                        isSearching = false;
-                      });
-                    } else {
-                      // 恢复显示默认城市
-                      setState(() {
-                        isSearching = true;
-                      });
-                      final allDefaultCities = <CityModel>[];
-                      for (final cityName in defaultCityNames) {
-                        final results = await weatherProvider.searchCities(
-                          cityName,
-                        );
-                        if (results.isNotEmpty) {
-                          final exactMatch = results.firstWhere(
-                            (city) => city.name == cityName,
-                            orElse: () => results.first,
-                          );
-                          allDefaultCities.add(exactMatch);
-                        }
-                      }
-                      setState(() {
-                        searchResults = allDefaultCities;
-                        isSearching = false;
-                      });
-                    }
-                  },
-                ),
-                const SizedBox(height: 16),
-                if (isSearching)
-                  Padding(
-                    padding: EdgeInsets.all(16),
-                    child: CircularProgressIndicator(
-                      color: AppColors.accentBlue,
-                    ),
-                  )
-                else if (searchResults.isNotEmpty)
-                  Expanded(
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      itemCount: searchResults.length,
-                      itemBuilder: (context, index) {
-                        final city = searchResults[index];
-                        final isMainCity = weatherProvider.mainCities.any(
-                          (c) => c.id == city.id,
-                        );
-
-                        // Material Design 3: 列表项样式
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 6),
-                          decoration: BoxDecoration(
-                            color: isMainCity
-                                ? AppColors.accentGreen.withOpacity(0.15)
-                                : AppColors.borderColor.withOpacity(0.03),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: isMainCity
-                                  ? AppColors.accentGreen
-                                  : AppColors.borderColor.withOpacity(0.2),
-                              width: isMainCity ? 1.5 : 1,
-                            ),
-                          ),
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 4,
-                            ),
-                            title: Row(
-                              children: [
-                                Text(
-                                  city.name,
-                                  style: TextStyle(
-                                    color: isMainCity
-                                        ? AppColors.accentGreen
-                                        : AppColors.textPrimary,
-                                    fontWeight: isMainCity
-                                        ? FontWeight.w600
-                                        : FontWeight.w500,
-                                    fontSize: 15,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  city.id,
-                                  style: TextStyle(
-                                    color: AppColors.textSecondary,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            trailing: isMainCity
-                                ? Icon(
-                                    Icons.check_circle_rounded,
-                                    color: AppColors.accentGreen,
-                                    size: 22,
-                                  )
-                                : Icon(
-                                    Icons.add_circle_outline_rounded,
-                                    color: AppColors.primaryBlue,
-                                    size: 22,
-                                  ),
-                            onTap: isMainCity
-                                ? null
-                                : () async {
-                                    final success = await weatherProvider
-                                        .addMainCity(city);
-                                    if (success) {
-                                      // 刷新UI显示已添加状态
-                                      setState(() {});
-                                      // 显示添加成功提示（在弹窗内使用轻量级提示）
-                                    } else {
-                                      // 显示添加失败提示
-                                      if (context.mounted) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: const Text('添加城市失败，请重试'),
-                                            backgroundColor: AppColors.error,
-                                            duration: const Duration(
-                                              milliseconds: 1500,
-                                            ),
-                                            behavior: SnackBarBehavior.floating,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                          ),
-                                        );
-                                      }
-                                    }
-                                  },
-                          ),
-                        );
-                      },
-                    ),
-                  )
-                else if (searchController.text.isEmpty && searchResults.isEmpty)
-                  Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text(
-                      '正在加载城市列表...',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 14,
-                      ),
-                    ),
-                  )
-                else if (searchController.text.isNotEmpty)
-                  Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text(
-                      '未找到匹配的城市',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-          actions: [
-            FilledButton(
-              onPressed: () => Navigator.pop(context),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primaryBlue,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 10,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-              child: const Text('关闭'),
-            ),
-          ],
-        ),
-      ),
+      builder: (context) => _AddCityDialog(weatherProvider: weatherProvider),
     );
   }
-
-  /// Show delete city dialog
 
   /// 更新当前位置数据
   Future<void> _updateCurrentLocation(
@@ -1645,5 +1404,324 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
           ),
         ) ??
         false;
+  }
+}
+
+/// Add City Dialog Widget
+class _AddCityDialog extends StatefulWidget {
+  final WeatherProvider weatherProvider;
+
+  const _AddCityDialog({required this.weatherProvider});
+
+  @override
+  State<_AddCityDialog> createState() => _AddCityDialogState();
+}
+
+class _AddCityDialogState extends State<_AddCityDialog> {
+  final TextEditingController searchController = TextEditingController();
+  List<CityModel> searchResults = [];
+  bool isSearching = false;
+  bool isInitialLoading = true;
+
+  // 直辖市和省会城市列表
+  final defaultCityNames = [
+    '北京', '上海', '天津', '重庆', // 直辖市
+    '哈尔滨', '长春', '沈阳', '呼和浩特', '石家庄', '太原', '西安', // 北方省会
+    '济南', '郑州', '南京', '武汉', '杭州', '合肥', '福州', '南昌', // 中部省会
+    '长沙', '贵阳', '成都', '广州', '昆明', '南宁', '海口', // 南方省会
+    '兰州', '西宁', '银川', '乌鲁木齐', '拉萨', // 西部省会
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDefaultCities();
+  }
+
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
+  }
+
+  /// 预加载默认城市
+  Future<void> _loadDefaultCities() async {
+    setState(() {
+      isInitialLoading = true;
+    });
+
+    final allDefaultCities = <CityModel>[];
+    for (final cityName in defaultCityNames) {
+      final results = await widget.weatherProvider.searchCities(cityName);
+      if (results.isNotEmpty) {
+        // 找到精确匹配的城市
+        final exactMatch = results.firstWhere(
+          (city) => city.name == cityName,
+          orElse: () => results.first,
+        );
+        allDefaultCities.add(exactMatch);
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        searchResults = allDefaultCities;
+        isInitialLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      // Material Design 3: 弹窗样式
+      backgroundColor: AppColors.backgroundSecondary,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+      elevation: 3,
+      icon: Icon(
+        Icons.add_location_alt_rounded,
+        color: AppColors.accentGreen,
+        size: 32,
+      ),
+      title: Column(
+        children: [
+          Text(
+            '添加城市',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 24,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '直辖市 · 省会',
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 13,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+        ],
+      ),
+      titlePadding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+      contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+      content: SizedBox(
+        width: double.maxFinite,
+        height: 400, // 固定高度防止溢出
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: searchController,
+              style: TextStyle(color: AppColors.textPrimary, fontSize: 15),
+              decoration: InputDecoration(
+                hintText: '搜索城市名称（如：北京、上海）',
+                hintStyle: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 15,
+                ),
+                prefixIcon: Icon(
+                  Icons.search_rounded,
+                  color: AppColors.textSecondary,
+                  size: 22,
+                ),
+                filled: true,
+                fillColor: AppColors.borderColor.withOpacity(0.05),
+                // Material Design 3: 更大的圆角
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: AppColors.borderColor),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: AppColors.borderColor.withOpacity(0.5),
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: AppColors.primaryBlue,
+                    width: 2,
+                  ),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+              ),
+              onChanged: (value) async {
+                if (value.isNotEmpty) {
+                  setState(() {
+                    isSearching = true;
+                  });
+                  final results = await widget.weatherProvider.searchCities(
+                    value,
+                  );
+                  if (mounted) {
+                    setState(() {
+                      searchResults = results;
+                      isSearching = false;
+                    });
+                  }
+                } else {
+                  // 恢复显示默认城市
+                  _loadDefaultCities();
+                }
+              },
+            ),
+            const SizedBox(height: 16),
+            if (isInitialLoading || isSearching)
+              Padding(
+                padding: EdgeInsets.all(16),
+                child: CircularProgressIndicator(color: AppColors.accentBlue),
+              )
+            else if (searchResults.isNotEmpty)
+              Expanded(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  itemCount: searchResults.length,
+                  itemBuilder: (context, index) {
+                    final city = searchResults[index];
+                    final isMainCity = widget.weatherProvider.mainCities.any(
+                      (c) => c.id == city.id,
+                    );
+
+                    // Material Design 3: 列表项样式
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 6),
+                      decoration: BoxDecoration(
+                        color: isMainCity
+                            ? AppColors.accentGreen.withOpacity(0.15)
+                            : AppColors.borderColor.withOpacity(0.03),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isMainCity
+                              ? AppColors.accentGreen
+                              : AppColors.borderColor.withOpacity(0.2),
+                          width: isMainCity ? 1.5 : 1,
+                        ),
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
+                        title: Row(
+                          children: [
+                            Text(
+                              city.name,
+                              style: TextStyle(
+                                color: isMainCity
+                                    ? AppColors.accentGreen
+                                    : AppColors.textPrimary,
+                                fontWeight: isMainCity
+                                    ? FontWeight.w600
+                                    : FontWeight.w500,
+                                fontSize: 15,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              city.id,
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                        trailing: isMainCity
+                            ? Icon(
+                                Icons.check_circle_rounded,
+                                color: AppColors.accentGreen,
+                                size: 22,
+                              )
+                            : Icon(
+                                Icons.add_circle_outline_rounded,
+                                color: AppColors.primaryBlue,
+                                size: 22,
+                              ),
+                        onTap: isMainCity
+                            ? null
+                            : () async {
+                                final success = await widget.weatherProvider
+                                    .addMainCity(city);
+                                if (success) {
+                                  // 刷新UI显示已添加状态
+                                  if (mounted) {
+                                    setState(() {});
+                                  }
+                                  // 显示添加成功提示（在弹窗内使用轻量级提示）
+                                } else {
+                                  // 显示添加失败提示
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: const Text('添加城市失败，请重试'),
+                                        backgroundColor: AppColors.error,
+                                        duration: const Duration(
+                                          milliseconds: 1500,
+                                        ),
+                                        behavior: SnackBarBehavior.floating,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
+                      ),
+                    );
+                  },
+                ),
+              )
+            else if (searchController.text.isEmpty && searchResults.isEmpty)
+              Padding(
+                padding: EdgeInsets.all(16),
+                child: Text(
+                  '正在加载城市列表...',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 14,
+                  ),
+                ),
+              )
+            else if (searchController.text.isNotEmpty)
+              Padding(
+                padding: EdgeInsets.all(16),
+                child: Text(
+                  '未找到匹配的城市',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+      actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+      actions: [
+        FilledButton(
+          onPressed: () => Navigator.pop(context),
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.primaryBlue,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          child: const Text('关闭'),
+        ),
+      ],
+    );
   }
 }

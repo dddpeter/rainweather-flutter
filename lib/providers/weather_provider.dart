@@ -454,7 +454,12 @@ class WeatherProvider extends ChangeNotifier {
   }
 
   /// 异步加载主要城市天气数据
-  Future<void> _loadMainCitiesWeather() async {
+  /// [forceRefresh] - 是否强制刷新（忽略缓存）
+  /// [skipCurrentLocation] - 是否跳过当前位置城市
+  Future<void> _loadMainCitiesWeather({
+    bool forceRefresh = false,
+    bool skipCurrentLocation = false,
+  }) async {
     _isLoadingCitiesWeather = true;
     notifyListeners();
 
@@ -467,8 +472,21 @@ class WeatherProvider extends ChangeNotifier {
           ? _mainCities.map((city) => city.name).toList()
           : AppConstants.mainCities;
 
+      // 获取当前位置名称
+      final currentLocationName = _currentLocation?.district;
+
       for (String cityName in cityNames) {
-        futures.add(_loadSingleCityWeather(cityName));
+        // 如果设置了跳过当前位置，且当前城市是当前位置，则跳过
+        if (skipCurrentLocation &&
+            currentLocationName != null &&
+            cityName == currentLocationName) {
+          print('🏙️ WeatherProvider: 跳过当前位置城市 $cityName 的刷新');
+          continue;
+        }
+
+        futures.add(
+          _loadSingleCityWeather(cityName, forceRefresh: forceRefresh),
+        );
       }
 
       // 等待所有请求完成
@@ -483,15 +501,21 @@ class WeatherProvider extends ChangeNotifier {
   }
 
   /// 加载单个城市的天气数据
-  Future<void> _loadSingleCityWeather(String cityName) async {
+  /// [forceRefresh] - 是否强制刷新（忽略缓存）
+  Future<void> _loadSingleCityWeather(
+    String cityName, {
+    bool forceRefresh = false,
+  }) async {
     try {
       // 检查是否有有效的缓存数据
       final weatherKey = '$cityName:${AppConstants.weatherAllKey}';
-      WeatherModel? cachedWeather = await _databaseService.getWeatherData(
-        weatherKey,
-      );
+      WeatherModel? cachedWeather;
 
-      if (cachedWeather != null) {
+      if (!forceRefresh) {
+        cachedWeather = await _databaseService.getWeatherData(weatherKey);
+      }
+
+      if (cachedWeather != null && !forceRefresh) {
         // 使用缓存数据
         _mainCitiesWeather[cityName] = cachedWeather;
         print('Using cached weather data for $cityName in main cities');
@@ -570,8 +594,12 @@ class WeatherProvider extends ChangeNotifier {
       await loadMainCities();
     }
 
-    // 刷新主要城市天气数据
-    await refreshMainCitiesWeather();
+    // 刷新主要城市天气数据（跳过当前位置城市，强制刷新其他城市）
+    print('🏙️ WeatherProvider: 刷新非当前位置的城市天气数据');
+    await _loadMainCitiesWeather(
+      forceRefresh: true, // 强制刷新
+      skipCurrentLocation: true, // 跳过当前位置城市
+    );
   }
 
   /// 清理过期缓存数据

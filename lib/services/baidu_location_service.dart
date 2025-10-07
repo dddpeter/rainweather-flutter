@@ -73,15 +73,11 @@ class BaiduLocationService {
         scanspan: 0, // 单次定位
       );
 
-      // 配置iOS参数（参照demo + 优化）
+      // 配置iOS参数（参照demo）
       final iosOpt = BaiduLocationIOSOption(
         coordType: BMFLocationCoordType.bd09ll,
         BMKLocationCoordinateType: 'BMKLocationCoordinateTypeBMK09LL',
         desiredAccuracy: BMFDesiredAccuracy.best,
-        distanceFilter: 10.0, // 距离过滤器：移动10米以上才更新
-        activityType: BMFActivityType.fitness, // 活动类型：适合一般使用场景
-        pausesLocationUpdatesAutomatically: true, // 自动暂停位置更新以节省电量
-        allowsBackgroundLocationUpdates: true, // 允许后台定位更新
       );
 
       // 准备定位

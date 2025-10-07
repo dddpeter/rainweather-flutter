@@ -651,7 +651,7 @@ class _TodayScreenState extends State<TodayScreen>
                               ),
                               decoration: BoxDecoration(
                                 color: Colors.orange.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
                                   color: Colors.orange.withOpacity(0.5),
                                   width: 1,

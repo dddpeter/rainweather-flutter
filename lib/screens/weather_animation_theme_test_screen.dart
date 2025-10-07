@@ -82,7 +82,7 @@ class _WeatherAnimationThemeTestScreenState
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: AppColors.backgroundSecondary,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: AppColors.borderColor),
                   ),
                   child: Row(
@@ -126,7 +126,7 @@ class _WeatherAnimationThemeTestScreenState
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       color: AppColors.backgroundSecondary,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: AppColors.borderColor),
                     ),
                     child: WeatherAnimationWidget(
@@ -184,7 +184,7 @@ class _WeatherAnimationThemeTestScreenState
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: AppColors.backgroundSecondary,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: AppColors.borderColor),
                   ),
                   child: Column(

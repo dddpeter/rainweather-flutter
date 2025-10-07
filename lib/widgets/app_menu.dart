@@ -237,7 +237,7 @@ class AppMenu extends StatelessWidget {
               backgroundColor: AppColors.backgroundSecondary,
               surfaceTintColor: Colors.transparent,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12), // Material Design 3 标准
+                borderRadius: BorderRadius.circular(8), // Material Design 3 标准
               ),
               elevation: 3,
               title: Text(
@@ -393,9 +393,7 @@ class AppMenu extends StatelessWidget {
         return AlertDialog(
           backgroundColor: AppColors.backgroundSecondary,
           surfaceTintColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           elevation: 3,
           icon: Icon(
             Icons.info_outline_rounded,

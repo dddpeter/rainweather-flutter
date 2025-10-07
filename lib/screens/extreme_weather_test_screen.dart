@@ -151,7 +151,7 @@ class _ExtremeWeatherTestScreenState extends State<ExtremeWeatherTestScreen> {
                           ),
                           decoration: BoxDecoration(
                             color: AppColors.primaryBlue.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(8),
                             border: Border.all(
                               color: AppColors.primaryBlue.withOpacity(0.3),
                               width: 1,

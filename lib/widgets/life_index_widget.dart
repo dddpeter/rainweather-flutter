@@ -304,9 +304,7 @@ class LifeIndexWidget extends StatelessWidget {
         return AlertDialog(
           backgroundColor: AppColors.backgroundSecondary,
           surfaceTintColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           elevation: 3,
           title: Row(
             children: [

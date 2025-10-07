@@ -173,7 +173,7 @@ class _GpsLocationTestScreenState extends State<GpsLocationTestScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.backgroundSecondary,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: AppColors.borderColor),
       ),
       child: Column(
@@ -338,7 +338,7 @@ class _GpsLocationTestScreenState extends State<GpsLocationTestScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.backgroundSecondary,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: AppColors.borderColor),
       ),
       child: Column(

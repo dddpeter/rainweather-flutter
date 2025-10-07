@@ -88,7 +88,7 @@ class _WeatherAlertWidgetState extends State<WeatherAlertWidget> {
                           ),
                           decoration: BoxDecoration(
                             color: AppColors.textSecondary.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             '${widget.alerts.length}条',
@@ -172,7 +172,7 @@ class _WeatherAlertWidgetState extends State<WeatherAlertWidget> {
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
             color: _getAlertBackgroundColor(alert.level).withOpacity(0.15),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -234,7 +234,7 @@ class _WeatherAlertWidgetState extends State<WeatherAlertWidget> {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: _getAlertBackgroundColor(alert.level).withOpacity(0.15),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -589,7 +589,7 @@ class WeatherAlertDetailScreen extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: Colors.red.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                         color: Colors.red.withOpacity(0.3),
                         width: 1,

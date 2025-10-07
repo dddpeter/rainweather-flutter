@@ -374,7 +374,7 @@ class AppColors {
   /// 标准弹窗装饰
   static BoxDecoration get dialogDecoration => BoxDecoration(
     color: _getColor('surface'),
-    borderRadius: BorderRadius.circular(12),
+    borderRadius: BorderRadius.circular(8),
     border: Border.all(color: _getColor('border'), width: 1),
     boxShadow: [
       BoxShadow(
@@ -392,7 +392,7 @@ class AppColors {
 
   /// 弹窗形状
   static ShapeBorder get dialogShape => RoundedRectangleBorder(
-    borderRadius: BorderRadius.circular(12),
+    borderRadius: BorderRadius.circular(8),
     side: BorderSide(color: _getColor('border'), width: 1),
   );
 

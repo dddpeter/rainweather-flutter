@@ -4,7 +4,7 @@ import time
 import os
 import shutil
 from datetime import datetime
-from typing import List, Dict
+from typing import List, Dict, Tuple
 
 def safe_fetch_data(url: str, max_retries: int = 3) -> str:
     """安全获取数据，带重试机制"""
@@ -27,6 +27,34 @@ def safe_fetch_data(url: str, max_retries: int = 3) -> str:
             continue
     
     return ""
+
+def validate_city_id(city_id: str, max_retries: int = 2) -> Tuple[bool, str]:
+    """验证城市ID是否有效，通过调用天气API"""
+    for retry in range(max_retries):
+        try:
+            url = f"https://www.weatherol.cn/api/home/getCurrAnd15dAnd24h?cityid={city_id}"
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+            response = requests.get(url, headers=headers, timeout=5)
+            
+            if response.status_code == 200:
+                data = response.json()
+                # 检查响应是否包含有效的天气数据
+                if data.get('code') == 200 and data.get('data'):
+                    return True, "有效"
+                else:
+                    return False, f"API返回错误: {data.get('message', '未知错误')}"
+            else:
+                return False, f"HTTP错误: {response.status_code}"
+                
+        except Exception as e:
+            if retry < max_retries - 1:
+                time.sleep(0.5)
+                continue
+            return False, f"请求异常: {str(e)}"
+    
+    return False, "验证失败"
 
 def parse_text_data(data: str) -> List[Dict[str, str]]:
     """解析文本格式的数据"""
@@ -56,8 +84,8 @@ def build_weather_code(area_code: str) -> str:
     # 比如安徽安庆望江的代码是220607，天气代码是101220607
     return f"101{area_code}"
 
-def get_districts_data() -> List[Dict[str, str]]:
-    """获取所有区县数据"""
+def get_districts_data(validate_data: bool = False) -> List[Dict[str, str]]:
+    """获取所有区县数据，并可选择验证数据有效性"""
     final_result = []
     
     # 获取省份数据（使用你提供的示例数据作为备份）
@@ -72,13 +100,15 @@ def get_districts_data() -> List[Dict[str, str]]:
     print(f"获取到 {len(provinces)} 个省份")
     
     total_districts = 0
+    valid_count = 0
+    invalid_count = 0
     
     # 遍历省份
     for i, province in enumerate(provinces):
         province_code = province['code']
         province_name = province['name']
         
-        print(f"处理省份 {i+1}/{len(provinces)}: {province_name}")
+        print(f"\n处理省份 {i+1}/{len(provinces)}: {province_name}")
         
         # 获取城市数据
         city_url = f"http://www.weather.com.cn/data/list3/city{province_code}.xml?level=2"
@@ -106,25 +136,42 @@ def get_districts_data() -> List[Dict[str, str]]:
             # 添加到最终结果
             for district in districts:
                 district_name = district['name']
+                weather_code = build_weather_code(district['code'])
                 
-                # 如果区县名和城市名相同，使用城市code + "00"
-                if district_name == city_name:
-                    weather_code = build_weather_code(city_code + "00")
-                    print(f"  发现同名: {city_name} == {district_name}, 使用 {weather_code}")
-                else:
-                    weather_code = build_weather_code(district['code'])
+                # 如果需要验证数据
+                is_valid = True
+                if validate_data:
+                    is_valid, message = validate_city_id(weather_code)
+                    if is_valid:
+                        valid_count += 1
+                        print(f"  ✅ {district_name} ({weather_code})")
+                    else:
+                        invalid_count += 1
+                        print(f"  ❌ {district_name} ({weather_code}) - {message}")
+                    
+                    # 避免请求过于频繁
+                    time.sleep(0.2)
                 
-                final_result.append({
-                    'id': weather_code,
-                    'name': district_name
-                })
-                total_districts += 1
+                # 只添加有效的数据
+                if is_valid:
+                    final_result.append({
+                        'id': weather_code,
+                        'name': district_name,
+                        'province': province_name,
+                        'city': city_name
+                    })
+                    total_districts += 1
         
         # 每处理5个省份暂停一下，避免请求过于频繁
         if (i + 1) % 5 == 0:
-            time.sleep(1)
+            time.sleep(2)
     
-    print(f"总共获取到 {total_districts} 个区县")
+    print(f"\n总共获取到 {total_districts} 个区县")
+    if validate_data:
+        print(f"验证统计: 有效 {valid_count}, 无效 {invalid_count}")
+        if valid_count + invalid_count > 0:
+            print(f"有效率: {valid_count/(valid_count+invalid_count)*100:.1f}%")
+    
     return final_result
 
 def backup_existing_file(file_path: str) -> str:
@@ -151,36 +198,62 @@ def backup_existing_file(file_path: str) -> str:
 def main():
     """主函数"""
     print("开始获取天气区县数据...")
+    print("=" * 60)
+    
+    # 询问是否需要验证数据
+    validate = input("\n是否验证数据有效性？(会调用API验证每个城市，耗时较长) [y/N]: ").strip().lower()
+    should_validate = validate in ['y', 'yes']
+    
+    if should_validate:
+        print("\n⚠️  警告: 验证模式将调用API验证每个城市，预计需要20-30分钟")
+        confirm = input("确认继续? [y/N]: ").strip().lower()
+        if confirm not in ['y', 'yes']:
+            print("已取消验证，将不验证数据")
+            should_validate = False
     
     # 获取所有第三级数据
-    districts = get_districts_data()
+    districts = get_districts_data(validate_data=should_validate)
+    
+    if not districts:
+        print("❌ 未获取到任何数据，程序退出")
+        return
     
     # 保存为JSON文件
-    output_file = "city111.json"
+    output_file = "city.json"
     
     # 如果文件已存在，先备份
     backup_file = backup_existing_file(output_file)
     
-    # 保存新数据（紧凑格式，一行一个城市）
+    # 保存新数据（包含省、市字段，紧凑格式）
     with open(output_file, 'w', encoding='utf-8') as f:
         f.write('[\n')
         for i, district in enumerate(districts):
-            city_line = f'  {{"id":"{district["id"]}","name":"{district["name"]}"}}'
+            city_line = f'  {{"id":"{district["id"]}","name":"{district["name"]}","province":"{district["province"]}","city":"{district["city"]}"}}'
             if i < len(districts) - 1:
                 city_line += ','
             f.write(city_line + '\n')
         f.write(']')
     
-    print(f"数据已保存到 {output_file}")
+    print(f"\n✅ 数据已保存到 {output_file}")
     if backup_file:
-        print(f"原文件已备份为: {backup_file}")
+        print(f"📦 原文件已备份为: {backup_file}")
     
     # 显示统计信息
-    print(f"\n数据统计:")
+    print(f"\n" + "=" * 60)
+    print(f"📊 数据统计:")
     print(f"- 总记录数: {len(districts)}")
     if districts:
         print(f"- 第一条记录: {districts[0]}")
         print(f"- 最后一条记录: {districts[-1]}")
+        
+        # 统计省份和城市数量
+        provinces = set(d['province'] for d in districts)
+        cities = set((d['province'], d['city']) for d in districts)
+        print(f"- 省份数量: {len(provinces)}")
+        print(f"- 城市数量: {len(cities)}")
+    
+    print("=" * 60)
+    print("✅ 完成!")
 
 if __name__ == "__main__":
     main()

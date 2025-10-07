@@ -128,6 +128,17 @@ class DatabaseService {
     }
   }
 
+  /// Clear all cities from database
+  Future<void> clearAllCities() async {
+    try {
+      final db = await database;
+      await db.delete('cities');
+      print('All cities cleared from database');
+    } catch (e) {
+      print('Error clearing cities: $e');
+    }
+  }
+
   /// Clear only weather data, preserve cities and location
   Future<void> clearWeatherData() async {
     try {
@@ -471,15 +482,28 @@ class DatabaseService {
 
             // 尝试查找包含该名称的城市
             final db = await database;
-            final List<Map<String, dynamic>> maps = await db.query(
+
+            // 先尝试完全匹配
+            List<Map<String, dynamic>> maps = await db.query(
               'cities',
-              where: 'name LIKE ? OR name LIKE ?',
-              whereArgs: [
-                '%$currentLocationName%',
-                '%${currentLocationName.replaceAll('区', '')}%',
-              ],
+              where: 'name = ?',
+              whereArgs: [currentLocationName],
               limit: 5,
             );
+
+            // 如果完全匹配失败，再尝试标准化匹配
+            if (maps.isEmpty) {
+              final normalizedName = CityNameMatcher.normalizeCityName(
+                currentLocationName,
+              );
+
+              maps = await db.query(
+                'cities',
+                where: 'name LIKE ? OR name LIKE ?',
+                whereArgs: ['%$currentLocationName%', '%$normalizedName%'],
+                limit: 5,
+              );
+            }
 
             if (maps.isNotEmpty) {
               // 选择第一个匹配的城市
@@ -606,10 +630,12 @@ class DatabaseService {
   }
 
   /// Get city by name
+  /// 先尝试完全匹配，再尝试标准化匹配
   Future<CityModel?> getCityByName(String name) async {
     final db = await database;
     try {
-      final List<Map<String, dynamic>> maps = await db.query(
+      // 先尝试完全匹配
+      List<Map<String, dynamic>> maps = await db.query(
         'cities',
         where: 'name = ?',
         whereArgs: [name],
@@ -619,6 +645,20 @@ class DatabaseService {
       if (maps.isNotEmpty) {
         return CityModel.fromMap(maps.first);
       }
+
+      // 完全匹配失败，尝试标准化匹配
+      final normalizedName = CityNameMatcher.normalizeCityName(name);
+      maps = await db.query(
+        'cities',
+        where: 'name = ?',
+        whereArgs: [normalizedName],
+        limit: 1,
+      );
+
+      if (maps.isNotEmpty) {
+        return CityModel.fromMap(maps.first);
+      }
+
       return null;
     } catch (e) {
       print('Failed to get city by name: $e');
@@ -757,17 +797,6 @@ class DatabaseService {
     } catch (e) {
       print('Failed to check cities table: $e');
       return false;
-    }
-  }
-
-  /// Clear all cities
-  Future<void> clearAllCities() async {
-    final db = await database;
-    try {
-      await db.delete('cities');
-      print('All cities cleared');
-    } catch (e) {
-      print('Failed to clear cities: $e');
     }
   }
 

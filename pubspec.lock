@@ -273,6 +273,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.1.1"
+  fl_amap:
+    dependency: "direct main"
+    description:
+      name: fl_amap
+      sha256: "44473148a76e56a12153fa5c2a5332208e817e747a266b907fae98e87f23027f"
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "3.4.3"
   fl_chart:
     dependency: "direct main"
     description:
@@ -342,6 +350,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.2.1"
+  flutter_tencent_lbs_plugin:
+    dependency: "direct main"
+    description:
+      name: flutter_tencent_lbs_plugin
+      sha256: f52a62149cf56a8c7f5880339327ac0e76e1a72a13e21cd502409042779a8ef8
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.1.0"
   flutter_test:
     dependency: "direct dev"
     description: flutter

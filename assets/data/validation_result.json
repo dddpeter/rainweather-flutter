@@ -1,0 +1,33 @@
+{
+  "sample_size": 50,
+  "valid": 45,
+  "invalid": 5,
+  "valid_rate": 90.0,
+  "errors": [
+    {
+      "id": "101130304",
+      "name": "乌兰乌苏",
+      "error": "❌ API返回错误: not found"
+    },
+    {
+      "id": "101060311",
+      "name": "罗子沟",
+      "error": "❌ API返回错误: not found"
+    },
+    {
+      "id": "101310217",
+      "name": "西沙",
+      "error": "❌ API返回错误: not found"
+    },
+    {
+      "id": "101201009",
+      "name": "绿葱坡",
+      "error": "❌ API返回错误: not found"
+    },
+    {
+      "id": "101221602",
+      "name": "庐江",
+      "error": "❌ API返回错误: not found"
+    }
+  ]
+}

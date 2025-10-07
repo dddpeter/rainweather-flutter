@@ -17,23 +17,38 @@ class CityNameMatcher {
   }
 
   /// 标准化城市名称，去除行政区划后缀
-  /// 参考Java代码逻辑，支持更多行政区划后缀
+  /// 只去除末尾的后缀，不影响中间的字符
   static String normalizeCityName(String cityName) {
     String normalized = cityName;
 
-    // 第一轮：去除省级和市级后缀
-    normalized = normalized
-        .replaceAll('省', '')
-        .replaceAll('市', '')
-        .replaceAll('自治区', '')
-        .replaceAll('区', '');
+    // 特殊处理：如果是两个字且以县、市、区结尾，则不进行替换
+    if (normalized.length == 2 &&
+        (normalized.endsWith('县') ||
+            normalized.endsWith('市') ||
+            normalized.endsWith('区'))) {
+      return normalized;
+    }
 
-    // 第二轮：去除县级后缀
-    normalized = normalized
-        .replaceAll('县', '')
-        .replaceAll('自治县', '')
-        .replaceAll('特区', '')
-        .replaceAll('特别行政区', '');
+    // 按优先级顺序去除末尾的后缀（从长到短，避免误匹配）
+    final suffixes = ['特别行政区', '自治区', '自治县', '特区', '省', '市', '区', '县'];
+
+    for (final suffix in suffixes) {
+      if (normalized.endsWith(suffix)) {
+        final withoutSuffix = normalized.substring(
+          0,
+          normalized.length - suffix.length,
+        );
+
+        // 检查去掉后缀后是否只剩下2个字，如果是且原后缀是县、市、区，则保留原名称
+        if (withoutSuffix.length == 2 &&
+            (suffix == '县' || suffix == '市' || suffix == '区')) {
+          return normalized; // 保留原名称
+        }
+
+        normalized = withoutSuffix;
+        break; // 找到一个匹配的后缀就停止
+      }
+    }
 
     return normalized;
   }

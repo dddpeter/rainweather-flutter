@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/city_model.dart';
 import '../services/database_service.dart';
 import '../constants/app_constants.dart';
@@ -7,32 +8,51 @@ import '../constants/app_constants.dart';
 class CityService {
   static CityService? _instance;
   DatabaseService _databaseService;
-  
+
   CityService._(this._databaseService);
-  
+
   static CityService getInstance() {
     _instance ??= CityService._(DatabaseService.getInstance());
     return _instance!;
   }
 
   /// Initialize cities from JSON file
-  Future<void> initializeCitiesFromJson() async {
+  /// [forceReload] - if true, will clear existing cities and reload from JSON
+  Future<void> initializeCitiesFromJson({bool forceReload = false}) async {
     try {
       print('Starting cities initialization from JSON...');
-      
+
+      // Check if this is the first time the app is launched
+      final prefs = await SharedPreferences.getInstance();
+      final isFirstLaunch = prefs.getBool('cities_initialized') != true;
+
       // Check if cities are already initialized
       final existingCities = await _databaseService.getAllCities();
       print('Existing cities count: ${existingCities.length}');
-      
-      if (existingCities.isNotEmpty) {
+      print('Is first launch: $isFirstLaunch');
+
+      // Determine if we should reload cities
+      final shouldReload =
+          forceReload || isFirstLaunch || existingCities.isEmpty;
+
+      if (existingCities.isNotEmpty && !shouldReload) {
         print('Cities already initialized, skipping...');
         return;
       }
 
+      // If reload is needed, clear existing cities first
+      if (shouldReload && existingCities.isNotEmpty) {
+        print('Reload requested, clearing existing cities...');
+        await _databaseService.clearAllCities();
+        print('Existing cities cleared');
+      }
+
       // Load cities from city.json file
-      final String jsonString = await rootBundle.loadString('assets/data/city.json');
+      final String jsonString = await rootBundle.loadString(
+        'assets/data/city.json',
+      );
       final List<dynamic> jsonList = json.decode(jsonString);
-      
+
       // Convert to CityModel list
       final List<CityModel> cities = jsonList.map((json) {
         final Map<String, dynamic> cityJson = json as Map<String, dynamic>;
@@ -55,10 +75,23 @@ class CityService {
         }
       }
 
-      print('Initialized $savedCount cities from JSON (total: ${cities.length})');
+      print(
+        'Initialized $savedCount cities from JSON (total: ${cities.length})',
+      );
+
+      // Mark cities as initialized
+      await prefs.setBool('cities_initialized', true);
+      print('Cities initialization marked as completed');
     } catch (e) {
       print('Failed to initialize cities from JSON: $e');
     }
+  }
+
+  /// Force reload cities from JSON file
+  /// This will clear existing cities and reload from city.json
+  Future<void> forceReloadCitiesFromJson() async {
+    print('Force reloading cities from JSON...');
+    await initializeCitiesFromJson(forceReload: true);
   }
 
   /// Get all cities
@@ -72,8 +105,12 @@ class CityService {
   }
 
   /// Get main cities with current location first
-  Future<List<CityModel>> getMainCitiesWithCurrentLocationFirst(String? currentLocationName) async {
-    return await _databaseService.getMainCitiesWithCurrentLocationFirst(currentLocationName);
+  Future<List<CityModel>> getMainCitiesWithCurrentLocationFirst(
+    String? currentLocationName,
+  ) async {
+    return await _databaseService.getMainCitiesWithCurrentLocationFirst(
+      currentLocationName,
+    );
   }
 
   /// Get city by name
@@ -91,7 +128,7 @@ class CityService {
     try {
       // Check if city exists in database
       CityModel? existingCity = await _databaseService.getCityById(city.id);
-      
+
       if (existingCity != null) {
         // Update existing city to main city
         await _databaseService.updateCityMainStatus(city.id, true);
@@ -102,7 +139,7 @@ class CityService {
         await _databaseService.saveCity(newCity);
         print('Added new main city: ${city.name}');
       }
-      
+
       return true;
     } catch (e) {
       print('Failed to add main city: $e');
@@ -124,7 +161,7 @@ class CityService {
       // Update city status to not main city
       await _databaseService.updateCityMainStatus(cityId, false);
       print('Removed city from main cities: ${city.name}');
-      
+
       return true;
     } catch (e) {
       print('Failed to remove main city: $e');
@@ -136,33 +173,42 @@ class CityService {
   Future<List<CityModel>> searchCities(String query) async {
     try {
       if (query.isEmpty) return [];
-      
+
       // Initialize city search data if needed
       await _databaseService.initializeCitySearchData();
-      
+
       // Search from database
-      final searchResults = await _databaseService.searchCitiesFromDatabase(query);
-      
+      final searchResults = await _databaseService.searchCitiesFromDatabase(
+        query,
+      );
+
       // Convert to CityModel list
-      final results = searchResults.map((map) => CityModel(
-        id: map['id'] as String,
-        name: map['name'] as String,
-        isMainCity: false, // Search results are not main cities by default
-        createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt'] as int),
-      )).toList();
-      
+      final results = searchResults
+          .map(
+            (map) => CityModel(
+              id: map['id'] as String,
+              name: map['name'] as String,
+              isMainCity:
+                  false, // Search results are not main cities by default
+              createdAt: DateTime.fromMillisecondsSinceEpoch(
+                map['createdAt'] as int,
+              ),
+            ),
+          )
+          .toList();
+
       // Sort results: exact matches first, then partial matches
       results.sort((a, b) {
         final aExact = a.name.toLowerCase() == query.toLowerCase();
         final bExact = b.name.toLowerCase() == query.toLowerCase();
-        
+
         if (aExact && !bExact) return -1;
         if (!aExact && bExact) return 1;
-        
+
         // If both are exact or both are partial, sort by name
         return a.name.compareTo(b.name);
       });
-      
+
       return results;
     } catch (e) {
       print('Failed to search cities: $e');

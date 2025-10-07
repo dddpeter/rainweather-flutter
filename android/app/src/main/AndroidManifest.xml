@@ -10,6 +10,14 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     
+    <!-- 腾讯定位额外权限 -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.ACCESS_LOCATION_EXTRA_COMMANDS" />
+    
     <!-- Background tasks -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -56,6 +64,14 @@
         <meta-data
             android:name="com.baidu.lbsapi.API_KEY"
             android:value="6gzLA6FpAfvzIkFij3NpqUPl3n0Suv4f"/>
+        <!-- 高德地图 AK -->
+        <meta-data
+            android:name="com.amap.api.v2.apikey"
+            android:value="caed2a6a1f4ea218793a1cdba8419320"/>
+        <!-- 腾讯定位 AK -->
+        <meta-data
+            android:name="TencentMapSDK"
+            android:value="ONHBZ-X3WWZ-FADXR-T5BOL-C4RP7-THFFB"/>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

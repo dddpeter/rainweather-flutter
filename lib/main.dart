@@ -18,6 +18,8 @@ import 'constants/theme_extensions.dart';
 import 'services/location_service.dart';
 import 'services/notification_service.dart';
 import 'services/baidu_location_service.dart';
+import 'services/amap_location_service.dart';
+import 'services/tencent_location_service.dart';
 import 'services/location_change_notifier.dart';
 import 'services/page_activation_observer.dart';
 import 'models/location_model.dart';
@@ -72,6 +74,16 @@ void main() async {
   await notificationService.initialize();
   await notificationService.requestPermissions();
 
+  // 全局设置腾讯定位服务
+  try {
+    print('🔧 全局设置腾讯定位服务');
+    final tencentLocationService = TencentLocationService.getInstance();
+    await tencentLocationService.setGlobalPrivacyAgreement();
+    print('✅ 腾讯定位服务设置成功');
+  } catch (e) {
+    print('❌ 腾讯定位服务设置失败: $e');
+  }
+
   // 全局设置百度定位隐私政策同意
   try {
     print('🔧 全局设置百度定位隐私政策同意');
@@ -80,6 +92,16 @@ void main() async {
     print('✅ 百度定位隐私政策同意设置成功');
   } catch (e) {
     print('❌ 百度定位隐私政策同意设置失败: $e');
+  }
+
+  // 全局设置高德地图API Key
+  try {
+    print('🔧 全局设置高德地图API Key');
+    final amapLocationService = AMapLocationService.getInstance();
+    await amapLocationService.setGlobalAPIKey();
+    print('✅ 高德地图API Key设置成功');
+  } catch (e) {
+    print('❌ 高德地图API Key设置失败: $e');
   }
 
   // 请求定位权限（参照demo）

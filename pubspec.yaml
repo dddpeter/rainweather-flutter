@@ -26,6 +26,8 @@ dependencies:
   geocoding: ^4.0.0
   permission_handler: ^12.0.1
   flutter_bmflocation: ^3.8.0  # 百度定位
+  fl_amap: ^3.4.3  # 高德地图定位
+  flutter_tencent_lbs_plugin: ^0.1.0  # 腾讯定位
   
   # Local Storage
   sqflite: ^2.3.3+1

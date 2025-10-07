@@ -5,6 +5,8 @@ import 'geocoding_service.dart';
 import 'enhanced_geocoding_service.dart';
 import 'ip_location_service.dart';
 import 'baidu_location_service.dart';
+import 'amap_location_service.dart';
+import 'tencent_location_service.dart';
 
 enum LocationPermissionResult { granted, denied, deniedForever, error }
 
@@ -24,6 +26,10 @@ class LocationService {
       EnhancedGeocodingService.getInstance();
   final BaiduLocationService _baiduLocationService =
       BaiduLocationService.getInstance();
+  final AMapLocationService _amapLocationService =
+      AMapLocationService.getInstance();
+  final TencentLocationService _tencentLocationService =
+      TencentLocationService.getInstance();
 
   LocationService._();
 
@@ -124,7 +130,49 @@ class LocationService {
   /// Get current location with proxy detection
   Future<LocationModel?> getCurrentLocation() async {
     try {
-      // ① 优先尝试百度定位（添加超时）
+      // ① 优先尝试腾讯定位（添加超时）
+      print('📍 尝试腾讯定位...');
+      try {
+        LocationModel? tencentLocation = await _tencentLocationService
+            .getCurrentLocation()
+            .timeout(
+              const Duration(seconds: 8),
+              onTimeout: () {
+                print('⏰ 腾讯定位超时，切换到高德地图定位');
+                return null;
+              },
+            );
+        if (tencentLocation != null) {
+          print('✅ 腾讯定位成功: ${tencentLocation.district}');
+          _cachedLocation = tencentLocation;
+          return tencentLocation;
+        }
+      } catch (e) {
+        print('❌ 腾讯定位失败: $e，尝试高德地图定位');
+      }
+
+      // ② 腾讯定位失败，尝试高德地图定位
+      print('📍 尝试高德地图定位...');
+      try {
+        LocationModel? amapLocation = await _amapLocationService
+            .getCurrentLocation()
+            .timeout(
+              const Duration(seconds: 8),
+              onTimeout: () {
+                print('⏰ 高德地图定位超时，切换到百度定位');
+                return null;
+              },
+            );
+        if (amapLocation != null) {
+          print('✅ 高德地图定位成功: ${amapLocation.district}');
+          _cachedLocation = amapLocation;
+          return amapLocation;
+        }
+      } catch (e) {
+        print('❌ 高德地图定位失败: $e，尝试百度定位');
+      }
+
+      // ③ 高德地图定位失败，尝试百度定位
       print('📍 尝试百度定位...');
       try {
         LocationModel? baiduLocation = await _baiduLocationService
@@ -145,7 +193,7 @@ class LocationService {
         print('❌ 百度定位失败: $e，尝试GPS定位');
       }
 
-      // ② 百度定位失败，尝试GPS定位
+      // ④ 百度定位失败，尝试GPS定位
       print('📍 尝试GPS定位...');
 
       // 检查权限（参考方案：3行代码搞定）

@@ -56,7 +56,7 @@ class WeatherProvider extends ChangeNotifier {
 
   // 定时刷新
   Timer? _refreshTimer;
-  static const Duration _refreshInterval = Duration(minutes: 30); // 30分钟刷新一次
+  static const Duration _refreshInterval = Duration(hours: 1); // 1小时刷新一次，避免过于频繁
 
   // Dynamic cities list
   List<CityModel> _mainCities = [];

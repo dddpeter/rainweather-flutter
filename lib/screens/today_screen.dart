@@ -30,6 +30,7 @@ class _TodayScreenState extends State<TodayScreen>
     with WidgetsBindingObserver, LocationChangeListener {
   bool _isVisible = false;
   final WeatherAlertService _alertService = WeatherAlertService.instance;
+  bool _isRefreshing = false; // 防止重复刷新
 
   @override
   void initState() {
@@ -53,8 +54,15 @@ class _TodayScreenState extends State<TodayScreen>
 
   /// 刷新当前定位和天气数据
   Future<void> _refreshCurrentLocationAndWeather() async {
+    // 防止重复刷新
+    if (_isRefreshing) {
+      print('🔄 TodayScreen: 正在刷新中，跳过重复请求');
+      return;
+    }
+
     try {
-      print('🔄 TodayScreen: 首次进入，开始定位和刷新天气数据');
+      _isRefreshing = true;
+      print('🔄 TodayScreen: 开始定位和刷新天气数据');
 
       final weatherProvider = context.read<WeatherProvider>();
 
@@ -64,6 +72,8 @@ class _TodayScreenState extends State<TodayScreen>
       print('✅ TodayScreen: 当前定位和天气数据刷新完成');
     } catch (e) {
       print('❌ TodayScreen: 刷新当前定位和天气数据失败: $e');
+    } finally {
+      _isRefreshing = false;
     }
   }
 
@@ -82,7 +92,7 @@ class _TodayScreenState extends State<TodayScreen>
     super.didChangeAppLifecycleState(state);
 
     // 当应用从后台恢复时，刷新定位和天气数据
-    if (state == AppLifecycleState.resumed) {
+    if (state == AppLifecycleState.resumed && !_isRefreshing) {
       print('📍 TodayScreen: 应用从后台恢复，准备刷新定位');
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _refreshCurrentLocationAndWeather();
@@ -99,14 +109,14 @@ class _TodayScreenState extends State<TodayScreen>
     );
     print('📍 TodayScreen: 页面可见状态: $_isVisible');
 
-    // 如果页面可见，刷新天气数据
-    if (_isVisible) {
+    // 如果页面可见且不在刷新中，刷新天气数据
+    if (_isVisible && !_isRefreshing) {
       print('📍 TodayScreen: 页面可见，准备刷新天气数据');
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _refreshWeatherData();
       });
     } else {
-      print('📍 TodayScreen: 页面不可见，跳过刷新');
+      print('📍 TodayScreen: 页面不可见或正在刷新中，跳过刷新');
     }
   }
 
@@ -134,7 +144,14 @@ class _TodayScreenState extends State<TodayScreen>
 
   /// 刷新天气数据
   Future<void> _refreshWeatherData() async {
+    // 防止重复刷新
+    if (_isRefreshing) {
+      print('🔄 TodayScreen: 正在刷新中，跳过重复请求');
+      return;
+    }
+
     try {
+      _isRefreshing = true;
       print('🔄 TodayScreen: 开始刷新天气数据');
       final weatherProvider = context.read<WeatherProvider>();
       print('🔄 TodayScreen: 调用 WeatherProvider.refreshWeatherData()');
@@ -143,6 +160,8 @@ class _TodayScreenState extends State<TodayScreen>
     } catch (e) {
       print('❌ TodayScreen: 刷新天气数据失败: $e');
       print('❌ TodayScreen: 错误堆栈: ${StackTrace.current}');
+    } finally {
+      _isRefreshing = false;
     }
   }
 

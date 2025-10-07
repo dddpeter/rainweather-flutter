@@ -23,3 +23,26 @@
 # 百度定位混淆规则
 -keep class com.baidu.** {*;}
 -keep class vi.com.gdi.** {*;}
+-dontwarn com.baidu.**
+
+# 高德地图混淆规则
+-keep class com.amap.** {*;}
+-keep class com.autonavi.** {*;}
+-dontwarn com.amap.**
+-dontwarn com.autonavi.**
+
+# 腾讯定位混淆规则
+-keep class com.tencent.** {*;}
+-keep class com.loc.** {*;}
+-dontwarn com.tencent.**
+-dontwarn com.loc.**
+
+# Flutter相关
+-keep class io.flutter.** { *; }
+-dontwarn io.flutter.**
+
+# 定位相关
+-keep class com.baidu.location.** { *; }
+-keep class com.baidu.mapapi.** { *; }
+-dontwarn com.baidu.location.**
+-dontwarn com.baidu.mapapi.**

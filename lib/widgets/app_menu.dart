@@ -462,13 +462,12 @@ class AppMenu extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '• 新增腾讯定位服务（最高优先级）\n'
-                      '• 新增高德地图定位服务\n'
-                      '• 集成天地图逆地理编码\n'
-                      '• 统一定位服务测试页面\n'
-                      '• 主要城市列表自动备份恢复\n'
-                      '• 优化城市名称匹配逻辑\n'
-                      '• 修复重新安装后数据恢复',
+                      '• 优化天气预警服务性能\n'
+                      '• 修复应用后台恢复问题\n'
+                      '• 改进今日天气界面交互\n'
+                      '• 提升定位服务稳定性\n'
+                      '• 优化代码结构和性能\n'
+                      '• 修复已知问题',
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,

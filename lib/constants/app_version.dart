@@ -8,10 +8,10 @@ class AppVersion {
 
   /// 应用版本号（显示用）
   /// 格式: "主版本号.次版本号.修订号"
-  static const String version = '1.7.0';
+  static const String version = '1.8.0';
 
   /// 应用构建号
-  static const int buildNumber = 7;
+  static const int buildNumber = 8;
 
   /// 完整版本信息
   /// 格式: "版本号+构建号"

@@ -296,8 +296,11 @@ class WeatherAlertService {
     // 检查空气质量是否超过阈值
     if (aqi >= _settings.airQualityThreshold) {
       final level = _getAirQualityLevel(aqi);
+      // 使用日期作为ID的一部分
+      final dateStr =
+          '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
       final alert = WeatherAlertModel(
-        id: 'air_quality_${cityName}_${now.millisecondsSinceEpoch}',
+        id: 'air_quality_${cityName}_$dateStr',
         title: '空气质量提醒',
         content: '当前空气质量指数为${aqi}，属于${level}，建议减少户外活动',
         level: aqi >= 200 ? WeatherAlertLevel.red : WeatherAlertLevel.yellow,
@@ -519,8 +522,11 @@ class WeatherAlertService {
     String cityName,
     DateTime now,
   ) {
+    // 使用日期作为ID的一部分，同一天同一城市的相同提醒只生成一次
+    final dateStr =
+        '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
     return WeatherAlertModel(
-      id: '${rule.weatherTerm}_${cityName}_${now.millisecondsSinceEpoch}',
+      id: '${rule.type.toString()}_${rule.weatherTerm}_${cityName}_$dateStr',
       title: '${rule.weatherTerm}提醒',
       content: _generateAlertContent(rule, current),
       level: rule.level,
@@ -545,8 +551,12 @@ class WeatherAlertService {
     String cityName,
     DateTime now,
   ) {
+    // 使用日期和小时作为ID的一部分
+    final dateStr =
+        '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
+    final hourStr = hour.forecasttime ?? 'unknown';
     return WeatherAlertModel(
-      id: 'hourly_${rule.weatherTerm}_${cityName}_${now.millisecondsSinceEpoch}',
+      id: 'hourly_${rule.type.toString()}_${rule.weatherTerm}_${cityName}_${dateStr}_$hourStr',
       title: '未来${hour.forecasttime}${rule.weatherTerm}提醒',
       content: _generateHourlyAlertContent(rule, hour),
       level: rule.level,
@@ -573,9 +583,13 @@ class WeatherAlertService {
     bool isAm,
   ) {
     final timeStr = isAm ? '上午' : '下午';
+    // 使用日期和时段作为ID的一部分
+    final dateStr =
+        '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
+    final dayStr = day.forecasttime ?? day.week ?? 'unknown';
 
     return WeatherAlertModel(
-      id: 'daily_${rule.weatherTerm}_${cityName}_${now.millisecondsSinceEpoch}',
+      id: 'daily_${rule.type.toString()}_${rule.weatherTerm}_${cityName}_${dateStr}_${dayStr}_$timeStr',
       title: '未来${timeStr}${rule.weatherTerm}提醒',
       content: _generateDailyAlertContent(rule, day, isAm),
       level: rule.level,
@@ -678,17 +692,25 @@ class WeatherAlertService {
     final filtered = <WeatherAlertModel>[];
 
     for (final newAlert in newAlerts) {
-      // 检查是否已存在相同类型的提醒
+      // 检查是否已存在相同ID的提醒（基于日期和类型的稳定ID）
       final exists = _alerts.any(
         (existing) =>
-            existing.weatherTerm == newAlert.weatherTerm &&
-            existing.cityName == newAlert.cityName &&
-            existing.type == newAlert.type &&
-            !existing.isExpired,
+            existing.id == newAlert.id ||
+            (existing.weatherTerm == newAlert.weatherTerm &&
+                existing.cityName == newAlert.cityName &&
+                existing.type == newAlert.type &&
+                !existing.isExpired),
       );
 
       if (!exists) {
         filtered.add(newAlert);
+        print(
+          '✅ WeatherAlertService: 添加新提醒 - ${newAlert.title} (${newAlert.id})',
+        );
+      } else {
+        print(
+          '⏭️ WeatherAlertService: 跳过重复提醒 - ${newAlert.title} (${newAlert.id})',
+        );
       }
     }
 

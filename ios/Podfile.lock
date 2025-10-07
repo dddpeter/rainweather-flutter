@@ -1,10 +1,18 @@
 PODS:
+  - AMapFoundation (1.8.2)
+  - AMapLocation (2.11.0):
+    - AMapFoundation (>= 1.8.0)
   - BMKLocationKit (2.1.3)
+  - fl_amap (0.0.1):
+    - AMapLocation
+    - Flutter
   - Flutter (1.0.0)
   - flutter_bmflocation (3.7.0):
     - BMKLocationKit (~> 2.1.3)
     - Flutter
   - flutter_local_notifications (0.0.1):
+    - Flutter
+  - flutter_tencent_lbs_plugin (0.0.1):
     - Flutter
   - geocoding_ios (1.0.5):
     - Flutter
@@ -29,9 +37,11 @@ PODS:
 
 DEPENDENCIES:
   - BMKLocationKit
+  - fl_amap (from `.symlinks/plugins/fl_amap/ios`)
   - Flutter (from `Flutter`)
   - flutter_bmflocation (from `.symlinks/plugins/flutter_bmflocation/ios`)
   - flutter_local_notifications (from `.symlinks/plugins/flutter_local_notifications/ios`)
+  - flutter_tencent_lbs_plugin (from `.symlinks/plugins/flutter_tencent_lbs_plugin/ios`)
   - geocoding_ios (from `.symlinks/plugins/geocoding_ios/ios`)
   - geolocator_apple (from `.symlinks/plugins/geolocator_apple/darwin`)
   - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
@@ -43,15 +53,21 @@ DEPENDENCIES:
 
 SPEC REPOS:
   trunk:
+    - AMapFoundation
+    - AMapLocation
     - BMKLocationKit
 
 EXTERNAL SOURCES:
+  fl_amap:
+    :path: ".symlinks/plugins/fl_amap/ios"
   Flutter:
     :path: Flutter
   flutter_bmflocation:
     :path: ".symlinks/plugins/flutter_bmflocation/ios"
   flutter_local_notifications:
     :path: ".symlinks/plugins/flutter_local_notifications/ios"
+  flutter_tencent_lbs_plugin:
+    :path: ".symlinks/plugins/flutter_tencent_lbs_plugin/ios"
   geocoding_ios:
     :path: ".symlinks/plugins/geocoding_ios/ios"
   geolocator_apple:
@@ -70,10 +86,14 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/workmanager_apple/ios"
 
 SPEC CHECKSUMS:
+  AMapFoundation: 9885c48fc3a78fdfb84a0299a2293e56ea3c9fec
+  AMapLocation: 8c46dbe995333ad6cae147d54a7307a577020be0
   BMKLocationKit: 79689c9898474cbad4a93a5f0cc06c8c97fa2b02
+  fl_amap: a4a9ea98231f06d773223c58c47535ca75376019
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
   flutter_bmflocation: f53a4bad68d0f0078dae79e92a1a9fd9b22e8487
   flutter_local_notifications: 4cde75091f6327eb8517fa068a0a5950212d2086
+  flutter_tencent_lbs_plugin: 44b9444bb4db98f2c78b46e1159a58b2a78e486b
   geocoding_ios: eafacae6ad11a1eb56681f7d11df602a5fd49416
   geolocator_apple: 66b711889fd333205763b83c9dcf0a57a28c7afd
   package_info_plus: c0502532a26c7662a62a356cebe2692ec5fe4ec4

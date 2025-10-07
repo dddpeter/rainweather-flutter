@@ -25,6 +25,7 @@ import 'services/page_activation_observer.dart';
 import 'models/location_model.dart';
 import 'widgets/custom_bottom_navigation_v2.dart';
 import 'utils/city_name_matcher.dart';
+import 'utils/app_state_manager.dart';
 
 // 全局路由观察者
 final PageActivationObserver _pageActivationObserver = PageActivationObserver();
@@ -69,10 +70,25 @@ class _RouteObserver extends RouteObserver<PageRoute<dynamic>> {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 初始化通知服务
-  final notificationService = NotificationService.instance;
-  await notificationService.initialize();
-  await notificationService.requestPermissions();
+  // 初始化通知服务并请求权限
+  try {
+    print('🔔 初始化通知服务');
+    final notificationService = NotificationService.instance;
+    await notificationService.initialize();
+
+    // 创建通知渠道（Android）
+    await notificationService.createNotificationChannels();
+
+    // 请求通知权限
+    final permissionGranted = await notificationService.requestPermissions();
+    print('🔔 通知权限请求结果: $permissionGranted');
+
+    if (!permissionGranted) {
+      print('⚠️ 通知权限未授予，部分功能可能无法使用');
+    }
+  } catch (e) {
+    print('❌ 通知服务初始化失败: $e');
+  }
 
   // 全局设置腾讯定位服务
   try {
@@ -260,7 +276,7 @@ class MainScreen extends StatefulWidget {
   State<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   int _currentIndex = 0;
   final PageActivationObserver _pageActivationObserver =
       PageActivationObserver();
@@ -271,6 +287,65 @@ class _MainScreenState extends State<MainScreen> {
     const Forecast15dScreen(),
     const MainCitiesScreen(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+
+    // 检查应用状态，处理被系统杀死后的恢复
+    _checkAndRecoverAppState();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    // 检测app从detached状态恢复
+    if (state == AppLifecycleState.resumed) {
+      print('🔄 MainScreen: App从后台恢复，检查状态');
+      _checkAndRecoverAppState();
+    }
+  }
+
+  /// 检查并恢复应用状态（处理app被系统杀死的情况）
+  Future<void> _checkAndRecoverAppState() async {
+    final appStateManager = AppStateManager();
+
+    // 如果应用未完全启动，说明可能被系统杀死后冷启动
+    if (!appStateManager.isAppFullyStarted) {
+      print('⚠️ MainScreen: 检测到应用状态未初始化，可能是被系统杀死后恢复');
+      print('🔄 MainScreen: 开始重新初始化应用状态');
+
+      try {
+        // 重新初始化WeatherProvider
+        final weatherProvider = context.read<WeatherProvider>();
+
+        // 标记开始初始化
+        appStateManager.markInitializationStarted();
+
+        // 重新初始化天气数据
+        await weatherProvider.initializeWeather();
+
+        // 标记应用完全启动
+        appStateManager.markAppFullyStarted();
+
+        print('✅ MainScreen: 应用状态恢复完成');
+      } catch (e) {
+        print('❌ MainScreen: 应用状态恢复失败: $e');
+        // 即使失败也标记为已启动，避免永久卡住
+        appStateManager.markAppFullyStarted();
+      }
+    } else {
+      print('✅ MainScreen: 应用状态正常');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

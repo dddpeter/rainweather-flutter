@@ -87,34 +87,14 @@ class _TodayScreenState extends State<TodayScreen>
   }
 
   /// 页面激活时刷新天气提醒
+  /// 注意：页面激活时不分析新提醒，只刷新UI显示已有提醒
   Future<void> _refreshWeatherAlertsOnActivation() async {
-    // 防止重复刷新
-    if (_isRefreshing) {
-      return;
-    }
-
     try {
-      print('📱 TodayScreen: 开始页面激活时的天气提醒刷新');
+      print('📱 TodayScreen: 页面激活，刷新UI显示提醒');
 
-      final weatherProvider = context.read<WeatherProvider>();
-
-      // 检查是否有有效的天气数据
-      if (weatherProvider.currentWeather != null &&
-          weatherProvider.currentLocation != null) {
-        // 刷新天气提醒
-        final newAlerts = await _alertService.analyzeWeather(
-          weatherProvider.currentWeather!,
-          weatherProvider.currentLocation!,
-        );
-
-        print('📱 TodayScreen: 页面激活刷新完成，新增提醒数量: ${newAlerts.length}');
-
-        // 刷新UI显示提醒
-        if (mounted) {
-          setState(() {});
-        }
-      } else {
-        print('📱 TodayScreen: 天气数据不完整，跳过提醒刷新');
+      // 只刷新UI，不重新分析提醒（避免重复通知）
+      if (mounted) {
+        setState(() {});
       }
     } catch (e) {
       print('📱 TodayScreen: 页面激活刷新失败: $e');
@@ -122,7 +102,9 @@ class _TodayScreenState extends State<TodayScreen>
   }
 
   /// 刷新当前定位和天气数据
-  Future<void> _refreshCurrentLocationAndWeather() async {
+  Future<void> _refreshCurrentLocationAndWeather({
+    bool skipAlertAnalysis = false,
+  }) async {
     // 防止重复刷新
     if (_isRefreshing) {
       print('🔄 TodayScreen: 正在刷新中，跳过重复请求');
@@ -138,8 +120,9 @@ class _TodayScreenState extends State<TodayScreen>
       // 调用新的定位方法（内部会检查是否首次定位）
       await weatherProvider.performLocationAfterEntering();
 
-      // 刷新天气提醒
-      if (weatherProvider.currentWeather != null &&
+      // 刷新天气提醒（只在不跳过的情况下）
+      if (!skipAlertAnalysis &&
+          weatherProvider.currentWeather != null &&
           weatherProvider.currentLocation != null) {
         print('🔄 TodayScreen: 开始刷新天气提醒');
         final newAlerts = await _alertService.analyzeWeather(
@@ -151,7 +134,9 @@ class _TodayScreenState extends State<TodayScreen>
           final alert = newAlerts[i];
           print('✅ 新增提醒 $i: ${alert.title} - ${alert.cityName}');
         }
-        setState(() {}); // 刷新UI显示提醒
+        if (mounted) {
+          setState(() {}); // 刷新UI显示提醒
+        }
       }
 
       print('✅ TodayScreen: 当前定位和天气数据刷新完成');
@@ -196,6 +181,7 @@ class _TodayScreenState extends State<TodayScreen>
     }
 
     try {
+      _isRefreshing = true;
       print('⏰ TodayScreen: 开始执行定时刷新');
 
       final weatherProvider = context.read<WeatherProvider>();
@@ -203,7 +189,7 @@ class _TodayScreenState extends State<TodayScreen>
       // 刷新天气数据
       await weatherProvider.refreshWeatherData();
 
-      // 刷新天气提醒
+      // 定时刷新时分析天气提醒（30分钟一次）
       if (weatherProvider.currentWeather != null &&
           weatherProvider.currentLocation != null) {
         print('⏰ TodayScreen: 定时刷新天气提醒');
@@ -212,12 +198,16 @@ class _TodayScreenState extends State<TodayScreen>
           weatherProvider.currentLocation!,
         );
         print('⏰ TodayScreen: 定时刷新天气提醒完成，新增提醒数量: ${newAlerts.length}');
-        setState(() {}); // 刷新UI显示提醒
+        if (mounted) {
+          setState(() {}); // 刷新UI显示提醒
+        }
       }
 
       print('⏰ TodayScreen: 定时刷新完成');
     } catch (e) {
       print('❌ TodayScreen: 定时刷新失败: $e');
+    } finally {
+      _isRefreshing = false;
     }
   }
 
@@ -248,13 +238,16 @@ class _TodayScreenState extends State<TodayScreen>
         // 恢复定时刷新
         _startPeriodicRefresh();
 
-        // 刷新定位和天气数据
-        if (!_isRefreshing) {
-          print('📍 TodayScreen: 准备刷新定位和天气数据');
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _refreshCurrentLocationAndWeather();
-          });
-        }
+        // 延迟刷新，避免立即刷新造成卡顿
+        // 从后台恢复时只刷新数据，不分析提醒（由定时刷新处理）
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (_isVisible && !_isRefreshing && mounted) {
+            print('📍 TodayScreen: 准备刷新天气数据（不分析提醒）');
+            _refreshWeatherDataOnly();
+          } else {
+            print('📍 TodayScreen: 页面不可见或正在刷新，跳过后台恢复刷新');
+          }
+        });
         break;
 
       case AppLifecycleState.paused:
@@ -275,6 +268,15 @@ class _TodayScreenState extends State<TodayScreen>
     }
   }
 
+  /// 只刷新天气数据，不分析提醒（用于后台恢复）
+  /// 注意：后台恢复不执行刷新，由定时刷新机制处理
+  Future<void> _refreshWeatherDataOnly() async {
+    // 后台恢复时不立即刷新，避免重复
+    // 定时刷新机制会在30分钟后自动刷新
+    print('🔄 TodayScreen: 后台恢复，跳过立即刷新（由定时器处理）');
+    return;
+  }
+
   /// 定位成功回调
   @override
   void onLocationSuccess(LocationModel newLocation) {
@@ -285,24 +287,14 @@ class _TodayScreenState extends State<TodayScreen>
     print('📍 TodayScreen: 页面可见状态: $_isVisible');
 
     // 如果页面可见且不在刷新中，刷新天气数据
+    // 注意：不在此处分析提醒，避免重复通知
     if (_isVisible && !_isRefreshing) {
       print('📍 TodayScreen: 页面可见，准备刷新天气数据');
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         await _refreshWeatherData();
-
-        // 刷新天气提醒
-        final weatherProvider = context.read<WeatherProvider>();
-        if (weatherProvider.currentWeather != null &&
-            weatherProvider.currentLocation != null) {
-          print('🔄 TodayScreen onLocationSuccess: 开始刷新天气提醒');
-          final newAlerts = await _alertService.analyzeWeather(
-            weatherProvider.currentWeather!,
-            weatherProvider.currentLocation!,
-          );
-          print(
-            '✅ TodayScreen onLocationSuccess: 天气提醒刷新完成，新增提醒数量: ${newAlerts.length}',
-          );
-          setState(() {}); // 刷新UI显示提醒
+        // 刷新UI以显示更新的数据
+        if (mounted) {
+          setState(() {});
         }
       });
     } else {
@@ -541,7 +533,7 @@ class _TodayScreenState extends State<TodayScreen>
                       HapticFeedback.lightImpact();
                     }
 
-                    // 刷新天气数据后分析提醒
+                    // 手动刷新时分析提醒（但不发送重复通知）
                     if (weatherProvider.currentWeather != null &&
                         weatherProvider.currentLocation != null) {
                       print('🔄 TodayScreen: 手动刷新天气提醒');
@@ -558,7 +550,9 @@ class _TodayScreenState extends State<TodayScreen>
                         HapticFeedback.heavyImpact();
                       }
 
-                      setState(() {}); // 刷新UI显示提醒
+                      if (mounted) {
+                        setState(() {}); // 刷新UI显示提醒
+                      }
                     }
                   },
                   color: AppColors.primaryBlue,

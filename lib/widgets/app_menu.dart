@@ -5,10 +5,9 @@ import '../constants/app_colors.dart';
 import '../constants/app_version.dart';
 import '../screens/weather_animation_test_screen.dart';
 import '../screens/weather_layout_test_screen.dart';
-import '../screens/gps_location_test_screen.dart';
 import '../screens/weather_alert_settings_screen.dart';
 import '../screens/weather_alert_test_screen.dart';
-import '../screens/baidu_location_test_screen.dart';
+import '../screens/all_location_test_screen.dart';
 
 class AppMenu extends StatelessWidget {
   const AppMenu({super.key});
@@ -119,37 +118,19 @@ class AppMenu extends StatelessWidget {
                 ],
               ),
             ),
-            // GPS定位测试
+            // 定位服务测试
             PopupMenuItem<String>(
-              value: 'gps_location_test',
+              value: 'all_location_test',
               child: Row(
                 children: [
                   Icon(
-                    Icons.location_searching,
+                    Icons.location_on,
                     color: AppColors.accentGreen,
                     size: 20,
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    'GPS定位测试',
-                    style: TextStyle(color: AppColors.textPrimary),
-                  ),
-                ],
-              ),
-            ),
-            // 百度定位测试
-            PopupMenuItem<String>(
-              value: 'baidu_location_test',
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.my_location,
-                    color: AppColors.primaryBlue,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    '百度定位测试',
+                    '定位服务测试',
                     style: TextStyle(color: AppColors.textPrimary),
                   ),
                 ],
@@ -188,11 +169,8 @@ class AppMenu extends StatelessWidget {
       case 'weather_layout_test':
         _navigateToWeatherLayoutTest(context);
         break;
-      case 'gps_location_test':
-        _navigateToGpsLocationTest(context);
-        break;
-      case 'baidu_location_test':
-        _navigateToBaiduLocationTest(context);
+      case 'all_location_test':
+        _navigateToAllLocationTest(context);
         break;
       case 'weather_alert_settings':
         _navigateToWeatherAlertSettings(context);
@@ -222,17 +200,10 @@ class AppMenu extends StatelessWidget {
     );
   }
 
-  void _navigateToGpsLocationTest(BuildContext context) {
+  void _navigateToAllLocationTest(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const GpsLocationTestScreen()),
-    );
-  }
-
-  void _navigateToBaiduLocationTest(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const BaiduLocationTestScreen()),
+      MaterialPageRoute(builder: (context) => const AllLocationTestScreen()),
     );
   }
 

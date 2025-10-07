@@ -61,6 +61,9 @@ dependencies:
   
   # Path utilities
   path: ^1.9.0
+  
+  # Home Widget
+  home_widget: ^0.6.0
 
 dev_dependencies:
   flutter_test:

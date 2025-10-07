@@ -12,6 +12,7 @@ import '../services/weather_alert_service.dart';
 import '../services/city_service.dart';
 import '../services/city_data_service.dart';
 import '../services/sun_moon_index_service.dart';
+import '../services/weather_widget_service.dart';
 import '../constants/app_constants.dart';
 import '../utils/app_state_manager.dart';
 import '../utils/city_name_matcher.dart';
@@ -26,6 +27,8 @@ class WeatherProvider extends ChangeNotifier {
   final DatabaseService _databaseService = DatabaseService.getInstance();
   final CityService _cityService = CityService.getInstance();
   final WeatherAlertService _alertService = WeatherAlertService.instance;
+  final WeatherWidgetService _widgetService =
+      WeatherWidgetService.getInstance();
 
   // 获取CityDataService实例
   CityDataService get _cityDataService => CityDataService.getInstance();
@@ -308,6 +311,14 @@ class WeatherProvider extends ChangeNotifier {
       if (_currentLocation != null && _error == null) {
         print('📍 WeatherProvider: refreshWeatherData 准备发送定位成功通知');
         LocationChangeNotifier().notifyLocationSuccess(_currentLocation!);
+
+        // 更新小组件
+        if (_currentWeather != null) {
+          _widgetService.updateWidget(
+            weatherData: _currentWeather!,
+            location: _currentLocation!,
+          );
+        }
       } else {
         print(
           '📍 WeatherProvider: refreshWeatherData 跳过通知 - 位置: ${_currentLocation?.district}, 错误: $_error',

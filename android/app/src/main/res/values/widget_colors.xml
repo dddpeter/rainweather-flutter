@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 亮色主题 - 天空蓝毛玻璃效果，深色背景确保图标清晰可见 -->
+    <color name="widget_background_blur">#F0E1F5FE</color>
+    <color name="widget_gradient_start">#4081D4FA</color>
+    <color name="widget_gradient_end">#2640C4FF</color>
+    <color name="widget_border">#660277BD</color>
+    <color name="widget_text_primary">#01579B</color>
+    <color name="widget_text_secondary">#0277BD</color>
+    <color name="widget_text_tertiary">#0288D1</color>
+    <color name="widget_temperature">#D32F2F</color>
+    <color name="widget_temp_high">#C62828</color>
+    <color name="widget_temp_low">#1565C0</color>
+    <color name="widget_accent">#1976D2</color>
+    <color name="widget_divider">#4D1976D2</color>
+    <color name="widget_weather_icon">#FF6F00</color>
+</resources>

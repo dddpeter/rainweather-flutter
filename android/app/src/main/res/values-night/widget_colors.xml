@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 暗色主题 - 毛玻璃效果 -->
+    <color name="widget_background_blur">#B3000000</color>
+    <color name="widget_gradient_start">#1AFFFFFF</color>
+    <color name="widget_gradient_end">#0D000000</color>
+    <color name="widget_border">#33FFFFFF</color>
+    <color name="widget_text_primary">#FFFFFF</color>
+    <color name="widget_text_secondary">#F5F5F5</color>
+    <color name="widget_text_tertiary">#CCCCCC</color>
+    <color name="widget_temperature">#FF7043</color>
+    <color name="widget_temp_high">#EF5350</color>
+    <color name="widget_temp_low">#64B5F6</color>
+    <color name="widget_accent">#64B5F6</color>
+    <color name="widget_divider">#44FFFFFF</color>
+    <color name="widget_weather_icon">#FFB74D</color>
+</resources>

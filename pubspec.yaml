@@ -10,6 +10,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   # UI Components
   cupertino_icons: ^1.0.8
@@ -64,6 +66,9 @@ dependencies:
   
   # Home Widget
   home_widget: ^0.6.0
+  
+  # Lunar Calendar (农历/黄历)
+  lunar: ^1.7.4
 
 dev_dependencies:
   flutter_test:

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'dart:ui';
 import 'package:provider/provider.dart';
 import 'providers/weather_provider.dart';
@@ -168,6 +169,17 @@ class RainWeatherApp extends StatelessWidget {
                 return MaterialApp(
                   title: '知雨天气2',
                   debugShowCheckedModeBanner: false,
+                  // 中文本地化支持
+                  localizationsDelegates: const [
+                    GlobalMaterialLocalizations.delegate,
+                    GlobalWidgetsLocalizations.delegate,
+                    GlobalCupertinoLocalizations.delegate,
+                  ],
+                  supportedLocales: const [
+                    Locale('zh', 'CN'), // 简体中文
+                    Locale('en', 'US'), // 英文
+                  ],
+                  locale: const Locale('zh', 'CN'), // 默认中文
                   theme: _buildLightTheme(themeProvider),
                   darkTheme: _buildDarkTheme(themeProvider),
                   themeMode: _getThemeMode(themeProvider.themeMode),

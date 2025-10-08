@@ -21,7 +21,10 @@ class BaiduLocationService {
   StreamSubscription<Map<String, Object>>? _locationSubscription;
   bool _isInitialized = false;
 
-  // 百度定位AK配置（在AndroidManifest.xml和iOS中配置）
+  // 百度定位AK配置
+  // Android端AK在AndroidManifest.xml中配置
+  // iOS端AK通过代码设置
+  static const String _iosAK = '3S45oqe6EyUi1KKSXhjEgp4qvnsqbDW9';
 
   BaiduLocationService._();
 
@@ -37,6 +40,13 @@ class BaiduLocationService {
 
       // 设置定位插件隐私政策同意
       _loc.setAgreePrivacy(true);
+
+      // iOS端需要通过代码设置AK
+      if (Platform.isIOS) {
+        print('🔧 BaiduLocationService: 设置iOS端AK');
+        await _loc.authAK(_iosAK);
+        print('✅ BaiduLocationService: iOS端AK设置成功');
+      }
 
       // 请求定位权限（参照demo）
       print('🔧 BaiduLocationService: 请求定位权限');
@@ -100,7 +110,12 @@ class BaiduLocationService {
   /// 检查定位权限
   Future<BaiduLocationPermissionResult> checkLocationPermission() async {
     try {
-      PermissionStatus status = await Permission.location.status;
+      // iOS上使用locationWhenInUse，Android上使用location
+      final permission = Platform.isIOS
+          ? Permission.locationWhenInUse
+          : Permission.location;
+
+      PermissionStatus status = await permission.status;
 
       if (status == PermissionStatus.granted) {
         return BaiduLocationPermissionResult.granted;
@@ -119,7 +134,12 @@ class BaiduLocationService {
 
   /// 申请定位权限
   Future<bool> requestLocationPerm() async {
-    final status = await Permission.location.request();
+    // iOS上使用locationWhenInUse，Android上使用location
+    final permission = Platform.isIOS
+        ? Permission.locationWhenInUse
+        : Permission.location;
+
+    final status = await permission.request();
     return status.isGranted;
   }
 
@@ -133,7 +153,11 @@ class BaiduLocationService {
         return BaiduLocationPermissionResult.granted;
       } else {
         // 检查是否被永久拒绝
-        PermissionStatus status = await Permission.location.status;
+        final permission = Platform.isIOS
+            ? Permission.locationWhenInUse
+            : Permission.location;
+
+        PermissionStatus status = await permission.status;
         if (status == PermissionStatus.permanentlyDenied) {
           return BaiduLocationPermissionResult.deniedForever;
         } else {
@@ -321,21 +345,26 @@ class BaiduLocationService {
         await initialize();
       }
 
-      // 检查权限
-      print('🔍 BaiduLocationService: 检查权限');
-      BaiduLocationPermissionResult permissionResult =
-          await checkLocationPermission();
-      if (permissionResult == BaiduLocationPermissionResult.denied) {
-        print('🔍 BaiduLocationService: 请求权限');
-        permissionResult = await requestLocationPermission();
+      // iOS暂时跳过权限检查，直接尝试定位
+      if (Platform.isIOS) {
+        print('📱 BaiduLocationService: iOS平台，跳过权限检查，直接定位');
+      } else {
+        // Android继续检查权限
+        print('🔍 BaiduLocationService: 检查权限');
+        BaiduLocationPermissionResult permissionResult =
+            await checkLocationPermission();
+        if (permissionResult == BaiduLocationPermissionResult.denied) {
+          print('🔍 BaiduLocationService: 请求权限');
+          permissionResult = await requestLocationPermission();
+        }
+
+        if (permissionResult != BaiduLocationPermissionResult.granted) {
+          print('❌ BaiduLocationService: 权限未授予');
+          throw BaiduLocationException('定位权限未授予');
+        }
       }
 
-      if (permissionResult != BaiduLocationPermissionResult.granted) {
-        print('❌ BaiduLocationService: 权限未授予');
-        throw BaiduLocationException('定位权限未授予');
-      }
-
-      print('✅ BaiduLocationService: 权限已获取');
+      print('✅ BaiduLocationService: 准备开始定位');
 
       // 创建Completer来处理异步结果
       final Completer<LocationModel?> completer = Completer<LocationModel?>();

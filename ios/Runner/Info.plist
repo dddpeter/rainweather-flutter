@@ -77,6 +77,16 @@
 	<!-- 网络使用说明 -->
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>知雨天气需要网络连接以获取最新的天气数据</string>
+	<!-- 定位服务配置 -->
+	<!-- 高德地图 API Key -->
+	<key>AMapKey</key>
+	<string>542565641b09a13192d52ca9c00cf7bb</string>
+	<!-- 百度地图 API Key -->
+	<key>BMKMapKey</key>
+	<string>6gzLA6FpAfvzIkFij3NpqUPl3n0Suv4f</string>
+	<!-- 腾讯地图 API Key -->
+	<key>TencentMapKey</key>
+	<string>ONHBZ-X3WWZ-FADXR-T5BOL-C4RP7-THFFB</string>
 	<!-- 高德地图配置 -->
 	<key>NSAppTransportSecurity</key>
 	<dict>

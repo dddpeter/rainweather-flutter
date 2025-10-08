@@ -20,6 +20,8 @@ import '../widgets/weather_alert_widget.dart';
 import '../services/weather_alert_service.dart';
 import '../services/location_change_notifier.dart';
 import '../services/page_activation_observer.dart';
+import '../services/lunar_service.dart';
+import '../widgets/lunar_info_widget.dart';
 import 'hourly_screen.dart';
 import 'weather_alerts_screen.dart';
 
@@ -587,6 +589,15 @@ class _TodayScreenState extends State<TodayScreen>
                         const SunMoonWidget(),
                         AppColors.cardSpacingWidget,
                         _buildTemperatureChart(weatherProvider),
+                        AppColors.cardSpacingWidget,
+                        // 农历信息
+                        _buildLunarInfo(),
+                        AppColors.cardSpacingWidget,
+                        // 宜忌信息
+                        _buildYiJiInfo(),
+                        AppColors.cardSpacingWidget,
+                        // 即将到来的节气
+                        _buildUpcomingSolarTerms(),
                         const SizedBox(height: 80), // Space for bottom buttons
                       ],
                     ),
@@ -742,26 +753,133 @@ class _TodayScreenState extends State<TodayScreen>
                 ],
               ),
 
-              // 农历日期 - Material Design 3
-              if (weather?.current?.nongLi != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  weather!.current!.nongLi!,
-                  style: TextStyle(
-                    color: context.read<ThemeProvider>().getColor(
-                      'headerTextSecondary',
-                    ),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w400,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ],
+              // 农历日期和节气 - Material Design 3
+              const SizedBox(height: 12),
+              _buildLunarAndSolarTerm(weather),
             ],
           ),
         ),
       ),
     );
+  }
+
+  /// 构建农历和节气节日信息（头部区域）- Tag样式
+  Widget _buildLunarAndSolarTerm(dynamic weather) {
+    try {
+      final lunarService = LunarService.getInstance();
+      final lunarInfo = lunarService.getLunarInfo(DateTime.now());
+      final nongLi = weather?.current?.nongLi;
+
+      // 收集所有要显示的标签
+      final tags = <Widget>[];
+
+      // 农历日期
+      if (nongLi != null) {
+        tags.add(
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.calendar_today,
+                color: context.read<ThemeProvider>().getColor(
+                  'headerTextSecondary',
+                ),
+                size: 14,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                nongLi,
+                style: TextStyle(
+                  color: context.read<ThemeProvider>().getColor(
+                    'headerTextSecondary',
+                  ),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+
+      // 节气（如果有）- 不要图标
+      if (lunarInfo.solarTerm != null && lunarInfo.solarTerm!.isNotEmpty) {
+        tags.add(
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              lunarInfo.solarTerm!,
+              style: TextStyle(
+                color: context.read<ThemeProvider>().getColor(
+                  'headerTextSecondary',
+                ),
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.3,
+              ),
+            ),
+          ),
+        );
+      }
+
+      // 传统节日（如果有）- 显示所有节日
+      if (lunarInfo.festivals.isNotEmpty) {
+        for (final festival in lunarInfo.festivals) {
+          tags.add(
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                festival,
+                style: TextStyle(
+                  color: context.read<ThemeProvider>().getColor(
+                    'headerTextSecondary',
+                  ),
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ),
+          );
+        }
+      }
+
+      // 使用Wrap布局，支持自动换行
+      return Wrap(
+        spacing: 8, // 标签间距
+        runSpacing: 6, // 行间距
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center, // 垂直居中对齐
+        children: tags,
+      );
+    } catch (e) {
+      print('❌ 构建农历节气信息失败: $e');
+      // 如果失败，显示基础农历信息
+      final nongLi = weather?.current?.nongLi;
+      if (nongLi != null) {
+        return Text(
+          nongLi,
+          style: TextStyle(
+            color: context.read<ThemeProvider>().getColor(
+              'headerTextSecondary',
+            ),
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
+            letterSpacing: 0.5,
+          ),
+        );
+      }
+      return const SizedBox.shrink();
+    }
   }
 
   Widget _buildTemperatureChart(WeatherProvider weatherProvider) {
@@ -1303,6 +1421,47 @@ class _TodayScreenState extends State<TodayScreen>
     } catch (e) {
       // 静默处理错误，不显示Toast
       print('刷新失败: ${e.toString()}');
+    }
+  }
+
+  /// 构建农历信息卡片
+  Widget _buildLunarInfo() {
+    try {
+      final lunarService = LunarService.getInstance();
+      final lunarInfo = lunarService.getLunarInfo(DateTime.now());
+      return LunarInfoWidget(lunarInfo: lunarInfo);
+    } catch (e) {
+      print('❌ 获取农历信息失败: $e');
+      return const SizedBox.shrink();
+    }
+  }
+
+  /// 构建宜忌信息卡片
+  Widget _buildYiJiInfo() {
+    try {
+      final lunarService = LunarService.getInstance();
+      final lunarInfo = lunarService.getLunarInfo(DateTime.now());
+      return YiJiWidget(lunarInfo: lunarInfo);
+    } catch (e) {
+      print('❌ 获取宜忌信息失败: $e');
+      return const SizedBox.shrink();
+    }
+  }
+
+  /// 构建即将到来的节气
+  Widget _buildUpcomingSolarTerms() {
+    try {
+      final lunarService = LunarService.getInstance();
+      final upcomingTerms = lunarService.getUpcomingSolarTerms(days: 60);
+
+      if (upcomingTerms.isEmpty) {
+        return const SizedBox.shrink();
+      }
+
+      return SolarTermListWidget(solarTerms: upcomingTerms, title: '即将到来的节气');
+    } catch (e) {
+      print('❌ 获取节气信息失败: $e');
+      return const SizedBox.shrink();
     }
   }
 }

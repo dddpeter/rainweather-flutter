@@ -60,8 +60,13 @@ class AMapLocationService {
     try {
       print('🔧 AMapLocationService: 开始初始化');
 
-      // 检查权限
-      if (await _getPermissions()) return;
+      // iOS平台跳过权限检查，直接初始化
+      if (!Platform.isIOS) {
+        // Android检查权限
+        if (await _getPermissions()) return;
+      } else {
+        print('📱 AMapLocationService: iOS平台，跳过初始化时的权限检查');
+      }
 
       // 初始化AMap定位
       final bool data = await _location.initialize();
@@ -82,14 +87,19 @@ class AMapLocationService {
     try {
       print('🔍 AMapLocationService: 检查定位权限');
 
-      final status = await Permission.location.status;
+      // iOS上使用locationWhenInUse，Android上使用location
+      final permission = Platform.isIOS
+          ? Permission.locationWhenInUse
+          : Permission.location;
+
+      final status = await permission.status;
       if (status.isGranted) {
         print('✅ AMapLocationService: 权限已获取');
         return false;
       }
 
       print('🔍 AMapLocationService: 请求定位权限');
-      final requestStatus = await Permission.location.request();
+      final requestStatus = await permission.request();
 
       if (requestStatus.isGranted) {
         print('✅ AMapLocationService: 权限获取成功');
@@ -120,13 +130,18 @@ class AMapLocationService {
         await initialize();
       }
 
-      // 检查权限
-      if (await _getPermissions()) {
-        print('❌ AMapLocationService: 权限未授予');
-        throw AMapLocationException('定位权限未授予');
+      // iOS暂时跳过权限检查，直接尝试定位
+      if (Platform.isIOS) {
+        print('📱 AMapLocationService: iOS平台，跳过权限检查，直接定位');
+      } else {
+        // Android继续检查权限
+        if (await _getPermissions()) {
+          print('❌ AMapLocationService: 权限未授予');
+          throw AMapLocationException('定位权限未授予');
+        }
       }
 
-      print('✅ AMapLocationService: 权限已获取');
+      print('✅ AMapLocationService: 准备开始定位');
 
       // 获取单次定位
       print('🚀 开始高德地图定位...');

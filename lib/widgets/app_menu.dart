@@ -8,6 +8,7 @@ import '../screens/weather_layout_test_screen.dart';
 import '../screens/weather_alert_settings_screen.dart';
 import '../screens/weather_alert_test_screen.dart';
 import '../screens/all_location_test_screen.dart';
+import '../screens/lunar_calendar_screen.dart';
 
 class AppMenu extends StatelessWidget {
   const AppMenu({super.key});
@@ -46,6 +47,21 @@ class AppMenu extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   Text('主题设置', style: TextStyle(color: AppColors.textPrimary)),
+                ],
+              ),
+            ),
+            // 老黄历
+            PopupMenuItem<String>(
+              value: 'lao_huang_li',
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.calendar_view_month_rounded,
+                    color: AppColors.warning,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Text('黄历节日', style: TextStyle(color: AppColors.textPrimary)),
                 ],
               ),
             ),
@@ -163,6 +179,9 @@ class AppMenu extends StatelessWidget {
       case 'theme':
         _showThemeDialog(context);
         break;
+      case 'lao_huang_li':
+        _navigateToLaoHuangLi(context);
+        break;
       case 'weather_test':
         _navigateToWeatherTest(context);
         break;
@@ -182,6 +201,15 @@ class AppMenu extends StatelessWidget {
         _showAboutDialog(context);
         break;
     }
+  }
+
+  void _navigateToLaoHuangLi(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const LunarCalendarScreen(isSelectMode: false),
+      ),
+    );
   }
 
   void _navigateToWeatherTest(BuildContext context) {

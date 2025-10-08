@@ -60,8 +60,13 @@ class TencentLocationService {
     try {
       print('🔧 TencentLocationService: 开始初始化');
 
-      // 检查权限
-      if (await _getPermissions()) return;
+      // iOS平台跳过权限检查，直接初始化
+      if (!Platform.isIOS) {
+        // Android检查权限
+        if (await _getPermissions()) return;
+      } else {
+        print('📱 TencentLocationService: iOS平台，跳过初始化时的权限检查');
+      }
 
       // 隐私政策同意和初始化已在应用启动时设置
       _isInitialized = true;
@@ -77,14 +82,19 @@ class TencentLocationService {
     try {
       print('🔍 TencentLocationService: 检查定位权限');
 
-      final status = await Permission.location.status;
+      // iOS上使用locationWhenInUse，Android上使用location
+      final permission = Platform.isIOS
+          ? Permission.locationWhenInUse
+          : Permission.location;
+
+      final status = await permission.status;
       if (status.isGranted) {
         print('✅ TencentLocationService: 权限已获取');
         return false;
       }
 
       print('🔍 TencentLocationService: 请求定位权限');
-      final requestStatus = await Permission.location.request();
+      final requestStatus = await permission.request();
 
       if (requestStatus.isGranted) {
         print('✅ TencentLocationService: 权限获取成功');
@@ -115,13 +125,18 @@ class TencentLocationService {
         await initialize();
       }
 
-      // 检查权限
-      if (await _getPermissions()) {
-        print('❌ TencentLocationService: 权限未授予');
-        throw TencentLocationException('定位权限未授予');
+      // iOS暂时跳过权限检查，直接尝试定位
+      if (Platform.isIOS) {
+        print('📱 TencentLocationService: iOS平台，跳过权限检查，直接定位');
+      } else {
+        // Android继续检查权限
+        if (await _getPermissions()) {
+          print('❌ TencentLocationService: 权限未授予');
+          throw TencentLocationException('定位权限未授予');
+        }
       }
 
-      print('✅ TencentLocationService: 权限已获取');
+      print('✅ TencentLocationService: 准备开始定位');
 
       // 获取单次定位
       print('🚀 开始腾讯定位...');

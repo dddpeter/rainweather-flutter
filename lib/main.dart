@@ -28,9 +28,13 @@ import 'models/location_model.dart';
 import 'widgets/custom_bottom_navigation_v2.dart';
 import 'utils/city_name_matcher.dart';
 import 'utils/app_state_manager.dart';
+import 'utils/app_recovery_manager.dart';
 
 // 全局路由观察者
 final PageActivationObserver _pageActivationObserver = PageActivationObserver();
+
+// 应用在后台的时间戳
+DateTime? _appInBackgroundSince;
 
 /// 路由观察者，用于监听页面切换
 class _RouteObserver extends RouteObserver<PageRoute<dynamic>> {
@@ -135,8 +139,78 @@ void main() async {
   runApp(const RainWeatherApp());
 }
 
-class RainWeatherApp extends StatelessWidget {
+class RainWeatherApp extends StatefulWidget {
   const RainWeatherApp({super.key});
+
+  @override
+  State<RainWeatherApp> createState() => _RainWeatherAppState();
+}
+
+class _RainWeatherAppState extends State<RainWeatherApp>
+    with WidgetsBindingObserver {
+  static const Duration _backgroundTimeout = Duration(minutes: 30); // 30分钟超时
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    switch (state) {
+      case AppLifecycleState.paused:
+        // 应用进入后台
+        _appInBackgroundSince = DateTime.now();
+        print('📱 App entered background at: $_appInBackgroundSince');
+        break;
+
+      case AppLifecycleState.resumed:
+        // 应用回到前台
+        final now = DateTime.now();
+        if (_appInBackgroundSince != null) {
+          final backgroundDuration = now.difference(_appInBackgroundSince!);
+          print(
+            '📱 App resumed after being in background for: $backgroundDuration',
+          );
+
+          // 如果在后台时间超过设定的超时时间，则重启应用
+          if (backgroundDuration > _backgroundTimeout) {
+            print(
+              '⏰ App was in background for more than $_backgroundTimeout, restarting...',
+            );
+            _restartApp();
+          }
+        }
+        _appInBackgroundSince = null;
+        break;
+
+      default:
+        break;
+    }
+  }
+
+  void _restartApp() {
+    // 重置应用状态管理器
+    AppStateManager().reset();
+
+    // 重新初始化应用状态
+    // 使用pushAndRemoveUntil确保完全重启应用
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const RainWeatherApp()),
+        (Route<dynamic> route) => false,
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -294,11 +368,6 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   final PageActivationObserver _pageActivationObserver =
       PageActivationObserver();
 
-  // 记录应用进入后台的时间
-  DateTime? _appPausedTime;
-  // 自动刷新的时间间隔（5分钟）
-  static const Duration _autoRefreshInterval = Duration(minutes: 5);
-
   final List<Widget> _screens = [
     const TodayScreen(),
     const HourlyScreen(),
@@ -311,8 +380,8 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    // 检查应用状态，处理被系统杀死后的恢复
-    _checkAndRecoverAppState();
+    // 初始化应用恢复管理器
+    // 恢复检查会在首次resumed时自动执行
   }
 
   @override
@@ -327,67 +396,34 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
 
     switch (state) {
       case AppLifecycleState.paused:
-        // 应用进入后台，记录时间
-        _appPausedTime = DateTime.now();
-        print('🔄 MainScreen: App进入后台，记录时间: $_appPausedTime');
+        // 应用进入后台，使用统一恢复策略管理
+        print('🔄 MainScreen: App进入后台');
 
-        // 进入后台时更新小组件，确保数据及时同步
+        // 进入后台时更新小组件
         _updateWidgetOnPause();
+
+        // 使用恢复管理器保存状态
+        AppRecoveryManager().handlePause();
         break;
 
       case AppLifecycleState.resumed:
-        // 应用从后台恢复
-        print('🔄 MainScreen: App从后台恢复，检查状态');
+        // 应用从后台恢复，使用统一恢复策略
+        print('🔄 MainScreen: App从后台恢复');
 
-        // 检查是否需要刷新
-        if (_appPausedTime != null) {
-          final pauseDuration = DateTime.now().difference(_appPausedTime!);
-          print('🔄 MainScreen: 后台时长: ${pauseDuration.inMinutes} 分钟');
+        final weatherProvider = context.read<WeatherProvider>();
 
-          if (pauseDuration >= _autoRefreshInterval) {
-            print(
-              '🔄 MainScreen: 超过${_autoRefreshInterval.inMinutes}分钟，触发自动刷新',
-            );
-            _performAutoRefresh();
-          }
-
-          // 清除记录的时间
-          _appPausedTime = null;
-        }
-
-        // 检查应用状态
-        _checkAndRecoverAppState();
+        // 使用恢复管理器处理恢复
+        AppRecoveryManager().handleResume(weatherProvider);
         break;
 
       case AppLifecycleState.detached:
         print('🔄 MainScreen: App被分离');
+        // 标记正常关闭
+        AppRecoveryManager().handleShutdown();
         break;
 
       default:
         break;
-    }
-  }
-
-  /// 执行自动刷新
-  Future<void> _performAutoRefresh() async {
-    try {
-      final weatherProvider = context.read<WeatherProvider>();
-
-      // 刷新当前天气数据
-      await weatherProvider.forceRefreshWithLocation();
-
-      // 刷新24小时预报
-      await weatherProvider.refresh24HourForecast();
-
-      // 刷新15日预报
-      await weatherProvider.refresh15DayForecast();
-
-      // 刷新主要城市列表
-      await weatherProvider.loadMainCities();
-
-      print('✅ MainScreen: 自动刷新完成');
-    } catch (e) {
-      print('❌ MainScreen: 自动刷新失败: $e');
     }
   }
 
@@ -408,39 +444,6 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       }
     } catch (e) {
       print('❌ MainScreen: 更新小组件失败: $e');
-    }
-  }
-
-  /// 检查并恢复应用状态（处理app被系统杀死的情况）
-  Future<void> _checkAndRecoverAppState() async {
-    final appStateManager = AppStateManager();
-
-    // 如果应用未完全启动，说明可能被系统杀死后冷启动
-    if (!appStateManager.isAppFullyStarted) {
-      print('⚠️ MainScreen: 检测到应用状态未初始化，可能是被系统杀死后恢复');
-      print('🔄 MainScreen: 开始重新初始化应用状态');
-
-      try {
-        // 重新初始化WeatherProvider
-        final weatherProvider = context.read<WeatherProvider>();
-
-        // 标记开始初始化
-        appStateManager.markInitializationStarted();
-
-        // 重新初始化天气数据
-        await weatherProvider.initializeWeather();
-
-        // 标记应用完全启动
-        appStateManager.markAppFullyStarted();
-
-        print('✅ MainScreen: 应用状态恢复完成');
-      } catch (e) {
-        print('❌ MainScreen: 应用状态恢复失败: $e');
-        // 即使失败也标记为已启动，避免永久卡住
-        appStateManager.markAppFullyStarted();
-      }
-    } else {
-      print('✅ MainScreen: 应用状态正常');
     }
   }
 

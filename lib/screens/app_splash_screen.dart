@@ -75,16 +75,21 @@ class _AppSplashScreenState extends State<AppSplashScreen>
         AppStateManager().markAppFullyStarted();
 
         // 跳转到主界面
-        Navigator.of(context).pushReplacement(
+        Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const MainScreen()),
+          (Route<dynamic> route) => false,
         );
       }
     } catch (e) {
       print('❌ 启动初始化失败: $e');
       // 即使失败也跳转到主界面
       if (mounted) {
-        Navigator.of(context).pushReplacement(
+        // 标记应用完全启动（即使初始化失败）
+        AppStateManager().markAppFullyStarted();
+
+        Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const MainScreen()),
+          (Route<dynamic> route) => false,
         );
       }
     }

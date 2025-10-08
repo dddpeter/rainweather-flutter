@@ -89,7 +89,5 @@ flutter:
   assets:
     - assets/images/
     - assets/images/backgroud.png
-    - assets/images/splash.jpg
-    - assets/icons/
     - assets/data/city.json
     - assets/data/

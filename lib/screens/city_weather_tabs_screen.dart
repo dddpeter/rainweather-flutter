@@ -13,6 +13,7 @@ import '../widgets/weather_animation_widget.dart';
 import '../widgets/hourly_chart.dart';
 import '../widgets/hourly_list.dart';
 import '../widgets/forecast15d_chart.dart';
+import '../widgets/weather_details_widget.dart';
 import '../models/weather_model.dart';
 
 class CityWeatherTabsScreen extends StatefulWidget {
@@ -375,8 +376,13 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
         physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
           children: [
+            // 空气质量卡片
+            _buildAirQualityCard(weatherProvider),
             // 详细信息卡片
-            _buildWeatherDetails(weatherProvider),
+            WeatherDetailsWidget(
+              weather: weatherProvider.currentWeather,
+              showAirQuality: false,
+            ),
             AppColors.cardSpacingWidget,
             // 生活指数
             LifeIndexWidget(weatherProvider: weatherProvider),
@@ -735,9 +741,25 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
     );
   }
 
-  Widget _buildWeatherDetails(WeatherProvider weatherProvider) {
+  /// 构建空气质量卡片
+  Widget _buildAirQualityCard(WeatherProvider weatherProvider) {
     final weather = weatherProvider.currentWeather;
     final air = weather?.current?.air ?? weather?.air;
+
+    if (air == null) {
+      return const SizedBox.shrink();
+    }
+
+    final aqi = int.tryParse(air.AQI ?? '');
+    if (aqi == null) {
+      return const SizedBox.shrink();
+    }
+
+    final level = air.levelIndex ?? _getAirQualityLevelText(aqi);
+    final color = _getAirQualityColor(aqi);
+
+    // 计算标尺位置（0-500范围）
+    final progress = (aqi / 500).clamp(0.0, 1.0);
 
     return Padding(
       padding: const EdgeInsets.symmetric(
@@ -747,105 +769,146 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
         elevation: AppColors.cardElevation,
         shadowColor: AppColors.cardShadowColor,
         color: AppColors.materialCardColor,
-        surfaceTintColor: Colors.transparent,
         shape: AppColors.cardShape,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // 标题行
               Row(
                 children: [
                   Icon(
-                    Icons.info_outline,
-                    color: AppColors.moon,
+                    Icons.air,
+                    color: color,
                     size: AppConstants.sectionTitleIconSize,
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    '详细信息',
+                    '空气质量',
                     style: TextStyle(
                       color: AppColors.textPrimary,
                       fontSize: AppConstants.sectionTitleFontSize,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+                  const Spacer(),
+                  // AQI数值
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '$aqi',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    level,
+                    style: TextStyle(
+                      color: color,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
-              if (air != null) ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildCompactDetailItem(
-                        Icons.air,
-                        '空气质量',
-                        '${_formatNumber(air.AQI)} (${air.levelIndex ?? '未知'})',
-                        AppColors.cardThemeBlue,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    if (weather?.current?.current != null)
-                      Expanded(
-                        child: _buildCompactDetailItem(
-                          Icons.thermostat,
-                          '体感温度',
-                          '${_formatNumber(weather!.current!.current!.feelstemperature)}℃',
-                          AppColors.cardThemeBlue,
+
+              // 空气质量标尺
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 标尺背景和进度
+                  Stack(
+                    children: [
+                      // 彩色渐变背景（6段）
+                      Container(
+                        height: 12,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(6),
+                          gradient: const LinearGradient(
+                            colors: [
+                              AppColors.airExcellent, // 优 0-50
+                              AppColors.airGood, // 良 50-100
+                              AppColors.airLight, // 轻度污染 100-150
+                              AppColors.airModerate, // 中度污染 150-200
+                              AppColors.airHeavy, // 重度污染 200-300
+                              AppColors.airSevere, // 严重污染 300-500
+                            ],
+                            stops: [0.0, 0.1, 0.2, 0.4, 0.6, 1.0],
+                          ),
                         ),
                       ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-              ],
-              if (weather?.current?.current != null) ...[
-                // 第一行：湿度和气压
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildCompactDetailItem(
-                        Icons.water_drop,
-                        '湿度',
-                        '${_formatNumber(weather!.current!.current!.humidity)}%',
-                        AppColors.cardThemeBlue,
+                      // 当前位置指示器
+                      Positioned(
+                        left:
+                            progress * (MediaQuery.of(context).size.width - 64),
+                        top: -4,
+                        child: Container(
+                          width: 20,
+                          height: 20,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: color, width: 3),
+                            boxShadow: [
+                              BoxShadow(
+                                color: color.withOpacity(0.3),
+                                blurRadius: 8,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: _buildCompactDetailItem(
-                        Icons.compress,
-                        '气压',
-                        '${_formatNumber(weather.current!.current!.airpressure)}hpa',
-                        AppColors.cardThemeBlue,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                // 第二行：风力和能见度
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildCompactDetailItem(
-                        Icons.air,
-                        '风力',
-                        '${weather.current!.current!.winddir ?? '--'} ${weather.current!.current!.windpower ?? ''}',
-                        AppColors.cardThemeBlue,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: _buildCompactDetailItem(
-                        Icons.visibility,
-                        '能见度',
-                        '${_formatNumber(weather.current!.current!.visibility)}km',
-                        AppColors.cardThemeBlue,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-              ],
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+
+                  // 刻度标签
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildScaleLabel('0'),
+                      _buildScaleLabel('50'),
+                      _buildScaleLabel('100'),
+                      _buildScaleLabel('150'),
+                      _buildScaleLabel('200'),
+                      _buildScaleLabel('300+'),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // 等级说明 - 平均分布占满一行
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(child: _buildLevelTag('优', AppColors.airExcellent)),
+                  const SizedBox(width: 4),
+                  Expanded(child: _buildLevelTag('良', AppColors.airGood)),
+                  const SizedBox(width: 4),
+                  Expanded(child: _buildLevelTag('轻度', AppColors.airLight)),
+                  const SizedBox(width: 4),
+                  Expanded(child: _buildLevelTag('中度', AppColors.airModerate)),
+                  const SizedBox(width: 4),
+                  Expanded(child: _buildLevelTag('重度', AppColors.airHeavy)),
+                  const SizedBox(width: 4),
+                  Expanded(child: _buildLevelTag('严重', AppColors.airSevere)),
+                ],
+              ),
             ],
           ),
         ),
@@ -853,67 +916,59 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
     );
   }
 
-  Widget _buildCompactDetailItem(
-    IconData icon,
-    String label,
-    String value,
-    Color color,
-  ) {
-    Color iconColor = _getDetailItemIconColor(icon);
-    final themeProvider = context.read<ThemeProvider>();
-    final backgroundOpacity = themeProvider.isLightTheme ? 0.08 : 0.25;
-    final iconBackgroundOpacity = themeProvider.isLightTheme ? 0.12 : 0.3;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: iconColor.withOpacity(backgroundOpacity),
-        borderRadius: BorderRadius.circular(4),
+  /// 构建刻度标签
+  Widget _buildScaleLabel(String text) {
+    return Text(
+      text,
+      style: TextStyle(
+        color: AppColors.textSecondary,
+        fontSize: 10,
+        fontWeight: FontWeight.w500,
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: iconColor.withOpacity(iconBackgroundOpacity),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Icon(icon, color: iconColor, size: 16),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 0.2,
-                    ),
-                    textAlign: TextAlign.left,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                height: 1.2,
-              ),
-              textAlign: TextAlign.left,
-            ),
-          ],
+    );
+  }
+
+  /// 构建等级标签
+  Widget _buildLevelTag(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: color.withOpacity(0.5), width: 1),
+      ),
+      child: Center(
+        child: Text(
+          text,
+          style: TextStyle(
+            color: color,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+          ),
+          textAlign: TextAlign.center,
         ),
       ),
     );
+  }
+
+  /// 获取空气质量等级文本
+  String _getAirQualityLevelText(int aqi) {
+    if (aqi <= 50) return '优';
+    if (aqi <= 100) return '良';
+    if (aqi <= 150) return '轻度污染';
+    if (aqi <= 200) return '中度污染';
+    if (aqi <= 300) return '重度污染';
+    return '严重污染';
+  }
+
+  /// 获取空气质量颜色
+  Color _getAirQualityColor(int aqi) {
+    if (aqi <= 50) return AppColors.airExcellent; // 优
+    if (aqi <= 100) return AppColors.airGood; // 良
+    if (aqi <= 150) return AppColors.airLight; // 轻度污染
+    if (aqi <= 200) return AppColors.airModerate; // 中度污染
+    if (aqi <= 300) return AppColors.airHeavy; // 重度污染
+    return AppColors.airSevere; // 严重污染
   }
 
   Widget _buildWeatherTipsCard(WeatherProvider weatherProvider) {
@@ -1014,35 +1069,6 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
         ],
       ),
     );
-  }
-
-  Color _getDetailItemIconColor(IconData icon) {
-    final themeProvider = context.read<ThemeProvider>();
-
-    switch (icon) {
-      case Icons.air:
-        return themeProvider.isLightTheme
-            ? const Color(0xFF1565C0)
-            : const Color(0xFF42A5F5);
-      case Icons.thermostat:
-        return themeProvider.isLightTheme
-            ? const Color(0xFFE53E3E)
-            : const Color(0xFFFF6B6B);
-      case Icons.water_drop:
-        return themeProvider.isLightTheme
-            ? const Color(0xFF0277BD)
-            : const Color(0xFF29B6F6);
-      case Icons.compress:
-        return themeProvider.isLightTheme
-            ? const Color(0xFF7B1FA2)
-            : const Color(0xFFBA68C8);
-      case Icons.visibility:
-        return themeProvider.isLightTheme
-            ? const Color(0xFF2E7D32)
-            : const Color(0xFF4CAF50);
-      default:
-        return AppColors.cardThemeBlue;
-    }
   }
 
   String _getClothingSuggestion(String temperature, String? weather) {

@@ -12,6 +12,7 @@ import '../constants/app_constants.dart';
 import '../widgets/sun_moon_widget.dart';
 import '../widgets/life_index_widget.dart';
 import '../widgets/weather_animation_widget.dart';
+import '../widgets/weather_details_widget.dart';
 import 'hourly_screen.dart';
 
 class CityWeatherScreen extends StatefulWidget {
@@ -182,7 +183,9 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
                             _buildHourlyWeather(weatherProvider),
                             AppColors.cardSpacingWidget,
                             // 详细信息卡片
-                            _buildWeatherDetails(weatherProvider),
+                            WeatherDetailsWidget(
+                              weather: weatherProvider.currentWeather,
+                            ),
                             AppColors.cardSpacingWidget,
                             // 生活指数
                             LifeIndexWidget(weatherProvider: weatherProvider),
@@ -418,194 +421,6 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
     );
   }
 
-  Widget _buildWeatherDetails(WeatherProvider weatherProvider) {
-    final weather = weatherProvider.currentWeather;
-    final air = weather?.current?.air ?? weather?.air;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppConstants.screenHorizontalPadding,
-      ),
-      child: Card(
-        elevation: AppColors.cardElevation,
-        shadowColor: AppColors.cardShadowColor,
-        color: AppColors.materialCardColor,
-        surfaceTintColor: Colors.transparent,
-        shape: AppColors.cardShape,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    color: AppColors.moon, // 使用紫色图标
-                    size: AppConstants.sectionTitleIconSize,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '详细信息',
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: AppConstants.sectionTitleFontSize,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              if (air != null) ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildCompactDetailItem(
-                        Icons.air,
-                        '空气质量',
-                        '${air.AQI ?? '--'} (${air.levelIndex ?? '未知'})',
-                        AppColors.cardThemeBlue,
-                      ),
-                    ),
-                    const SizedBox(width: 4), // 减小间隙
-                    if (weather?.current?.current != null)
-                      Expanded(
-                        child: _buildCompactDetailItem(
-                          Icons.thermostat,
-                          '体感温度',
-                          '${weather!.current!.current!.feelstemperature ?? '--'}℃',
-                          AppColors.cardThemeBlue,
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 4), // 减小间隙
-              ],
-              if (weather?.current?.current != null) ...[
-                // 第一行：湿度和气压
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildCompactDetailItem(
-                        Icons.water_drop,
-                        '湿度',
-                        '${weather!.current!.current!.humidity ?? '--'}%',
-                        AppColors.cardThemeBlue,
-                      ),
-                    ),
-                    const SizedBox(width: 4), // 减小间隙
-                    Expanded(
-                      child: _buildCompactDetailItem(
-                        Icons.compress,
-                        '气压',
-                        '${weather.current!.current!.airpressure ?? '--'}hpa',
-                        AppColors.cardThemeBlue,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4), // 减小间隙
-                // 第二行：风力和能见度
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildCompactDetailItem(
-                        Icons.air,
-                        '风力',
-                        '${weather.current!.current!.winddir ?? '--'} ${weather.current!.current!.windpower ?? ''}',
-                        AppColors.cardThemeBlue,
-                      ),
-                    ),
-                    const SizedBox(width: 4), // 减小间隙
-                    Expanded(
-                      child: _buildCompactDetailItem(
-                        Icons.visibility,
-                        '能见度',
-                        '${weather.current!.current!.visibility ?? '--'}km',
-                        AppColors.cardThemeBlue,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4), // 减小间隙
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCompactDetailItem(
-    IconData icon,
-    String label,
-    String value,
-    Color color,
-  ) {
-    // 根据图标类型获取对应的颜色
-    Color iconColor = _getDetailItemIconColor(icon);
-    final themeProvider = context.read<ThemeProvider>();
-    final backgroundOpacity = themeProvider.isLightTheme ? 0.08 : 0.25;
-    final iconBackgroundOpacity = themeProvider.isLightTheme ? 0.12 : 0.3;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: iconColor.withOpacity(backgroundOpacity), // 根据主题调整透明度
-        borderRadius: BorderRadius.circular(4), // 与今日提醒保持一致
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: iconColor.withOpacity(
-                      iconBackgroundOpacity,
-                    ), // 根据主题调整透明度
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Icon(
-                    icon,
-                    color: iconColor, // 使用图标颜色
-                    size: 16,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 13, // 从11增大到13
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 0.2,
-                    ),
-                    textAlign: TextAlign.left,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                height: 1.2,
-              ),
-              textAlign: TextAlign.left,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   /// 构建天气提示卡片（Material Design 3）
   Widget _buildWeatherTipsCard(WeatherProvider weatherProvider) {
     final weather = weatherProvider.currentWeather;
@@ -711,33 +526,19 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
     );
   }
 
-  /// 根据图标类型获取对应的颜色
+  /// 获取详细信息项图标颜色
   Color _getDetailItemIconColor(IconData icon) {
-    final themeProvider = context.read<ThemeProvider>();
-
-    switch (icon) {
-      case Icons.air:
-        return themeProvider.isLightTheme
-            ? const Color(0xFF1565C0) // 亮色模式：深蓝色
-            : const Color(0xFF42A5F5); // 暗色模式：亮蓝色
-      case Icons.thermostat:
-        return themeProvider.isLightTheme
-            ? const Color(0xFFE53E3E) // 亮色模式：深红色
-            : const Color(0xFFFF6B6B); // 暗色模式：亮红色
-      case Icons.water_drop:
-        return themeProvider.isLightTheme
-            ? const Color(0xFF0277BD) // 亮色模式：深青色
-            : const Color(0xFF29B6F6); // 暗色模式：亮青色
-      case Icons.compress:
-        return themeProvider.isLightTheme
-            ? const Color(0xFF7B1FA2) // 亮色模式：深紫色
-            : const Color(0xFFBA68C8); // 暗色模式：亮紫色
-      case Icons.visibility:
-        return themeProvider.isLightTheme
-            ? const Color(0xFF2E7D32) // 亮色模式：深绿色
-            : const Color(0xFF4CAF50); // 暗色模式：亮绿色
-      default:
-        return AppColors.cardThemeBlue; // 默认使用主题蓝色
+    // 使用更明快、活泼的两种颜色：橙色和蓝色
+    if (icon == Icons.water_drop ||
+        icon == Icons.air ||
+        icon == Icons.eco ||
+        icon == Icons.checkroom ||
+        icon == Icons.local_hospital) {
+      // 橙色系 - 明快活泼
+      return const Color(0xFFFFB74D); // 在亮色和暗色主题下都使用相同的橙色
+    } else {
+      // 蓝色系 - 明快清新
+      return const Color(0xFF4FC3F7); // 在亮色和暗色主题下都使用相同的蓝色
     }
   }
 
@@ -780,3 +581,5 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
     }
   }
 }
+
+class _DetailItem {}

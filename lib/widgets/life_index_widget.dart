@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:math' as math;
 import '../models/sun_moon_index_model.dart';
 import '../providers/weather_provider.dart';
 import '../providers/theme_provider.dart';
@@ -126,13 +127,31 @@ class LifeIndexWidget extends StatelessWidget {
     print('原始指数类型: ${indices.map((e) => e.indexTypeCh).toList()}');
     print('过滤后指数类型: ${filteredIndices.map((e) => e.indexTypeCh).toList()}');
 
-    // 将数据分成两列
+    // 将数据分成两列（第一列：穿衣指数、紫外线强度指数、洗车指数；第二列：感冒指数、化妆指数、运动指数）
+    final List<LifeIndex> column1 = [];
+    final List<LifeIndex> column2 = [];
+
+    for (int i = 0; i < filteredIndices.length; i++) {
+      if (i % 2 == 0) {
+        column1.add(filteredIndices[i]);
+      } else {
+        column2.add(filteredIndices[i]);
+      }
+    }
+
+    // 确保两列长度相同，不足的用空占位符补充
+    final int maxLen = math.max(column1.length, column2.length);
+    while (column1.length < maxLen) {
+      column1.add(_createPlaceholderIndex());
+    }
+    while (column2.length < maxLen) {
+      column2.add(_createPlaceholderIndex());
+    }
+
+    // 构建行数据
     final List<List<LifeIndex>> rows = [];
-    for (int i = 0; i < filteredIndices.length; i += 2) {
-      rows.add([
-        filteredIndices[i],
-        if (i + 1 < filteredIndices.length) filteredIndices[i + 1],
-      ]);
+    for (int i = 0; i < maxLen; i++) {
+      rows.add([column1[i], column2[i]]);
     }
 
     return Column(
@@ -141,13 +160,13 @@ class LifeIndexWidget extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: 4), // 减小间隙
           child: Row(
             children: [
-              Expanded(child: _buildLifeIndexItem(row[0], context)),
+              Expanded(
+                child: _buildLifeIndexItem(row[0], context, true),
+              ), // 第一列使用橙色
               const SizedBox(width: 4), // 减小间隙
               Expanded(
-                child: row.length > 1
-                    ? _buildLifeIndexItem(row[1], context)
-                    : const SizedBox(), // 如果只有一项，用空容器占位
-              ),
+                child: _buildLifeIndexItem(row[1], context, false),
+              ), // 第二列使用蓝色
             ],
           ),
         );
@@ -155,12 +174,31 @@ class LifeIndexWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildLifeIndexItem(LifeIndex lifeIndex, BuildContext context) {
-    Color color = _getLifeIndexColor(lifeIndex.indexTypeCh ?? '', context);
+  /// 创建占位符指数
+  LifeIndex _createPlaceholderIndex() {
+    return LifeIndex(indexTypeCh: '', indexLevel: '', indexContent: '');
+  }
+
+  Widget _buildLifeIndexItem(
+    LifeIndex lifeIndex,
+    BuildContext context,
+    bool isFirstColumn,
+  ) {
+    // 如果是占位符，返回空容器
+    if (lifeIndex.indexTypeCh == '' && lifeIndex.indexLevel == '') {
+      return const SizedBox();
+    }
+
+    // 根据所在列决定颜色，而不是根据指数类型
+    Color color = isFirstColumn
+        ? const Color(0xFFFFB74D) // 第一列使用橙色
+        : const Color(0xFF64DD17); // 第二列使用绿色（替换原来的蓝色）
+
     IconData icon = _getLifeIndexIcon(lifeIndex.indexTypeCh ?? '');
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    final backgroundOpacity = themeProvider.isLightTheme ? 0.08 : 0.25;
-    final iconBackgroundOpacity = themeProvider.isLightTheme ? 0.12 : 0.3;
+    // 提高亮色模式下的清晰度
+    final backgroundOpacity = themeProvider.isLightTheme ? 0.15 : 0.25;
+    final iconBackgroundOpacity = themeProvider.isLightTheme ? 0.2 : 0.3;
 
     return Builder(
       builder: (context) => InkWell(
@@ -244,37 +282,15 @@ class LifeIndexWidget extends StatelessWidget {
     }
   }
 
-  Color _getLifeIndexColor(String indexType, BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-
-    switch (indexType) {
-      case '穿衣指数':
-        return themeProvider.isLightTheme
-            ? const Color(0xFFE53E3E) // 亮色模式：深红色
-            : const Color(0xFFFF6B6B); // 暗色模式：亮红色
-      case '感冒指数':
-        return themeProvider.isLightTheme
-            ? const Color(0xFF2E7D32) // 亮色模式：深绿色
-            : const Color(0xFF4CAF50); // 暗色模式：亮绿色
-      case '化妆指数':
-        return themeProvider.isLightTheme
-            ? const Color(0xFF7B1FA2) // 亮色模式：深紫色
-            : const Color(0xFFBA68C8); // 暗色模式：亮紫色
-      case '紫外线强度指数':
-        return themeProvider.isLightTheme
-            ? const Color(0xFFE65100) // 亮色模式：深橙色
-            : const Color(0xFFFF9800); // 暗色模式：亮橙色
-      case '洗车指数':
-        return themeProvider.isLightTheme
-            ? const Color(0xFF1565C0) // 亮色模式：深蓝色
-            : const Color(0xFF42A5F5); // 暗色模式：亮蓝色
-      case '运动指数':
-        return themeProvider.isLightTheme
-            ? const Color(0xFFD84315) // 亮色模式：深橙红色
-            : const Color(0xFFFF7043); // 暗色模式：亮橙红色
-      default:
-        return AppColors.cardThemeBlue; // 默认使用主题蓝色
-    }
+  Color _getLifeIndexColor(
+    String indexType,
+    BuildContext context,
+    bool isFirstColumn,
+  ) {
+    // 根据所在列决定颜色，而不是根据指数类型
+    return isFirstColumn
+        ? const Color(0xFFFFB74D) // 第一列使用橙色
+        : const Color(0xFF4FC3F7); // 第二列使用蓝色
   }
 
   /// 截断指标名称，最多显示5个字，超过则去掉末尾的"指数"
@@ -301,6 +317,26 @@ class LifeIndexWidget extends StatelessWidget {
     showDialog(
       context: context,
       builder: (BuildContext context) {
+        // 确定当前指数在列表中的位置，以决定使用哪种颜色
+        final targetIndices = [
+          '穿衣指数',
+          '感冒指数',
+          '化妆指数',
+          '紫外线强度指数',
+          '洗车指数',
+          '运动指数',
+        ];
+        final int indexInList = targetIndices.indexOf(
+          lifeIndex.indexTypeCh ?? '',
+        );
+        final bool isFirstColumn =
+            indexInList % 2 == 0; // 第一列（0, 2, 4）使用橙色，第二列（1, 3, 5）使用绿色
+
+        // 根据所在列决定颜色
+        final Color indexColor = isFirstColumn
+            ? const Color(0xFFFFB74D) // 第一列使用橙色
+            : const Color(0xFF64DD17); // 第二列使用绿色（替换原来的蓝色）
+
         return AlertDialog(
           backgroundColor: AppColors.backgroundSecondary,
           surfaceTintColor: Colors.transparent,
@@ -311,12 +347,12 @@ class LifeIndexWidget extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.detailCardGreen.withOpacity(0.2),
+                  color: indexColor.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
                   _getLifeIndexIcon(lifeIndex.indexTypeCh ?? ''),
-                  color: AppColors.detailCardGreen,
+                  color: indexColor,
                   size: 24,
                 ),
               ),
@@ -340,10 +376,10 @@ class LifeIndexWidget extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.detailCardGreen.withOpacity(0.1),
+                  color: indexColor.withOpacity(0.15), // 提高透明度以增强可见性
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: AppColors.detailCardGreen.withOpacity(0.3),
+                    color: indexColor.withOpacity(0.4), // 增加边框透明度以提高可见性
                     width: 1,
                   ),
                 ),

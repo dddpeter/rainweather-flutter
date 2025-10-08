@@ -990,6 +990,17 @@ class WeatherProvider extends ChangeNotifier {
       }
     } finally {
       _setLoading(false);
+
+      // 更新小组件（确保数据及时同步）
+      if (_currentWeather != null &&
+          _currentLocation != null &&
+          _error == null) {
+        _widgetService.updateWidget(
+          weatherData: _currentWeather!,
+          location: _currentLocation!,
+        );
+      }
+
       notifyListeners();
     }
   }
@@ -1067,6 +1078,7 @@ class WeatherProvider extends ChangeNotifier {
       print(
         'After restore - _currentLocation district: ${_currentLocation?.district}',
       );
+
       notifyListeners();
       print(
         'Restored to current location weather (alerts already cleared): ${_originalLocation!.district}',

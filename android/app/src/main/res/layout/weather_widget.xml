@@ -72,8 +72,8 @@
 
             <ImageView
                 android:id="@+id/image_weather_icon"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
+                android:layout_width="68dp"
+                android:layout_height="68dp"
                 android:src="@drawable/q"
                 android:scaleType="fitCenter"
                 android:contentDescription="天气图标" />
@@ -122,7 +122,9 @@
                 android:text="📍 朝阳区"
                 android:textSize="12sp"
                 android:textColor="@color/widget_text_secondary"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end" />
 
             <TextView
                 android:id="@+id/text_aqi"
@@ -132,7 +134,9 @@
                 android:text="空气 良"
                 android:textSize="12sp"
                 android:textColor="@color/widget_text_secondary"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end" />
 
             <TextView
                 android:id="@+id/text_wind"
@@ -142,7 +146,9 @@
                 android:text="东南风2级"
                 android:textSize="12sp"
                 android:textColor="@color/widget_text_secondary"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end" />
 
             <TextView
                 android:id="@+id/text_rain"
@@ -152,7 +158,9 @@
                 android:text="💧今日无雨"
                 android:textSize="12sp"
                 android:textColor="@color/widget_text_secondary"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end" />
         </LinearLayout>
 
         <!-- 分隔线 -->

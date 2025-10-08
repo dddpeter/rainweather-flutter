@@ -22,6 +22,7 @@ import 'services/amap_location_service.dart';
 import 'services/tencent_location_service.dart';
 import 'services/location_change_notifier.dart';
 import 'services/page_activation_observer.dart';
+import 'services/weather_widget_service.dart';
 import 'models/location_model.dart';
 import 'widgets/custom_bottom_navigation_v2.dart';
 import 'utils/city_name_matcher.dart';
@@ -317,6 +318,9 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
         // 应用进入后台，记录时间
         _appPausedTime = DateTime.now();
         print('🔄 MainScreen: App进入后台，记录时间: $_appPausedTime');
+
+        // 进入后台时更新小组件，确保数据及时同步
+        _updateWidgetOnPause();
         break;
 
       case AppLifecycleState.resumed:
@@ -372,6 +376,26 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       print('✅ MainScreen: 自动刷新完成');
     } catch (e) {
       print('❌ MainScreen: 自动刷新失败: $e');
+    }
+  }
+
+  /// 应用进入后台时更新小组件
+  void _updateWidgetOnPause() {
+    try {
+      final weatherProvider = context.read<WeatherProvider>();
+
+      // 确保有数据时才更新
+      if (weatherProvider.currentWeather != null &&
+          weatherProvider.currentLocation != null) {
+        final widgetService = WeatherWidgetService.getInstance();
+        widgetService.updateWidget(
+          weatherData: weatherProvider.currentWeather!,
+          location: weatherProvider.currentLocation!,
+        );
+        print('📱 MainScreen: 进入后台时更新小组件');
+      }
+    } catch (e) {
+      print('❌ MainScreen: 更新小组件失败: $e');
     }
   }
 
@@ -704,9 +728,9 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
                                       onPressed: weatherProvider.isLoading
                                           ? null
                                           : () async {
-                                              // 执行强制刷新（不显示Toast提示）
+                                              // 只刷新主要城市天气，不重新定位
                                               await weatherProvider
-                                                  .forceRefreshWithLocation();
+                                                  .refreshMainCitiesWeather();
                                             },
                                       icon: weatherProvider.isLoading
                                           ? SizedBox(

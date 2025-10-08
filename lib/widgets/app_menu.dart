@@ -460,13 +460,13 @@ class AppMenu extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '• 新增桌面天气小组件\n'
-                      '• 小组件支持真实天气图标\n'
-                      '• 小组件自适应暗色/亮色主题\n'
-                      '• 预报显示未来5天天气\n'
-                      '• 后台5分钟自动刷新天气\n'
-                      '• 优化小屏幕显示效果\n'
-                      '• 修复添加城市响应问题',
+                      '• 桌面小组件使用真实天气图标\n'
+                      '• 小组件自适应屏幕大小布局\n'
+                      '• 底部导航栏Material Design 3优化\n'
+                      '• 卡片圆角统一为8dp标准\n'
+                      '• 降雨提醒逻辑优化\n'
+                      '• 主要城市页面刷新优化\n'
+                      '• 修复无限刷新问题',
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,

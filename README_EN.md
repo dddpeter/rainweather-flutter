@@ -228,7 +228,22 @@ This Flutter app is a complete refactor of the original Android weather app with
 
 ## Changelog
 
-### v1.9.0 (Latest)
+### v1.10.0 (Latest)
+
+**UI/UX Improvements**
+- 🎨 Bottom navigation bar Material Design 3 style optimization
+- 📐 Unified card corner radius to 8dp standard (Material Design 3)
+- 🌙 Enhanced selected state visibility in dark mode (24% opacity)
+- 📱 Widget layout optimization for all screen sizes
+
+**Feature Enhancements**
+- 🔄 Main cities page refresh without re-locating, saves battery
+- 📍 Location icon tap triggers re-location only
+- 💧 Improved rain alert logic for better accuracy
+- 🔧 Fixed infinite refresh issue
+- 📏 Widget text single-line display without wrapping
+
+### v1.9.0
 
 **Home Screen Widget**
 - 🏠 New Android home screen weather widget feature

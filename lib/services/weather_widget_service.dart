@@ -133,22 +133,40 @@ class WeatherWidgetService {
 
   /// 获取降雨提醒
   String _getRainAlert(WeatherModel weatherData) {
-    // 检查今日是否有雨
+    // 优先使用 API 返回的 tips（如果包含降雨信息）
+    final tips = weatherData.current?.tips;
+    if (tips != null &&
+        tips.isNotEmpty &&
+        (tips.contains('雨') || tips.contains('伞'))) {
+      // API提示过长则简化
+      if (tips.length > 8) {
+        return '有雨 带伞';
+      }
+      return tips;
+    }
+
+    // 检查当前天气
+    final currentWeather =
+        weatherData.current?.current?.weather?.toLowerCase() ?? '';
+    if (currentWeather.contains('雨')) {
+      return '有雨 带伞';
+    }
+
+    // 检查今日预报是否有雨
     final todayForecast = weatherData.forecast15d?.isNotEmpty == true
         ? weatherData.forecast15d!.first
         : null;
 
-    if (todayForecast == null) return '暂无降雨';
+    if (todayForecast != null) {
+      final textDay = todayForecast.weather_am?.toLowerCase() ?? '';
+      final textNight = todayForecast.weather_pm?.toLowerCase() ?? '';
 
-    final textDay = todayForecast.weather_am?.toLowerCase() ?? '';
-    final textNight = todayForecast.weather_pm?.toLowerCase() ?? '';
-
-    if (textDay.contains('雨') || textNight.contains('雨')) {
-      // 简化提醒（因为当前模型没有降雨概率字段）
-      return '今日有雨 带伞';
+      if (textDay.contains('雨') || textNight.contains('雨')) {
+        return '有雨 带伞';
+      }
     }
 
-    return '今日无雨';
+    return '无雨';
   }
 
   /// 获取5日天气预报

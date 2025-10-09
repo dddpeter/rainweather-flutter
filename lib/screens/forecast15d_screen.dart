@@ -8,6 +8,7 @@ import '../models/weather_model.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_constants.dart';
 import '../widgets/forecast15d_chart.dart';
+import 'daily_weather_detail_screen.dart';
 
 class Forecast15dScreen extends StatefulWidget {
   const Forecast15dScreen({super.key});
@@ -287,112 +288,127 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
         shadowColor: AppColors.cardShadowColor,
         color: AppColors.materialCardColor,
         shape: AppColors.cardShape,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              // Date and week
-              SizedBox(
-                width: 60,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isToday
-                            ? AppColors.accentBlue.withOpacity(0.2)
-                            : AppColors.accentGreen.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(1),
-                        border: Border.all(
+        child: InkWell(
+          onTap: () {
+            // 跳转到单日详情页面
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => DailyWeatherDetailScreen(
+                  dailyWeather: day,
+                  dayIndex: index,
+                ),
+              ),
+            );
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                // Date and week
+                SizedBox(
+                  width: 60,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
                           color: isToday
-                              ? AppColors.accentBlue.withOpacity(0.5)
-                              : AppColors.accentGreen.withOpacity(0.5),
-                          width: 1,
+                              ? AppColors.accentBlue.withOpacity(0.2)
+                              : AppColors.accentGreen.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(1),
+                          border: Border.all(
+                            color: isToday
+                                ? AppColors.accentBlue.withOpacity(0.5)
+                                : AppColors.accentGreen.withOpacity(0.5),
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          isToday
+                              ? '今天'
+                              : isTomorrow
+                              ? '明天'
+                              : day.week ?? '',
+                          style: TextStyle(
+                            color: isToday
+                                ? AppColors.textPrimary
+                                : AppColors.accentGreen,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
                       ),
-                      child: Text(
-                        isToday
-                            ? '今天'
-                            : isTomorrow
-                            ? '明天'
-                            : day.week ?? '',
-                        style: TextStyle(
-                          color: isToday
-                              ? AppColors.textPrimary
-                              : AppColors.accentGreen,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      day.forecasttime ?? '',
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    if (day.sunrise_sunset != null) ...[
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 4),
                       Text(
-                        day.sunrise_sunset!,
+                        day.forecasttime ?? '',
                         style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 10,
+                          color: AppColors.textPrimary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      if (day.sunrise_sunset != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          day.sunrise_sunset!,
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Weather info - compact horizontal layout
+                Expanded(
+                  child: Row(
+                    children: [
+                      // Morning weather (使用pm数据)
+                      Expanded(
+                        child: _buildCompactWeatherPeriod(
+                          '上午',
+                          day.weather_pm ?? '晴',
+                          day.temperature_pm ?? '--',
+                          day.weather_pm_pic ?? 'n00',
+                          day.winddir_pm ?? '',
+                          day.windpower_pm ?? '',
+                          weatherProvider,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Divider
+                      Container(
+                        width: 1,
+                        height: 40,
+                        color: AppColors.dividerColor,
+                      ),
+                      const SizedBox(width: 8),
+                      // Evening weather (使用am数据)
+                      Expanded(
+                        child: _buildCompactWeatherPeriod(
+                          '下午',
+                          day.weather_am ?? '晴',
+                          day.temperature_am ?? '--',
+                          day.weather_am_pic ?? 'd00',
+                          day.winddir_am ?? '',
+                          day.windpower_am ?? '',
+                          weatherProvider,
                         ),
                       ),
                     ],
-                  ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              // Weather info - compact horizontal layout
-              Expanded(
-                child: Row(
-                  children: [
-                    // Morning weather (使用pm数据)
-                    Expanded(
-                      child: _buildCompactWeatherPeriod(
-                        '上午',
-                        day.weather_pm ?? '晴',
-                        day.temperature_pm ?? '--',
-                        day.weather_pm_pic ?? 'n00',
-                        day.winddir_pm ?? '',
-                        day.windpower_pm ?? '',
-                        weatherProvider,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    // Divider
-                    Container(
-                      width: 1,
-                      height: 40,
-                      color: AppColors.dividerColor,
-                    ),
-                    const SizedBox(width: 8),
-                    // Evening weather (使用am数据)
-                    Expanded(
-                      child: _buildCompactWeatherPeriod(
-                        '下午',
-                        day.weather_am ?? '晴',
-                        day.temperature_am ?? '--',
-                        day.weather_am_pic ?? 'd00',
-                        day.winddir_am ?? '',
-                        day.windpower_am ?? '',
-                        weatherProvider,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

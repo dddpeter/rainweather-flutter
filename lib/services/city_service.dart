@@ -79,7 +79,8 @@ class CityService {
         'Initialized $savedCount cities from JSON (total: ${cities.length})',
       );
 
-      // 恢复主要城市列表（如果有备份）
+      // 从SharedPreferences恢复主要城市列表
+      // SharedPreferences会通过Android Auto Backup自动云备份（如果用户开启了）
       await restoreMainCitiesFromPrefs();
 
       // Mark cities as initialized
@@ -144,6 +145,7 @@ class CityService {
       }
 
       // 备份主要城市列表到SharedPreferences
+      // SharedPreferences会通过Android Auto Backup自动云备份
       await _backupMainCitiesToPrefs();
 
       return true;
@@ -313,45 +315,88 @@ class CityService {
   }
 
   /// 备份主要城市列表到SharedPreferences
+  /// SharedPreferences会通过Android Auto Backup功能自动云备份（需要用户开启）
   Future<void> _backupMainCitiesToPrefs() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final mainCities = await _databaseService.getMainCities();
-      final mainCityIds = mainCities.map((city) => city.id).toList();
 
+      // 只保存用户自定义的城市（排除当前定位城市）
+      final userCities = mainCities
+          .where(
+            (city) =>
+                !city.id.contains('virtual') &&
+                city.id != 'virtual_current_location',
+          )
+          .toList();
+
+      final mainCityIds = userCities.map((city) => city.id).toList();
+      final mainCityNames = userCities.map((city) => city.name).toList();
+
+      // 备份城市ID和名称（双重保险）
       await prefs.setStringList('main_city_ids', mainCityIds);
-      print('Backed up ${mainCityIds.length} main cities to SharedPreferences');
+      await prefs.setStringList('main_city_names', mainCityNames);
+
+      print('✅ 备份 ${mainCityIds.length} 个用户城市到SharedPreferences');
+      print('   城市列表: ${mainCityNames.join(", ")}');
     } catch (e) {
-      print('Failed to backup main cities: $e');
+      print('❌ 备份主要城市失败: $e');
     }
   }
 
   /// 从SharedPreferences恢复主要城市列表
+  /// 支持Android Auto Backup云备份恢复
   Future<void> restoreMainCitiesFromPrefs() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final mainCityIds = prefs.getStringList('main_city_ids');
+      final mainCityNames = prefs.getStringList('main_city_names');
 
-      if (mainCityIds == null || mainCityIds.isEmpty) {
-        print('No main cities backup found, using defaults');
+      if ((mainCityIds == null || mainCityIds.isEmpty) &&
+          (mainCityNames == null || mainCityNames.isEmpty)) {
+        print('📦 没有找到城市备份数据');
         return;
       }
 
-      print('Found ${mainCityIds.length} backed up main cities');
+      print(
+        '📦 找到城市备份: ${mainCityIds?.length ?? 0} 个ID, ${mainCityNames?.length ?? 0} 个名称',
+      );
 
       // 恢复主要城市状态
       int restoredCount = 0;
-      for (final cityId in mainCityIds) {
-        final city = await _databaseService.getCityById(cityId);
-        if (city != null) {
-          await _databaseService.updateCityMainStatus(cityId, true);
-          restoredCount++;
+      int notFoundCount = 0;
+
+      // 优先使用城市ID恢复
+      if (mainCityIds != null && mainCityIds.isNotEmpty) {
+        for (int i = 0; i < mainCityIds.length; i++) {
+          final cityId = mainCityIds[i];
+          final cityName = (mainCityNames != null && i < mainCityNames.length)
+              ? mainCityNames[i]
+              : null;
+
+          // 先尝试通过ID查找
+          CityModel? city = await _databaseService.getCityById(cityId);
+
+          // 如果ID查找失败，尝试通过名称查找
+          if (city == null && cityName != null) {
+            print('⚠️ 城市ID $cityId 未找到，尝试通过名称查找: $cityName');
+            city = await _databaseService.getCityByName(cityName);
+          }
+
+          if (city != null) {
+            await _databaseService.updateCityMainStatus(city.id, true);
+            restoredCount++;
+            print('✅ 恢复城市: ${city.name} (ID: ${city.id})');
+          } else {
+            notFoundCount++;
+            print('❌ 无法恢复城市: ${cityName ?? cityId}');
+          }
         }
       }
 
-      print('Restored $restoredCount main cities from backup');
+      print('📦 城市恢复完成: 成功 $restoredCount 个，失败 $notFoundCount 个');
     } catch (e) {
-      print('Failed to restore main cities: $e');
+      print('❌ 恢复主要城市失败: $e');
     }
   }
 }

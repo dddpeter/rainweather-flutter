@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/lunar_model.dart';
 import '../constants/app_colors.dart';
+import '../constants/app_constants.dart';
+import '../providers/theme_provider.dart';
 
 /// 农历信息卡片组件
 class LunarInfoWidget extends StatelessWidget {
@@ -11,7 +14,9 @@ class LunarInfoWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16), // 与其他卡片一致
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppConstants.screenHorizontalPadding,
+      ),
       child: Card(
         elevation: AppColors.cardElevation,
         shadowColor: AppColors.cardShadowColor,
@@ -28,15 +33,15 @@ class LunarInfoWidget extends StatelessWidget {
                 children: [
                   Icon(
                     Icons.calendar_month_rounded,
-                    color: AppColors.warning,
-                    size: 20,
+                    color: AppColors.accentBlue,
+                    size: AppConstants.sectionTitleIconSize,
                   ),
                   const SizedBox(width: 8),
                   Text(
                     '农历信息',
                     style: TextStyle(
                       color: AppColors.textPrimary,
-                      fontSize: 16,
+                      fontSize: AppConstants.sectionTitleFontSize,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -44,15 +49,18 @@ class LunarInfoWidget extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              // 农历日期和干支
+              // 农历日期和干支（只使用橙色和绿色两种颜色）
               Row(
                 children: [
                   Expanded(
                     child: _buildInfoRow(
                       Icons.calendar_today,
                       '农历',
-                      '${lunarInfo.lunarMonth}${lunarInfo.lunarDay}',
-                      AppColors.warning,
+                      _formatLunarDate(
+                        lunarInfo.lunarMonth,
+                        lunarInfo.lunarDay,
+                      ),
+                      const Color(0xFFFFB74D), // 橙色
                     ),
                   ),
                   const SizedBox(width: 4),
@@ -61,7 +69,7 @@ class LunarInfoWidget extends StatelessWidget {
                       Icons.spa,
                       '生肖',
                       '${lunarInfo.yearAnimal}年',
-                      AppColors.primaryBlue,
+                      const Color(0xFF64DD17), // 绿色
                     ),
                   ),
                 ],
@@ -74,7 +82,7 @@ class LunarInfoWidget extends StatelessWidget {
                       Icons.auto_awesome,
                       '星座',
                       lunarInfo.constellation,
-                      AppColors.accentBlue,
+                      const Color(0xFFFFB74D), // 橙色
                     ),
                   ),
                   const SizedBox(width: 4),
@@ -83,7 +91,7 @@ class LunarInfoWidget extends StatelessWidget {
                       Icons.spa_outlined,
                       '干支',
                       lunarInfo.dayGanZhi,
-                      AppColors.sunrise,
+                      const Color(0xFF64DD17), // 绿色
                     ),
                   ),
                 ],
@@ -95,62 +103,83 @@ class LunarInfoWidget extends StatelessWidget {
     );
   }
 
+  /// 格式化农历日期，确保有"月"字
+  String _formatLunarDate(String lunarMonth, String lunarDay) {
+    // 如果月份已经包含"月"字，直接拼接
+    if (lunarMonth.contains('月')) {
+      return '$lunarMonth$lunarDay';
+    }
+    // 否则添加"月"字
+    return '$lunarMonth月$lunarDay';
+  }
+
   Widget _buildInfoRow(
     IconData icon,
     String label,
     String value,
     Color iconColor,
   ) {
-    // 使用与详细信息卡片相同的样式
-    return Container(
-      decoration: BoxDecoration(
-        color: iconColor.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(4), // 与详细信息卡片一致
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+    return Builder(
+      builder: (context) {
+        final themeProvider = Provider.of<ThemeProvider>(
+          context,
+          listen: false,
+        );
+        // 与详细信息卡片完全一致的透明度
+        final backgroundOpacity = themeProvider.isLightTheme ? 0.15 : 0.25;
+        final iconBackgroundOpacity = themeProvider.isLightTheme ? 0.2 : 0.3;
+
+        return Container(
+          decoration: BoxDecoration(
+            color: iconColor.withOpacity(backgroundOpacity), // 根据主题调整透明度
+            borderRadius: BorderRadius.circular(4), // 与详细信息卡片一致
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: iconColor.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Icon(icon, color: iconColor, size: 16),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 0.2,
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: iconColor.withOpacity(iconBackgroundOpacity),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Icon(icon, color: iconColor, size: 16),
                     ),
-                    textAlign: TextAlign.left,
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        label,
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 0.2,
+                        ),
+                        textAlign: TextAlign.left,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  value,
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    height: 1.2,
                   ),
+                  textAlign: TextAlign.left,
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                height: 1.2,
-              ),
-              textAlign: TextAlign.left,
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
@@ -164,7 +193,9 @@ class YiJiWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16), // 与其他卡片一致
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppConstants.screenHorizontalPadding,
+      ),
       child: Card(
         elevation: AppColors.cardElevation,
         shadowColor: AppColors.cardShadowColor,
@@ -181,15 +212,15 @@ class YiJiWidget extends StatelessWidget {
                 children: [
                   Icon(
                     Icons.event_available_rounded,
-                    color: AppColors.accentGreen,
-                    size: 20,
+                    color: AppColors.accentBlue,
+                    size: AppConstants.sectionTitleIconSize,
                   ),
                   const SizedBox(width: 8),
                   Text(
                     '宜忌提醒',
                     style: TextStyle(
                       color: AppColors.textPrimary,
-                      fontSize: 16,
+                      fontSize: AppConstants.sectionTitleFontSize,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -235,52 +266,66 @@ class YiJiWidget extends StatelessWidget {
   }
 
   Widget _buildYiJiItem(IconData icon, String label, String text, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(12), // 与今日提醒一致
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color.withOpacity(0.15), width: 1),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Icon(icon, color: color, size: 16),
+    return Builder(
+      builder: (context) {
+        final themeProvider = Provider.of<ThemeProvider>(
+          context,
+          listen: false,
+        );
+        // 与今日提醒卡片完全一致的透明度
+        final backgroundOpacity = themeProvider.isLightTheme ? 0.08 : 0.25;
+        final iconBackgroundOpacity = themeProvider.isLightTheme ? 0.12 : 0.3;
+
+        return Container(
+          padding: const EdgeInsets.all(12), // 与今日提醒一致
+          decoration: BoxDecoration(
+            color: color.withOpacity(backgroundOpacity),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(
+              color: color.withOpacity(0.15),
+              width: 1,
+            ), // 与今日提醒一致
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(iconBackgroundOpacity),
+                  borderRadius: BorderRadius.circular(4),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  text,
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    height: 1.4,
-                  ),
+                child: Icon(icon, color: color, size: 18), // 与今日提醒一致
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: TextStyle(
+                        color: color,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold, // 与今日提醒一致
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      text,
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 14,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -303,7 +348,9 @@ class SolarTermListWidget extends StatelessWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16), // 与其他卡片一致
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppConstants.screenHorizontalPadding,
+      ),
       child: Card(
         elevation: AppColors.cardElevation,
         shadowColor: AppColors.cardShadowColor,
@@ -311,7 +358,7 @@ class SolarTermListWidget extends StatelessWidget {
         surfaceTintColor: Colors.transparent,
         shape: AppColors.cardShape,
         child: Padding(
-          padding: const EdgeInsets.all(16), // 与其他卡片一致
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -320,15 +367,15 @@ class SolarTermListWidget extends StatelessWidget {
                 children: [
                   Icon(
                     Icons.wb_sunny_rounded,
-                    color: AppColors.warning,
-                    size: 20,
+                    color: AppColors.accentBlue,
+                    size: AppConstants.sectionTitleIconSize,
                   ),
                   const SizedBox(width: 8),
                   Text(
                     title,
                     style: TextStyle(
                       color: AppColors.textPrimary,
-                      fontSize: 16,
+                      fontSize: AppConstants.sectionTitleFontSize,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -348,118 +395,125 @@ class SolarTermListWidget extends StatelessWidget {
     final daysFromNow = term.daysFromNow();
     final isToday = term.isToday();
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8), // 与其他卡片一致
-      padding: const EdgeInsets.all(12), // 与今日提醒一致
-      decoration: BoxDecoration(
-        color: isToday
-            ? AppColors.warning.withOpacity(0.08)
-            : AppColors.borderColor.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(4), // 与其他卡片一致
-        border: Border.all(
-          color: isToday
-              ? AppColors.warning.withOpacity(0.15)
-              : AppColors.borderColor.withOpacity(0.15),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          // 表情符号
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: isToday
-                  ? AppColors.warning.withOpacity(0.12)
-                  : AppColors.borderColor.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(term.emoji, style: const TextStyle(fontSize: 20)),
-          ),
-          const SizedBox(width: 12),
+    return Builder(
+      builder: (context) {
+        final themeProvider = Provider.of<ThemeProvider>(
+          context,
+          listen: false,
+        );
+        // 与详细信息卡片完全一致的透明度
+        final backgroundOpacity = themeProvider.isLightTheme ? 0.15 : 0.25;
+        final iconBackgroundOpacity = themeProvider.isLightTheme ? 0.2 : 0.3;
 
-          // 节气信息
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+        final itemColor = isToday
+            ? AppColors.warning
+            : AppColors.accentBlue; // 换成蓝色
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+          decoration: BoxDecoration(
+            color: itemColor.withOpacity(backgroundOpacity),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Row(
+            children: [
+              // 表情符号
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: itemColor.withOpacity(iconBackgroundOpacity),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(term.emoji, style: const TextStyle(fontSize: 20)),
+              ),
+              const SizedBox(width: 8),
+
+              // 节气信息
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      term.name,
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    if (isToday)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.error,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Text(
-                          '今天',
+                    Row(
+                      children: [
+                        Text(
+                          term.name,
                           style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
+                            color: AppColors.textSecondary,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 0.2,
                           ),
                         ),
+                        const SizedBox(width: 6),
+                        if (isToday)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.error,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              '今天',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      term.description,
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                        height: 1.3,
+                        fontWeight: FontWeight.w500,
                       ),
+                    ),
                   ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  term.description,
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 13,
-                    height: 1.3,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // 日期和倒计时
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '${term.date.month}/${term.date.day}',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
               ),
-              if (!isToday && daysFromNow >= 0) ...[
-                const SizedBox(height: 2),
-                Text(
-                  daysFromNow == 0
-                      ? '今天'
-                      : daysFromNow == 1
-                      ? '明天'
-                      : '${daysFromNow}天',
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
+
+              // 日期和倒计时
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '${term.date.month}/${term.date.day}',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-              ],
+                  if (!isToday && daysFromNow >= 0) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      daysFromNow == 0
+                          ? '今天'
+                          : daysFromNow == 1
+                          ? '明天'
+                          : '${daysFromNow}天',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

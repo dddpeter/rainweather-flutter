@@ -258,7 +258,7 @@ class _RainWeatherAppState extends State<RainWeatherApp>
                   darkTheme: _buildDarkTheme(themeProvider),
                   themeMode: _getThemeMode(themeProvider.themeMode),
                   navigatorObservers: [_RouteObserver(_pageActivationObserver)],
-                  home: const AppSplashScreen(), // 使用自定义启动页面，支持应用主题
+                  home: const AppSplashScreen(), // 保留启动页面确保正确初始化
                 );
               },
             ),
@@ -379,9 +379,6 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-
-    // 初始化应用恢复管理器
-    // 恢复检查会在首次resumed时自动执行
   }
 
   @override
@@ -632,52 +629,20 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
     super.dispose();
   }
 
-  /// 定位成功回调
+  /// 定位成功回调（主要城市页面不响应今日天气页面的定位）
   @override
   void onLocationSuccess(LocationModel newLocation) {
     print('📍 MainCitiesScreen: 收到定位成功通知 ${newLocation.district}');
-    print(
-      '📍 MainCitiesScreen: 定位详情 - 城市: ${newLocation.city}, 区县: ${newLocation.district}, 省份: ${newLocation.province}',
-    );
-
-    // 刷新主要城市天气数据
-    print('📍 MainCitiesScreen: 准备刷新主要城市天气数据');
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _refreshMainCitiesWeather();
-    });
+    print('📍 MainCitiesScreen: 主要城市页面只响应自己的定位图标，忽略此通知');
+    // 主要城市页面只有点击定位图标才会更新第一个卡片
   }
 
-  /// 定位失败回调
+  /// 定位失败回调（主要城市页面不响应今日天气页面的定位失败）
   @override
   void onLocationFailed(String error) {
     print('❌ MainCitiesScreen: 收到定位失败通知 $error');
-
-    // 可以显示错误信息
-    print('❌ MainCitiesScreen: 准备显示错误信息');
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('定位失败: $error'),
-          backgroundColor: AppColors.error,
-        ),
-      );
-    });
-  }
-
-  /// 刷新主要城市天气数据
-  Future<void> _refreshMainCitiesWeather() async {
-    try {
-      print('🔄 MainCitiesScreen: 开始刷新主要城市天气数据');
-      final weatherProvider = context.read<WeatherProvider>();
-      print(
-        '🔄 MainCitiesScreen: 调用 WeatherProvider.refreshMainCitiesWeather()',
-      );
-      await weatherProvider.refreshMainCitiesWeather();
-      print('✅ MainCitiesScreen: 主要城市天气数据刷新完成');
-    } catch (e) {
-      print('❌ MainCitiesScreen: 刷新主要城市天气数据失败: $e');
-      print('❌ MainCitiesScreen: 错误堆栈: ${StackTrace.current}');
-    }
+    print('❌ MainCitiesScreen: 主要城市页面只响应自己的定位图标，忽略此通知');
+    // 主要城市页面只有点击定位图标失败时才提示
   }
 
   @override
@@ -739,15 +704,22 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
                                         ),
                                       ),
                                     ),
+                                    // 刷新图标 - 只刷新列表数据，不进行定位
                                     IconButton(
-                                      onPressed: weatherProvider.isLoading
+                                      onPressed:
+                                          weatherProvider.isLoading ||
+                                              weatherProvider
+                                                  .isLocationRefreshing
                                           ? null
                                           : () async {
                                               // 只刷新主要城市天气，不重新定位
                                               await weatherProvider
                                                   .refreshMainCitiesWeather();
                                             },
-                                      icon: weatherProvider.isLoading
+                                      icon:
+                                          weatherProvider.isLoading ||
+                                              weatherProvider
+                                                  .isLocationRefreshing
                                           ? SizedBox(
                                               width: 20,
                                               height: 20,
@@ -1379,14 +1351,42 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
     WeatherProvider weatherProvider,
   ) async {
     try {
-      // 强制刷新位置和天气数据（清理缓存）
-      await weatherProvider.forceRefreshWithLocation();
+      print('📍 点击定位图标，开始定位并更新第一个卡片');
 
-      // 重新加载主要城市列表
-      await weatherProvider.loadMainCities();
+      // 只定位并更新第一个卡片（当前定位城市）
+      final success = await weatherProvider
+          .refreshFirstCityLocationAndWeather();
+
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '定位成功，已更新为 ${weatherProvider.currentLocation?.district ?? "当前位置"}',
+            ),
+            backgroundColor: AppColors.success,
+            duration: const Duration(seconds: 1),
+          ),
+        );
+      } else if (!success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('定位失败，保持显示之前的数据'),
+            backgroundColor: AppColors.warning,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
     } catch (e) {
-      // 静默处理错误，不显示Toast
-      print('更新位置失败: $e');
+      print('❌ 更新位置失败: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('定位失败，保持显示原有数据'),
+            backgroundColor: AppColors.warning,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
     }
   }
 

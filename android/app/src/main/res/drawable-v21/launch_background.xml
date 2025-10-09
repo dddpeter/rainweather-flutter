@@ -1,26 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 启动画面 - 深蓝色背景 + 放大图标 + 浮出效果 (Android 5.0+) -->
+<!-- 启动画面 - 与AppSplash完全一致的深蓝色渐变 (Android 5.0+) -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- 深蓝色背景 -->
-    <item android:drawable="@color/launch_background" />
-
-    <!-- 图标阴影层（浮出效果） -->
-    <item
-        android:width="180dp"
-        android:height="180dp"
-        android:gravity="center">
-        <shape android:shape="oval">
-            <solid android:color="#20000000" />
+    <!-- 深蓝色渐变背景 (从左上到右下) -->
+    <item>
+        <shape>
+            <gradient
+                android:angle="135"
+                android:startColor="#012d78"
+                android:endColor="#0A1B3D"
+                android:type="linear" />
         </shape>
-    </item>
-
-    <!-- 应用图标（放大至160dp） -->
-    <item
-        android:width="160dp"
-        android:height="160dp"
-        android:gravity="center">
-        <bitmap
-            android:gravity="center"
-            android:src="@mipmap/ic_launcher" />
     </item>
 </layer-list>

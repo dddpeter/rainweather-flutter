@@ -12,12 +12,14 @@ import '../services/weather_service.dart';
 import '../constants/app_constants.dart';
 import '../constants/app_colors.dart';
 import '../models/location_model.dart';
+import '../models/weather_model.dart';
 import '../widgets/sun_moon_widget.dart';
 import '../widgets/life_index_widget.dart';
 import '../widgets/weather_animation_widget.dart';
 import '../widgets/app_menu.dart';
 import '../widgets/weather_alert_widget.dart';
 import '../services/weather_alert_service.dart';
+import '../services/database_service.dart';
 import '../services/location_change_notifier.dart';
 import '../services/page_activation_observer.dart';
 import '../services/lunar_service.dart';
@@ -580,10 +582,14 @@ class _TodayScreenState extends State<TodayScreen>
                         // 24小时天气
                         _buildHourlyWeather(weatherProvider),
                         AppColors.cardSpacingWidget,
-                        // 详细信息卡片
-                        WeatherDetailsWidget(
-                          weather: weatherProvider.currentWeather,
-                        ),
+                        // 使用缓存数据时，显示上午/下午分时段信息
+                        if (weatherProvider.isUsingCachedData)
+                          _buildTimePeriodDetails(weatherProvider),
+                        // 详细信息卡片（非缓存时显示）
+                        if (!weatherProvider.isUsingCachedData)
+                          WeatherDetailsWidget(
+                            weather: weatherProvider.currentWeather,
+                          ),
                         AppColors.cardSpacingWidget,
                         // 生活指数
                         LifeIndexWidget(weatherProvider: weatherProvider),
@@ -658,6 +664,70 @@ class _TodayScreenState extends State<TodayScreen>
                               fontWeight: FontWeight.bold,
                             ),
                           ),
+                          // 数据状态指示器
+                          if (weatherProvider.isUsingCachedData ||
+                              weatherProvider.isBackgroundRefreshing)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (weatherProvider
+                                      .isBackgroundRefreshing) ...[
+                                    SizedBox(
+                                      width: 10,
+                                      height: 10,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 1.5,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              context
+                                                  .read<ThemeProvider>()
+                                                  .getColor(
+                                                    'headerTextSecondary',
+                                                  ),
+                                            ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                  ],
+                                  if (weatherProvider.isUsingCachedData)
+                                    Icon(
+                                      Icons.history,
+                                      size: 10,
+                                      color: context
+                                          .read<ThemeProvider>()
+                                          .getColor('headerTextSecondary'),
+                                    ),
+                                  const SizedBox(width: 4),
+                                  FutureBuilder<String>(
+                                    future: _getCacheAgeText(weatherProvider),
+                                    builder: (context, snapshot) {
+                                      String text;
+                                      if (weatherProvider
+                                          .isBackgroundRefreshing) {
+                                        text = '正在更新...';
+                                      } else if (snapshot.hasData) {
+                                        text = snapshot.data!;
+                                      } else {
+                                        text = '缓存数据';
+                                      }
+
+                                      return Text(
+                                        text,
+                                        style: TextStyle(
+                                          color: context
+                                              .read<ThemeProvider>()
+                                              .getColor('headerTextSecondary'),
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
                           if (location?.isProxyDetected == true) ...[
                             const SizedBox(height: 4),
                             Container(
@@ -978,7 +1048,49 @@ class _TodayScreenState extends State<TodayScreen>
     );
   }
 
-  /// 获取空气质量等级文本
+  /// 获取缓存年龄的友好文字描述
+  Future<String> _getCacheAgeText(WeatherProvider weatherProvider) async {
+    try {
+      // 从SQLite获取缓存时间
+      if (weatherProvider.currentLocation == null) {
+        return '缓存数据';
+      }
+
+      final weatherKey =
+          '${weatherProvider.currentLocation!.district}:${AppConstants.weatherAllKey}';
+      final databaseService = DatabaseService.getInstance();
+      final db = await databaseService.database;
+      final result = await db.query(
+        'weather_cache',
+        columns: ['created_at'],
+        where: 'key = ?',
+        whereArgs: [weatherKey],
+      );
+
+      if (result.isEmpty) {
+        return '缓存数据';
+      }
+
+      final createdAt = result.first['created_at'] as int;
+      final cacheDateTime = DateTime.fromMillisecondsSinceEpoch(createdAt);
+      final ageMinutes = DateTime.now().difference(cacheDateTime).inMinutes;
+
+      if (ageMinutes < 60) {
+        return '缓存 ${ageMinutes}分钟前';
+      } else if (ageMinutes < 1440) {
+        // 小于24小时
+        final hours = (ageMinutes / 60).floor();
+        return '缓存 ${hours}小时前';
+      } else {
+        // 超过24小时
+        final days = (ageMinutes / 1440).floor();
+        return '缓存 ${days}天前';
+      }
+    } catch (e) {
+      return '缓存数据';
+    }
+  }
+
   String _getAirQualityLevelText(int aqi) {
     if (aqi <= 50) return '优';
     if (aqi <= 100) return '良';
@@ -998,6 +1110,165 @@ class _TodayScreenState extends State<TodayScreen>
     return AppColors.airSevere; // 严重污染
   }
 
+  /// 构建上午/下午分时段信息（使用缓存数据时）
+  Widget _buildTimePeriodDetails(WeatherProvider weatherProvider) {
+    // 从15天预报中获取今天的数据
+    final forecast15d = weatherProvider.forecast15d;
+    if (forecast15d == null || forecast15d.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    // 找到今天的预报数据（通常是第一个或第二个）
+    DailyWeather? todayForecast;
+    try {
+      // 尝试从预报数据中找到今天
+      for (var day in forecast15d) {
+        if (day.forecasttime != null) {
+          final forecastDate = DateTime.parse(day.forecasttime!);
+          final now = DateTime.now();
+          if (forecastDate.year == now.year &&
+              forecastDate.month == now.month &&
+              forecastDate.day == now.day) {
+            todayForecast = day;
+            break;
+          }
+        }
+      }
+      // 如果没找到，使用第一个
+      todayForecast ??= forecast15d.first;
+    } catch (e) {
+      todayForecast = forecast15d.first;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppConstants.screenHorizontalPadding,
+      ),
+      child: Row(
+        children: [
+          // 上午
+          Expanded(
+            child: _buildPeriodCard(
+              '上午',
+              todayForecast.weather_pm ?? '--',
+              todayForecast.temperature_pm ?? '--',
+              todayForecast.winddir_pm ?? '--',
+              todayForecast.windpower_pm ?? '--',
+              AppColors.warning,
+            ),
+          ),
+          const SizedBox(width: 12),
+          // 下午
+          Expanded(
+            child: _buildPeriodCard(
+              '下午',
+              todayForecast.weather_am ?? '--',
+              todayForecast.temperature_am ?? '--',
+              todayForecast.winddir_am ?? '--',
+              todayForecast.windpower_am ?? '--',
+              AppColors.primaryBlue,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 获取天气对应的emoji图标
+  String _getWeatherEmoji(String weather) {
+    // 使用与AppConstants.weatherIcons相同的映射逻辑
+    return AppConstants.weatherIcons[weather] ?? '☀️';
+  }
+
+  /// 构建时段卡片
+  Widget _buildPeriodCard(
+    String period,
+    String weather,
+    String temperature,
+    String windDir,
+    String windPower,
+    Color accentColor,
+  ) {
+    return Card(
+      elevation: AppColors.cardElevation,
+      shadowColor: AppColors.cardShadowColor,
+      color: AppColors.materialCardColor,
+      shape: AppColors.cardShape,
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          children: [
+            // 时段标题（缩小）
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+              decoration: BoxDecoration(
+                color: accentColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: accentColor.withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: Text(
+                period,
+                style: TextStyle(
+                  color: accentColor,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8), // 标题和图标的间隙
+            // 天气emoji图标（42px）
+            Text(
+              _getWeatherEmoji(weather),
+              style: const TextStyle(fontSize: 42),
+            ),
+            const SizedBox(height: 4), // 图标和天气描述的距离（更近）
+            // 天气描述（再缩小）
+            Text(
+              weather,
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 2), // 天气和温度的距离（更近）
+            // 温度（再缩小）
+            Text(
+              '$temperature℃',
+              style: TextStyle(
+                color: accentColor,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            // 风向风力
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.air, color: AppColors.textSecondary, size: 14),
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    '$windDir $windPower',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 11,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// 构建农历和节气节日信息（头部区域）- Tag样式
   Widget _buildLunarAndSolarTerm(dynamic weather) {
     try {
@@ -1010,6 +1281,22 @@ class _TodayScreenState extends State<TodayScreen>
 
       // 农历日期
       if (nongLi != null) {
+        // 格式化农历日期，确保月份有"月"字
+        String formattedNongLi = nongLi;
+        // 如果格式是"八十八"这种，需要添加"月"字变成"八月十八"
+        // 正则匹配：数字+数字的格式
+        final match = RegExp(
+          r'^(正|二|三|四|五|六|七|八|九|十|冬|腊)(初|十|廿|卅)',
+        ).hasMatch(nongLi);
+        if (match && !nongLi.contains('月')) {
+          // 在第一个汉字后面添加"月"
+          if (nongLi.length >= 2) {
+            final firstChar = nongLi[0];
+            final rest = nongLi.substring(1);
+            formattedNongLi = '$firstChar月$rest';
+          }
+        }
+
         tags.add(
           Row(
             mainAxisSize: MainAxisSize.min,
@@ -1023,7 +1310,7 @@ class _TodayScreenState extends State<TodayScreen>
               ),
               const SizedBox(width: 6),
               Text(
-                nongLi,
+                formattedNongLi,
                 style: TextStyle(
                   color: context.read<ThemeProvider>().getColor(
                     'headerTextSecondary',

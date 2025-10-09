@@ -28,43 +28,8 @@ class LifeIndexWidget extends StatelessWidget {
         if (sunMoonData?.index != null && sunMoonData!.index!.isNotEmpty) {
           lifeIndexContent = _buildLifeIndexGrid(context, sunMoonData.index!);
         } else {
-          // 调试信息：显示为什么没有生活指数数据
-          lifeIndexContent = Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.red.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.red.withOpacity(0.3)),
-            ),
-            child: Column(
-              children: [
-                Text(
-                  '调试信息：生活指数数据',
-                  style: TextStyle(
-                    color: AppColors.error,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'sunMoonData: ${sunMoonData != null ? "有数据" : "无数据"}',
-                  style: TextStyle(color: AppColors.textSecondary),
-                ),
-                Text(
-                  'index: ${sunMoonData?.index != null ? "有数据" : "无数据"}',
-                  style: TextStyle(color: AppColors.textSecondary),
-                ),
-                Text(
-                  'index长度: ${sunMoonData?.index?.length ?? 0}',
-                  style: TextStyle(color: AppColors.textSecondary),
-                ),
-                Text(
-                  'isLoading: ${weatherProvider.isLoadingSunMoonIndex}',
-                  style: TextStyle(color: AppColors.textSecondary),
-                ),
-              ],
-            ),
-          );
+          // 没有数据时不显示任何内容
+          lifeIndexContent = const SizedBox.shrink();
         }
 
         if (showContainer) {
@@ -121,11 +86,6 @@ class LifeIndexWidget extends StatelessWidget {
     final filteredIndices = indices
         .where((index) => targetIndices.contains(index.indexTypeCh ?? ''))
         .toList();
-
-    print('原始指数数量: ${indices.length}');
-    print('过滤后指数数量: ${filteredIndices.length}');
-    print('原始指数类型: ${indices.map((e) => e.indexTypeCh).toList()}');
-    print('过滤后指数类型: ${filteredIndices.map((e) => e.indexTypeCh).toList()}');
 
     // 将数据分成两列（第一列：穿衣指数、紫外线强度指数、洗车指数；第二列：感冒指数、化妆指数、运动指数）
     final List<LifeIndex> column1 = [];
@@ -280,17 +240,6 @@ class LifeIndexWidget extends StatelessWidget {
       default:
         return Icons.info_outline;
     }
-  }
-
-  Color _getLifeIndexColor(
-    String indexType,
-    BuildContext context,
-    bool isFirstColumn,
-  ) {
-    // 根据所在列决定颜色，而不是根据指数类型
-    return isFirstColumn
-        ? const Color(0xFFFFB74D) // 第一列使用橙色
-        : const Color(0xFF4FC3F7); // 第二列使用蓝色
   }
 
   /// 截断指标名称，最多显示5个字，超过则去掉末尾的"指数"

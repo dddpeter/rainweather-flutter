@@ -1,5 +1,6 @@
 import '../models/commute_advice_model.dart';
 import '../models/weather_model.dart';
+import 'weather_alert_service.dart';
 
 /// 通勤建议服务
 class CommuteAdviceService {
@@ -13,36 +14,63 @@ class CommuteAdviceService {
     return 'advice_${DateTime.now().millisecondsSinceEpoch}';
   }
 
-  /// 判断当前是否在通勤时段
+  /// 判断当前是否在通勤时段（从用户设置读取）
   static bool isInCommuteTime() {
     final now = DateTime.now();
-    final hour = now.hour;
-
-    // 早高峰：6:00-10:00
-    if (hour >= 6 && hour < 10) {
-      return true;
+    
+    // 从天气提醒设置中读取通勤时间配置
+    final settings = WeatherAlertService.instance.settings;
+    
+    // 检查是否启用通勤提醒
+    if (!settings.enableCommuteAlerts) {
+      return false;
     }
-
-    // 晚高峰：17:00-20:00
-    if (hour >= 17 && hour < 20) {
-      return true;
-    }
-
-    return false;
+    
+    // 使用用户配置的通勤时间判断
+    return settings.commuteTime.isCommuteTime(now);
   }
 
-  /// 获取当前通勤时段
+  /// 获取当前通勤时段（从用户设置读取）
   static CommuteTimeSlot? getCurrentCommuteTimeSlot() {
     final now = DateTime.now();
-    final hour = now.hour;
-
-    // 早高峰：6:00-10:00
-    if (hour >= 6 && hour < 10) {
+    
+    // 从天气提醒设置中读取通勤时间配置
+    final settings = WeatherAlertService.instance.settings;
+    
+    // 检查是否启用通勤提醒
+    if (!settings.enableCommuteAlerts) {
+      return null;
+    }
+    
+    final commuteTime = settings.commuteTime;
+    final weekday = now.weekday;
+    
+    // 检查是否为工作日
+    if (!commuteTime.workDays.contains(weekday)) {
+      return null;
+    }
+    
+    final currentMinutes = now.hour * 60 + now.minute;
+    
+    // 检查早晨通勤时间
+    final morningStartMinutes = 
+        commuteTime.morningStart.hour * 60 + commuteTime.morningStart.minute;
+    final morningEndMinutes = 
+        commuteTime.morningEnd.hour * 60 + commuteTime.morningEnd.minute;
+    
+    if (currentMinutes >= morningStartMinutes && 
+        currentMinutes < morningEndMinutes) {
       return CommuteTimeSlot.morning;
     }
-
-    // 晚高峰：17:00-20:00
-    if (hour >= 17 && hour < 20) {
+    
+    // 检查晚上通勤时间
+    final eveningStartMinutes = 
+        commuteTime.eveningStart.hour * 60 + commuteTime.eveningStart.minute;
+    final eveningEndMinutes = 
+        commuteTime.eveningEnd.hour * 60 + commuteTime.eveningEnd.minute;
+    
+    if (currentMinutes >= eveningStartMinutes && 
+        currentMinutes < eveningEndMinutes) {
       return CommuteTimeSlot.evening;
     }
 

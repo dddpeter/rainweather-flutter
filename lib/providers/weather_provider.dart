@@ -13,6 +13,8 @@ import '../services/city_service.dart';
 import '../services/city_data_service.dart';
 import '../services/sun_moon_index_service.dart';
 import '../services/weather_widget_service.dart';
+import '../services/commute_advice_service.dart';
+import '../models/commute_advice_model.dart';
 import '../constants/app_constants.dart';
 import '../utils/app_state_manager.dart';
 import '../utils/city_name_matcher.dart';
@@ -75,6 +77,11 @@ class WeatherProvider extends ChangeNotifier {
   List<CityModel> _mainCities = [];
   bool _isLoadingCities = false;
 
+  // 通勤建议相关
+  List<CommuteAdviceModel> _commuteAdvices = [];
+  bool _hasShownCommuteAdviceToday = false; // 今日是否已显示过通勤建议
+  Timer? _commuteCleanupTimer; // 通勤建议清理定时器
+
   // Getters
   WeatherModel? get currentWeather => _currentWeather;
   LocationModel? get currentLocation => _currentLocation;
@@ -98,6 +105,11 @@ class WeatherProvider extends ChangeNotifier {
   // Dynamic cities getters
   List<CityModel> get mainCities => _mainCities;
   bool get isLoadingCities => _isLoadingCities;
+
+  // 通勤建议getters
+  List<CommuteAdviceModel> get commuteAdvices => _commuteAdvices;
+  bool get hasUnreadCommuteAdvices => _commuteAdvices.any((a) => !a.isRead);
+  bool get hasShownCommuteAdviceToday => _hasShownCommuteAdviceToday;
 
   // 当前定位天气数据的getter
   WeatherModel? get currentLocationWeather => _currentLocationWeather;
@@ -182,6 +194,13 @@ class WeatherProvider extends ChangeNotifier {
       print('   - 24小时预报: ${_hourlyForecast?.length ?? 0}条');
       print('   - 15日预报: ${_forecast15d?.length ?? 0}天');
       print('🔄 后台开始刷新最新数据...\n');
+
+      // 启动通勤建议清理定时器
+      _startCommuteCleanupTimer();
+
+      // 加载并检查通勤建议
+      await loadCommuteAdvices();
+      await checkAndGenerateCommuteAdvices();
 
       // 3. 后台异步刷新（不阻塞UI）
       _backgroundRefresh();
@@ -461,6 +480,13 @@ class WeatherProvider extends ChangeNotifier {
 
       // 异步加载主要城市天气数据
       _loadMainCitiesWeather();
+
+      // 启动通勤建议清理定时器
+      _startCommuteCleanupTimer();
+
+      // 加载并检查通勤建议
+      loadCommuteAdvices();
+      checkAndGenerateCommuteAdvices();
 
       // 标记初始化完成
       appStateManager.markInitializationCompleted();
@@ -2044,10 +2070,154 @@ class WeatherProvider extends ChangeNotifier {
     return cityId ?? AppConstants.defaultCityId;
   }
 
+  // ==================== 通勤建议相关方法 ====================
+
+  /// 检查并生成通勤建议
+  Future<void> checkAndGenerateCommuteAdvices() async {
+    // 检查是否在通勤时段
+    if (!CommuteAdviceService.isInCommuteTime()) {
+      print('⏰ 不在通勤时段，跳过生成通勤建议');
+      return;
+    }
+
+    // 检查今日是否已显示过
+    if (_hasShownCommuteAdviceToday) {
+      print('✅ 今日已显示过通勤建议，跳过');
+      return;
+    }
+
+    // 检查是否有天气数据
+    if (_currentWeather == null) {
+      print('❌ 无天气数据，无法生成通勤建议');
+      return;
+    }
+
+    try {
+      // 生成通勤建议
+      final advices = CommuteAdviceService.generateAdvices(_currentWeather!);
+
+      if (advices.isEmpty) {
+        print('ℹ️ 当前天气条件无需特别提醒');
+        return;
+      }
+
+      // 保存到数据库
+      await _databaseService.saveCommuteAdvices(advices);
+
+      // 加载通勤建议
+      await loadCommuteAdvices();
+
+      // 标记今日已显示
+      _hasShownCommuteAdviceToday = true;
+
+      print('✅ 生成并保存通勤建议: ${advices.length}条');
+      notifyListeners();
+    } catch (e) {
+      print('❌ 生成通勤建议失败: $e');
+    }
+  }
+
+  /// 加载通勤建议
+  Future<void> loadCommuteAdvices() async {
+    try {
+      final advices = await _databaseService.getTodayCommuteAdvices();
+      _commuteAdvices = advices;
+      notifyListeners();
+      print('✅ 加载通勤建议: ${advices.length}条');
+    } catch (e) {
+      print('❌ 加载通勤建议失败: $e');
+    }
+  }
+
+  /// 标记通勤建议为已读
+  Future<void> markCommuteAdviceAsRead(String adviceId) async {
+    try {
+      await _databaseService.markCommuteAdviceAsRead(adviceId);
+      // 更新本地状态
+      final index = _commuteAdvices.indexWhere((a) => a.id == adviceId);
+      if (index != -1) {
+        _commuteAdvices[index] = _commuteAdvices[index].copyWith(isRead: true);
+        notifyListeners();
+      }
+    } catch (e) {
+      print('❌ 标记通勤建议失败: $e');
+    }
+  }
+
+  /// 标记所有通勤建议为已读
+  Future<void> markAllCommuteAdvicesAsRead() async {
+    try {
+      await _databaseService.markAllCommuteAdvicesAsRead();
+      // 更新本地状态
+      _commuteAdvices = _commuteAdvices
+          .map((a) => a.copyWith(isRead: true))
+          .toList();
+      notifyListeners();
+    } catch (e) {
+      print('❌ 批量标记通勤建议失败: $e');
+    }
+  }
+
+  /// 启动通勤建议清理定时器
+  void _startCommuteCleanupTimer() {
+    _stopCommuteCleanupTimer();
+
+    // 每5分钟检查一次是否需要清理
+    _commuteCleanupTimer = Timer.periodic(const Duration(minutes: 5), (timer) {
+      _checkAndCleanupCommuteAdvices();
+    });
+
+    print('⏰ 通勤建议清理定时器已启动');
+  }
+
+  /// 停止通勤建议清理定时器
+  void _stopCommuteCleanupTimer() {
+    _commuteCleanupTimer?.cancel();
+    _commuteCleanupTimer = null;
+  }
+
+  /// 检查并清理通勤建议
+  Future<void> _checkAndCleanupCommuteAdvices() async {
+    try {
+      // 1. 清理15天前的旧记录
+      await _databaseService.cleanExpiredCommuteAdvices();
+
+      // 2. 检查当前时段是否结束，清理当前时段的建议
+      final timeSlot = CommuteAdviceService.getCurrentCommuteTimeSlot();
+      if (timeSlot != null) {
+        // 还在通勤时段，不清理
+        return;
+      }
+
+      // 不在通勤时段，检查是否需要清理
+      if (_commuteAdvices.isNotEmpty) {
+        final firstAdvice = _commuteAdvices.first;
+        if (CommuteAdviceService.isTimeSlotEnded(firstAdvice.timeSlot)) {
+          // 时段已结束，清理当天该时段的建议
+          await _databaseService.cleanEndedTimeSlotAdvices(
+            firstAdvice.timeSlot.toString().split('.').last,
+          );
+
+          // 重新加载建议
+          await loadCommuteAdvices();
+
+          // 重置今日显示标记
+          _hasShownCommuteAdviceToday = false;
+
+          print('✅ 通勤时段结束，已清理建议');
+        }
+      }
+    } catch (e) {
+      print('❌ 清理通勤建议失败: $e');
+    }
+  }
+
   @override
   void dispose() {
     // 停止定时刷新
     _stopPeriodicRefresh();
+    // 停止通勤建议清理定时器
+    _stopCommuteCleanupTimer();
     super.dispose();
   }
 }

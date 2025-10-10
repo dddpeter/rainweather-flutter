@@ -6,6 +6,7 @@ import '../models/weather_model.dart';
 import '../models/location_model.dart';
 import '../models/city_model.dart';
 import '../models/sun_moon_index_model.dart';
+import '../models/commute_advice_model.dart';
 import '../constants/app_constants.dart';
 import '../utils/city_name_matcher.dart';
 
@@ -28,7 +29,7 @@ class DatabaseService {
       String path = join(await getDatabasesPath(), 'weather.db');
       _database = await openDatabase(
         path,
-        version: 4,
+        version: 5,
         onCreate: (db, version) async {
           await db.execute('''
             CREATE TABLE weather_cache (
@@ -67,6 +68,20 @@ class DatabaseService {
               createdAt INTEGER NOT NULL
             )
           ''');
+
+          await db.execute('''
+            CREATE TABLE commute_advices (
+              id TEXT PRIMARY KEY,
+              timestamp TEXT NOT NULL,
+              adviceType TEXT NOT NULL,
+              title TEXT NOT NULL,
+              content TEXT NOT NULL,
+              icon TEXT NOT NULL,
+              isRead INTEGER NOT NULL DEFAULT 0,
+              timeSlot TEXT NOT NULL,
+              createdAt INTEGER NOT NULL
+            )
+          ''');
         },
         onUpgrade: (db, oldVersion, newVersion) async {
           if (oldVersion < 2) {
@@ -99,6 +114,25 @@ class DatabaseService {
             ''');
             print(
               'Database upgraded to version 4: Added sortOrder column to cities table',
+            );
+          }
+          if (oldVersion < 5) {
+            // 添加commute_advices表
+            await db.execute('''
+              CREATE TABLE commute_advices (
+                id TEXT PRIMARY KEY,
+                timestamp TEXT NOT NULL,
+                adviceType TEXT NOT NULL,
+                title TEXT NOT NULL,
+                content TEXT NOT NULL,
+                icon TEXT NOT NULL,
+                isRead INTEGER NOT NULL DEFAULT 0,
+                timeSlot TEXT NOT NULL,
+                createdAt INTEGER NOT NULL
+              )
+            ''');
+            print(
+              'Database upgraded to version 5: Added commute_advices table',
             );
           }
         },
@@ -921,6 +955,191 @@ class DatabaseService {
       }
     } catch (e) {
       print('Failed to remove duplicate cities: $e');
+    }
+  }
+
+  // ==================== 通勤建议相关方法 ====================
+
+  /// 保存通勤建议
+  Future<void> saveCommuteAdvice(CommuteAdviceModel advice) async {
+    final db = await database;
+    try {
+      await db.insert(
+        'commute_advices',
+        advice.toMap()..['createdAt'] = DateTime.now().millisecondsSinceEpoch,
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      print('✅ 通勤建议已保存: ${advice.title}');
+    } catch (e) {
+      print('❌ 保存通勤建议失败: $e');
+    }
+  }
+
+  /// 批量保存通勤建议
+  Future<void> saveCommuteAdvices(List<CommuteAdviceModel> advices) async {
+    final db = await database;
+    final batch = db.batch();
+
+    try {
+      for (var advice in advices) {
+        batch.insert(
+          'commute_advices',
+          advice.toMap()..['createdAt'] = DateTime.now().millisecondsSinceEpoch,
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+      await batch.commit(noResult: true);
+      print('✅ 批量保存通勤建议成功: ${advices.length}条');
+    } catch (e) {
+      print('❌ 批量保存通勤建议失败: $e');
+    }
+  }
+
+  /// 获取所有通勤建议
+  Future<List<CommuteAdviceModel>> getAllCommuteAdvices() async {
+    final db = await database;
+    try {
+      final List<Map<String, dynamic>> maps = await db.query(
+        'commute_advices',
+        orderBy: 'createdAt DESC',
+      );
+      return maps.map((map) => CommuteAdviceModel.fromMap(map)).toList();
+    } catch (e) {
+      print('❌ 获取通勤建议失败: $e');
+      return [];
+    }
+  }
+
+  /// 获取未读的通勤建议
+  Future<List<CommuteAdviceModel>> getUnreadCommuteAdvices() async {
+    final db = await database;
+    try {
+      final List<Map<String, dynamic>> maps = await db.query(
+        'commute_advices',
+        where: 'isRead = ?',
+        whereArgs: [0],
+        orderBy: 'createdAt DESC',
+      );
+      return maps.map((map) => CommuteAdviceModel.fromMap(map)).toList();
+    } catch (e) {
+      print('❌ 获取未读通勤建议失败: $e');
+      return [];
+    }
+  }
+
+  /// 获取今日的通勤建议
+  Future<List<CommuteAdviceModel>> getTodayCommuteAdvices() async {
+    final db = await database;
+    try {
+      final now = DateTime.now();
+      final startOfDay = DateTime(now.year, now.month, now.day);
+      final startTimestamp = startOfDay.millisecondsSinceEpoch;
+
+      final List<Map<String, dynamic>> maps = await db.query(
+        'commute_advices',
+        where: 'createdAt >= ?',
+        whereArgs: [startTimestamp],
+        orderBy: 'createdAt DESC',
+      );
+      return maps.map((map) => CommuteAdviceModel.fromMap(map)).toList();
+    } catch (e) {
+      print('❌ 获取今日通勤建议失败: $e');
+      return [];
+    }
+  }
+
+  /// 标记建议为已读
+  Future<void> markCommuteAdviceAsRead(String adviceId) async {
+    final db = await database;
+    try {
+      await db.update(
+        'commute_advices',
+        {'isRead': 1},
+        where: 'id = ?',
+        whereArgs: [adviceId],
+      );
+      print('✅ 通勤建议已标记为已读: $adviceId');
+    } catch (e) {
+      print('❌ 标记通勤建议失败: $e');
+    }
+  }
+
+  /// 批量标记建议为已读
+  Future<void> markAllCommuteAdvicesAsRead() async {
+    final db = await database;
+    try {
+      await db.update(
+        'commute_advices',
+        {'isRead': 1},
+        where: 'isRead = ?',
+        whereArgs: [0],
+      );
+      print('✅ 所有通勤建议已标记为已读');
+    } catch (e) {
+      print('❌ 批量标记通勤建议失败: $e');
+    }
+  }
+
+  /// 删除指定的通勤建议
+  Future<void> deleteCommuteAdvice(String adviceId) async {
+    final db = await database;
+    try {
+      await db.delete(
+        'commute_advices',
+        where: 'id = ?',
+        whereArgs: [adviceId],
+      );
+      print('✅ 通勤建议已删除: $adviceId');
+    } catch (e) {
+      print('❌ 删除通勤建议失败: $e');
+    }
+  }
+
+  /// 清理过期的通勤建议（保留15天内的）
+  Future<int> cleanExpiredCommuteAdvices() async {
+    final db = await database;
+    try {
+      final now = DateTime.now();
+      final fifteenDaysAgo = now.subtract(const Duration(days: 15));
+      final timestamp = fifteenDaysAgo.millisecondsSinceEpoch;
+
+      final deletedCount = await db.delete(
+        'commute_advices',
+        where: 'createdAt < ?',
+        whereArgs: [timestamp],
+      );
+
+      if (deletedCount > 0) {
+        print('✅ 清理过期通勤建议: $deletedCount条');
+      }
+      return deletedCount;
+    } catch (e) {
+      print('❌ 清理过期通勤建议失败: $e');
+      return 0;
+    }
+  }
+
+  /// 清理当前时段结束的通勤建议
+  Future<int> cleanEndedTimeSlotAdvices(String timeSlot) async {
+    final db = await database;
+    try {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final startTimestamp = today.millisecondsSinceEpoch;
+
+      final deletedCount = await db.delete(
+        'commute_advices',
+        where: 'timeSlot = ? AND createdAt >= ?',
+        whereArgs: [timeSlot, startTimestamp],
+      );
+
+      if (deletedCount > 0) {
+        print('✅ 清理$timeSlot时段的通勤建议: $deletedCount条');
+      }
+      return deletedCount;
+    } catch (e) {
+      print('❌ 清理时段通勤建议失败: $e');
+      return 0;
     }
   }
 

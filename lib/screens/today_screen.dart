@@ -568,16 +568,6 @@ class _TodayScreenState extends State<TodayScreen>
                       children: [
                         _buildTopWeatherSection(weatherProvider),
                         AppColors.cardSpacingWidget,
-                        // 天气提醒卡片（智能提醒，不包含气象预警）
-                        _buildWeatherAlertCard(weatherProvider),
-                        // 只有在有天气提醒时才显示间距
-                        if (_alertService
-                            .getAlertsForCity(
-                              _getDisplayCity(weatherProvider.currentLocation),
-                              weatherProvider.currentLocation,
-                            )
-                            .isNotEmpty)
-                          AppColors.cardSpacingWidget,
                         // 通勤提醒卡片（通勤建议，不包含气象预警和天气提醒）
                         const CommuteAdviceWidget(),
                         // 只有在有通勤建议时才显示间距
@@ -1559,18 +1549,29 @@ class _TodayScreenState extends State<TodayScreen>
       weatherProvider.currentLocation,
     );
 
-    // 调试信息
-    print('TodayScreen _buildAlertButton: 天气提醒数量=${smartAlerts.length}');
+    // 获取通勤提醒
+    final commuteAdvices = weatherProvider.commuteAdvices;
 
-    if (smartAlerts.isNotEmpty) {
+    // 计算总提醒数
+    final totalCount = smartAlerts.length + commuteAdvices.length;
+
+    // 调试信息
+    print(
+      'TodayScreen _buildAlertButton: 天气提醒数量=${smartAlerts.length}, 通勤提醒数量=${commuteAdvices.length}',
+    );
+
+    if (totalCount > 0) {
       return CompactWeatherAlertWidget(
         alerts: smartAlerts,
+        commuteCount: commuteAdvices.length,
         onTap: () {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) =>
-                  WeatherAlertDetailScreen(alerts: smartAlerts),
+              builder: (context) => WeatherAlertDetailScreen(
+                alerts: smartAlerts,
+                commuteAdvices: commuteAdvices,
+              ),
             ),
           );
         },
@@ -1578,57 +1579,6 @@ class _TodayScreenState extends State<TodayScreen>
     }
 
     return const SizedBox(width: 40); // 占位保持对称
-  }
-
-  /// 构建天气提醒卡片（智能提醒，不包含气象预警）
-  Widget _buildWeatherAlertCard(WeatherProvider weatherProvider) {
-    // 获取天气提醒（智能提醒，仅当前定位城市）
-    final currentCity = _getDisplayCity(weatherProvider.currentLocation);
-    final alerts = _alertService.getAlertsForCity(
-      currentCity,
-      weatherProvider.currentLocation,
-    );
-
-    // 添加详细的调试日志
-    print('🔍 _buildWeatherAlertCard: 当前城市: $currentCity');
-    print('🔍 _buildWeatherAlertCard: 获取到的提醒数量: ${alerts.length}');
-
-    // 打印所有提醒的详细信息
-    for (int i = 0; i < alerts.length; i++) {
-      final alert = alerts[i];
-      print(
-        '🔍 提醒 $i: id=${alert.id}, title=${alert.title}, cityName=${alert.cityName}, shouldShow=${alert.shouldShow}, isExpired=${alert.isExpired}, isRead=${alert.isRead}',
-      );
-    }
-
-    // 检查所有提醒（包括不显示的）
-    final allAlerts = _alertService.alerts;
-    print('🔍 _buildWeatherAlertCard: 服务中所有提醒数量: ${allAlerts.length}');
-    for (int i = 0; i < allAlerts.length; i++) {
-      final alert = allAlerts[i];
-      print(
-        '🔍 所有提醒 $i: id=${alert.id}, title=${alert.title}, cityName=${alert.cityName}, shouldShow=${alert.shouldShow}, isExpired=${alert.isExpired}, isRead=${alert.isRead}',
-      );
-    }
-
-    // 如果没有提醒，返回空组件
-    if (alerts.isEmpty) {
-      print('🔍 _buildWeatherAlertCard: 没有提醒，返回空组件');
-      return const SizedBox.shrink();
-    }
-
-    print('🔍 _buildWeatherAlertCard: 有提醒，显示提醒卡片');
-    return WeatherAlertWidget(
-      alerts: alerts,
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => WeatherAlertDetailScreen(alerts: alerts),
-          ),
-        );
-      },
-    );
   }
 
   /// 处理刷新按钮点击，显示反馈信息

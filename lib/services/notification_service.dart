@@ -4,7 +4,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 import '../models/weather_alert_model.dart';
+import '../main.dart' as main_app;
+import '../widgets/weather_alert_widget.dart';
+import '../services/weather_alert_service.dart';
+import '../providers/weather_provider.dart';
 
 /// 通知服务类
 /// 负责管理天气提醒的本地通知
@@ -349,12 +354,62 @@ class NotificationService {
           print('NotificationService: 通知被点击 - $type');
         }
 
-        // 这里可以处理通知点击后的导航逻辑
-        // 例如跳转到天气提醒详情页面
+        // 导航到综合提醒页面
+        _navigateToAlertDetailScreen();
       }
     } catch (e) {
       if (kDebugMode) {
         print('NotificationService: 处理通知点击失败 - $e');
+      }
+    }
+  }
+
+  /// 导航到综合提醒页面
+  void _navigateToAlertDetailScreen() {
+    final context = main_app.navigatorKey.currentContext;
+    if (context == null) {
+      if (kDebugMode) {
+        print('NotificationService: 无法获取导航器上下文');
+      }
+      return;
+    }
+
+    try {
+      // 获取天气提醒服务和天气提供者
+      final alertService = WeatherAlertService.instance;
+      final weatherProvider = Provider.of<WeatherProvider>(
+        context,
+        listen: false,
+      );
+
+      // 获取当前定位城市的天气提醒
+      final currentLocation = weatherProvider.currentLocation;
+      final currentCity = currentLocation?.district ?? '';
+
+      final alerts = alertService.getAlertsForCity(
+        currentCity,
+        currentLocation,
+      );
+      final commuteAdvices = weatherProvider.commuteAdvices;
+
+      if (kDebugMode) {
+        print(
+          'NotificationService: 导航到综合提醒页面 - 天气提醒: ${alerts.length}, 通勤提醒: ${commuteAdvices.length}',
+        );
+      }
+
+      // 导航到综合提醒页面
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => WeatherAlertDetailScreen(
+            alerts: alerts,
+            commuteAdvices: commuteAdvices,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        print('NotificationService: 导航到综合提醒页面失败 - $e');
       }
     }
   }

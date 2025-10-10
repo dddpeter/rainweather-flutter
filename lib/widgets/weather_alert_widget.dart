@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/weather_alert_model.dart';
+import '../models/commute_advice_model.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_constants.dart';
 import '../providers/theme_provider.dart';
@@ -399,32 +400,41 @@ class _WeatherAlertWidgetState extends State<WeatherAlertWidget> {
 /// 简化的天气提醒组件（用于顶部显示）
 class CompactWeatherAlertWidget extends StatelessWidget {
   final List<WeatherAlertModel> alerts;
+  final int commuteCount; // 通勤提醒数量
   final VoidCallback? onTap;
 
   const CompactWeatherAlertWidget({
     super.key,
     required this.alerts,
+    this.commuteCount = 0,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (alerts.isEmpty) {
+    // 计算总提醒数
+    final totalCount = alerts.length + commuteCount;
+
+    if (totalCount == 0) {
       return const SizedBox(width: 40);
     }
 
-    // 获取最高优先级的提醒
-    final topAlert = alerts
-        .where((alert) => alert.shouldShow)
-        .fold<WeatherAlertModel?>(
-          null,
-          (prev, alert) =>
-              prev == null || alert.priority < prev.priority ? alert : prev,
-        );
+    // 获取最高优先级的天气提醒（如果有）
+    final topAlert = alerts.isNotEmpty
+        ? alerts
+              .where((alert) => alert.shouldShow)
+              .fold<WeatherAlertModel?>(
+                null,
+                (prev, alert) => prev == null || alert.priority < prev.priority
+                    ? alert
+                    : prev,
+              )
+        : null;
 
-    if (topAlert == null) {
-      return const SizedBox(width: 40);
-    }
+    // 如果没有天气提醒，但有通勤提醒，使用默认颜色
+    final iconColor = topAlert != null
+        ? _getAlertColor(topAlert.level)
+        : const Color(0xFFFFB300); // 琥珀色（通勤提醒默认颜色）
 
     return IconButton(
       onPressed: onTap,
@@ -432,10 +442,10 @@ class CompactWeatherAlertWidget extends StatelessWidget {
         children: [
           Icon(
             Icons.warning_rounded,
-            color: _getAlertColor(topAlert.level),
+            color: iconColor,
             size: AppColors.titleBarIconSize,
           ),
-          if (alerts.length > 1)
+          if (totalCount > 1)
             Positioned(
               right: 0,
               top: 0,
@@ -447,7 +457,7 @@ class CompactWeatherAlertWidget extends StatelessWidget {
                 ),
                 constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
                 child: Text(
-                  '${alerts.length}',
+                  '$totalCount',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 10,
@@ -476,23 +486,30 @@ class CompactWeatherAlertWidget extends StatelessWidget {
   }
 }
 
-/// 天气提醒详情页面
+/// 综合提醒详情页面（天气提醒 + 通勤提醒）
 class WeatherAlertDetailScreen extends StatelessWidget {
   final List<WeatherAlertModel> alerts;
+  final List<CommuteAdviceModel> commuteAdvices;
 
-  const WeatherAlertDetailScreen({super.key, required this.alerts});
+  const WeatherAlertDetailScreen({
+    super.key,
+    required this.alerts,
+    this.commuteAdvices = const [],
+  });
 
   @override
   Widget build(BuildContext context) {
+    final totalCount = alerts.length + commuteAdvices.length;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('天气提醒 (${alerts.length}条)'),
+        title: Text('综合提醒 ($totalCount条)'),
         backgroundColor: AppColors.primaryBlue,
         foregroundColor: Colors.white,
       ),
       body: Container(
         decoration: BoxDecoration(gradient: AppColors.primaryGradient),
-        child: alerts.isEmpty
+        child: totalCount == 0
             ? Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -504,7 +521,7 @@ class WeatherAlertDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      '暂无天气提醒',
+                      '暂无提醒',
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 16,
@@ -513,17 +530,76 @@ class WeatherAlertDetailScreen extends StatelessWidget {
                   ],
                 ),
               )
-            : ListView.builder(
+            : ListView(
                 padding: const EdgeInsets.all(16),
-                itemCount: alerts.length,
-                itemBuilder: (context, index) {
-                  final alert = alerts[index];
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    child: _buildAlertCard(alert),
-                  );
-                },
+                children: [
+                  // 天气提醒区域
+                  if (alerts.isNotEmpty) ...[
+                    _buildSectionHeader('天气提醒', alerts.length, Icons.cloud),
+                    const SizedBox(height: 8),
+                    ...alerts.map(
+                      (alert) => Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        child: _buildAlertCard(alert),
+                      ),
+                    ),
+                  ],
+
+                  // 通勤提醒区域
+                  if (commuteAdvices.isNotEmpty) ...[
+                    if (alerts.isNotEmpty) const SizedBox(height: 8),
+                    _buildSectionHeader(
+                      '通勤提醒',
+                      commuteAdvices.length,
+                      Icons.commute,
+                    ),
+                    const SizedBox(height: 8),
+                    ...commuteAdvices.map(
+                      (advice) => Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        child: _buildCommuteCard(advice),
+                      ),
+                    ),
+                  ],
+                ],
               ),
+      ),
+    );
+  }
+
+  /// 构建区域标题
+  Widget _buildSectionHeader(String title, int count, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      child: Row(
+        children: [
+          Icon(icon, color: AppColors.accentBlue, size: 20),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: AppColors.accentBlue.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              '$count',
+              style: TextStyle(
+                color: AppColors.accentBlue,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -693,5 +769,130 @@ class WeatherAlertDetailScreen extends StatelessWidget {
 
   String _formatDateTime(DateTime dateTime) {
     return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+
+  /// 构建通勤提醒卡片
+  Widget _buildCommuteCard(CommuteAdviceModel advice) {
+    final levelColor = advice.getLevelColor();
+    final levelName = advice.getLevelName();
+
+    return Card(
+      elevation: AppColors.cardElevation,
+      shadowColor: AppColors.cardShadowColor,
+      color: AppColors.materialCardColor,
+      surfaceTintColor: Colors.transparent,
+      shape: AppColors.cardShape,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 标题行
+            Row(
+              children: [
+                // 图标
+                Text(advice.icon, style: const TextStyle(fontSize: 24)),
+                const SizedBox(width: 12),
+                // 级别标签
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: levelColor.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    levelName,
+                    style: TextStyle(
+                      color: levelColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          advice.title,
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      // AI标签（仅AI生成的建议显示）
+                      if (advice.adviceType == 'ai_smart') ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFB300).withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.auto_awesome,
+                                color: const Color(0xFFFFB300),
+                                size: 10,
+                              ),
+                              const SizedBox(width: 2),
+                              Text(
+                                'AI',
+                                style: TextStyle(
+                                  color: const Color(0xFFFFB300),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // 内容
+            Text(
+              advice.content,
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 14,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // 详细信息
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.backgroundSecondary.withOpacity(0.5),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildInfoRow('时段', advice.timeSlot.name),
+                  _buildInfoRow('创建时间', _formatDateTime(advice.timestamp)),
+                  _buildInfoRow('建议类型', advice.adviceType),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

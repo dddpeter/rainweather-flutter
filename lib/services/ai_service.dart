@@ -125,33 +125,74 @@ class AIService {
         ? '无预报数据'
         : futureWeather.join('、');
 
-    return '''你是一个专业的天气助手，请根据以下天气信息，为通勤人群提供简洁实用的出行建议。
+    final greeting = timeSlot == 'morning' ? '早安' : '晚安';
+    final timeLabel = timeSlot == 'morning' ? '早高峰' : '晚高峰';
 
-【当前时段】${timeSlot == 'morning' ? '早高峰通勤（上班）' : '晚高峰通勤（下班）'}
+    return '''【角色】
+你是「通勤天气管家」——一位专注于用天气数据守护上下班安全、舒适、效率的私人助理。
 
-【当前天气】
-- 天气状况：$weatherType
-- 温度：$temperature℃
+【当前时段】$timeLabel 通勤
+
+【天气数据】
+- 天气现象：$weatherType
+- 气温：$temperature℃
 - 风力：$windPower
 - 空气质量：$airQuality
+- 未来趋势：$futureWeatherStr
 
-【未来趋势】接下来几小时天气：$futureWeatherStr
+【输出格式】
+一句话${greeting}问候 + 分段清单（使用 Emoji） + 交通工具推荐指数 + 暖心彩蛋
 
-【要求】
-1. 只给出1-2条最重要的出行建议
-2. 每条建议控制在60字以内
-3. 重点关注：携带物品、交通工具选择、安全提示
-4. 语气友好自然，避免官方用语
-5. 直接给出建议内容，不要额外说明
+【分段清单要点】（根据天气情况选择2-4个最重要的）
+🌂 防雨建议：⚠️只有下雨（小雨/中雨/大雨/暴雨）时才建议带伞，雾/霾/阴天不需要
+👟 鞋履&防滑：根据路面状况建议
+☀️ 防晒/防寒：根据温度和天气
+🫧 空气/呼吸：根据空气质量
+🚦 交通安全：根据天气和风力
 
-请直接输出建议内容，格式如：
-建议1：具体内容
-建议2：具体内容（如有必要）''';
+🚇 交通指数（用星级表示，最多5星）：
+地铁 ⭐ 公交 ⭐ 骑行 ⭐ 自驾 ⭐
+
+💡 彩蛋：一句暖心提示或天气趣闻
+
+【语言风格】
+- 亲切、口语化、Emoji 点缀
+- 每条建议≤20 字
+- 先给结论再给理由
+- 拒绝冗余和官方用语
+
+【示例参考】
+🌞 早安！今天$timeLabel 通勤如下——
+
+🌂 防雨：降水概率低，放心省伞。
+👟 鞋履：路面干燥，常规鞋即可。
+☀️ 防晒：紫外线强，露肤请涂防晒。
+🫧 空气：AQI优，畅快呼吸。
+
+🚇 交通指数：地铁⭐⭐⭐⭐⭐ 骑行⭐⭐⭐⭐
+
+💡 今天是个好天气，保持好心情！
+
+请直接输出完整的通勤建议，不要额外说明。''';
   }
 
   /// 解析AI返回的建议文本
   List<String> parseAdviceText(String text) {
-    final lines = text.split('\n');
+    // 去掉多余的连续空行，保留有意义的换行
+    final cleanedText = _removeExtraEmptyLines(text);
+
+    // 对于新版通勤提醒（包含问候、清单、推荐、彩蛋），作为一个整体返回
+    if (cleanedText.contains('🌞') ||
+        cleanedText.contains('🌙') ||
+        cleanedText.contains('早安') ||
+        cleanedText.contains('晚安') ||
+        cleanedText.contains('🚇') ||
+        cleanedText.contains('💡')) {
+      return [cleanedText];
+    }
+
+    // 兼容旧版格式：按行拆分
+    final lines = cleanedText.split('\n');
     final advices = <String>[];
 
     for (var line in lines) {
@@ -169,6 +210,21 @@ class AIService {
     }
 
     return advices;
+  }
+
+  /// 去掉多余的连续空行（保留单个换行）
+  String _removeExtraEmptyLines(String text) {
+    // 1. 去掉首尾空白
+    final trimmed = text.trim();
+
+    // 2. 将连续的多个空行替换为单个换行
+    final cleaned = trimmed.replaceAll(RegExp(r'\n{3,}'), '\n\n');
+
+    // 3. 去掉每行末尾的空白字符
+    final lines = cleaned.split('\n');
+    final processedLines = lines.map((line) => line.trimRight()).toList();
+
+    return processedLines.join('\n');
   }
 
   /// 构建天气预警的Prompt（用于增强提醒内容）
@@ -271,10 +327,11 @@ ${windPower != null ? '- 风力：$windPower' : ''}
 
   /// 解析天气提醒文本
   String? parseAlertText(String text) {
-    final trimmed = text.trim();
-    if (trimmed.isEmpty) return null;
+    // 去掉多余的连续空行
+    final cleaned = _removeExtraEmptyLines(text);
+    if (cleaned.isEmpty) return null;
 
     // 移除可能的标点符号
-    return trimmed.replaceFirst(RegExp(r'^[：:]\s*'), '');
+    return cleaned.replaceFirst(RegExp(r'^[：:]\s*'), '');
   }
 }

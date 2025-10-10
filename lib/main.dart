@@ -34,6 +34,9 @@ import 'utils/app_recovery_manager.dart';
 // 全局路由观察者
 final PageActivationObserver _pageActivationObserver = PageActivationObserver();
 
+// 全局导航器 Key（用于通知点击等场景的导航）
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 // 应用在后台的时间戳
 DateTime? _appInBackgroundSince;
 
@@ -242,6 +245,7 @@ class _RainWeatherAppState extends State<RainWeatherApp>
             child: Builder(
               builder: (context) {
                 return MaterialApp(
+                  navigatorKey: navigatorKey, // 全局导航器 Key
                   title: '知雨天气2',
                   debugShowCheckedModeBanner: false,
                   // 中文本地化支持

@@ -264,8 +264,10 @@ class CommuteAdviceService {
         return null;
       }
 
-      // 合并多条建议为一条
-      final combinedContent = adviceList.join('\n\n');
+      // 合并多条建议为一条（新版通勤提醒已经是完整文本，只有一条）
+      final combinedContent = adviceList.length == 1
+          ? adviceList[0]
+          : adviceList.join('\n\n');
 
       // 根据天气情况确定级别
       print('\n✅ 步骤6: 确定建议级别');

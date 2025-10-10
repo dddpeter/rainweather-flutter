@@ -275,8 +275,14 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
 
   /// 构建AI天气总结卡片
   Widget _buildAIWeatherSummary(WeatherProvider weatherProvider) {
-    const aiColor = Color(0xFFFFB300); // 琥珀金色
     final themeProvider = context.read<ThemeProvider>();
+    const aiColor = Color(0xFFFFB300); // 琥珀金色
+
+    // 根据主题调整透明度和颜色
+    final iconBgOpacity = themeProvider.isLightTheme ? 0.15 : 0.25;
+    final titleColor = themeProvider.isLightTheme
+        ? const Color(0xFFE65100) // 亮色模式：深橙色（更好对比度）
+        : aiColor; // 暗色模式：琥珀金色
 
     // 如果没有总结内容且不在生成中，不显示卡片
     if (weatherProvider.forecast15dSummary == null &&
@@ -291,70 +297,70 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
         top: 16,
         bottom: 8,
       ),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [aiColor.withOpacity(0.15), aiColor.withOpacity(0.08)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: aiColor.withOpacity(0.3), width: 1),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: aiColor.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(8),
+      child: Card(
+        elevation: AppColors.cardElevation,
+        shadowColor: AppColors.cardShadowColor,
+        color: AppColors.materialCardColor,
+        surfaceTintColor: Colors.transparent,
+        shape: AppColors.cardShape,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: titleColor.withOpacity(iconBgOpacity),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.auto_awesome, color: titleColor, size: 20),
               ),
-              child: Icon(Icons.auto_awesome, color: aiColor, size: 20),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        '近期天气总结',
-                        style: TextStyle(
-                          color: aiColor,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      if (weatherProvider.isGenerating15dSummary)
-                        SizedBox(
-                          width: 12,
-                          height: 12,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(aiColor),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          '近期天气总结',
+                          style: TextStyle(
+                            color: titleColor,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                    ],
-                  ),
-                  if (weatherProvider.forecast15dSummary != null) ...[
-                    const SizedBox(height: 6),
-                    Text(
-                      weatherProvider.forecast15dSummary!,
-                      style: TextStyle(
-                        color: themeProvider.getColor('headerTextSecondary'),
-                        fontSize: 14,
-                        height: 1.4,
-                      ),
+                        const SizedBox(width: 6),
+                        if (weatherProvider.isGenerating15dSummary)
+                          SizedBox(
+                            width: 12,
+                            height: 12,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                titleColor,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
+                    if (weatherProvider.forecast15dSummary != null) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        weatherProvider.forecast15dSummary!,
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 14,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

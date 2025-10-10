@@ -212,8 +212,8 @@ class WeatherProvider extends ChangeNotifier {
       // App重启：清理当前时段的旧建议，重新生成
       await _cleanAndRegenerateCommuteAdvices();
 
-      // 生成AI智能天气摘要（使用缓存数据）
-      generateWeatherSummary();
+      // AI智能摘要将在后台刷新成功后生成（使用最新数据）
+      // 这样避免了使用缓存数据生成后又立即用新数据重新生成的问题
 
       // 3. 后台异步刷新（不阻塞UI）
       _backgroundRefresh();
@@ -290,6 +290,9 @@ class WeatherProvider extends ChangeNotifier {
 
             print('✅ 后台数据刷新完成，已替换为最新数据');
             notifyListeners(); // 一次性通知UI
+
+            // 后台刷新成功后，重新生成AI智能摘要（使用最新数据）
+            generateWeatherSummary();
           } else {
             // 刷新失败，完整恢复所有快照数据
             print('⚠️ 后台刷新失败，恢复缓存数据');
@@ -708,6 +711,9 @@ class WeatherProvider extends ChangeNotifier {
             location: _currentLocation!,
           );
         }
+
+        // 刷新成功后，重新生成AI智能摘要
+        generateWeatherSummary();
       } else if (_error != null) {
         print(
           '📍 WeatherProvider: refreshWeatherData 跳过通知 - 位置: ${_currentLocation?.district}, 错误: $_error',
@@ -1584,6 +1590,9 @@ class WeatherProvider extends ChangeNotifier {
           weatherData: _currentWeather!,
           location: _currentLocation!,
         );
+
+        // 强制刷新成功后，重新生成AI智能摘要
+        generateWeatherSummary();
       }
 
       notifyListeners();

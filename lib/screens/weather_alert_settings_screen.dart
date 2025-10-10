@@ -254,21 +254,17 @@ class _WeatherAlertSettingsScreenState
               const SizedBox(height: 16),
 
               // 空气质量阈值
-              _buildSliderTile(
-                title: '空气质量阈值',
-                subtitle: 'AQI ≥ ${_settings.airQualityThreshold}',
-                value: _settings.airQualityThreshold.toDouble(),
+              _buildNumberPickerTile(
+                title: '空气质量阈值 (AQI)',
+                unit: '',
+                value: _settings.airQualityThreshold,
                 min: 50,
                 max: 300,
-                divisions: 10,
+                step: 10,
                 onChanged: (value) {
                   setState(() {
-                    _settings = _settings.copyWith(
-                      airQualityThreshold: value.round(),
-                    );
+                    _settings = _settings.copyWith(airQualityThreshold: value);
                   });
-                },
-                onChangeEnd: (value) {
                   _saveSettings();
                 },
               ),
@@ -331,21 +327,19 @@ class _WeatherAlertSettingsScreenState
               const SizedBox(height: 16),
 
               // 高温阈值
-              _buildSliderTile(
+              _buildNumberPickerTile(
                 title: '高温阈值',
-                subtitle: '≥ ${_settings.highTemperatureThreshold}℃',
-                value: _settings.highTemperatureThreshold.toDouble(),
+                unit: '℃',
+                value: _settings.highTemperatureThreshold,
                 min: 30,
                 max: 50,
-                divisions: 20,
+                step: 1,
                 onChanged: (value) {
                   setState(() {
                     _settings = _settings.copyWith(
-                      highTemperatureThreshold: value.round(),
+                      highTemperatureThreshold: value,
                     );
                   });
-                },
-                onChangeEnd: (value) {
                   _saveSettings();
                 },
               ),
@@ -353,21 +347,19 @@ class _WeatherAlertSettingsScreenState
               const SizedBox(height: 16),
 
               // 低温阈值
-              _buildSliderTile(
+              _buildNumberPickerTile(
                 title: '低温阈值',
-                subtitle: '≤ ${_settings.lowTemperatureThreshold}℃',
-                value: _settings.lowTemperatureThreshold.toDouble(),
+                unit: '℃',
+                value: _settings.lowTemperatureThreshold,
                 min: -20,
                 max: 10,
-                divisions: 30,
+                step: 1,
                 onChanged: (value) {
                   setState(() {
                     _settings = _settings.copyWith(
-                      lowTemperatureThreshold: value.round(),
+                      lowTemperatureThreshold: value,
                     );
                   });
-                },
-                onChangeEnd: (value) {
                   _saveSettings();
                 },
               ),
@@ -726,15 +718,15 @@ class _WeatherAlertSettingsScreenState
     );
   }
 
-  Widget _buildSliderTile({
+  /// 数字选择器（替代滑动条）
+  Widget _buildNumberPickerTile({
     required String title,
-    required String subtitle,
-    required double value,
-    required double min,
-    required double max,
-    required int divisions,
-    required ValueChanged<double> onChanged,
-    ValueChanged<double>? onChangeEnd,
+    required String unit,
+    required int value,
+    required int min,
+    required int max,
+    required int step,
+    required ValueChanged<int> onChanged,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -747,19 +739,93 @@ class _WeatherAlertSettingsScreenState
             fontWeight: FontWeight.w500,
           ),
         ),
-        Text(
-          subtitle,
-          style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            color: AppColors.cardBackground,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: AppColors.cardBorder),
+          ),
+          child: Row(
+            children: [
+              // 减少按钮
+              InkWell(
+                onTap: value > min
+                    ? () {
+                        onChanged(value - step);
+                      }
+                    : null,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(8),
+                  bottomLeft: Radius.circular(8),
+                ),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  child: Icon(
+                    Icons.remove,
+                    color: value > min
+                        ? AppColors.accentBlue
+                        : AppColors.textSecondary.withOpacity(0.3),
+                    size: 24,
+                  ),
+                ),
+              ),
+              // 分隔线
+              Container(width: 1, height: 40, color: AppColors.cardBorder),
+              // 数值显示
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Text(
+                    '$value$unit',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+              // 分隔线
+              Container(width: 1, height: 40, color: AppColors.cardBorder),
+              // 增加按钮
+              InkWell(
+                onTap: value < max
+                    ? () {
+                        onChanged(value + step);
+                      }
+                    : null,
+                borderRadius: const BorderRadius.only(
+                  topRight: Radius.circular(8),
+                  bottomRight: Radius.circular(8),
+                ),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  child: Icon(
+                    Icons.add,
+                    color: value < max
+                        ? AppColors.accentBlue
+                        : AppColors.textSecondary.withOpacity(0.3),
+                    size: 24,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 8),
-        Slider(
-          value: value,
-          min: min,
-          max: max,
-          divisions: divisions,
-          onChanged: onChanged,
-          onChangeEnd: onChangeEnd,
-          activeColor: AppColors.accentBlue,
+        // 范围提示
+        Text(
+          '范围: $min - $max$unit',
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+          textAlign: TextAlign.center,
         ),
       ],
     );

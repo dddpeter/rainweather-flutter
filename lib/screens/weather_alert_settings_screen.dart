@@ -267,6 +267,8 @@ class _WeatherAlertSettingsScreenState
                       airQualityThreshold: value.round(),
                     );
                   });
+                },
+                onChangeEnd: (value) {
                   _saveSettings();
                 },
               ),
@@ -342,6 +344,8 @@ class _WeatherAlertSettingsScreenState
                       highTemperatureThreshold: value.round(),
                     );
                   });
+                },
+                onChangeEnd: (value) {
                   _saveSettings();
                 },
               ),
@@ -362,6 +366,8 @@ class _WeatherAlertSettingsScreenState
                       lowTemperatureThreshold: value.round(),
                     );
                   });
+                },
+                onChangeEnd: (value) {
                   _saveSettings();
                 },
               ),
@@ -728,6 +734,7 @@ class _WeatherAlertSettingsScreenState
     required double max,
     required int divisions,
     required ValueChanged<double> onChanged,
+    ValueChanged<double>? onChangeEnd,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -751,6 +758,7 @@ class _WeatherAlertSettingsScreenState
           max: max,
           divisions: divisions,
           onChanged: onChanged,
+          onChangeEnd: onChangeEnd,
           activeColor: AppColors.accentBlue,
         ),
       ],

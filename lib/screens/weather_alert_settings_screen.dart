@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/weather_alert_model.dart';
 import '../services/weather_alert_service.dart';
@@ -18,11 +19,18 @@ class _WeatherAlertSettingsScreenState
     extends State<WeatherAlertSettingsScreen> {
   late WeatherAlertSettings _settings;
   bool _isLoading = false;
+  Timer? _debounceTimer;
 
   @override
   void initState() {
     super.initState();
     _settings = WeatherAlertService.instance.settings;
+  }
+
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -265,7 +273,7 @@ class _WeatherAlertSettingsScreenState
                   setState(() {
                     _settings = _settings.copyWith(airQualityThreshold: value);
                   });
-                  _saveSettings();
+                  _debouncedSaveSettings();
                 },
               ),
             ],
@@ -340,7 +348,7 @@ class _WeatherAlertSettingsScreenState
                       highTemperatureThreshold: value,
                     );
                   });
-                  _saveSettings();
+                  _debouncedSaveSettings();
                 },
               ),
 
@@ -360,7 +368,7 @@ class _WeatherAlertSettingsScreenState
                       lowTemperatureThreshold: value,
                     );
                   });
-                  _saveSettings();
+                  _debouncedSaveSettings();
                 },
               ),
             ],
@@ -926,12 +934,20 @@ class _WeatherAlertSettingsScreenState
     }
   }
 
-  Future<void> _saveSettings() async {
-    setState(() {
-      _isLoading = true;
-    });
+  /// 防抖保存设置（延迟保存，避免频繁操作导致页面跳转）
+  void _debouncedSaveSettings() {
+    // 取消之前的定时器
+    _debounceTimer?.cancel();
 
+    // 设置新的定时器，500ms后保存
+    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+      _saveSettings();
+    });
+  }
+
+  Future<void> _saveSettings() async {
     try {
+      // 不显示loading，避免页面重建
       await WeatherAlertService.instance.saveSettings(_settings);
     } catch (e) {
       if (mounted) {
@@ -941,12 +957,6 @@ class _WeatherAlertSettingsScreenState
             backgroundColor: AppColors.error,
           ),
         );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
       }
     }
   }

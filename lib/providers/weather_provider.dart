@@ -2080,9 +2080,22 @@ class WeatherProvider extends ChangeNotifier {
       return;
     }
 
-    // 检查今日是否已显示过
-    if (_hasShownCommuteAdviceToday) {
-      print('✅ 今日已显示过通勤建议，跳过');
+    // 检查今日当前时段是否已生成过建议
+    final currentTimeSlot = CommuteAdviceService.getCurrentCommuteTimeSlot();
+    if (currentTimeSlot == null) {
+      print('⏰ 无法获取当前时段，跳过生成通勤建议');
+      return;
+    }
+
+    // 检查数据库中是否已有当前时段的建议
+    final existingAdvices = await _databaseService.getTodayCommuteAdvices();
+    final hasCurrentSlotAdvices = existingAdvices.any(
+      (a) => a.timeSlot == currentTimeSlot,
+    );
+
+    if (hasCurrentSlotAdvices) {
+      print('✅ 当前时段已有通勤建议，跳过生成');
+      _hasShownCommuteAdviceToday = true;
       return;
     }
 
@@ -2093,12 +2106,20 @@ class WeatherProvider extends ChangeNotifier {
     }
 
     try {
+      print('🚀 开始生成通勤建议...');
+
       // 生成通勤建议
       final advices = CommuteAdviceService.generateAdvices(_currentWeather!);
 
       if (advices.isEmpty) {
         print('ℹ️ 当前天气条件无需特别提醒');
+        _hasShownCommuteAdviceToday = true;
         return;
+      }
+
+      print('📝 生成了 ${advices.length} 条建议:');
+      for (var advice in advices) {
+        print('   - ${advice.title}: ${advice.adviceType}');
       }
 
       // 保存到数据库
@@ -2110,7 +2131,7 @@ class WeatherProvider extends ChangeNotifier {
       // 标记今日已显示
       _hasShownCommuteAdviceToday = true;
 
-      print('✅ 生成并保存通勤建议: ${advices.length}条');
+      print('✅ 生成并保存通勤建议完成');
       notifyListeners();
     } catch (e) {
       print('❌ 生成通勤建议失败: $e');
@@ -2120,10 +2141,27 @@ class WeatherProvider extends ChangeNotifier {
   /// 加载通勤建议
   Future<void> loadCommuteAdvices() async {
     try {
+      // 先清理数据库中的重复数据
+      await _databaseService.cleanDuplicateCommuteAdvices();
+
       final advices = await _databaseService.getTodayCommuteAdvices();
-      _commuteAdvices = advices;
+
+      // 二次去重：按 adviceType + timeSlot 去重（防止并发导致的重复）
+      final uniqueAdvices = <String, CommuteAdviceModel>{};
+      for (var advice in advices) {
+        final key = '${advice.adviceType}_${advice.timeSlot}';
+        // 如果已存在相同类型和时段的建议，保留时间最新的
+        if (!uniqueAdvices.containsKey(key) ||
+            advice.timestamp.isAfter(uniqueAdvices[key]!.timestamp)) {
+          uniqueAdvices[key] = advice;
+        }
+      }
+
+      _commuteAdvices = uniqueAdvices.values.toList();
+      _commuteAdvices.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+
       notifyListeners();
-      print('✅ 加载通勤建议: ${advices.length}条');
+      print('✅ 加载通勤建议: ${_commuteAdvices.length}条（原始${advices.length}条）');
     } catch (e) {
       print('❌ 加载通勤建议失败: $e');
     }

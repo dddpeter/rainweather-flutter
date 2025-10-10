@@ -18,6 +18,7 @@ import '../widgets/life_index_widget.dart';
 import '../widgets/weather_animation_widget.dart';
 import '../widgets/app_menu.dart';
 import '../widgets/weather_alert_widget.dart';
+import '../widgets/commute_advice_widget.dart';
 import '../services/weather_alert_service.dart';
 import '../services/database_service.dart';
 import '../services/location_change_notifier.dart';
@@ -578,6 +579,11 @@ class _TodayScreenState extends State<TodayScreen>
                               _getDisplayCity(weatherProvider.currentLocation),
                             )
                             .isNotEmpty)
+                          AppColors.cardSpacingWidget,
+                        // 通勤建议卡片
+                        const CommuteAdviceWidget(),
+                        // 只有在有通勤建议时才显示间距
+                        if (weatherProvider.commuteAdvices.isNotEmpty)
                           AppColors.cardSpacingWidget,
                         // 24小时天气
                         _buildHourlyWeather(weatherProvider),

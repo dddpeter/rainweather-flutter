@@ -1143,6 +1143,58 @@ class DatabaseService {
     }
   }
 
+  /// 清理重复的通勤建议（保留每种类型+时段的最新一条）
+  Future<int> cleanDuplicateCommuteAdvices() async {
+    final db = await database;
+    try {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final startTimestamp = today.millisecondsSinceEpoch;
+
+      // 获取今日所有建议
+      final List<Map<String, dynamic>> allAdvices = await db.query(
+        'commute_advices',
+        where: 'createdAt >= ?',
+        whereArgs: [startTimestamp],
+        orderBy: 'createdAt DESC',
+      );
+
+      if (allAdvices.isEmpty) return 0;
+
+      // 按 adviceType + timeSlot 分组
+      final Map<String, List<String>> typeGroups = {};
+      for (var advice in allAdvices) {
+        final key = '${advice['adviceType']}_${advice['timeSlot']}';
+        typeGroups.putIfAbsent(key, () => []);
+        typeGroups[key]!.add(advice['id'] as String);
+      }
+
+      // 删除每组中除了第一条（最新）之外的所有记录
+      int deletedCount = 0;
+      for (var group in typeGroups.values) {
+        if (group.length > 1) {
+          // 保留第一条，删除其余
+          for (int i = 1; i < group.length; i++) {
+            await db.delete(
+              'commute_advices',
+              where: 'id = ?',
+              whereArgs: [group[i]],
+            );
+            deletedCount++;
+          }
+        }
+      }
+
+      if (deletedCount > 0) {
+        print('✅ 清理重复通勤建议: $deletedCount条');
+      }
+      return deletedCount;
+    } catch (e) {
+      print('❌ 清理重复通勤建议失败: $e');
+      return 0;
+    }
+  }
+
   /// Close database
   Future<void> close() async {
     if (_database != null) {

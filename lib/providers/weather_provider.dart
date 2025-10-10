@@ -212,8 +212,9 @@ class WeatherProvider extends ChangeNotifier {
       // App重启：清理当前时段的旧建议，重新生成
       await _cleanAndRegenerateCommuteAdvices();
 
-      // AI智能摘要将在后台刷新成功后生成（使用最新数据）
-      // 这样避免了使用缓存数据生成后又立即用新数据重新生成的问题
+      // 使用缓存数据先生成一次AI智能摘要（快速显示）
+      // 后台刷新成功后会用最新数据重新生成
+      generateWeatherSummary();
 
       // 3. 后台异步刷新（不阻塞UI）
       _backgroundRefresh();

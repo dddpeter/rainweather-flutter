@@ -568,8 +568,6 @@ class _TodayScreenState extends State<TodayScreen>
                       children: [
                         _buildTopWeatherSection(weatherProvider),
                         AppColors.cardSpacingWidget,
-                        // 空气质量卡片
-                        _buildAirQualityCard(weatherProvider),
                         // 天气提醒卡片（智能提醒，不包含气象预警）
                         _buildWeatherAlertCard(weatherProvider),
                         // 只有在有天气提醒时才显示间距
@@ -585,6 +583,9 @@ class _TodayScreenState extends State<TodayScreen>
                         // 只有在有通勤建议时才显示间距
                         if (weatherProvider.commuteAdvices.isNotEmpty)
                           AppColors.cardSpacingWidget,
+                        // 空气质量卡片
+                        _buildAirQualityCard(weatherProvider),
+                        AppColors.cardSpacingWidget,
                         // 24小时天气
                         _buildHourlyWeather(weatherProvider),
                         AppColors.cardSpacingWidget,

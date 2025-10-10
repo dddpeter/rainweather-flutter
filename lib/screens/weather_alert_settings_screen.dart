@@ -184,21 +184,75 @@ class _WeatherAlertSettingsScreenState
               const SizedBox(height: 16),
 
               // 早晨通勤时间
-              _buildTimeTile(
+              _buildTimeRangeTile(
                 title: '早晨通勤时间',
-                subtitle:
-                    '${_settings.commuteTime.morningStart} - ${_settings.commuteTime.morningEnd}',
-                onTap: () => _selectTime(context, true),
+                startTime: _settings.commuteTime.morningStart,
+                endTime: _settings.commuteTime.morningEnd,
+                onStartTimeChanged: (time) {
+                  setState(() {
+                    _settings = _settings.copyWith(
+                      commuteTime: CommuteTimeSettings(
+                        morningStart: time,
+                        morningEnd: _settings.commuteTime.morningEnd,
+                        eveningStart: _settings.commuteTime.eveningStart,
+                        eveningEnd: _settings.commuteTime.eveningEnd,
+                        workDays: _settings.commuteTime.workDays,
+                      ),
+                    );
+                  });
+                  _debouncedSaveSettings();
+                },
+                onEndTimeChanged: (time) {
+                  setState(() {
+                    _settings = _settings.copyWith(
+                      commuteTime: CommuteTimeSettings(
+                        morningStart: _settings.commuteTime.morningStart,
+                        morningEnd: time,
+                        eveningStart: _settings.commuteTime.eveningStart,
+                        eveningEnd: _settings.commuteTime.eveningEnd,
+                        workDays: _settings.commuteTime.workDays,
+                      ),
+                    );
+                  });
+                  _debouncedSaveSettings();
+                },
               ),
 
-              const SizedBox(height: 8),
+              const SizedBox(height: 16),
 
               // 晚上通勤时间
-              _buildTimeTile(
+              _buildTimeRangeTile(
                 title: '晚上通勤时间',
-                subtitle:
-                    '${_settings.commuteTime.eveningStart} - ${_settings.commuteTime.eveningEnd}',
-                onTap: () => _selectTime(context, false),
+                startTime: _settings.commuteTime.eveningStart,
+                endTime: _settings.commuteTime.eveningEnd,
+                onStartTimeChanged: (time) {
+                  setState(() {
+                    _settings = _settings.copyWith(
+                      commuteTime: CommuteTimeSettings(
+                        morningStart: _settings.commuteTime.morningStart,
+                        morningEnd: _settings.commuteTime.morningEnd,
+                        eveningStart: time,
+                        eveningEnd: _settings.commuteTime.eveningEnd,
+                        workDays: _settings.commuteTime.workDays,
+                      ),
+                    );
+                  });
+                  _debouncedSaveSettings();
+                },
+                onEndTimeChanged: (time) {
+                  setState(() {
+                    _settings = _settings.copyWith(
+                      commuteTime: CommuteTimeSettings(
+                        morningStart: _settings.commuteTime.morningStart,
+                        morningEnd: _settings.commuteTime.morningEnd,
+                        eveningStart: _settings.commuteTime.eveningStart,
+                        eveningEnd: time,
+                        workDays: _settings.commuteTime.workDays,
+                      ),
+                    );
+                  });
+                  _debouncedSaveSettings();
+                },
               ),
 
               const SizedBox(height: 8),
@@ -698,31 +752,162 @@ class _WeatherAlertSettingsScreenState
     );
   }
 
-  Widget _buildTimeTile({
+  /// 时间范围选择控件
+  Widget _buildTimeRangeTile({
     required String title,
-    required String subtitle,
-    required VoidCallback onTap,
+    required CustomTimeOfDay startTime,
+    required CustomTimeOfDay endTime,
+    required ValueChanged<CustomTimeOfDay> onStartTimeChanged,
+    required ValueChanged<CustomTimeOfDay> onEndTimeChanged,
   }) {
-    return ListTile(
-      title: Text(
-        title,
-        style: TextStyle(
-          color: AppColors.textPrimary,
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
         ),
-      ),
-      subtitle: Text(
-        subtitle,
-        style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
-      ),
-      trailing: Icon(
-        Icons.arrow_forward_ios,
-        color: AppColors.textSecondary,
-        size: 16,
-      ),
-      onTap: onTap,
-      contentPadding: EdgeInsets.zero,
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            // 开始时间
+            Expanded(
+              child: InkWell(
+                onTap: () async {
+                  final time = await showTimePicker(
+                    context: context,
+                    initialTime: TimeOfDay(
+                      hour: startTime.hour,
+                      minute: startTime.minute,
+                    ),
+                  );
+                  if (time != null) {
+                    onStartTimeChanged(
+                      CustomTimeOfDay(hour: time.hour, minute: time.minute),
+                    );
+                  }
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.cardBackground,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.cardBorder),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.access_time,
+                            color: AppColors.accentBlue,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '$startTime',
+                            style: TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        '开始',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            // 连接线
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Icon(
+                Icons.arrow_forward,
+                color: AppColors.textSecondary,
+                size: 20,
+              ),
+            ),
+            // 结束时间
+            Expanded(
+              child: InkWell(
+                onTap: () async {
+                  final time = await showTimePicker(
+                    context: context,
+                    initialTime: TimeOfDay(
+                      hour: endTime.hour,
+                      minute: endTime.minute,
+                    ),
+                  );
+                  if (time != null) {
+                    onEndTimeChanged(
+                      CustomTimeOfDay(hour: time.hour, minute: time.minute),
+                    );
+                  }
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.cardBackground,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.cardBorder),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.access_time_filled,
+                            color: AppColors.accentBlue,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '$endTime',
+                            style: TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        '结束',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -890,48 +1075,6 @@ class _WeatherAlertSettingsScreenState
         ),
       ],
     );
-  }
-
-  Future<void> _selectTime(BuildContext context, bool isMorning) async {
-    final currentTime = isMorning
-        ? _settings.commuteTime.morningStart
-        : _settings.commuteTime.eveningStart;
-
-    final time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay(
-        hour: currentTime.hour,
-        minute: currentTime.minute,
-      ),
-    );
-
-    if (time != null) {
-      setState(() {
-        final newTime = CustomTimeOfDay(hour: time.hour, minute: time.minute);
-        if (isMorning) {
-          _settings = _settings.copyWith(
-            commuteTime: CommuteTimeSettings(
-              morningStart: newTime,
-              morningEnd: _settings.commuteTime.morningEnd,
-              eveningStart: _settings.commuteTime.eveningStart,
-              eveningEnd: _settings.commuteTime.eveningEnd,
-              workDays: _settings.commuteTime.workDays,
-            ),
-          );
-        } else {
-          _settings = _settings.copyWith(
-            commuteTime: CommuteTimeSettings(
-              morningStart: _settings.commuteTime.morningStart,
-              morningEnd: _settings.commuteTime.morningEnd,
-              eveningStart: newTime,
-              eveningEnd: _settings.commuteTime.eveningEnd,
-              workDays: _settings.commuteTime.workDays,
-            ),
-          );
-        }
-      });
-      _saveSettings();
-    }
   }
 
   /// 防抖保存设置（延迟保存，避免频繁操作导致页面跳转）

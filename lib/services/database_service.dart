@@ -29,7 +29,7 @@ class DatabaseService {
       String path = join(await getDatabasesPath(), 'weather.db');
       _database = await openDatabase(
         path,
-        version: 5,
+        version: 6,
         onCreate: (db, version) async {
           await db.execute('''
             CREATE TABLE weather_cache (
@@ -79,6 +79,7 @@ class DatabaseService {
               icon TEXT NOT NULL,
               isRead INTEGER NOT NULL DEFAULT 0,
               timeSlot TEXT NOT NULL,
+              level TEXT NOT NULL DEFAULT 'normal',
               createdAt INTEGER NOT NULL
             )
           ''');
@@ -133,6 +134,15 @@ class DatabaseService {
             ''');
             print(
               'Database upgraded to version 5: Added commute_advices table',
+            );
+          }
+          if (oldVersion < 6) {
+            // 添加level字段到commute_advices表
+            await db.execute('''
+              ALTER TABLE commute_advices ADD COLUMN level TEXT NOT NULL DEFAULT 'normal'
+            ''');
+            print(
+              'Database upgraded to version 6: Added level column to commute_advices table',
             );
           }
         },

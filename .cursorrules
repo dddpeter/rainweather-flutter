@@ -1,0 +1,383 @@
+# RainWeather Flutter 项目规则
+
+## 核心概念定义
+
+### 1. 天气提醒（智能提醒）
+- **定义**: 根据24小时天气和15日天气智能分析，总结的近3-5天提醒
+- **数据来源**: WeatherAlertService智能分析生成
+- **显示位置**: 
+  - 今日天气页面（TodayScreen）
+  - 通知栏推送
+- **适用范围**: 仅当前定位城市
+- **实现文件**: 
+  - `lib/services/weather_alert_service.dart`
+  - `lib/screens/today_screen.dart` (_buildWeatherAlertCard)
+- **特点**: 
+  - 基于用户设置的阈值
+  - 支持通勤时段场景提醒
+  - 可使用AI增强内容
+  - 分析未来天气趋势
+
+### 2. 气象预警（原始预警）
+- **定义**: 天气接口API数据直接返回的官方预警信息
+- **数据来源**: 天气API (`weather.current.alerts`)
+- **显示位置**: 
+  - 主要城市列表小卡片右上角图标
+  - 城市天气详情页面右上角图标（CityWeatherTabsScreen）
+- **适用范围**: 当前定位城市和所有自定义城市
+- **实现文件**: 
+  - `lib/main.dart` (_buildCityAlertIcon)
+  - `lib/screens/city_weather_tabs_screen.dart` (_buildAlertIcon)
+  - `lib/screens/weather_alerts_screen.dart`
+- **特点**: 
+  - 官方气象部门发布
+  - 实时更新
+  - 所有城市通用
+
+### 3. 通勤提醒（通勤建议）
+- **定义**: 每日通勤时段的出行建议
+- **数据来源**: CommuteAdviceService生成（AI优先，规则引擎备用）
+- **显示位置**: 
+  - 今日天气页面（TodayScreen）
+  - App启动时弹窗提醒
+- **适用范围**: 仅当前定位城市
+- **时段设置**: 在"天气提醒设置"中配置
+  - 默认早高峰: 07:00 - 09:00
+  - 默认晚高峰: 17:30 - 19:30
+  - 可自定义时间和工作日
+- **实现文件**: 
+  - `lib/services/commute_advice_service.dart`
+  - `lib/widgets/commute_advice_widget.dart`
+  - `lib/providers/weather_provider.dart` (checkAndGenerateCommuteAdvices)
+- **特点**: 
+  - 按时段生成（早高峰/晚高峰）
+  - 每个时段只生成一次
+  - 基于当前天气和24小时预报
+  - 包含级别系统（严重/警告/提示/普通）
+  - 保留15天历史记录
+  - 时段结束自动清理
+
+## 页面预警显示规则
+
+### 今日天气页面（TodayScreen）
+- 显示：天气提醒（智能提醒）
+- 显示：通勤提醒（通勤建议）
+- 不显示：气象预警
+
+### 主要城市列表页面（MainScreen）
+- 显示：气象预警（卡片右上角图标）
+- 不显示：天气提醒
+- 不显示：通勤提醒
+
+### 城市天气详情页面（CityWeatherTabsScreen）
+- 显示：气象预警（右上角图标）
+- 不显示：天气提醒
+- 不显示：通勤提醒
+
+## 代码规范
+
+### 命名约定
+- 气象预警: `originalAlerts`, `alerts` (来自API)
+- 天气提醒: `smartAlerts`, `weatherAlerts` (智能分析)
+- 通勤提醒: `commuteAdvices`
+
+### 方法命名
+- 分析天气生成提醒: `analyzeWeather()` → 生成天气提醒
+- 检查通勤时段: `isInCommuteTime()` → 判断通勤提醒
+- 获取原始预警: `weather.current?.alerts` → 气象预警
+
+### 注释规范
+在处理预警相关代码时，请明确注释是哪种类型：
+```dart
+// 获取气象预警（原始预警，来自天气API）
+final originalAlerts = weather?.current?.alerts;
+
+// 获取天气提醒（智能分析生成）
+final smartAlerts = alertService.getAlertsForCity(cityName, location);
+
+// 获取通勤提醒（通勤时段建议）
+final commuteAdvices = weatherProvider.commuteAdvices;
+```
+
+## 用户设置相关
+
+### 天气提醒设置（WeatherAlertSettings）
+- 启用必须提醒开关
+- 启用场景提醒开关
+- 启用通勤提醒开关
+- 空气质量阈值
+- 温度阈值
+- 通勤时间设置（早高峰、晚高峰）
+- 工作日设置
+
+### 通勤时间判断
+- 读取用户设置: `WeatherAlertService.instance.settings.commuteTime`
+- 检查时段: `CommuteAdviceService.isInCommuteTime()`
+- 不要硬编码时间，必须从设置读取
+
+## AI使用规则
+
+### AI调用场景
+- ✅ 天气提醒: 重要提醒（红色预警）和场景提醒使用AI增强
+- ✅ 通勤提醒: AI优先生成，失败降级到规则引擎
+- ✅ 智能摘要: 今日天气页面顶部的AI摘要
+- ❌ 气象预警: 不使用AI，直接展示API数据
+
+### AI降级策略
+1. AI调用失败 → 使用规则引擎/默认文案
+2. 超时（15秒）→ 使用备用方案
+3. 网络异常 → 使用本地规则
+
+## 数据库表结构
+
+### weather_alerts（天气提醒）
+- 存储WeatherAlertService生成的智能提醒
+- 只存储当前定位城市的提醒
+
+### commute_advices（通勤提醒）
+- 存储通勤时段的出行建议
+- 包含level字段（严重/警告/提示/普通）
+- 保留15天历史记录
+
+### weather_cache（天气数据缓存）
+- 包含current.alerts（气象预警）
+- 所有城市的天气数据
+
+## 重要提醒
+
+❗ 开发时请注意区分这三个概念，不要混淆：
+- 城市详情页面右上角 = 气象预警（API数据）
+- 今日天气页面提醒卡片 = 天气提醒（智能分析）
+- 今日天气页面通勤卡片 = 通勤提醒（时段建议）
+
+## UI样式规范
+
+### Material Design 3 (MD3) 设计规范
+
+本项目遵循 Material Design 3 设计规范，所有卡片组件应当符合以下 MD3 标准：
+
+#### MD3 卡片规范
+1. **卡片类型**: 使用 Elevated Card（带阴影的卡片）
+2. **圆角**: 使用 `borderRadius: 8px`（MD3 标准中等圆角）
+3. **阴影**: 使用 `elevation: 2-4`（轻度阴影）
+4. **间距**: 卡片之间保持 `8-16px` 间距
+5. **内边距**: 卡片内部内容距离边缘 `12-16px`
+6. **色彩系统**: 
+   - 背景色自适应主题（亮色/暗色）
+   - 使用半透明背景（亮色 15-25%，暗色 25-40%）
+7. **交互反馈**: 可点击卡片使用 InkWell 提供涟漪效果
+8. **无边框**: 内部小卡片原则上不使用边框（依靠透明度区分层次）
+9. **⚠️ 配色约束**: 大卡片内部小卡片**不使用蓝色系**（因为暗色模式App背景是深蓝色，蓝色系对比度不足）
+
+#### MD3 透明度层次规范
+- **大卡片背景**: 半透明白色（亮色：白色，暗色：25% 白色）
+- **小卡片背景**: 
+  - 亮色模式: `0.15`
+  - 暗色模式: `0.25`
+- **图标/标签容器背景**:
+  - 亮色模式: `0.2`
+  - 暗色模式: `0.3`
+- **边框颜色**: `0.15-0.2`（如需使用）
+
+### 标准卡片样式规范（符合 MD3）
+
+#### 1. 外层大卡片（包含图表、详细信息等所有卡片）
+**外层结构**:
+```dart
+Padding(
+  padding: const EdgeInsets.symmetric(
+    horizontal: AppConstants.screenHorizontalPadding,  // 左右边距（16px）
+  ),
+  child: Card(
+    elevation: AppColors.cardElevation,              // 阴影高度（2-4）
+    shadowColor: AppColors.cardShadowColor,          // 阴影颜色
+    color: AppColors.materialCardColor,              // 背景色（自适应主题）
+    surfaceTintColor: Colors.transparent,            // 禁用 MD3 默认的表面着色
+    shape: AppColors.cardShape,                      // 圆角（8px）
+    child: Padding(
+      padding: const EdgeInsets.all(16),             // 内边距（标准：16px，图表可用12px）
+      child: Column(...),
+    ),
+  ),
+)
+```
+
+**卡片间距**:
+- 使用 `AppColors.cardSpacingWidget` 分隔卡片（8-16px）
+
+#### 2. 卡片标题栏
+```dart
+Row(
+  children: [
+    Icon(
+      Icons.info_outline,                        // 标题图标
+      color: AppColors.accentBlue,               // 图标颜色
+      size: AppConstants.sectionTitleIconSize,   // 图标大小
+    ),
+    const SizedBox(width: 8),                    // 图标与文字间距
+    Text(
+      '详细信息',
+      style: TextStyle(
+        color: AppColors.textPrimary,            // 标题颜色
+        fontSize: AppConstants.sectionTitleFontSize,  // 标题字号
+        fontWeight: FontWeight.bold,             // 标题粗细
+      ),
+    ),
+  ],
+)
+```
+- **标题下方间距**: `16px`
+
+#### 3. 内部小卡片容器
+- **布局**: 两列布局
+- **列间距**: `4px`
+- **行间距**: `4px`
+- **圆角**: `borderRadius: 4px`
+- **背景透明度**: 
+  - 亮色模式: `0.15`
+  - 暗色模式: `0.25`
+- **边框**: 无边框
+- **内边距**: `vertical: 12px, horizontal: 14px`
+- **颜色配置**:
+  - 第一列: `Color(0xFFFFB74D)` (橙色)
+  - 第二列: `Color(0xFF64DD17)` (绿色)
+  - ⚠️ **避免使用蓝色系**：暗色模式下App背景是深蓝色，蓝色系小卡片对比度不足
+
+#### 4. 小卡片内图标/标签容器
+```dart
+Container(
+  padding: const EdgeInsets.all(6),             // 正方形内边距
+  decoration: BoxDecoration(
+    color: iconColor.withOpacity(
+      themeProvider.isLightTheme ? 0.2 : 0.3    // 透明度
+    ),
+    borderRadius: BorderRadius.circular(4),     // 圆角
+  ),
+  child: Icon(
+    item.icon,
+    color: iconColor,                           // 图标颜色
+    size: 16,                                   // 图标大小
+  ),
+)
+```
+- **与标签文字间距**: `8px`
+
+#### 5. 小卡片内文字样式
+**标签文字**:
+```dart
+Text(
+  item.label,
+  style: TextStyle(
+    color: AppColors.textSecondary,             // 次要文字颜色
+    fontSize: 13,                               // 字号
+    fontWeight: FontWeight.w500,                // 字重
+    letterSpacing: 0.2,                         // 字间距
+  ),
+)
+```
+
+**数值文字**:
+```dart
+Text(
+  item.value,
+  style: TextStyle(
+    color: AppColors.textPrimary,               // 主要文字颜色
+    fontSize: 16,                               // 字号
+    fontWeight: FontWeight.w600,                // 字重
+    height: 1.2,                                // 行高
+  ),
+)
+```
+- **标签与数值间距**: `8px`
+
+#### 6. 图表卡片特殊说明
+**图表卡片样式**（温度趋势图、15日图表等）:
+```dart
+Padding(
+  padding: const EdgeInsets.symmetric(
+    horizontal: AppConstants.screenHorizontalPadding,
+  ),
+  child: Card(
+    elevation: AppColors.cardElevation,
+    shadowColor: AppColors.cardShadowColor,
+    color: AppColors.materialCardColor,
+    shape: AppColors.cardShape,
+    child: Padding(
+      padding: const EdgeInsets.all(12),        // 图表卡片使用 12px 内边距
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 标题栏（与其他卡片一致）
+          Row(
+            children: [
+              Icon(
+                Icons.show_chart,
+                color: AppColors.accentBlue,
+                size: AppConstants.sectionTitleIconSize,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '7日温度趋势',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: AppConstants.sectionTitleFontSize,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),            // 标题与图表间距
+          SizedBox(
+            height: 220,                         // 图表固定高度
+            child: WeatherChart(...),
+          ),
+        ],
+      ),
+    ),
+  ),
+)
+```
+- **图表内边距**: `12px`（比标准卡片少 4px，为图表留更多空间）
+- **标题与图表间距**: `8px`（比标准卡片少 8px）
+- **图表高度**: `220px`（7日趋势）或 `280px`（15日趋势）
+
+#### 7. 适用范围
+此样式规范适用于以下所有卡片组件：
+- ✅ 详细信息卡片 (`WeatherDetailsWidget`)
+- ✅ 生活指数卡片 (`LifeIndexWidget`)
+- ✅ 通勤提醒卡片 (`CommuteAdviceWidget`)
+- ✅ 天气提醒卡片 (`WeatherAlertWidget`)
+- ✅ 空气质量卡片 (`_buildAirQualityCard`)
+- ✅ 天气提示卡片 (`_buildWeatherTipsCard`)
+- ✅ 今日天气提示项 (`_buildTipItem`)
+- ✅ 时段卡片 (`_buildPeriodCard`)
+- ✅ 温度趋势图 (`_buildTemperatureChart`)
+- ✅ 15日温度趋势 (`Forecast15dChart`)
+- ✅ 24小时天气 (`HourlyWeatherWidget`)
+- ✅ 农历信息 (`LunarInfoWidget`)
+- ✅ 日月信息 (`SunMoonWidget`)
+
+#### 8. 通勤提醒级别颜色
+- 🔴 严重 (critical): `Color(0xFFD32F2F)` - 红色
+- 🟠 警告 (warning): `Color(0xFFF57C00)` - 橙色
+- 🟢 提示 (info): `Color(0xFF64DD17)` - 亮绿色
+- 🟢 建议 (normal): `Color(0xFF388E3C)` - 深绿色
+
+#### 9. 色彩使用原则
+
+**⚠️ 重要：避免在内部小卡片中使用蓝色系**
+
+由于暗色模式下App背景色为深蓝色（`primaryGradient`），内部小卡片使用蓝色系会导致对比度不足，难以辨识。
+
+**推荐的小卡片颜色：**
+- ✅ 橙色系：`#FFB74D`（第一列推荐）
+- ✅ 绿色系：`#64DD17`（第二列推荐）
+- ✅ 红色系：`#D32F2F`（警告/严重级别）
+- ✅ 琥珀色：`#FFB300`（AI助手等特殊场景）
+- ✅ 黄色系：`#F57C00`（警告级别）
+- ❌ 蓝色系：避免使用（对比度不足）
+
+**例外情况：**
+- 仅标题栏图标可使用蓝色（如 `AppColors.accentBlue`）
+- 大卡片背景（非内部小卡片）可使用蓝色
+

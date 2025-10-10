@@ -1,6 +1,7 @@
 import '../models/commute_advice_model.dart';
 import '../models/weather_model.dart';
 import 'weather_alert_service.dart';
+import 'ai_service.dart';
 
 /// 通勤建议服务
 class CommuteAdviceService {
@@ -8,6 +9,8 @@ class CommuteAdviceService {
       CommuteAdviceService._internal();
   factory CommuteAdviceService() => _instance;
   CommuteAdviceService._internal();
+
+  final AIService _aiService = AIService();
 
   /// 生成唯一ID（使用时间戳+随机数确保唯一性）
   static String _generateId() {
@@ -23,13 +26,50 @@ class CommuteAdviceService {
     // 从天气提醒设置中读取通勤时间配置
     final settings = WeatherAlertService.instance.settings;
 
+    print('\n🔍 检查通勤时段:');
+    print(
+      '   当前时间: ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
+    );
+    print('   星期: ${_getWeekdayName(now.weekday)}');
+
     // 检查是否启用通勤提醒
     if (!settings.enableCommuteAlerts) {
+      print('   ❌ 通勤提醒未启用（请在"天气提醒设置"中启用）');
       return false;
     }
+    print('   ✅ 通勤提醒已启用');
 
     // 使用用户配置的通勤时间判断
-    return settings.commuteTime.isCommuteTime(now);
+    final isInTime = settings.commuteTime.isCommuteTime(now);
+
+    if (isInTime) {
+      print('   ✅ 在通勤时段内');
+    } else {
+      final morningStart = settings.commuteTime.morningStart;
+      final morningEnd = settings.commuteTime.morningEnd;
+      final eveningStart = settings.commuteTime.eveningStart;
+      final eveningEnd = settings.commuteTime.eveningEnd;
+
+      print('   ❌ 不在通勤时段');
+      print(
+        '   早高峰: ${morningStart.hour.toString().padLeft(2, '0')}:${morningStart.minute.toString().padLeft(2, '0')} - ${morningEnd.hour.toString().padLeft(2, '0')}:${morningEnd.minute.toString().padLeft(2, '0')}',
+      );
+      print(
+        '   晚高峰: ${eveningStart.hour.toString().padLeft(2, '0')}:${eveningStart.minute.toString().padLeft(2, '0')} - ${eveningEnd.hour.toString().padLeft(2, '0')}:${eveningEnd.minute.toString().padLeft(2, '0')}',
+      );
+
+      // 检查是否为工作日
+      if (!settings.commuteTime.workDays.contains(now.weekday)) {
+        print('   ℹ️ 当前不是工作日');
+      }
+    }
+
+    return isInTime;
+  }
+
+  static String _getWeekdayName(int weekday) {
+    const weekdays = ['一', '二', '三', '四', '五', '六', '日'];
+    return '星期${weekdays[weekday - 1]}';
   }
 
   /// 获取当前通勤时段（从用户设置读取）
@@ -41,6 +81,7 @@ class CommuteAdviceService {
 
     // 检查是否启用通勤提醒
     if (!settings.enableCommuteAlerts) {
+      print('   ⚠️ getCurrentCommuteTimeSlot: 通勤提醒未启用');
       return null;
     }
 
@@ -49,6 +90,7 @@ class CommuteAdviceService {
 
     // 检查是否为工作日
     if (!commuteTime.workDays.contains(weekday)) {
+      print('   ⚠️ getCurrentCommuteTimeSlot: 当前不是工作日');
       return null;
     }
 
@@ -79,8 +121,8 @@ class CommuteAdviceService {
     return null;
   }
 
-  /// 根据天气数据生成通勤建议（基于当前天气+24小时预报）
-  static List<CommuteAdviceModel> generateAdvices(WeatherModel weather) {
+  /// 根据天气数据生成通勤建议（基于当前天气+24小时预报+AI智能生成）
+  Future<List<CommuteAdviceModel>> generateAdvices(WeatherModel weather) async {
     final timeSlot = getCurrentCommuteTimeSlot();
     if (timeSlot == null) {
       return []; // 不在通勤时段，不生成建议
@@ -107,9 +149,261 @@ class CommuteAdviceService {
     );
 
     // 1. 根据天气类型生成建议
-    final weatherType = current.weather ?? '';
     final futureWeatherTypes =
         commuteWeatherInfo['futureWeatherTypes'] as Set<String>;
+
+    print('\n🔄 CommuteAdviceService: 开始生成通勤建议');
+    print('⏰ 时段: ${timeSlot == CommuteTimeSlot.morning ? '早高峰' : '晚高峰'}');
+    print('🌦️ 当前天气: ${current.weather}');
+    print('🌡️ 当前温度: ${current.temperature}℃');
+    print('💨 风力: ${current.windpower}');
+    print('😷 空气质量: ${air?.levelIndex ?? '未知'}');
+    print('📊 未来天气类型: ${futureWeatherTypes.length}种\n');
+
+    // 尝试使用AI生成智能建议
+    print('🎯 策略: 优先使用AI智能生成，失败则降级到规则引擎\n');
+
+    final aiAdvice = await _tryGenerateAIAdvice(
+      weather: weather,
+      timeSlot: timeSlot,
+      settings: settings,
+      futureWeatherTypes: futureWeatherTypes,
+    );
+
+    // 如果AI生成成功，优先使用AI建议
+    if (aiAdvice != null) {
+      print('🎉 使用AI生成的建议');
+      advices.add(aiAdvice);
+      return advices;
+    }
+
+    // AI失败或不可用，使用规则引擎生成建议
+    print('\n╔════════════════════════════════════════╗');
+    print('║   ⚠️ AI建议失败，降级到规则引擎  ║');
+    print('╚════════════════════════════════════════╝\n');
+
+    final ruleAdvices = _generateRuleBasedAdvices(
+      weather: weather,
+      timeSlot: timeSlot,
+      settings: settings,
+      futureWeatherTypes: futureWeatherTypes,
+    );
+
+    print('📋 规则引擎生成 ${ruleAdvices.length} 条建议');
+    for (var advice in ruleAdvices) {
+      print(
+        '   - ${advice.title} (级别: ${advice.level.toString().split('.').last})',
+      );
+    }
+    print('');
+
+    return ruleAdvices;
+  }
+
+  /// 尝试使用AI生成智能建议
+  Future<CommuteAdviceModel?> _tryGenerateAIAdvice({
+    required WeatherModel weather,
+    required CommuteTimeSlot timeSlot,
+    required settings,
+    required Set<String> futureWeatherTypes,
+  }) async {
+    print('\n╔════════════════════════════════════════╗');
+    print('║   🤖 AI通勤建议生成流程           ║');
+    print('╚════════════════════════════════════════╝');
+
+    try {
+      final current = weather.current?.current;
+      final air = weather.current?.air ?? weather.air;
+
+      if (current == null) {
+        print('❌ 步骤1: 天气数据为空');
+        return null;
+      }
+
+      print('✅ 步骤1: 获取天气数据');
+      print('   - 天气: ${current.weather}');
+      print('   - 温度: ${current.temperature}℃');
+      print('   - 风力: ${current.windpower}');
+      print('   - 空气: ${air?.levelIndex ?? '未知'}');
+      print('   - 时段: ${timeSlot == CommuteTimeSlot.morning ? '早高峰' : '晚高峰'}');
+      print('   - 未来天气数: ${futureWeatherTypes.length}条');
+
+      // 构建Prompt
+      print('\n✅ 步骤2: 构建AI Prompt');
+      final prompt = _aiService.buildCommutePrompt(
+        weatherType: current.weather ?? '未知',
+        temperature: current.temperature ?? '--',
+        windPower: current.windpower ?? '--',
+        airQuality: air?.levelIndex ?? '良好',
+        timeSlot: timeSlot.toString().split('.').last,
+        futureWeather: futureWeatherTypes.toList(),
+      );
+
+      // 调用AI
+      print('\n✅ 步骤3: 调用智谱AI API');
+      final aiResponse = await _aiService.generateSmartAdvice(prompt);
+
+      if (aiResponse == null || aiResponse.isEmpty) {
+        print('❌ 步骤4: AI响应为空');
+        return null;
+      }
+
+      print('✅ 步骤4: AI响应接收成功');
+      print('   响应长度: ${aiResponse.length}字符');
+
+      // 解析AI建议
+      print('\n✅ 步骤5: 解析AI建议');
+      final adviceList = _aiService.parseAdviceText(aiResponse);
+      print('   解析出建议条数: ${adviceList.length}');
+      for (int i = 0; i < adviceList.length; i++) {
+        print('   建议${i + 1}: ${adviceList[i]}');
+      }
+
+      if (adviceList.isEmpty) {
+        print('❌ 解析结果为空');
+        return null;
+      }
+
+      // 合并多条建议为一条
+      final combinedContent = adviceList.join('\n\n');
+
+      // 根据天气情况确定级别
+      print('\n✅ 步骤6: 确定建议级别');
+      final level = _determineLevel(
+        weatherType: current.weather ?? '',
+        temperature: current.temperature ?? '0',
+        airQuality: air?.AQI ?? '0',
+        futureWeatherTypes: futureWeatherTypes,
+      );
+      print('   级别: ${level.toString().split('.').last}');
+
+      // 生成标题和图标
+      final titleAndIcon = _generateTitleAndIcon(
+        weatherType: current.weather ?? '',
+        level: level,
+        timeSlot: timeSlot,
+      );
+
+      print('\n╔════════════════════════════════════════╗');
+      print('║   ✅ AI建议生成成功！              ║');
+      print('╚════════════════════════════════════════╝\n');
+
+      return CommuteAdviceModel(
+        id: _generateId(),
+        timestamp: DateTime.now(),
+        adviceType: 'ai_smart',
+        title: titleAndIcon['title']!,
+        content: combinedContent,
+        icon: titleAndIcon['icon']!,
+        isRead: false,
+        timeSlot: timeSlot,
+        level: level,
+      );
+    } catch (e, stackTrace) {
+      print('\n╔════════════════════════════════════════╗');
+      print('║   ❌ AI建议生成失败                ║');
+      print('╚════════════════════════════════════════╝');
+      print('错误: $e');
+      print('堆栈: $stackTrace\n');
+      return null;
+    }
+  }
+
+  /// 根据天气情况生成标题和图标
+  static Map<String, String> _generateTitleAndIcon({
+    required String weatherType,
+    required CommuteAdviceLevel level,
+    required CommuteTimeSlot timeSlot,
+  }) {
+    // 根据天气类型生成标题
+    String title = '';
+    String icon = '';
+
+    if (weatherType.contains('雨')) {
+      title = '雨天出行';
+      icon = '🌧️';
+    } else if (weatherType.contains('雪')) {
+      title = '雪天出行';
+      icon = '❄️';
+    } else if (weatherType.contains('雾') || weatherType.contains('霾')) {
+      title = '低能见度出行';
+      icon = '🌫️';
+    } else if (weatherType.contains('晴')) {
+      title = '晴好天气出行';
+      icon = '☀️';
+    } else if (weatherType.contains('阴') || weatherType.contains('云')) {
+      title = '多云天气出行';
+      icon = '☁️';
+    } else {
+      // 默认
+      title = timeSlot == CommuteTimeSlot.morning ? '早高峰出行' : '晚高峰出行';
+      icon = timeSlot == CommuteTimeSlot.morning ? '🌅' : '🌆';
+    }
+
+    return {'title': title, 'icon': icon};
+  }
+
+  /// 确定建议级别
+  static CommuteAdviceLevel _determineLevel({
+    required String weatherType,
+    required String temperature,
+    required String airQuality,
+    required Set<String> futureWeatherTypes,
+  }) {
+    // 检查是否有严重天气
+    if (weatherType.contains('暴雨') ||
+        weatherType.contains('暴雪') ||
+        futureWeatherTypes.any((t) => t.contains('暴雨') || t.contains('暴雪'))) {
+      return CommuteAdviceLevel.critical;
+    }
+
+    // 检查是否有需要警告的天气
+    if (weatherType.contains('大雨') ||
+        weatherType.contains('大雪') ||
+        weatherType.contains('雾') ||
+        weatherType.contains('霾') ||
+        futureWeatherTypes.any((t) => t.contains('大雨') || t.contains('大雪'))) {
+      return CommuteAdviceLevel.warning;
+    }
+
+    // 检查温度
+    final temp = int.tryParse(temperature) ?? 0;
+    if (temp >= 38 || temp <= -8) {
+      return CommuteAdviceLevel.warning;
+    }
+
+    // 检查空气质量
+    final aqi = int.tryParse(airQuality) ?? 0;
+    if (aqi >= 150) {
+      return CommuteAdviceLevel.warning;
+    }
+
+    // 其他情况为提示或建议
+    if (weatherType.contains('雨') ||
+        weatherType.contains('雪') ||
+        temp >= 35 ||
+        temp <= 0) {
+      return CommuteAdviceLevel.info;
+    }
+
+    return CommuteAdviceLevel.normal;
+  }
+
+  /// 使用规则引擎生成建议（AI失败时的备用方案）
+  static List<CommuteAdviceModel> _generateRuleBasedAdvices({
+    required WeatherModel weather,
+    required CommuteTimeSlot timeSlot,
+    required settings,
+    required Set<String> futureWeatherTypes,
+  }) {
+    final advices = <CommuteAdviceModel>[];
+    final current = weather.current?.current;
+    final air = weather.current?.air ?? weather.air;
+    final hourlyForecast = weather.forecast24h;
+
+    if (current == null) return [];
+
+    final weatherType = current.weather ?? '';
 
     // 晴天建议（只在非雨雪天提醒，包含未来预报）
     final hasRainOrSnow = futureWeatherTypes.any(
@@ -127,6 +421,7 @@ class CommuteAdviceService {
           icon: '☀️',
           isRead: false,
           timeSlot: timeSlot,
+          level: CommuteAdviceLevel.normal, // 日常建议
         ),
       );
     }
@@ -140,6 +435,16 @@ class CommuteAdviceService {
       final maxRainType = _getMaxRainType([weatherType, ...futureWeatherTypes]);
       final rainyAdvice = _getRainyAdvice(maxRainType, isCurrentRain);
 
+      // 根据降雨级别分配提醒级别
+      CommuteAdviceLevel rainLevel;
+      if (maxRainType.contains('暴雨')) {
+        rainLevel = CommuteAdviceLevel.critical; // 暴雨 - 严重
+      } else if (maxRainType.contains('大雨')) {
+        rainLevel = CommuteAdviceLevel.warning; // 大雨 - 警告
+      } else {
+        rainLevel = CommuteAdviceLevel.info; // 中雨/小雨 - 提示
+      }
+
       advices.add(
         CommuteAdviceModel(
           id: _generateId(),
@@ -150,6 +455,7 @@ class CommuteAdviceService {
           icon: '🌧️',
           isRead: false,
           timeSlot: timeSlot,
+          level: rainLevel,
         ),
       );
     }
@@ -160,6 +466,19 @@ class CommuteAdviceService {
 
     if (willSnow) {
       final isCurrentSnow = _isSnowy(weatherType);
+
+      // 根据降雪类型分配级别
+      CommuteAdviceLevel snowLevel;
+      if (weatherType.contains('暴雪') ||
+          futureWeatherTypes.any((t) => t.contains('暴雪'))) {
+        snowLevel = CommuteAdviceLevel.critical; // 暴雪 - 严重
+      } else if (weatherType.contains('大雪') ||
+          futureWeatherTypes.any((t) => t.contains('大雪'))) {
+        snowLevel = CommuteAdviceLevel.warning; // 大雪 - 警告
+      } else {
+        snowLevel = CommuteAdviceLevel.info; // 中雪/小雪 - 提示
+      }
+
       advices.add(
         CommuteAdviceModel(
           id: _generateId(),
@@ -172,12 +491,25 @@ class CommuteAdviceService {
           icon: '❄️',
           isRead: false,
           timeSlot: timeSlot,
+          level: snowLevel,
         ),
       );
     }
 
     // 2. 根据风力生成建议
     if (_isWindy(current)) {
+      // 根据风力大小分配级别
+      final windPower = current.windpower ?? '';
+      final powerMatch = RegExp(r'(\d+)').firstMatch(windPower);
+      final power = int.tryParse(powerMatch?.group(1) ?? '0') ?? 0;
+
+      CommuteAdviceLevel windLevel;
+      if (power >= 8) {
+        windLevel = CommuteAdviceLevel.warning; // 8级以上大风 - 警告
+      } else {
+        windLevel = CommuteAdviceLevel.info; // 6-7级 - 提示
+      }
+
       advices.add(
         CommuteAdviceModel(
           id: _generateId(),
@@ -188,6 +520,7 @@ class CommuteAdviceService {
           icon: '💨',
           isRead: false,
           timeSlot: timeSlot,
+          level: windLevel,
         ),
       );
     }
@@ -197,6 +530,18 @@ class CommuteAdviceService {
         air != null &&
         _isAirQualityPoor(air, settings.airQualityThreshold)) {
       final aqiLevel = air.levelIndex ?? '未知';
+      final aqiValue = int.tryParse(air.AQI ?? '0') ?? 0;
+
+      // 根据AQI值分配级别
+      CommuteAdviceLevel airLevel;
+      if (aqiValue >= 200) {
+        airLevel = CommuteAdviceLevel.critical; // 重度污染以上 - 严重
+      } else if (aqiValue >= 150) {
+        airLevel = CommuteAdviceLevel.warning; // 中度污染 - 警告
+      } else {
+        airLevel = CommuteAdviceLevel.info; // 轻度污染 - 提示
+      }
+
       advices.add(
         CommuteAdviceModel(
           id: _generateId(),
@@ -207,6 +552,7 @@ class CommuteAdviceService {
           icon: '😷',
           isRead: false,
           timeSlot: timeSlot,
+          level: airLevel,
         ),
       );
     }
@@ -225,6 +571,7 @@ class CommuteAdviceService {
           icon: '🌫️',
           isRead: false,
           timeSlot: timeSlot,
+          level: CommuteAdviceLevel.warning, // 低能见度 - 警告
         ),
       );
     }
@@ -247,6 +594,17 @@ class CommuteAdviceService {
       // 高温提醒
       if (maxTemp >= settings.highTemperatureThreshold) {
         final isCurrent = currentTemp >= settings.highTemperatureThreshold;
+
+        // 根据温度高低分配级别
+        CommuteAdviceLevel highTempLevel;
+        if (maxTemp >= 40) {
+          highTempLevel = CommuteAdviceLevel.critical; // 40℃以上 - 严重
+        } else if (maxTemp >= 37) {
+          highTempLevel = CommuteAdviceLevel.warning; // 37-39℃ - 警告
+        } else {
+          highTempLevel = CommuteAdviceLevel.info; // 35-36℃ - 提示
+        }
+
         advices.add(
           CommuteAdviceModel(
             id: _generateId(),
@@ -259,6 +617,7 @@ class CommuteAdviceService {
             icon: '🌡️',
             isRead: false,
             timeSlot: timeSlot,
+            level: highTempLevel,
           ),
         );
       }
@@ -266,6 +625,17 @@ class CommuteAdviceService {
       // 低温提醒
       if (minTemp <= settings.lowTemperatureThreshold) {
         final isCurrent = currentTemp <= settings.lowTemperatureThreshold;
+
+        // 根据温度低温分配级别
+        CommuteAdviceLevel lowTempLevel;
+        if (minTemp <= -10) {
+          lowTempLevel = CommuteAdviceLevel.critical; // -10℃以下 - 严重
+        } else if (minTemp <= -5) {
+          lowTempLevel = CommuteAdviceLevel.warning; // -5~-10℃ - 警告
+        } else {
+          lowTempLevel = CommuteAdviceLevel.info; // 0℃左右 - 提示
+        }
+
         advices.add(
           CommuteAdviceModel(
             id: _generateId(),
@@ -278,6 +648,7 @@ class CommuteAdviceService {
             icon: '🧊',
             isRead: false,
             timeSlot: timeSlot,
+            level: lowTempLevel,
           ),
         );
       }

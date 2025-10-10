@@ -4,6 +4,7 @@ import '../models/weather_alert_model.dart';
 import '../models/weather_model.dart';
 import '../models/location_model.dart';
 import 'notification_service.dart';
+import 'ai_service.dart';
 
 /// 天气提醒服务
 class WeatherAlertService {
@@ -26,6 +27,9 @@ class WeatherAlertService {
   // 通知服务
   final NotificationService _notificationService = NotificationService.instance;
 
+  // AI服务
+  final AIService _aiService = AIService();
+
   /// 获取提醒设置
   WeatherAlertSettings get settings => _settings;
 
@@ -33,10 +37,18 @@ class WeatherAlertService {
   List<WeatherAlertModel> get alerts =>
       _alerts.where((alert) => alert.shouldShow).toList();
 
-  /// 获取指定城市的提醒列表
-  List<WeatherAlertModel> getAlertsForCity(String cityName) => _alerts
-      .where((alert) => alert.shouldShow && alert.cityName == cityName)
-      .toList();
+  /// 获取指定城市的提醒列表（支持区县和市的灵活匹配）
+  List<WeatherAlertModel> getAlertsForCity(
+    String cityName, [
+    LocationModel? location,
+  ]) {
+    return _alerts.where((alert) {
+      if (!alert.shouldShow) return false;
+
+      // 使用城市匹配逻辑
+      return _isCityMatch(alert.cityName, cityName, location);
+    }).toList();
+  }
 
   /// 获取必须提醒（一档）
   List<WeatherAlertModel> get requiredAlerts =>
@@ -127,25 +139,34 @@ class WeatherAlertService {
     final cityName = _getCityName(location);
     final now = DateTime.now();
 
+    print('\n🔍 开始分析天气生成提醒 - 城市: $cityName');
+
     // 分析当前天气
-    final currentWeatherAlerts = _analyzeCurrentWeather(current, cityName, now);
+    final currentWeatherAlerts = await _analyzeCurrentWeather(
+      current,
+      cityName,
+      now,
+    );
     newAlerts.addAll(currentWeatherAlerts);
+    print('✅ 当前天气提醒: ${currentWeatherAlerts.length}条');
 
     // 分析24小时预报
-    final hourlyAlerts = _analyzeHourlyForecast(
+    final hourlyAlerts = await _analyzeHourlyForecast(
       weather.forecast24h,
       cityName,
       now,
     );
     newAlerts.addAll(hourlyAlerts);
+    print('✅ 24小时预报提醒: ${hourlyAlerts.length}条');
 
     // 分析15天预报
-    final dailyAlerts = _analyzeDailyForecast(
+    final dailyAlerts = await _analyzeDailyForecast(
       weather.forecast15d,
       cityName,
       now,
     );
     newAlerts.addAll(dailyAlerts);
+    print('✅ 15天预报提醒: ${dailyAlerts.length}条');
 
     // 分析空气质量
     final airQualityAlerts = _analyzeAirQuality(
@@ -179,11 +200,11 @@ class WeatherAlertService {
   }
 
   /// 分析当前天气
-  List<WeatherAlertModel> _analyzeCurrentWeather(
+  Future<List<WeatherAlertModel>> _analyzeCurrentWeather(
     CurrentWeather current,
     String cityName,
     DateTime now,
-  ) {
+  ) async {
     final alerts = <WeatherAlertModel>[];
     final weather = current.weather ?? '';
 
@@ -193,7 +214,24 @@ class WeatherAlertService {
     for (final rule in rules) {
       // 检查是否应该生成提醒
       if (_shouldGenerateAlert(rule, current, now)) {
-        final alert = _createAlertFromRule(rule, current, cityName, now);
+        var alert = _createAlertFromRule(rule, current, cityName, now);
+
+        // 使用AI增强提醒内容（仅针对重要提醒）
+        if (rule.isRequired || rule.level == WeatherAlertLevel.red) {
+          final timeInfo = '当前时间';
+          final enhancedContent = await _enhanceAlertWithAI(
+            weatherTerm: rule.weatherTerm,
+            cityName: cityName,
+            timeInfo: timeInfo,
+            level: rule.level,
+            isRequired: rule.isRequired,
+          );
+
+          if (enhancedContent != null) {
+            alert = alert.copyWith(content: enhancedContent);
+          }
+        }
+
         alerts.add(alert);
       }
     }
@@ -201,11 +239,11 @@ class WeatherAlertService {
   }
 
   /// 分析24小时预报
-  List<WeatherAlertModel> _analyzeHourlyForecast(
+  Future<List<WeatherAlertModel>> _analyzeHourlyForecast(
     List<HourlyWeather>? hourlyForecast,
     String cityName,
     DateTime now,
-  ) {
+  ) async {
     final alerts = <WeatherAlertModel>[];
 
     if (hourlyForecast == null || hourlyForecast.isEmpty) return alerts;
@@ -220,7 +258,22 @@ class WeatherAlertService {
       for (final rule in rules) {
         // 场景提醒：检查是否在通勤时间
         if (rule.isScenarioBased && _isCommuteTime(now)) {
-          final alert = _createHourlyAlertFromRule(rule, hour, cityName, now);
+          var alert = _createHourlyAlertFromRule(rule, hour, cityName, now);
+
+          // 使用AI增强通勤时段的提醒内容
+          final timeInfo = hour.forecasttime ?? '未来时段';
+          final enhancedContent = await _enhanceAlertWithAI(
+            weatherTerm: rule.weatherTerm,
+            cityName: cityName,
+            timeInfo: timeInfo,
+            level: rule.level,
+            isRequired: rule.isRequired,
+          );
+
+          if (enhancedContent != null) {
+            alert = alert.copyWith(content: enhancedContent);
+          }
+
           alerts.add(alert);
         }
       }
@@ -230,11 +283,11 @@ class WeatherAlertService {
   }
 
   /// 分析15天预报
-  List<WeatherAlertModel> _analyzeDailyForecast(
+  Future<List<WeatherAlertModel>> _analyzeDailyForecast(
     List<DailyWeather>? dailyForecast,
     String cityName,
     DateTime now,
-  ) {
+  ) async {
     final alerts = <WeatherAlertModel>[];
 
     if (dailyForecast == null || dailyForecast.isEmpty) return alerts;
@@ -252,26 +305,54 @@ class WeatherAlertService {
 
       for (final rule in amRules) {
         if (rule.isRequired) {
-          final alert = _createDailyAlertFromRule(
-            rule,
-            day,
-            cityName,
-            now,
-            true,
-          );
+          var alert = _createDailyAlertFromRule(rule, day, cityName, now, true);
+
+          // 对严重天气使用AI增强
+          if (rule.level == WeatherAlertLevel.red) {
+            final dateStr = day.forecasttime ?? '未来';
+            final enhancedContent = await _enhanceAlertWithAI(
+              weatherTerm: rule.weatherTerm,
+              cityName: cityName,
+              timeInfo: '$dateStr 上午',
+              level: rule.level,
+              isRequired: rule.isRequired,
+            );
+
+            if (enhancedContent != null) {
+              alert = alert.copyWith(content: enhancedContent);
+            }
+          }
+
           alerts.add(alert);
         }
       }
 
       for (final rule in pmRules) {
         if (rule.isRequired) {
-          final alert = _createDailyAlertFromRule(
+          var alert = _createDailyAlertFromRule(
             rule,
             day,
             cityName,
             now,
             false,
           );
+
+          // 对严重天气使用AI增强
+          if (rule.level == WeatherAlertLevel.red) {
+            final dateStr = day.forecasttime ?? '未来';
+            final enhancedContent = await _enhanceAlertWithAI(
+              weatherTerm: rule.weatherTerm,
+              cityName: cityName,
+              timeInfo: '$dateStr 下午',
+              level: rule.level,
+              isRequired: rule.isRequired,
+            );
+
+            if (enhancedContent != null) {
+              alert = alert.copyWith(content: enhancedContent);
+            }
+          }
+
           alerts.add(alert);
         }
       }
@@ -515,6 +596,46 @@ class WeatherAlertService {
     return _settings.commuteTime.isCommuteTime(now);
   }
 
+  /// 使用AI优化提醒内容
+  Future<String?> _enhanceAlertWithAI({
+    required String weatherTerm,
+    required String cityName,
+    required String timeInfo,
+    required WeatherAlertLevel level,
+    required bool isRequired,
+  }) async {
+    try {
+      final levelName = level == WeatherAlertLevel.red
+          ? '红色预警（危险）'
+          : level == WeatherAlertLevel.yellow
+          ? '黄色预警（警告）'
+          : '蓝色预警（提示）';
+
+      final prompt = _aiService.buildWeatherAlertPrompt(
+        weatherTerm: weatherTerm,
+        cityName: cityName,
+        timeInfo: timeInfo,
+        alertLevel: levelName,
+        isRequired: isRequired,
+      );
+
+      final aiResponse = await _aiService.generateSmartAdvice(prompt);
+
+      if (aiResponse != null && aiResponse.isNotEmpty) {
+        final enhancedContent = _aiService.parseAlertText(aiResponse);
+        if (enhancedContent != null && enhancedContent.isNotEmpty) {
+          print('✅ AI增强提醒内容成功: $enhancedContent');
+          return enhancedContent;
+        }
+      }
+
+      return null;
+    } catch (e) {
+      print('⚠️ AI增强提醒失败，使用默认内容: $e');
+      return null;
+    }
+  }
+
   /// 从规则创建提醒
   WeatherAlertModel _createAlertFromRule(
     WeatherAlertRule rule,
@@ -664,6 +785,7 @@ class WeatherAlertService {
 
   /// 获取城市名称
   String _getCityName(LocationModel location) {
+    // 优先使用区/县，再用市，最后用省
     if (location.district.isNotEmpty && location.district != '未知') {
       return location.district;
     } else if (location.city.isNotEmpty && location.city != '未知') {
@@ -673,6 +795,37 @@ class WeatherAlertService {
     } else {
       return '当前位置';
     }
+  }
+
+  /// 判断两个城市名称是否匹配（考虑区县和市的关系）
+  bool _isCityMatch(
+    String cityName,
+    String targetCity,
+    LocationModel? location,
+  ) {
+    // 完全匹配
+    if (cityName == targetCity) {
+      return true;
+    }
+
+    // 如果location提供了，检查区县和市的关系
+    if (location != null) {
+      // 如果cityName是区县，targetCity是市（或反过来）
+      if ((cityName == location.district && targetCity == location.city) ||
+          (cityName == location.city && targetCity == location.district)) {
+        return true;
+      }
+
+      // 同时检查省份
+      if ((cityName == location.district && targetCity == location.province) ||
+          (cityName == location.province && targetCity == location.district) ||
+          (cityName == location.city && targetCity == location.province) ||
+          (cityName == location.province && targetCity == location.city)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   /// 获取空气质量等级

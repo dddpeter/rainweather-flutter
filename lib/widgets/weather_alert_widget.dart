@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/weather_alert_model.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_constants.dart';
+import '../providers/theme_provider.dart';
 
 /// 天气提醒组件
 class WeatherAlertWidget extends StatefulWidget {
@@ -51,15 +53,13 @@ class _WeatherAlertWidgetState extends State<WeatherAlertWidget> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 标题行
+              // 标题行（可点击展开/收起）
               InkWell(
-                onTap: widget.alerts.length > 1
-                    ? () {
-                        setState(() {
-                          _isExpanded = !_isExpanded;
-                        });
-                      }
-                    : null,
+                onTap: () {
+                  setState(() {
+                    _isExpanded = !_isExpanded;
+                  });
+                },
                 borderRadius: BorderRadius.circular(8),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4),
@@ -80,43 +80,42 @@ class _WeatherAlertWidgetState extends State<WeatherAlertWidget> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      if (widget.alerts.length > 1)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.textSecondary.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            '${widget.alerts.length}条',
-                            style: TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                            ),
+                      // 提醒数量标签（始终显示）
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.textSecondary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '${widget.alerts.length}条',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
+                      ),
                       const Spacer(),
-                      if (widget.alerts.length > 1)
-                        Icon(
-                          _isExpanded ? Icons.expand_less : Icons.expand_more,
-                          color: AppColors.textSecondary,
-                          size: 20,
-                        ),
                       if (widget.onTap != null) ...[
-                        const SizedBox(width: 8),
                         InkWell(
                           onTap: widget.onTap,
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(4),
                           child: Padding(
-                            padding: const EdgeInsets.all(4),
-                            child: Icon(
-                              Icons.arrow_forward_ios,
-                              color: AppColors.textSecondary,
-                              size: 16,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            child: Text(
+                              '更多',
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
                         ),
@@ -142,37 +141,47 @@ class _WeatherAlertWidgetState extends State<WeatherAlertWidget> {
     );
   }
 
-  /// 构建单个提醒项
+  /// 构建单个提醒项（符合 MD3 规范，可点击跳转）
   Widget _buildAlertItem(
     WeatherAlertModel alert, {
     bool showFullContent = true,
   }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: _getAlertBackgroundColor(alert.level).withOpacity(0.08),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: _getAlertBackgroundColor(alert.level).withOpacity(0.2),
-          width: 1,
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final backgroundOpacity = themeProvider.isLightTheme ? 0.15 : 0.25;
+
+    return InkWell(
+      onTap: widget.onTap, // 点击小卡片跳转到天气提醒详情页
+      borderRadius: BorderRadius.circular(4),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: _getAlertBackgroundColor(
+            alert.level,
+          ).withOpacity(backgroundOpacity),
+          borderRadius: BorderRadius.circular(4),
         ),
+        child: showFullContent
+            ? _buildFullAlertContent(alert)
+            : _buildCollapsedAlertContent(alert),
       ),
-      child: showFullContent
-          ? _buildFullAlertContent(alert)
-          : _buildCollapsedAlertContent(alert),
     );
   }
 
   /// 构建收起状态的提醒内容（只显示标题）
   Widget _buildCollapsedAlertContent(WeatherAlertModel alert) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final iconBackgroundOpacity = themeProvider.isLightTheme ? 0.2 : 0.3;
+
     return Row(
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
-            color: _getAlertBackgroundColor(alert.level).withOpacity(0.15),
-            borderRadius: BorderRadius.circular(8),
+            color: _getAlertBackgroundColor(
+              alert.level,
+            ).withOpacity(iconBackgroundOpacity),
+            borderRadius: BorderRadius.circular(4),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -205,9 +214,8 @@ class _WeatherAlertWidgetState extends State<WeatherAlertWidget> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: Colors.red.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.red.withOpacity(0.3), width: 1),
+              color: Colors.red.withOpacity(iconBackgroundOpacity),
+              borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
               '必提醒',
@@ -224,6 +232,9 @@ class _WeatherAlertWidgetState extends State<WeatherAlertWidget> {
 
   /// 构建展开状态的提醒内容（显示完整信息）
   Widget _buildFullAlertContent(WeatherAlertModel alert) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final iconBackgroundOpacity = themeProvider.isLightTheme ? 0.2 : 0.3;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -231,10 +242,12 @@ class _WeatherAlertWidgetState extends State<WeatherAlertWidget> {
         Row(
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: _getAlertBackgroundColor(alert.level).withOpacity(0.15),
-                borderRadius: BorderRadius.circular(8),
+                color: _getAlertBackgroundColor(
+                  alert.level,
+                ).withOpacity(iconBackgroundOpacity),
+                borderRadius: BorderRadius.circular(4),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -267,12 +280,8 @@ class _WeatherAlertWidgetState extends State<WeatherAlertWidget> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: Colors.red.withOpacity(0.3),
-                    width: 1,
-                  ),
+                  color: Colors.red.withOpacity(iconBackgroundOpacity),
+                  borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
                   '必提醒',
@@ -320,12 +329,8 @@ class _WeatherAlertWidgetState extends State<WeatherAlertWidget> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.orange.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: Colors.orange.withOpacity(0.3),
-                width: 1,
-              ),
+              color: Colors.orange.withOpacity(iconBackgroundOpacity),
+              borderRadius: BorderRadius.circular(4),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -539,17 +544,10 @@ class WeatherAlertDetailScreen extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
+                  padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: _getAlertColor(alert.level).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: _getAlertColor(alert.level).withOpacity(0.3),
-                      width: 1,
-                    ),
+                    color: _getAlertColor(alert.level).withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(4),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -588,12 +586,8 @@ class WeatherAlertDetailScreen extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: Colors.red.withOpacity(0.3),
-                        width: 1,
-                      ),
+                      color: Colors.red.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
                       '必须提醒',

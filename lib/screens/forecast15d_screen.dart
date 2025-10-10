@@ -222,6 +222,10 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
                             ),
                           ),
                         ),
+                        // AI Weather Summary
+                        SliverToBoxAdapter(
+                          child: _buildAIWeatherSummary(weatherProvider),
+                        ),
                         // Temperature Trend Chart
                         SliverToBoxAdapter(
                           child: Container(
@@ -266,6 +270,93 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
           ),
         );
       },
+    );
+  }
+
+  /// 构建AI天气总结卡片
+  Widget _buildAIWeatherSummary(WeatherProvider weatherProvider) {
+    const aiColor = Color(0xFFFFB300); // 琥珀金色
+    final themeProvider = context.read<ThemeProvider>();
+
+    // 如果没有总结内容且不在生成中，不显示卡片
+    if (weatherProvider.forecast15dSummary == null &&
+        !weatherProvider.isGenerating15dSummary) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(
+        left: AppConstants.screenHorizontalPadding,
+        right: AppConstants.screenHorizontalPadding,
+        top: 16,
+        bottom: 8,
+      ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [aiColor.withOpacity(0.15), aiColor.withOpacity(0.08)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: aiColor.withOpacity(0.3), width: 1),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: aiColor.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(Icons.auto_awesome, color: aiColor, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        '近期天气总结',
+                        style: TextStyle(
+                          color: aiColor,
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      if (weatherProvider.isGenerating15dSummary)
+                        SizedBox(
+                          width: 12,
+                          height: 12,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(aiColor),
+                          ),
+                        ),
+                    ],
+                  ),
+                  if (weatherProvider.forecast15dSummary != null) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      weatherProvider.forecast15dSummary!,
+                      style: TextStyle(
+                        color: themeProvider.getColor('headerTextSecondary'),
+                        fontSize: 14,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

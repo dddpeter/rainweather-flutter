@@ -15,6 +15,7 @@ import '../widgets/hourly_list.dart';
 import '../widgets/forecast15d_chart.dart';
 import '../widgets/weather_details_widget.dart';
 import '../models/weather_model.dart';
+import 'weather_alerts_screen.dart';
 
 class CityWeatherTabsScreen extends StatefulWidget {
   final String cityName;
@@ -282,8 +283,8 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
                       ),
                     ),
                   ),
-                  // 右侧占位
-                  const SizedBox(width: 40),
+                  // 预警图标
+                  _buildAlertIcon(context, weatherProvider),
                 ],
               ),
               const SizedBox(height: 16),
@@ -301,7 +302,7 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
                       children: [
                         WeatherAnimationWidget(
                           weatherType: current?.weather ?? '晴',
-                          size: 120,
+                          size: 100,
                           isPlaying: true,
                         ),
                       ],
@@ -376,8 +377,13 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
         physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
           children: [
+            const SizedBox(height: 16),
             // 空气质量卡片
             _buildAirQualityCard(weatherProvider),
+            AppColors.cardSpacingWidget,
+            // 今日提醒卡片（在详细信息前面）
+            _buildWeatherTipsCard(weatherProvider),
+            AppColors.cardSpacingWidget,
             // 详细信息卡片
             WeatherDetailsWidget(
               weather: weatherProvider.currentWeather,
@@ -386,9 +392,6 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
             AppColors.cardSpacingWidget,
             // 生活指数
             LifeIndexWidget(weatherProvider: weatherProvider),
-            AppColors.cardSpacingWidget,
-            // 天气提示卡片
-            _buildWeatherTipsCard(weatherProvider),
             AppColors.cardSpacingWidget,
             const SunMoonWidget(),
             AppColors.cardSpacingWidget,
@@ -416,6 +419,7 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
         physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
           children: [
+            const SizedBox(height: 16),
             // 24小时温度趋势图
             Padding(
               padding: const EdgeInsets.symmetric(
@@ -574,7 +578,7 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
 
   Widget _buildAlertCard(WeatherAlert alert, int index) {
     final levelColor = _getAlertLevelColor(alert.level);
-    final levelBgColor = levelColor.withOpacity(0.15);
+    final levelBgColor = levelColor.withOpacity(0.08);
 
     return Card(
       elevation: AppColors.cardElevation,
@@ -1027,7 +1031,7 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
                     current!.temperature!,
                     current.weather,
                   ),
-                  AppColors.primaryBlue,
+                  const Color(0xFF64DD17), // 绿色（避免使用蓝色系）
                 ),
             ],
           ),
@@ -1037,12 +1041,15 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
   }
 
   Widget _buildTipItem(IconData icon, String text, Color color) {
+    final themeProvider = context.read<ThemeProvider>();
+    final backgroundOpacity = themeProvider.isLightTheme ? 0.15 : 0.25;
+    final iconBackgroundOpacity = themeProvider.isLightTheme ? 0.2 : 0.3;
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.2), width: 1),
+        color: color.withOpacity(backgroundOpacity),
+        borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1050,10 +1057,10 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(8),
+              color: color.withOpacity(iconBackgroundOpacity),
+              borderRadius: BorderRadius.circular(4),
             ),
-            child: Icon(icon, color: color, size: 18),
+            child: Icon(icon, color: color, size: 16),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -1150,7 +1157,7 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
 
   void _showAlertDetailDialog(WeatherAlert alert) {
     final levelColor = _getAlertLevelColor(alert.level);
-    final levelBgColor = levelColor.withOpacity(0.15);
+    final levelBgColor = levelColor.withOpacity(0.08);
 
     showDialog(
       context: context,
@@ -1661,5 +1668,117 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
       // 如果还是失败，返回当前时间
       return DateTime.now();
     }
+  }
+
+  /// 构建气象预警图标按钮（仅显示原始预警，与主要城市列表卡片一致）
+  Widget _buildAlertIcon(
+    BuildContext context,
+    WeatherProvider weatherProvider,
+  ) {
+    final weather = weatherProvider.currentWeather;
+
+    // 获取气象预警（原始预警数据，来自天气API）
+    final alerts = weather?.current?.alerts;
+
+    // 过滤掉过期的预警
+    final validAlerts = _filterExpiredAlerts(alerts);
+    final hasValidAlerts = validAlerts.isNotEmpty;
+
+    if (!hasValidAlerts) {
+      return const SizedBox(width: 40); // 占位保持对称
+    }
+
+    // 气象预警数量
+    final alertCount = validAlerts.length;
+
+    // 显示气象预警图标
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => WeatherAlertsScreen(alerts: validAlerts),
+          ),
+        );
+      },
+      borderRadius: BorderRadius.circular(20),
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Stack(
+          children: [
+            Icon(
+              Icons.warning_rounded,
+              color: AppColors.error,
+              size: AppColors.titleBarIconSize,
+            ),
+            // 显示预警数量角标
+            if (alertCount > 1)
+              Positioned(
+                right: 0,
+                top: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: AppColors.error,
+                    shape: BoxShape.circle,
+                  ),
+                  constraints: const BoxConstraints(
+                    minWidth: 14,
+                    minHeight: 14,
+                  ),
+                  child: Text(
+                    '$alertCount',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 过滤掉过期的气象预警
+  List<WeatherAlert> _filterExpiredAlerts(List<WeatherAlert>? alerts) {
+    if (alerts == null || alerts.isEmpty) {
+      return [];
+    }
+
+    final now = DateTime.now();
+    final validAlerts = <WeatherAlert>[];
+
+    for (final alert in alerts) {
+      // 检查预警是否有发布时间
+      if (alert.publishTime == null || alert.publishTime!.isEmpty) {
+        // 没有发布时间，保留
+        validAlerts.add(alert);
+        continue;
+      }
+
+      try {
+        // 解析发布时间（格式如: "2025-10-10 08:00:00"）
+        final publishTime = DateTime.parse(alert.publishTime!);
+
+        // 预警有效期：发布后24小时内
+        final expiryTime = publishTime.add(const Duration(hours: 24));
+
+        if (now.isBefore(expiryTime)) {
+          validAlerts.add(alert);
+        } else {
+          print('🗑️ 过滤过期预警: ${alert.type} (发布时间: ${alert.publishTime})');
+        }
+      } catch (e) {
+        // 解析失败，保留该预警
+        print('⚠️ 无法解析预警时间: ${alert.publishTime}，保留该预警');
+        validAlerts.add(alert);
+      }
+    }
+
+    return validAlerts;
   }
 }

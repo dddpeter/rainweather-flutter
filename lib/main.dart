@@ -25,6 +25,7 @@ import 'services/location_change_notifier.dart';
 import 'services/page_activation_observer.dart';
 import 'services/weather_widget_service.dart';
 import 'models/location_model.dart';
+import 'models/weather_model.dart';
 import 'widgets/custom_bottom_navigation_v2.dart';
 import 'utils/city_name_matcher.dart';
 import 'utils/app_state_manager.dart';
@@ -1224,7 +1225,7 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
     );
   }
 
-  /// 构建城市预警图标（Material Design 3）
+  /// 构建城市气象预警图标（原始预警，来自天气API）
   Widget _buildCityAlertIcon(
     BuildContext context,
     dynamic cityWeather,
@@ -1234,10 +1235,14 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
       return const SizedBox.shrink();
     }
 
+    // 获取气象预警（原始预警数据，来自天气API）
     final alerts = cityWeather.current?.alerts;
-    final hasOriginalAlerts = alerts != null && alerts.isNotEmpty;
 
-    if (!hasOriginalAlerts) {
+    // 过滤掉过期的预警
+    final validAlerts = _filterExpiredAlerts(alerts);
+    final hasValidAlerts = validAlerts.isNotEmpty;
+
+    if (!hasValidAlerts) {
       return const SizedBox.shrink();
     }
 
@@ -1251,7 +1256,7 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => WeatherAlertsScreen(alerts: alerts),
+                builder: (context) => WeatherAlertsScreen(alerts: validAlerts),
               ),
             );
           },
@@ -1267,6 +1272,45 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
         ),
       ),
     );
+  }
+
+  /// 过滤掉过期的气象预警
+  List<WeatherAlert> _filterExpiredAlerts(List<WeatherAlert>? alerts) {
+    if (alerts == null || alerts.isEmpty) {
+      return [];
+    }
+
+    final now = DateTime.now();
+    final validAlerts = <WeatherAlert>[];
+
+    for (final alert in alerts) {
+      // 检查预警是否有发布时间
+      if (alert.publishTime == null || alert.publishTime!.isEmpty) {
+        // 没有发布时间，保留
+        validAlerts.add(alert);
+        continue;
+      }
+
+      try {
+        // 解析发布时间（格式如: "2025-10-10 08:00:00"）
+        final publishTime = DateTime.parse(alert.publishTime!);
+
+        // 预警有效期：发布后24小时内
+        final expiryTime = publishTime.add(const Duration(hours: 24));
+
+        if (now.isBefore(expiryTime)) {
+          validAlerts.add(alert);
+        } else {
+          print('🗑️ 过滤过期预警: ${alert.type} (发布时间: ${alert.publishTime})');
+        }
+      } catch (e) {
+        // 解析失败，保留该预警
+        print('⚠️ 无法解析预警时间: ${alert.publishTime}，保留该预警');
+        validAlerts.add(alert);
+      }
+    }
+
+    return validAlerts;
   }
 
   Widget _buildCityWeatherInfo(

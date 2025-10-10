@@ -292,7 +292,7 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
                       children: [
                         WeatherAnimationWidget(
                           weatherType: current?.weather ?? '晴',
-                          size: 120, // 从100增大到120
+                          size: 100,
                           isPlaying: true,
                         ),
                       ],

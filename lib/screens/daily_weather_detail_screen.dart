@@ -160,7 +160,7 @@ class DailyWeatherDetailScreen extends StatelessWidget {
                       children: [
                         WeatherAnimationWidget(
                           weatherType: dailyWeather.weather_pm ?? '晴',
-                          size: 120,
+                          size: 100,
                           isPlaying: true,
                         ),
                       ],

@@ -5,7 +5,6 @@ import '../models/location_model.dart';
 import '../models/city_model.dart';
 import '../models/sun_moon_index_model.dart';
 import '../services/weather_service.dart';
-import '../services/forecast15d_service.dart';
 import '../services/location_service.dart';
 import '../services/database_service.dart';
 import '../services/weather_alert_service.dart';
@@ -14,6 +13,7 @@ import '../services/city_data_service.dart';
 import '../services/sun_moon_index_service.dart';
 import '../services/weather_widget_service.dart';
 import '../services/commute_advice_service.dart';
+import '../services/ai_service.dart';
 import '../models/commute_advice_model.dart';
 import '../constants/app_constants.dart';
 import '../utils/app_state_manager.dart';
@@ -23,8 +23,6 @@ import 'dart:async';
 
 class WeatherProvider extends ChangeNotifier {
   final WeatherService _weatherService = WeatherService.getInstance();
-  final Forecast15dService _forecast15dService =
-      Forecast15dService.getInstance();
   final LocationService _locationService = LocationService.getInstance();
   final DatabaseService _databaseService = DatabaseService.getInstance();
   final CityService _cityService = CityService.getInstance();
@@ -82,6 +80,13 @@ class WeatherProvider extends ChangeNotifier {
   bool _hasShownCommuteAdviceToday = false; // 今日是否已显示过通勤建议
   Timer? _commuteCleanupTimer; // 通勤建议清理定时器
 
+  // AI智能摘要
+  String? _weatherSummary; // AI生成的天气摘要
+  bool _isGeneratingSummary = false;
+  String? _forecast15dSummary; // AI生成的15日天气总结
+  bool _isGenerating15dSummary = false;
+  final AIService _aiService = AIService();
+
   // Getters
   WeatherModel? get currentWeather => _currentWeather;
   LocationModel? get currentLocation => _currentLocation;
@@ -110,6 +115,12 @@ class WeatherProvider extends ChangeNotifier {
   List<CommuteAdviceModel> get commuteAdvices => _commuteAdvices;
   bool get hasUnreadCommuteAdvices => _commuteAdvices.any((a) => !a.isRead);
   bool get hasShownCommuteAdviceToday => _hasShownCommuteAdviceToday;
+
+  // AI摘要相关
+  String? get weatherSummary => _weatherSummary;
+  bool get isGeneratingSummary => _isGeneratingSummary;
+  String? get forecast15dSummary => _forecast15dSummary;
+  bool get isGenerating15dSummary => _isGenerating15dSummary;
 
   // 当前定位天气数据的getter
   WeatherModel? get currentLocationWeather => _currentLocationWeather;
@@ -198,9 +209,11 @@ class WeatherProvider extends ChangeNotifier {
       // 启动通勤建议清理定时器
       _startCommuteCleanupTimer();
 
-      // 加载并检查通勤建议
-      await loadCommuteAdvices();
-      await checkAndGenerateCommuteAdvices();
+      // App重启：清理当前时段的旧建议，重新生成
+      await _cleanAndRegenerateCommuteAdvices();
+
+      // 生成AI智能天气摘要（使用缓存数据）
+      generateWeatherSummary();
 
       // 3. 后台异步刷新（不阻塞UI）
       _backgroundRefresh();
@@ -484,9 +497,11 @@ class WeatherProvider extends ChangeNotifier {
       // 启动通勤建议清理定时器
       _startCommuteCleanupTimer();
 
-      // 加载并检查通勤建议
-      loadCommuteAdvices();
-      checkAndGenerateCommuteAdvices();
+      // App重启：清理当前时段的旧建议，重新生成
+      _cleanAndRegenerateCommuteAdvices();
+
+      // 生成AI智能天气摘要
+      generateWeatherSummary();
 
       // 标记初始化完成
       appStateManager.markInitializationCompleted();
@@ -635,6 +650,15 @@ class WeatherProvider extends ChangeNotifier {
           // 同步当前定位天气数据到主要城市列表
           _mainCitiesWeather[location.district] = weather;
           print('✅ 当前定位城市数据已同步到主要城市列表');
+
+          // 分析天气提醒（智能提醒，仅当前定位城市）
+          try {
+            print('🏙️ WeatherProvider: 分析当前定位城市的天气提醒');
+            await _alertService.analyzeWeather(weather, location);
+            print('🏙️ WeatherProvider: 已生成当前定位城市的天气提醒');
+          } catch (e) {
+            print('🏙️ WeatherProvider: 分析天气提醒失败 - $e');
+          }
 
           // 清空错误
           _error = null;
@@ -957,12 +981,21 @@ class WeatherProvider extends ChangeNotifier {
           // 保存到缓存
           await _databaseService.putWeatherData(weatherKey, weather);
 
-          // 分析天气提醒
-          try {
-            await _alertService.analyzeWeather(weather, cityLocation);
-            print('🏙️ WeatherProvider: 已分析 $cityName 的天气提醒');
-          } catch (e) {
-            print('🏙️ WeatherProvider: 分析 $cityName 天气提醒失败 - $e');
+          // 只为当前定位城市分析天气提醒（智能提醒）
+          // 其他城市只使用气象预警（原始预警数据）
+          final currentLocationName = getCurrentLocationCityName();
+          final isCurrentLocation = cityName == currentLocationName;
+
+          if (isCurrentLocation) {
+            try {
+              print('🏙️ WeatherProvider: 分析当前定位城市 $cityName 的天气提醒');
+              await _alertService.analyzeWeather(weather, cityLocation);
+              print('🏙️ WeatherProvider: 已分析 $cityName 的天气提醒');
+            } catch (e) {
+              print('🏙️ WeatherProvider: 分析 $cityName 天气提醒失败 - $e');
+            }
+          } else {
+            print('🏙️ WeatherProvider: $cityName 是自定义城市，跳过天气提醒分析（只使用气象预警）');
           }
 
           // 通知UI更新
@@ -1864,6 +1897,11 @@ class WeatherProvider extends ChangeNotifier {
     } finally {
       _setLoading(false);
     }
+
+    // 生成AI 15日天气总结
+    if (_forecast15d != null && _forecast15d!.isNotEmpty) {
+      generateForecast15dSummary();
+    }
   }
 
   /// 刷新24小时预报数据
@@ -2072,6 +2110,235 @@ class WeatherProvider extends ChangeNotifier {
 
   // ==================== 通勤建议相关方法 ====================
 
+  /// App重启时清理并重新生成通勤建议
+  Future<void> _cleanAndRegenerateCommuteAdvices() async {
+    print('\n╔════════════════════════════════════════╗');
+    print('║  🔄 App重启：清理并重新生成建议  ║');
+    print('╚════════════════════════════════════════╝');
+
+    try {
+      // 检查是否在通勤时段
+      if (!CommuteAdviceService.isInCommuteTime()) {
+        print('⏰ 不在通勤时段，只加载历史建议');
+        await loadCommuteAdvices();
+        return;
+      }
+
+      final currentTimeSlot = CommuteAdviceService.getCurrentCommuteTimeSlot();
+      if (currentTimeSlot == null) {
+        print('⏰ 无法获取当前时段');
+        await loadCommuteAdvices();
+        return;
+      }
+
+      print(
+        '⏰ 当前时段: ${currentTimeSlot == CommuteTimeSlot.morning ? '早高峰' : '晚高峰'}',
+      );
+
+      // 清理当前时段的所有建议
+      print('🗑️ 清理当前时段的旧建议...');
+      final deletedCount = await _databaseService.cleanEndedTimeSlotAdvices(
+        currentTimeSlot.toString().split('.').last,
+      );
+      print('✅ 已清理 $deletedCount 条旧建议');
+
+      // 重置标记，允许重新生成
+      _hasShownCommuteAdviceToday = false;
+
+      // 重新生成通勤建议
+      print('🚀 重新生成通勤建议...\n');
+      await checkAndGenerateCommuteAdvices();
+    } catch (e) {
+      print('❌ 清理并重新生成建议失败: $e');
+      // 失败时至少加载现有建议
+      await loadCommuteAdvices();
+    }
+  }
+
+  /// 生成智能天气摘要
+  Future<void> generateWeatherSummary() async {
+    if (_currentWeather == null) {
+      print('⚠️ 无天气数据，无法生成智能摘要');
+      return;
+    }
+
+    if (_isGeneratingSummary) {
+      print('⏳ 智能摘要生成中，跳过重复请求');
+      return;
+    }
+
+    _isGeneratingSummary = true;
+    notifyListeners();
+
+    // 先准备数据（在try外层，确保catch也能访问）
+    final current = _currentWeather!.current?.current;
+    final air = _currentWeather!.current?.air ?? _currentWeather!.air;
+    final hourly = _currentWeather!.forecast24h;
+
+    if (current == null) {
+      print('❌ 无当前天气数据');
+      _isGeneratingSummary = false;
+      notifyListeners();
+      return;
+    }
+
+    // 构建未来天气趋势
+    final upcomingWeather = <String>[];
+    if (hourly != null && hourly.isNotEmpty) {
+      final next3Hours = hourly.take(3);
+      for (var hour in next3Hours) {
+        if (hour.weather != null && hour.weather!.isNotEmpty) {
+          upcomingWeather.add(hour.weather!);
+        }
+      }
+    }
+
+    try {
+      print('\n🎨 开始生成AI智能天气摘要...');
+
+      // 构建prompt
+      final prompt = _aiService.buildWeatherSummaryPrompt(
+        currentWeather: current.weather ?? '晴',
+        temperature: current.temperature ?? '--',
+        airQuality: air?.levelIndex ?? '未知',
+        upcomingWeather: upcomingWeather,
+        humidity: current.humidity,
+        windPower: current.windpower,
+      );
+
+      // 调用AI
+      final aiResponse = await _aiService.generateSmartAdvice(prompt);
+
+      if (aiResponse != null && aiResponse.isNotEmpty) {
+        _weatherSummary = _aiService.parseAlertText(aiResponse);
+        print('✅ AI摘要生成成功: $_weatherSummary');
+      } else {
+        print('❌ AI摘要生成失败，使用默认文案');
+        _weatherSummary = _generateDefaultWeatherSummary(
+          current,
+          upcomingWeather,
+        );
+      }
+    } catch (e) {
+      print('❌ 生成智能摘要异常: $e');
+      // 失败时使用默认文案
+      _weatherSummary = _generateDefaultWeatherSummary(
+        current,
+        upcomingWeather,
+      );
+    } finally {
+      _isGeneratingSummary = false;
+      notifyListeners();
+    }
+  }
+
+  /// 生成默认天气摘要（包含带伞、穿衣建议）
+  String _generateDefaultWeatherSummary(
+    CurrentWeather current,
+    List<String> upcomingWeather,
+  ) {
+    final weather = current.weather ?? '晴';
+    final temp = int.tryParse(current.temperature ?? '20') ?? 20;
+
+    // 基础天气描述
+    String summary = '$weather，温度${current.temperature}℃。';
+
+    // 带伞建议
+    final needUmbrella =
+        weather.contains('雨') || upcomingWeather.any((w) => w.contains('雨'));
+    if (needUmbrella) {
+      summary += '建议携带雨具。';
+    }
+
+    // 穿衣建议
+    if (temp <= 10) {
+      summary += '天气较冷，注意保暖，建议穿厚外套。';
+    } else if (temp <= 18) {
+      summary += '温度适中，建议穿长袖衬衫或薄外套。';
+    } else if (temp <= 25) {
+      summary += '天气舒适，适合短袖或薄长袖。';
+    } else {
+      summary += '天气炎热，建议穿轻薄透气衣物，注意防晒。';
+    }
+
+    return summary;
+  }
+
+  /// 生成15日天气总结
+  Future<void> generateForecast15dSummary() async {
+    if (_forecast15d == null || _forecast15d!.isEmpty) {
+      print('⚠️ 无15日预报数据，无法生成总结');
+      return;
+    }
+
+    if (_isGenerating15dSummary) {
+      print('⏳ 15日天气总结生成中，跳过重复请求');
+      return;
+    }
+
+    _isGenerating15dSummary = true;
+    notifyListeners();
+
+    try {
+      print('\n🎨 开始生成AI 15日天气总结...');
+
+      // 构建天气数据
+      final dailyForecasts = <Map<String, dynamic>>[];
+      for (var day in _forecast15d!) {
+        // 优先使用白天天气，如果没有则使用下午天气
+        final weather = day.weather_am ?? day.weather_pm ?? '未知';
+        dailyForecasts.add({
+          'weather': weather,
+          'tempMax': day.temperature_am,
+          'tempMin': day.temperature_pm,
+        });
+      }
+
+      // 构建prompt
+      final prompt = _aiService.buildForecast15dSummaryPrompt(
+        dailyForecasts: dailyForecasts,
+        cityName: _currentLocation?.district ?? '当前位置',
+      );
+
+      // 调用AI
+      final aiResponse = await _aiService.generateSmartAdvice(prompt);
+
+      if (aiResponse != null && aiResponse.isNotEmpty) {
+        _forecast15dSummary = _aiService.parseAlertText(aiResponse);
+        print('✅ 15日天气总结生成成功: $_forecast15dSummary');
+      } else {
+        print('❌ 15日天气总结生成失败，使用默认文案');
+        _forecast15dSummary = _getDefault15dSummary();
+      }
+    } catch (e) {
+      print('❌ 生成15日天气总结异常: $e');
+      // 失败时使用简单的默认文案
+      _forecast15dSummary = _getDefault15dSummary();
+    } finally {
+      _isGenerating15dSummary = false;
+      notifyListeners();
+    }
+  }
+
+  /// 获取默认15日天气总结
+  String _getDefault15dSummary() {
+    if (_forecast15d == null || _forecast15d!.isEmpty) {
+      return '暂无15日天气预报数据';
+    }
+
+    // 统计主要天气类型
+    final weatherTypes = <String>{};
+    for (var day in _forecast15d!) {
+      // 优先使用白天天气，如果没有则使用下午天气
+      final weather = day.weather_am ?? day.weather_pm;
+      if (weather != null && weather.isNotEmpty) {
+        weatherTypes.add(weather);
+      }
+    }
+
+    return '未来15天主要天气：${weatherTypes.take(3).join('、')}等，请关注天气变化，合理安排出行。';
+  }
+
   /// 检查并生成通勤建议
   Future<void> checkAndGenerateCommuteAdvices() async {
     // 检查是否在通勤时段
@@ -2106,45 +2373,95 @@ class WeatherProvider extends ChangeNotifier {
     }
 
     try {
-      print('🚀 开始生成通勤建议...');
+      print('\n╔════════════════════════════════════════╗');
+      print('║  🚀 WeatherProvider: 通勤建议生成 ║');
+      print('╚════════════════════════════════════════╝');
+      print('📍 当前位置: ${_currentLocation?.district}');
+      print('⏰ 当前时间: ${DateTime.now()}');
+      print('🌡️ 天气数据: ${_currentWeather != null ? '已加载' : '未加载'}');
 
-      // 生成通勤建议
-      final advices = CommuteAdviceService.generateAdvices(_currentWeather!);
+      if (_currentWeather != null) {
+        print('   - 温度: ${_currentWeather!.current?.current?.temperature}℃');
+        print('   - 天气: ${_currentWeather!.current?.current?.weather}');
+        print('   - 风力: ${_currentWeather!.current?.current?.windpower}');
+        print('   - 24h预报: ${_currentWeather!.forecast24h?.length ?? 0}条');
+      }
+      print('');
+
+      // 生成通勤建议（使用AI或规则引擎）
+      final commuteService = CommuteAdviceService();
+      final advices = await commuteService.generateAdvices(_currentWeather!);
 
       if (advices.isEmpty) {
         print('ℹ️ 当前天气条件无需特别提醒');
         _hasShownCommuteAdviceToday = true;
+        print('');
         return;
       }
 
-      print('📝 生成了 ${advices.length} 条建议:');
-      for (var advice in advices) {
-        print('   - ${advice.title}: ${advice.adviceType}');
+      print('╔════════════════════════════════════════╗');
+      print('║  📝 生成结果                        ║');
+      print('╚════════════════════════════════════════╝');
+      print('生成建议数: ${advices.length}');
+      for (int i = 0; i < advices.length; i++) {
+        final advice = advices[i];
+        print('');
+        print('建议 ${i + 1}:');
+        print('   标题: ${advice.title}');
+        print('   类型: ${advice.adviceType}');
+        print(
+          '   级别: ${advice.getLevelName()} (${advice.level.toString().split('.').last})',
+        );
+        print('   图标: ${advice.icon}');
+        print(
+          '   内容: ${advice.content.substring(0, advice.content.length > 50 ? 50 : advice.content.length)}...',
+        );
       }
 
       // 保存到数据库
+      print('\n💾 保存到数据库...');
       await _databaseService.saveCommuteAdvices(advices);
+      print('✅ 数据库保存成功');
 
       // 加载通勤建议
+      print('📂 加载通勤建议...');
       await loadCommuteAdvices();
+      print('✅ 加载完成，当前建议数: ${_commuteAdvices.length}');
 
       // 标记今日已显示
       _hasShownCommuteAdviceToday = true;
 
-      print('✅ 生成并保存通勤建议完成');
+      print('\n╔════════════════════════════════════════╗');
+      print('║  ✅ 通勤建议生成完成              ║');
+      print('╚════════════════════════════════════════╝\n');
+
       notifyListeners();
-    } catch (e) {
-      print('❌ 生成通勤建议失败: $e');
+    } catch (e, stackTrace) {
+      print('\n╔════════════════════════════════════════╗');
+      print('║  ❌ 通勤建议生成失败              ║');
+      print('╚════════════════════════════════════════╝');
+      print('错误: $e');
+      print('堆栈: $stackTrace\n');
     }
   }
 
   /// 加载通勤建议
   Future<void> loadCommuteAdvices() async {
     try {
+      print('\n📚 开始加载通勤建议...');
+
       // 先清理数据库中的重复数据
       await _databaseService.cleanDuplicateCommuteAdvices();
 
       final advices = await _databaseService.getTodayCommuteAdvices();
+      print('   数据库中今日建议: ${advices.length}条');
+
+      if (advices.isEmpty) {
+        print('   ℹ️ 数据库中没有今日通勤建议');
+        _commuteAdvices = [];
+        notifyListeners();
+        return;
+      }
 
       // 二次去重：按 adviceType + timeSlot 去重（防止并发导致的重复）
       final uniqueAdvices = <String, CommuteAdviceModel>{};
@@ -2160,8 +2477,17 @@ class WeatherProvider extends ChangeNotifier {
       _commuteAdvices = uniqueAdvices.values.toList();
       _commuteAdvices.sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
+      print('✅ 加载通勤建议: ${_commuteAdvices.length}条（去重后）');
+      if (_commuteAdvices.isNotEmpty) {
+        print('   建议详情:');
+        for (var advice in _commuteAdvices) {
+          print(
+            '   - ${advice.timeSlot == CommuteTimeSlot.morning ? "早高峰" : "晚高峰"}: ${advice.title}',
+          );
+        }
+      }
+
       notifyListeners();
-      print('✅ 加载通勤建议: ${_commuteAdvices.length}条（原始${advices.length}条）');
     } catch (e) {
       print('❌ 加载通勤建议失败: $e');
     }

@@ -27,7 +27,6 @@ import '../services/lunar_service.dart';
 import '../widgets/lunar_info_widget.dart';
 import '../widgets/weather_details_widget.dart';
 import 'hourly_screen.dart';
-import 'weather_alerts_screen.dart';
 
 class TodayScreen extends StatefulWidget {
   const TodayScreen({super.key});
@@ -571,16 +570,17 @@ class _TodayScreenState extends State<TodayScreen>
                         AppColors.cardSpacingWidget,
                         // 空气质量卡片
                         _buildAirQualityCard(weatherProvider),
-                        // 天气提醒卡片 - 放在详细信息卡片之前
+                        // 天气提醒卡片（智能提醒，不包含气象预警）
                         _buildWeatherAlertCard(weatherProvider),
-                        // 只有在有提醒时才显示间距
+                        // 只有在有天气提醒时才显示间距
                         if (_alertService
                             .getAlertsForCity(
                               _getDisplayCity(weatherProvider.currentLocation),
+                              weatherProvider.currentLocation,
                             )
                             .isNotEmpty)
                           AppColors.cardSpacingWidget,
-                        // 通勤建议卡片
+                        // 通勤提醒卡片（通勤建议，不包含气象预警和天气提醒）
                         const CommuteAdviceWidget(),
                         // 只有在有通勤建议时才显示间距
                         if (weatherProvider.commuteAdvices.isNotEmpty)
@@ -599,9 +599,6 @@ class _TodayScreenState extends State<TodayScreen>
                         AppColors.cardSpacingWidget,
                         // 生活指数
                         LifeIndexWidget(weatherProvider: weatherProvider),
-                        AppColors.cardSpacingWidget,
-                        // 天气提示卡片
-                        _buildWeatherTipsCard(weatherProvider),
                         AppColors.cardSpacingWidget,
                         const SunMoonWidget(),
                         AppColors.cardSpacingWidget,
@@ -793,7 +790,7 @@ class _TodayScreenState extends State<TodayScreen>
                       children: [
                         WeatherAnimationWidget(
                           weatherType: current?.weather ?? '晴',
-                          size: 120, // 从100增大到120
+                          size: 100,
                           isPlaying: true,
                         ),
                       ],
@@ -837,9 +834,90 @@ class _TodayScreenState extends State<TodayScreen>
               // 农历日期和节气 - Material Design 3
               const SizedBox(height: 12),
               _buildLunarAndSolarTerm(weather),
+
+              // AI智能天气摘要
+              if (weatherProvider.weatherSummary != null ||
+                  weatherProvider.isGeneratingSummary) ...[
+                const SizedBox(height: 16),
+                _buildAIWeatherSummary(weatherProvider),
+              ],
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  /// 构建AI智能天气摘要
+  Widget _buildAIWeatherSummary(WeatherProvider weatherProvider) {
+    // 使用金色/琥珀色系，在深蓝背景上更醒目
+    const aiColor = Color(0xFFFFB300); // 琥珀色
+    final themeProvider = context.read<ThemeProvider>();
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [aiColor.withOpacity(0.15), aiColor.withOpacity(0.08)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: aiColor.withOpacity(0.3), width: 1),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: aiColor.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(Icons.auto_awesome, color: aiColor, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'AI智能助手',
+                      style: TextStyle(
+                        color: aiColor,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    if (weatherProvider.isGeneratingSummary)
+                      SizedBox(
+                        width: 12,
+                        height: 12,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(aiColor),
+                        ),
+                      ),
+                  ],
+                ),
+                if (weatherProvider.weatherSummary != null) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    weatherProvider.weatherSummary!,
+                    style: TextStyle(
+                      color: themeProvider.getColor('headerTextSecondary'),
+                      fontSize: 14,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1172,7 +1250,7 @@ class _TodayScreenState extends State<TodayScreen>
               todayForecast.temperature_am ?? '--',
               todayForecast.winddir_am ?? '--',
               todayForecast.windpower_am ?? '--',
-              AppColors.primaryBlue,
+              const Color(0xFF64DD17), // 绿色（避免使用蓝色系）
             ),
           ),
         ],
@@ -1204,16 +1282,12 @@ class _TodayScreenState extends State<TodayScreen>
         padding: const EdgeInsets.all(14),
         child: Column(
           children: [
-            // 时段标题（缩小）
+            // 时段标题（符合 MD3 规范）
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: accentColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: accentColor.withOpacity(0.3),
-                  width: 1,
-                ),
+                color: accentColor.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
                 period,
@@ -1477,46 +1551,27 @@ class _TodayScreenState extends State<TodayScreen>
   }
 
   Widget _buildAlertButton(WeatherProvider weatherProvider) {
-    // 获取当前城市的提醒
+    // 获取天气提醒（智能提醒，仅当前定位城市）
     final currentCity = _getDisplayCity(weatherProvider.currentLocation);
-    final smartAlerts = _alertService.getAlertsForCity(currentCity);
-    final originalAlerts = weatherProvider.currentWeather?.current?.alerts;
-
-    // 合并智能提醒和原始预警
-    final allAlerts = <dynamic>[];
-    if (smartAlerts.isNotEmpty) {
-      allAlerts.addAll(smartAlerts);
-    }
-    if (originalAlerts != null && originalAlerts.isNotEmpty) {
-      allAlerts.addAll(originalAlerts);
-    }
-
-    // 调试信息
-    print(
-      'TodayScreen _buildAlertButton: smartAlerts=${smartAlerts.length}, originalAlerts=${originalAlerts?.length ?? 0}',
+    final smartAlerts = _alertService.getAlertsForCity(
+      currentCity,
+      weatherProvider.currentLocation,
     );
 
-    if (allAlerts.isNotEmpty) {
+    // 调试信息
+    print('TodayScreen _buildAlertButton: 天气提醒数量=${smartAlerts.length}');
+
+    if (smartAlerts.isNotEmpty) {
       return CompactWeatherAlertWidget(
         alerts: smartAlerts,
         onTap: () {
-          if (smartAlerts.isNotEmpty) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) =>
-                    WeatherAlertDetailScreen(alerts: smartAlerts),
-              ),
-            );
-          } else if (originalAlerts != null && originalAlerts.isNotEmpty) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) =>
-                    WeatherAlertsScreen(alerts: originalAlerts),
-              ),
-            );
-          }
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  WeatherAlertDetailScreen(alerts: smartAlerts),
+            ),
+          );
         },
       );
     }
@@ -1524,11 +1579,14 @@ class _TodayScreenState extends State<TodayScreen>
     return const SizedBox(width: 40); // 占位保持对称
   }
 
-  /// 构建天气提醒卡片
+  /// 构建天气提醒卡片（智能提醒，不包含气象预警）
   Widget _buildWeatherAlertCard(WeatherProvider weatherProvider) {
-    // 获取当前城市的提醒
+    // 获取天气提醒（智能提醒，仅当前定位城市）
     final currentCity = _getDisplayCity(weatherProvider.currentLocation);
-    final alerts = _alertService.getAlertsForCity(currentCity);
+    final alerts = _alertService.getAlertsForCity(
+      currentCity,
+      weatherProvider.currentLocation,
+    );
 
     // 添加详细的调试日志
     print('🔍 _buildWeatherAlertCard: 当前城市: $currentCity');
@@ -1570,154 +1628,6 @@ class _TodayScreenState extends State<TodayScreen>
         );
       },
     );
-  }
-
-  /// 构建天气提示卡片（Material Design 3）
-  Widget _buildWeatherTipsCard(WeatherProvider weatherProvider) {
-    final weather = weatherProvider.currentWeather;
-    final tips = weather?.current?.tips;
-    final current = weather?.current?.current;
-
-    if (tips == null && current == null) {
-      return const SizedBox.shrink();
-    }
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppConstants.screenHorizontalPadding,
-      ),
-      child: Card(
-        elevation: AppColors.cardElevation,
-        shadowColor: AppColors.cardShadowColor,
-        color: AppColors.materialCardColor,
-        surfaceTintColor: Colors.transparent,
-        shape: AppColors.cardShape,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 标题
-              Row(
-                children: [
-                  Icon(
-                    Icons.lightbulb_rounded,
-                    color: AppColors.warning,
-                    size: AppConstants.sectionTitleIconSize,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '今日提醒',
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: AppConstants.sectionTitleFontSize,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // 天气提示
-              if (tips != null) ...[
-                _buildTipItem(Icons.wb_sunny_rounded, tips, AppColors.warning),
-                const SizedBox(height: 12),
-              ],
-
-              // 穿衣建议
-              if (current?.temperature != null)
-                _buildTipItem(
-                  Icons.checkroom_rounded,
-                  _getClothingSuggestion(
-                    current!.temperature!,
-                    current.weather,
-                  ),
-                  AppColors.primaryBlue,
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// 构建提示项
-  Widget _buildTipItem(IconData icon, String text, Color color) {
-    final themeProvider = context.read<ThemeProvider>();
-    final backgroundOpacity = themeProvider.isLightTheme ? 0.08 : 0.25;
-    final iconBackgroundOpacity = themeProvider.isLightTheme ? 0.12 : 0.3;
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withOpacity(backgroundOpacity),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color.withOpacity(0.15), width: 1),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: color.withOpacity(iconBackgroundOpacity),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Icon(icon, color: color, size: 18),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 14,
-                height: 1.5,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 根据温度和天气生成穿衣建议
-  String _getClothingSuggestion(String temperature, String? weather) {
-    try {
-      final temp = int.parse(temperature);
-      final hasRain = weather?.contains('雨') ?? false;
-      final hasSnow = weather?.contains('雪') ?? false;
-
-      String suggestion = '';
-
-      // 温度建议
-      if (temp >= 30) {
-        suggestion = '天气炎热，建议穿短袖、短裤等清凉透气的衣服';
-      } else if (temp >= 25) {
-        suggestion = '天气温暖，适合穿短袖、薄长裤等夏季服装';
-      } else if (temp >= 20) {
-        suggestion = '天气舒适，建议穿长袖衬衫、薄外套等';
-      } else if (temp >= 15) {
-        suggestion = '天气微凉，建议穿夹克、薄毛衣等';
-      } else if (temp >= 10) {
-        suggestion = '天气较冷，建议穿厚外套、毛衣等保暖衣物';
-      } else if (temp >= 0) {
-        suggestion = '天气寒冷，建议穿棉衣、羽绒服等厚实保暖的衣服';
-      } else {
-        suggestion = '天气严寒，建议穿加厚羽绒服、保暖内衣等防寒衣物';
-      }
-
-      // 天气补充建议
-      if (hasRain) {
-        suggestion += '，记得带伞☂️';
-      } else if (hasSnow) {
-        suggestion += '，注意防滑保暖❄️';
-      }
-
-      return suggestion;
-    } catch (e) {
-      return '根据天气情况适当增减衣物';
-    }
   }
 
   /// 处理刷新按钮点击，显示反馈信息

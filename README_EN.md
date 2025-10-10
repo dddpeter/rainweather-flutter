@@ -228,7 +228,46 @@ This Flutter app is a complete refactor of the original Android weather app with
 
 ## Changelog
 
-### v1.10.0 (Latest)
+### v1.11.0 (Latest - 2025-10-10)
+
+**Material Design 3 Enhancement**
+- 🎨 Comprehensive MD3 card design standards with unified styling
+- 📐 Unified inner card transparency (light 0.15/0.2, dark 0.25/0.3)
+- 🚫 Color constraint: Avoid blue tones in inner cards (poor contrast on dark background)
+- 🎯 Unified border radius: 4px (inner cards), 8px (outer cards)
+- 🔲 Removed borders from inner cards, using transparency for visual hierarchy
+
+**AI Features Optimization**
+- 🤖 AI assistant color optimization (blue → amber gold #FFB300)
+- ✨ Smart AI badge display (only shows on AI-generated suggestions)
+- 🧠 Dynamic commute advice title generation (auto-generated based on weather)
+- 🎯 AI badge position optimization (moved from card header to content)
+
+**Commute Alert System**
+- 🚗 Real-time theme switching for commute alert component
+- 🎨 Complete design unification between commute and weather alerts
+- 📊 Optimized expand/collapse interaction (collapsed shows first item summary)
+- 🔄 Semantic expand icons (collapsed: right arrow →, expanded: down arrow ↓)
+- 🟢 "Info" level color changed to green (avoiding blue contrast issues)
+
+**Card Layout Optimization**
+- 📋 Today's tips card moved forward (before 24h forecast/details)
+- 🏷️ Count badge always visible (including "1 item")
+- 🎯 Clothing advice and afternoon period use green (avoiding blue)
+
+**Interaction Experience**
+- 👆 Weather alert cards clickable to navigate to detail page
+- 👆 Commute alert cards clickable to expand when collapsed
+- 🎯 Clearer header tap interactions
+- 📱 Removed expand/collapse icon from weather alerts, using "More" text
+
+**Documentation Enhancement**
+- 📖 Added comprehensive MD3 design standards section
+- 📐 Detailed card style specifications (with code examples)
+- 🎨 Color usage principles and constraints
+- 📋 Applicable components list (13 components)
+
+### v1.10.0
 
 **UI/UX Improvements**
 - 🎨 Bottom navigation bar Material Design 3 style optimization

@@ -488,13 +488,14 @@ class AppMenu extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '• 桌面小组件使用真实天气图标\n'
-                      '• 小组件自适应屏幕大小布局\n'
-                      '• 底部导航栏Material Design 3优化\n'
-                      '• 卡片圆角统一为8dp标准\n'
-                      '• 降雨提醒逻辑优化\n'
-                      '• 主要城市页面刷新优化\n'
-                      '• 修复无限刷新问题',
+                      '• Material Design 3 规范完善\n'
+                      '• AI智能助手配色优化（琥珀金色）\n'
+                      '• 通勤提醒与天气提醒设计统一\n'
+                      '• 内部小卡片禁用蓝色系\n'
+                      '• 今日提醒卡片位置前移\n'
+                      '• AI标签智能显示\n'
+                      '• 通勤建议标题动态生成\n'
+                      '• 小卡片点击交互优化',
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,

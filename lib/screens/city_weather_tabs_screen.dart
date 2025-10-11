@@ -13,6 +13,7 @@ import '../widgets/hourly_chart.dart';
 import '../widgets/hourly_list.dart';
 import '../widgets/forecast15d_chart.dart';
 import '../widgets/weather_details_widget.dart';
+import '../widgets/ai_content_widget.dart';
 import '../models/weather_model.dart';
 import 'weather_alerts_screen.dart';
 
@@ -526,150 +527,34 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
         ),
         child: Column(
           children: [
-            // AI智能助手（24小时天气总结）
-            _buildAIWeatherSummary(weatherProvider),
+            // AI智能助手（24小时天气总结） - 使用渐进式展示
+            AIContentWidget(
+              title: 'AI智能助手',
+              icon: Icons.auto_awesome,
+              fetchAIContent: () async {
+                if (weatherProvider.weatherSummary != null) {
+                  return weatherProvider.weatherSummary!;
+                }
+                await weatherProvider.generateWeatherSummary();
+                return weatherProvider.weatherSummary ?? '';
+              },
+              defaultContent: '今日天气舒适，适合出行。注意温差变化，合理增减衣物。',
+            ),
             AppColors.cardSpacingWidget,
 
-            // 15日天气AI总结
-            _buildAI15dSummary(weatherProvider),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// 构建AI智能助手卡片（24小时天气总结）
-  Widget _buildAIWeatherSummary(WeatherProvider weatherProvider) {
-    final themeProvider = context.read<ThemeProvider>();
-    final aiColor = themeProvider.isLightTheme
-        ? const Color(0xFFE65100) // 深橙色
-        : const Color(0xFFFFB300); // 琥珀金色
-
-    return Card(
-      elevation: AppColors.cardElevation,
-      shadowColor: AppColors.cardShadowColor,
-      color: AppColors.materialCardColor,
-      surfaceTintColor: Colors.transparent,
-      shape: AppColors.cardShape,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 标题
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: aiColor.withOpacity(
-                      themeProvider.isLightTheme ? 0.15 : 0.2,
-                    ),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Icon(Icons.auto_awesome, color: aiColor, size: 16),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'AI智能助手',
-                  style: TextStyle(
-                    color: aiColor,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const Spacer(),
-                if (weatherProvider.isGeneratingSummary)
-                  SizedBox(
-                    width: 14,
-                    height: 14,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(aiColor),
-                    ),
-                  ),
-              ],
+            // 15日天气AI总结 - 使用渐进式展示
+            AIContentWidget(
+              title: '15日天气趋势',
+              icon: Icons.trending_up,
+              fetchAIContent: () async {
+                if (weatherProvider.forecast15dSummary != null) {
+                  return weatherProvider.forecast15dSummary!;
+                }
+                await weatherProvider.generateForecast15dSummary();
+                return weatherProvider.forecast15dSummary ?? '';
+              },
+              defaultContent: '未来半月天气平稳，温度变化不大，适合安排户外活动。',
             ),
-            if (weatherProvider.weatherSummary != null) ...[
-              const SizedBox(height: 6),
-              Text(
-                weatherProvider.weatherSummary!,
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 14,
-                  height: 1.4,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// 构建15日天气AI总结卡片
-  Widget _buildAI15dSummary(WeatherProvider weatherProvider) {
-    final themeProvider = context.read<ThemeProvider>();
-    final titleColor = themeProvider.isLightTheme
-        ? const Color(0xFFE65100) // 深橙色
-        : const Color(0xFFFFB300); // 琥珀金色
-
-    return Card(
-      elevation: AppColors.cardElevation,
-      shadowColor: AppColors.cardShadowColor,
-      color: AppColors.materialCardColor,
-      surfaceTintColor: Colors.transparent,
-      shape: AppColors.cardShape,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 标题
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: titleColor.withOpacity(
-                      themeProvider.isLightTheme ? 0.15 : 0.2,
-                    ),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Icon(Icons.auto_awesome, color: titleColor, size: 16),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  '15日天气总结',
-                  style: TextStyle(
-                    color: titleColor,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const Spacer(),
-                if (weatherProvider.isGenerating15dSummary)
-                  SizedBox(
-                    width: 14,
-                    height: 14,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(titleColor),
-                    ),
-                  ),
-              ],
-            ),
-            if (weatherProvider.forecast15dSummary != null) ...[
-              const SizedBox(height: 6),
-              Text(
-                weatherProvider.forecast15dSummary!,
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 14,
-                  height: 1.4,
-                ),
-              ),
-            ],
           ],
         ),
       ),

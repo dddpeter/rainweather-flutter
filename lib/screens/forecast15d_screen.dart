@@ -8,6 +8,9 @@ import '../models/weather_model.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_constants.dart';
 import '../widgets/forecast15d_chart.dart';
+import '../widgets/ai_content_widget.dart';
+import '../widgets/floating_action_island.dart';
+import '../widgets/app_drawer.dart';
 import 'daily_weather_detail_screen.dart';
 
 class Forecast15dScreen extends StatefulWidget {
@@ -67,302 +70,232 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
         // 确保AppColors使用最新的主题
         AppColors.setThemeProvider(themeProvider);
 
-        return Scaffold(
-          body: Container(
-            decoration: BoxDecoration(gradient: AppColors.primaryGradient),
-            child: SafeArea(
-              child: Consumer<WeatherProvider>(
-                builder: (context, weatherProvider, child) {
-                  if (weatherProvider.isLoading) {
-                    return Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.textPrimary,
-                      ),
-                    );
-                  }
-
-                  if (weatherProvider.error != null) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.error_outline,
-                            size: 64,
-                            color: AppColors.error,
+        return Consumer<WeatherProvider>(
+          builder: (context, weatherProvider, child) {
+            return Scaffold(
+              drawer: const AppDrawer(),
+              floatingActionButton: _buildFloatingActionIsland(weatherProvider),
+              body: Container(
+                decoration: BoxDecoration(gradient: AppColors.primaryGradient),
+                child: SafeArea(
+                  child: Builder(
+                    builder: (context) {
+                      if (weatherProvider.isLoading) {
+                        return Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.textPrimary,
                           ),
-                          const SizedBox(height: 16),
-                          Text(
-                            '加载失败',
-                            style: TextStyle(
-                              color: AppColors.textPrimary,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            weatherProvider.error!,
-                            style: TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 14,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 24),
-                          ElevatedButton(
-                            onPressed: () =>
-                                weatherProvider.refresh15DayForecast(),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primaryBlue,
-                              foregroundColor: AppColors.textPrimary,
-                            ),
-                            child: const Text('重试'),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  final forecast15d = weatherProvider.forecast15d;
-
-                  if (forecast15d == null || forecast15d.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.cloud_off,
-                            size: 64,
-                            color: AppColors.textSecondary,
-                          ),
-                          SizedBox(height: 16),
-                          Text(
-                            '暂无15日预报数据',
-                            style: TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  return RefreshIndicator(
-                    onRefresh: () async {
-                      // iOS触觉反馈
-                      if (Platform.isIOS) {
-                        HapticFeedback.mediumImpact();
+                        );
                       }
-                      await weatherProvider.refresh15DayForecast();
-                      if (Platform.isIOS) {
-                        HapticFeedback.lightImpact();
+
+                      if (weatherProvider.error != null) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                size: 64,
+                                color: AppColors.error,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                '加载失败',
+                                style: TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                weatherProvider.error!,
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 14,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 24),
+                              ElevatedButton(
+                                onPressed: () =>
+                                    weatherProvider.refresh15DayForecast(),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primaryBlue,
+                                  foregroundColor: AppColors.textPrimary,
+                                ),
+                                child: const Text('重试'),
+                              ),
+                            ],
+                          ),
+                        );
                       }
-                    },
-                    color: AppColors.primaryBlue,
-                    backgroundColor: AppColors.backgroundSecondary,
-                    child: CustomScrollView(
-                      slivers: [
-                        // Header
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
+
+                      final forecast15d = weatherProvider.forecast15d;
+
+                      if (forecast15d == null || forecast15d.isEmpty) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.cloud_off,
+                                size: 64,
+                                color: AppColors.textSecondary,
+                              ),
+                              SizedBox(height: 16),
+                              Text(
+                                '暂无15日预报数据',
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      return RefreshIndicator(
+                        onRefresh: () async {
+                          // iOS触觉反馈
+                          if (Platform.isIOS) {
+                            HapticFeedback.mediumImpact();
+                          }
+                          await weatherProvider.refresh15DayForecast();
+                          if (Platform.isIOS) {
+                            HapticFeedback.lightImpact();
+                          }
+                        },
+                        color: AppColors.primaryBlue,
+                        backgroundColor: AppColors.backgroundSecondary,
+                        child: CustomScrollView(
+                          slivers: [
+                            // Header
+                            SliverToBoxAdapter(
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      '15日预报',
-                                      style: TextStyle(
-                                        color: AppColors.textPrimary,
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          '15日预报',
+                                          style: TextStyle(
+                                            color: AppColors.textPrimary,
+                                            fontSize: 24,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        const Spacer(),
+                                        IconButton(
+                                          onPressed: weatherProvider.isLoading
+                                              ? null
+                                              : () => weatherProvider
+                                                    .refresh15DayForecast(),
+                                          icon: weatherProvider.isLoading
+                                              ? SizedBox(
+                                                  width: 20,
+                                                  height: 20,
+                                                  child: CircularProgressIndicator(
+                                                    strokeWidth: 2,
+                                                    valueColor:
+                                                        AlwaysStoppedAnimation<
+                                                          Color
+                                                        >(
+                                                          AppColors.textPrimary,
+                                                        ),
+                                                  ),
+                                                )
+                                              : Icon(
+                                                  Icons.refresh,
+                                                  color: AppColors
+                                                      .titleBarIconColor,
+                                                  size: AppColors
+                                                      .titleBarIconSize,
+                                                ),
+                                        ),
+                                      ],
                                     ),
-                                    const Spacer(),
-                                    IconButton(
-                                      onPressed: weatherProvider.isLoading
-                                          ? null
-                                          : () => weatherProvider
-                                                .refresh15DayForecast(),
-                                      icon: weatherProvider.isLoading
-                                          ? SizedBox(
-                                              width: 20,
-                                              height: 20,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                                valueColor:
-                                                    AlwaysStoppedAnimation<
-                                                      Color
-                                                    >(AppColors.textPrimary),
-                                              ),
-                                            )
-                                          : Icon(
-                                              Icons.refresh,
-                                              color:
-                                                  AppColors.titleBarIconColor,
-                                              size: AppColors.titleBarIconSize,
-                                            ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      '${weatherProvider.currentLocation?.district ?? '未知地区'} 未来15天天气预报',
+                                      style: TextStyle(
+                                        color: AppColors.textSecondary
+                                            .withOpacity(0.8),
+                                        fontSize:
+                                            AppConstants.sectionTitleFontSize,
+                                      ),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  '${weatherProvider.currentLocation?.district ?? '未知地区'} 未来15天天气预报',
-                                  style: TextStyle(
-                                    color: AppColors.textSecondary.withOpacity(
-                                      0.8,
-                                    ),
-                                    fontSize: AppConstants.sectionTitleFontSize,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        // AI Weather Summary
-                        SliverToBoxAdapter(
-                          child: _buildAIWeatherSummary(weatherProvider),
-                        ),
-                        // Temperature Trend Chart
-                        SliverToBoxAdapter(
-                          child: Container(
-                            margin: EdgeInsets.only(
-                              left: AppConstants.screenHorizontalPadding,
-                              right: AppConstants.screenHorizontalPadding,
-                              top: 8, // 减少与副标题的间距
-                            ),
-                            child: Forecast15dChart(
-                              key: _chartKey,
-                              forecast15d: forecast15d.skip(1).toList(),
-                            ),
-                          ),
-                        ),
-                        // Forecast List
-                        SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              // 跳过第一个对象（昨天），从索引1开始
-                              final actualIndex = index + 1;
-                              if (actualIndex >= forecast15d.length)
-                                return null;
-
-                              final day = forecast15d[actualIndex];
-                              return _buildForecastCard(
-                                day,
-                                weatherProvider,
-                                actualIndex,
-                              );
-                            },
-                            childCount: forecast15d.length > 1
-                                ? forecast15d.length - 1
-                                : 0,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  /// 构建AI天气总结卡片
-  Widget _buildAIWeatherSummary(WeatherProvider weatherProvider) {
-    final themeProvider = context.read<ThemeProvider>();
-    const aiColor = Color(0xFFFFB300); // 琥珀金色
-
-    // 根据主题调整透明度和颜色
-    final iconBgOpacity = themeProvider.isLightTheme ? 0.15 : 0.25;
-    final titleColor = themeProvider.isLightTheme
-        ? const Color(0xFFE65100) // 亮色模式：深橙色（更好对比度）
-        : aiColor; // 暗色模式：琥珀金色
-
-    // 如果没有总结内容且不在生成中，不显示卡片
-    if (weatherProvider.forecast15dSummary == null &&
-        !weatherProvider.isGenerating15dSummary) {
-      return const SizedBox.shrink();
-    }
-
-    return Padding(
-      padding: const EdgeInsets.only(
-        left: AppConstants.screenHorizontalPadding,
-        right: AppConstants.screenHorizontalPadding,
-        top: 16,
-        bottom: 8,
-      ),
-      child: Card(
-        elevation: AppColors.cardElevation,
-        shadowColor: AppColors.cardShadowColor,
-        color: AppColors.materialCardColor,
-        surfaceTintColor: Colors.transparent,
-        shape: AppColors.cardShape,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: titleColor.withOpacity(iconBgOpacity),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(Icons.auto_awesome, color: titleColor, size: 20),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          '近期天气总结',
-                          style: TextStyle(
-                            color: titleColor,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        if (weatherProvider.isGenerating15dSummary)
-                          SizedBox(
-                            width: 12,
-                            height: 12,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                titleColor,
                               ),
                             ),
-                          ),
-                      ],
-                    ),
-                    if (weatherProvider.forecast15dSummary != null) ...[
-                      const SizedBox(height: 6),
-                      Text(
-                        weatherProvider.forecast15dSummary!,
-                        style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 14,
-                          height: 1.4,
+                            // AI Weather Summary - 使用渐进式展示
+                            SliverToBoxAdapter(
+                              child: AIContentWidget(
+                                title: '15日天气趋势',
+                                icon: Icons.trending_up,
+                                fetchAIContent: () async {
+                                  if (weatherProvider.forecast15dSummary !=
+                                      null) {
+                                    return weatherProvider.forecast15dSummary!;
+                                  }
+                                  await weatherProvider
+                                      .generateForecast15dSummary();
+                                  return weatherProvider.forecast15dSummary ??
+                                      '';
+                                },
+                                defaultContent: '未来半月天气平稳，温度变化不大，适合安排户外活动。',
+                              ),
+                            ),
+                            // Temperature Trend Chart
+                            SliverToBoxAdapter(
+                              child: Container(
+                                margin: EdgeInsets.only(
+                                  left: AppConstants.screenHorizontalPadding,
+                                  right: AppConstants.screenHorizontalPadding,
+                                  top: 8, // 减少与副标题的间距
+                                ),
+                                child: Forecast15dChart(
+                                  key: _chartKey,
+                                  forecast15d: forecast15d.skip(1).toList(),
+                                ),
+                              ),
+                            ),
+                            // Forecast List
+                            SliverList(
+                              delegate: SliverChildBuilderDelegate(
+                                (context, index) {
+                                  // 跳过第一个对象（昨天），从索引1开始
+                                  final actualIndex = index + 1;
+                                  if (actualIndex >= forecast15d.length)
+                                    return null;
+
+                                  final day = forecast15d[actualIndex];
+                                  return _buildForecastCard(
+                                    day,
+                                    weatherProvider,
+                                    actualIndex,
+                                  );
+                                },
+                                childCount: forecast15d.length > 1
+                                    ? forecast15d.length - 1
+                                    : 0,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
-                  ],
+                      );
+                    },
+                  ),
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -701,5 +634,61 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
     } catch (e) {
       return false;
     }
+  }
+
+  /// 构建浮动操作岛
+  Widget _buildFloatingActionIsland(WeatherProvider weatherProvider) {
+    final themeProvider = context.read<ThemeProvider>();
+
+    return FloatingActionIsland(
+      mainIcon: Icons.menu_rounded,
+      mainTooltip: '快捷操作',
+      actions: [
+        // 刷新
+        IslandAction(
+          icon: Icons.refresh_rounded,
+          label: '刷新',
+          onTap: () async {
+            // iOS触觉反馈
+            if (Platform.isIOS) {
+              HapticFeedback.mediumImpact();
+            }
+
+            await weatherProvider.refresh15DayForecast();
+
+            // iOS触觉反馈 - 刷新完成
+            if (Platform.isIOS) {
+              HapticFeedback.lightImpact();
+            }
+          },
+          backgroundColor: AppColors.primaryBlue,
+        ),
+        // 设置
+        IslandAction(
+          icon: Icons.settings_rounded,
+          label: '设置',
+          onTap: () {
+            Scaffold.of(context).openDrawer();
+          },
+          backgroundColor: AppColors.primaryBlue,
+        ),
+        // 主题切换
+        IslandAction(
+          icon: themeProvider.isLightTheme
+              ? Icons.dark_mode_rounded
+              : Icons.light_mode_rounded,
+          label: themeProvider.isLightTheme ? '暗色' : '亮色',
+          onTap: () {
+            // 切换主题：亮色→暗色，暗色→亮色
+            themeProvider.setThemeMode(
+              themeProvider.isLightTheme
+                  ? AppThemeMode.dark
+                  : AppThemeMode.light,
+            );
+          },
+          backgroundColor: AppColors.primaryBlue,
+        ),
+      ],
+    );
   }
 }

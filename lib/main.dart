@@ -12,6 +12,8 @@ import 'screens/city_weather_tabs_screen.dart';
 import 'screens/weather_alerts_screen.dart';
 import 'screens/app_splash_screen.dart';
 import 'widgets/city_card_skeleton.dart';
+import 'widgets/floating_action_island.dart';
+import 'widgets/app_drawer.dart';
 import 'models/city_model.dart';
 import 'constants/app_colors.dart';
 import 'constants/app_constants.dart';
@@ -463,6 +465,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
         });
 
         return Scaffold(
+          drawer: const AppDrawer(),
           body: IndexedStack(index: _currentIndex, children: _screens),
           resizeToAvoidBottomInset: false,
           bottomNavigationBar: CustomBottomNavigationV2(
@@ -531,76 +534,58 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
               BottomNavigationItem(icon: Icons.location_city, label: '主要城市'),
             ],
           ),
-          floatingActionButton: _currentIndex == 0
-              ? Consumer<WeatherProvider>(
-                  builder: (context, weatherProvider, child) {
-                    return Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(28),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.buttonShadow,
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(28),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                          child: Container(
-                            width: 56,
-                            height: 56,
-                            decoration: BoxDecoration(
-                              color: weatherProvider.isLoading
-                                  ? AppColors.glassBackground.withOpacity(0.8)
-                                  : AppColors.glassBackground,
-                              borderRadius: BorderRadius.circular(28),
-                              border: Border.all(
-                                color: AppColors.borderColor,
-                                width: 1,
-                              ),
-                            ),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(28),
-                                onTap: weatherProvider.isLoading
-                                    ? null
-                                    : () async {
-                                        // 执行强制刷新（不显示Toast提示）
-                                        await weatherProvider
-                                            .forceRefreshWithLocation();
-                                      },
-                                child: Center(
-                                  child: weatherProvider.isLoading
-                                      ? SizedBox(
-                                          width: 20,
-                                          height: 20,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            valueColor:
-                                                AlwaysStoppedAnimation<Color>(
-                                                  AppColors.textPrimary,
-                                                ),
-                                          ),
-                                        )
-                                      : Icon(
-                                          Icons.refresh,
-                                          color: AppColors.textPrimary,
-                                          size: 24,
-                                        ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                )
-              : null,
+          floatingActionButton: _buildFloatingActionIsland(),
+        );
+      },
+    );
+  }
+
+  /// 构建浮动操作岛（根据当前页面显示不同操作）
+  Widget _buildFloatingActionIsland() {
+    return Consumer2<WeatherProvider, ThemeProvider>(
+      builder: (context, weatherProvider, themeProvider, child) {
+        // 根据当前页面显示不同的操作
+        List<IslandAction> actions = [];
+
+        // 所有页面都有刷新、设置、主题切换
+        actions.addAll([
+          IslandAction(
+            icon: Icons.refresh_rounded,
+            label: '刷新',
+            onTap: () async {
+              await weatherProvider.forceRefreshWithLocation();
+            },
+            backgroundColor: AppColors.primaryBlue,
+          ),
+          IslandAction(
+            icon: Icons.settings_rounded,
+            label: '设置',
+            onTap: () {
+              Scaffold.of(context).openDrawer();
+            },
+            backgroundColor: AppColors.primaryBlue,
+          ),
+          IslandAction(
+            icon: themeProvider.isLightTheme
+                ? Icons.dark_mode_rounded
+                : Icons.light_mode_rounded,
+            label: themeProvider.isLightTheme ? '暗色' : '亮色',
+            onTap: () {
+              // 切换主题：亮色→暗色，暗色→亮色
+              themeProvider.setThemeMode(
+                themeProvider.isLightTheme
+                    ? AppThemeMode.dark
+                    : AppThemeMode.light,
+              );
+            },
+            backgroundColor: AppColors.primaryBlue,
+          ),
+        ]);
+
+        return FloatingActionIsland(
+          mainIcon: Icons.menu_rounded,
+          mainTooltip: '快捷操作',
+          actions: actions,
         );
       },
     );

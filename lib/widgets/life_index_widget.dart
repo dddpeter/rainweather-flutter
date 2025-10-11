@@ -149,16 +149,33 @@ class LifeIndexWidget extends StatelessWidget {
       return const SizedBox();
     }
 
-    // 根据所在列决定颜色，而不是根据指数类型
-    Color color = isFirstColumn
-        ? const Color(0xFFFFB74D) // 第一列使用橙色
-        : const Color(0xFF64DD17); // 第二列使用绿色（替换原来的蓝色）
-
     IconData icon = _getLifeIndexIcon(lifeIndex.indexTypeCh ?? '');
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    // 提高亮色模式下的清晰度
-    final backgroundOpacity = themeProvider.isLightTheme ? 0.15 : 0.25;
-    final iconBackgroundOpacity = themeProvider.isLightTheme ? 0.2 : 0.3;
+
+    // 根据所在列和主题决定颜色
+    Color iconColor;
+    Color backgroundColor;
+    Color textColor;
+    double iconBackgroundOpacity;
+
+    // 背景色的基础颜色（橙色或绿色）
+    final baseColor = isFirstColumn
+        ? const Color(0xFFFFB74D) // 第一列橙色
+        : const Color(0xFF64DD17); // 第二列绿色
+
+    if (themeProvider.isLightTheme) {
+      // 亮色模式：图标主题深蓝色，背景保持橙/绿半透明，文字主题深蓝
+      iconColor = const Color(0xFF012d78); // 图标主题深蓝色
+      backgroundColor = baseColor.withOpacity(0.25); // 背景保持橙/绿半透明
+      textColor = const Color(0xFF012d78); // 主题深蓝字
+      iconBackgroundOpacity = 0.2;
+    } else {
+      // 暗色模式：图标白色，背景橙/绿半透明，文字白色
+      iconColor = Colors.white; // 图标白色
+      backgroundColor = baseColor.withOpacity(0.25); // 背景橙/绿半透明
+      textColor = AppColors.textPrimary; // 白字
+      iconBackgroundOpacity = 0.3;
+    }
 
     return Builder(
       builder: (context) => InkWell(
@@ -166,8 +183,18 @@ class LifeIndexWidget extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         child: Container(
           decoration: BoxDecoration(
-            color: color.withOpacity(backgroundOpacity), // 根据主题调整透明度
+            color: backgroundColor, // 根据主题调整颜色
             borderRadius: BorderRadius.circular(4), // 与今日提醒保持一致
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(
+                  themeProvider.isLightTheme ? 0.08 : 0.15,
+                ),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+                spreadRadius: 0,
+              ),
+            ],
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
@@ -179,14 +206,14 @@ class LifeIndexWidget extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: color.withOpacity(
+                        color: iconColor.withOpacity(
                           iconBackgroundOpacity,
                         ), // 根据主题调整透明度
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Icon(
                         icon,
-                        color: color, // 使用对应指数的颜色作为图标颜色
+                        color: iconColor, // 使用配对的图标颜色
                         size: 16,
                       ),
                     ),
@@ -195,8 +222,8 @@ class LifeIndexWidget extends StatelessWidget {
                       child: Text(
                         _truncateIndexName(lifeIndex.indexTypeCh ?? ''),
                         style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 13, // 与详细信息卡片一致
+                          color: textColor, // 使用配对的文字颜色
+                          fontSize: 13,
                           fontWeight: FontWeight.w500,
                           letterSpacing: 0.2,
                         ),
@@ -209,7 +236,7 @@ class LifeIndexWidget extends StatelessWidget {
                 Text(
                   lifeIndex.indexLevel ?? '--',
                   style: TextStyle(
-                    color: AppColors.textPrimary,
+                    color: textColor, // 使用配对的文字颜色
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     height: 1.2,

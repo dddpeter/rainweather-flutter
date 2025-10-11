@@ -294,6 +294,9 @@ class WeatherProvider extends ChangeNotifier {
 
             // 后台刷新成功后，重新生成AI智能摘要（使用最新数据）
             generateWeatherSummary();
+
+            // 后台刷新成功后，检查并生成通勤提醒
+            await checkAndGenerateCommuteAdvices();
           } else {
             // 刷新失败，完整恢复所有快照数据
             print('⚠️ 后台刷新失败，恢复缓存数据');
@@ -715,6 +718,9 @@ class WeatherProvider extends ChangeNotifier {
 
         // 刷新成功后，重新生成AI智能摘要
         generateWeatherSummary();
+
+        // 刷新成功后，检查并生成通勤提醒
+        await checkAndGenerateCommuteAdvices();
       } else if (_error != null) {
         print(
           '📍 WeatherProvider: refreshWeatherData 跳过通知 - 位置: ${_currentLocation?.district}, 错误: $_error',
@@ -724,7 +730,13 @@ class WeatherProvider extends ChangeNotifier {
   }
 
   /// Get weather data for specific city
-  Future<void> getWeatherForCity(String cityName) async {
+  /// 获取指定城市的天气
+  /// [cityName] 城市名称
+  /// [forceRefreshAI] 是否强制刷新AI总结，忽略缓存（默认false）
+  Future<void> getWeatherForCity(
+    String cityName, {
+    bool forceRefreshAI = false,
+  }) async {
     _setLoading(true);
     _error = null;
 
@@ -800,6 +812,16 @@ class WeatherProvider extends ChangeNotifier {
 
       // 为特定城市加载日出日落和生活指数数据
       await _loadSunMoonIndexDataForCity(cityName);
+
+      // 切换城市后，重新生成AI智能摘要（基于当前城市天气）
+      if (_currentWeather != null) {
+        generateWeatherSummary(forceRefresh: forceRefreshAI);
+
+        // 生成15日天气总结
+        if (_forecast15d != null && _forecast15d!.isNotEmpty) {
+          generateForecast15dSummary(forceRefresh: forceRefreshAI);
+        }
+      }
     } catch (e) {
       _error = 'Error: $e';
       print('City weather error: $e');
@@ -1594,6 +1616,9 @@ class WeatherProvider extends ChangeNotifier {
 
         // 强制刷新成功后，重新生成AI智能摘要
         generateWeatherSummary();
+
+        // 强制刷新成功后，检查并生成通勤提醒
+        await checkAndGenerateCommuteAdvices();
       }
 
       notifyListeners();
@@ -2166,7 +2191,8 @@ class WeatherProvider extends ChangeNotifier {
   }
 
   /// 生成智能天气摘要
-  Future<void> generateWeatherSummary() async {
+  /// [forceRefresh] 是否强制刷新，忽略缓存（默认false）
+  Future<void> generateWeatherSummary({bool forceRefresh = false}) async {
     if (_currentWeather == null) {
       print('⚠️ 无天气数据，无法生成智能摘要');
       return;
@@ -2204,6 +2230,26 @@ class WeatherProvider extends ChangeNotifier {
     }
 
     try {
+      // 构建缓存key（包含城市名、天气、温度等关键信息）
+      final cityName =
+          _currentLocation?.district ?? _currentLocation?.city ?? '未知';
+      final cacheKey =
+          'ai_summary:$cityName:${current.weather}:${current.temperature}';
+
+      // 如果不是强制刷新，先尝试从缓存获取
+      if (!forceRefresh) {
+        final cachedSummary = await _databaseService.getAISummary(cacheKey);
+        if (cachedSummary != null && cachedSummary.isNotEmpty) {
+          _weatherSummary = cachedSummary;
+          print('✅ 使用缓存的AI摘要: $_weatherSummary');
+          _isGeneratingSummary = false;
+          notifyListeners();
+          return;
+        }
+      } else {
+        print('🔄 强制刷新模式，忽略缓存');
+      }
+
       print('\n🎨 开始生成AI智能天气摘要...');
 
       // 构建prompt
@@ -2222,6 +2268,10 @@ class WeatherProvider extends ChangeNotifier {
       if (aiResponse != null && aiResponse.isNotEmpty) {
         _weatherSummary = _aiService.parseAlertText(aiResponse);
         print('✅ AI摘要生成成功: $_weatherSummary');
+
+        // 保存到缓存（6小时有效期）
+        await _databaseService.putAISummary(cacheKey, _weatherSummary!);
+        print('💾 AI摘要已缓存');
       } else {
         print('❌ AI摘要生成失败，使用默认文案');
         _weatherSummary = _generateDefaultWeatherSummary(
@@ -2275,7 +2325,8 @@ class WeatherProvider extends ChangeNotifier {
   }
 
   /// 生成15日天气总结
-  Future<void> generateForecast15dSummary() async {
+  /// [forceRefresh] 是否强制刷新，忽略缓存（默认false）
+  Future<void> generateForecast15dSummary({bool forceRefresh = false}) async {
     if (_forecast15d == null || _forecast15d!.isEmpty) {
       print('⚠️ 无15日预报数据，无法生成总结');
       return;
@@ -2290,8 +2341,6 @@ class WeatherProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      print('\n🎨 开始生成AI 15日天气总结...');
-
       // 构建天气数据
       final dailyForecasts = <Map<String, dynamic>>[];
       for (var day in _forecast15d!) {
@@ -2303,6 +2352,31 @@ class WeatherProvider extends ChangeNotifier {
           'tempMin': day.temperature_pm,
         });
       }
+
+      // 构建缓存key（包含城市名和主要天气类型）
+      final cityName =
+          _currentLocation?.district ?? _currentLocation?.city ?? '未知';
+      final mainWeathers = dailyForecasts
+          .take(5)
+          .map((d) => d['weather'])
+          .join(',');
+      final cacheKey = 'ai_15d_summary:$cityName:$mainWeathers';
+
+      // 如果不是强制刷新，先尝试从缓存获取
+      if (!forceRefresh) {
+        final cachedSummary = await _databaseService.getAI15dSummary(cacheKey);
+        if (cachedSummary != null && cachedSummary.isNotEmpty) {
+          _forecast15dSummary = cachedSummary;
+          print('✅ 使用缓存的15日天气总结: $_forecast15dSummary');
+          _isGenerating15dSummary = false;
+          notifyListeners();
+          return;
+        }
+      } else {
+        print('🔄 强制刷新模式，忽略15日天气缓存');
+      }
+
+      print('\n🎨 开始生成AI 15日天气总结...');
 
       // 构建prompt
       final prompt = _aiService.buildForecast15dSummaryPrompt(
@@ -2316,6 +2390,10 @@ class WeatherProvider extends ChangeNotifier {
       if (aiResponse != null && aiResponse.isNotEmpty) {
         _forecast15dSummary = _aiService.parseAlertText(aiResponse);
         print('✅ 15日天气总结生成成功: $_forecast15dSummary');
+
+        // 保存到缓存（6小时有效期）
+        await _databaseService.putAI15dSummary(cacheKey, _forecast15dSummary!);
+        print('💾 15日天气总结已缓存');
       } else {
         print('❌ 15日天气总结生成失败，使用默认文案');
         _forecast15dSummary = _getDefault15dSummary();
@@ -2353,14 +2431,18 @@ class WeatherProvider extends ChangeNotifier {
   Future<void> checkAndGenerateCommuteAdvices() async {
     // 检查是否在通勤时段
     if (!CommuteAdviceService.isInCommuteTime()) {
-      print('⏰ 不在通勤时段，跳过生成通勤建议');
+      print('⏰ 不在通勤时段，加载历史通勤建议');
+      // 不在通勤时段时，加载历史建议以便显示
+      await loadCommuteAdvices();
       return;
     }
 
     // 检查今日当前时段是否已生成过建议
     final currentTimeSlot = CommuteAdviceService.getCurrentCommuteTimeSlot();
     if (currentTimeSlot == null) {
-      print('⏰ 无法获取当前时段，跳过生成通勤建议');
+      print('⏰ 无法获取当前时段，加载历史建议');
+      // 无法获取时段时，至少加载历史建议
+      await loadCommuteAdvices();
       return;
     }
 
@@ -2371,14 +2453,19 @@ class WeatherProvider extends ChangeNotifier {
     );
 
     if (hasCurrentSlotAdvices) {
-      print('✅ 当前时段已有通勤建议，跳过生成');
+      print('✅ 当前时段已有通勤建议，加载到界面');
       _hasShownCommuteAdviceToday = true;
+
+      // 加载已有的建议到内存并通知UI
+      await loadCommuteAdvices();
       return;
     }
 
     // 检查是否有天气数据
     if (_currentWeather == null) {
-      print('❌ 无天气数据，无法生成通勤建议');
+      print('❌ 无天气数据，无法生成通勤建议，加载历史建议');
+      // 无天气数据时，至少加载历史建议
+      await loadCommuteAdvices();
       return;
     }
 
@@ -2452,6 +2539,9 @@ class WeatherProvider extends ChangeNotifier {
       print('╚════════════════════════════════════════╝');
       print('错误: $e');
       print('堆栈: $stackTrace\n');
+
+      // 生成失败时，至少加载历史建议
+      await loadCommuteAdvices();
     }
   }
 
@@ -2473,9 +2563,43 @@ class WeatherProvider extends ChangeNotifier {
         return;
       }
 
+      // 获取当前通勤时段
+      final currentTimeSlot = CommuteAdviceService.getCurrentCommuteTimeSlot();
+      final now = DateTime.now();
+
+      // 过滤逻辑：
+      // 1. 如果当前在通勤时段，只显示当前时段的建议
+      // 2. 如果不在通勤时段，不显示任何建议（已过期）
+      final filteredAdvices = advices.where((advice) {
+        if (currentTimeSlot != null) {
+          // 在通勤时段内，只显示当前时段的建议
+          return advice.timeSlot == currentTimeSlot;
+        } else {
+          // 不在通勤时段，检查时段是否已结束
+          final settings = WeatherAlertService.instance.settings;
+          final currentMinutes = now.hour * 60 + now.minute;
+
+          if (advice.timeSlot == CommuteTimeSlot.morning) {
+            final morningEndMinutes =
+                settings.commuteTime.morningEnd.hour * 60 +
+                settings.commuteTime.morningEnd.minute;
+            // 早高峰已结束，不显示
+            return currentMinutes < morningEndMinutes;
+          } else {
+            final eveningEndMinutes =
+                settings.commuteTime.eveningEnd.hour * 60 +
+                settings.commuteTime.eveningEnd.minute;
+            // 晚高峰已结束，不显示
+            return currentMinutes < eveningEndMinutes;
+          }
+        }
+      }).toList();
+
+      print('   过滤后剩余: ${filteredAdvices.length}条');
+
       // 二次去重：按 adviceType + timeSlot 去重（防止并发导致的重复）
       final uniqueAdvices = <String, CommuteAdviceModel>{};
-      for (var advice in advices) {
+      for (var advice in filteredAdvices) {
         final key = '${advice.adviceType}_${advice.timeSlot}';
         // 如果已存在相同类型和时段的建议，保留时间最新的
         if (!uniqueAdvices.containsKey(key) ||

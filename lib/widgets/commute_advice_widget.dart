@@ -4,6 +4,7 @@ import '../providers/weather_provider.dart';
 import '../providers/theme_provider.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_constants.dart';
+import '../models/commute_advice_model.dart';
 
 /// 通勤建议组件
 class CommuteAdviceWidget extends StatefulWidget {
@@ -148,10 +149,47 @@ class _CommuteAdviceWidgetState extends State<CommuteAdviceWidget> {
     final levelBgColor = advice.getLevelBackgroundColor();
     final levelName = advice.getLevelName();
 
-    // 参考生活指数卡片的透明度设置
     final themeProvider = context.read<ThemeProvider>();
-    final backgroundOpacity = themeProvider.isLightTheme ? 0.15 : 0.25;
-    final iconBackgroundOpacity = themeProvider.isLightTheme ? 0.2 : 0.3;
+
+    // 根据级别和主题决定颜色
+    Gradient? backgroundGradient; // 亮色模式使用渐变
+    Color? backgroundColor; // 暗色模式使用纯色
+    Color textColor;
+    Color borderColor;
+    Color levelTagBgColor; // 级别标签背景色
+    Color levelTagTextColor; // 级别标签文字色
+
+    if (themeProvider.isLightTheme) {
+      // 亮色模式：主题浅蓝色渐变（带透明度），着重提醒
+      backgroundGradient = const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Color(0x40E1F5FE), // 浅蓝色，25% 透明度
+          Color(0x6081D4FA), // 较深浅蓝色，38% 透明度
+        ],
+      );
+      backgroundColor = null; // 使用渐变，不使用纯色
+      textColor = levelColor; // 文字使用级别原色
+      borderColor = levelColor; // 边框使用级别原色
+      // Element UI dark tag 风格：深色背景 + 白字
+      levelTagBgColor = levelColor; // 级别标签背景使用级别原色（不透明）
+      levelTagTextColor = Colors.white; // 级别标签白字
+    } else {
+      // 暗色模式：保持原有风格
+      backgroundGradient = null; // 不使用渐变
+      backgroundColor = levelBgColor.withOpacity(0.25);
+      textColor = levelColor; // 使用原色
+      borderColor = Colors.transparent; // 无边框
+      // Element UI plain tag 风格：半透明背景 + 彩色边框 + 彩色文字
+      levelTagBgColor = levelBgColor.withOpacity(0.25); // 半透明背景
+      levelTagTextColor = levelColor; // 级别原色文字
+    }
+
+    // AI标签颜色（金琥珀色）及其反色
+    const aiColor = Color(0xFFFFB300); // 金琥珀色
+    const aiInvertedColor = Color(0xFF004CFF); // 反色（蓝色）
+    final aiTextColor = themeProvider.isLightTheme ? aiInvertedColor : aiColor;
 
     return InkWell(
       onTap: isCollapsed
@@ -167,13 +205,27 @@ class _CommuteAdviceWidgetState extends State<CommuteAdviceWidget> {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: levelBgColor.withOpacity(backgroundOpacity),
+          color: backgroundColor, // 暗色模式使用纯色
+          gradient: backgroundGradient, // 亮色模式使用渐变
           borderRadius: BorderRadius.circular(4),
+          border: borderColor != Colors.transparent
+              ? Border.all(color: borderColor, width: 1) // 亮色模式添加边框
+              : null, // 暗色模式无边框
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(
+                themeProvider.isLightTheme ? 0.08 : 0.15,
+              ),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+              spreadRadius: 0,
+            ),
+          ],
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 图标
+            // 图标（emoji）
             Text(advice.icon, style: const TextStyle(fontSize: 20)),
             const SizedBox(width: 12),
             // 内容
@@ -183,19 +235,29 @@ class _CommuteAdviceWidgetState extends State<CommuteAdviceWidget> {
                 children: [
                   Row(
                     children: [
-                      // 级别标签
+                      // 级别标签（亮色=Element UI dark tag，暗色=Element UI plain tag）
                       Container(
-                        padding: const EdgeInsets.all(6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ), // Element UI tag 风格内边距
                         decoration: BoxDecoration(
-                          color: levelColor.withOpacity(iconBackgroundOpacity),
+                          color: levelTagBgColor,
                           borderRadius: BorderRadius.circular(4),
+                          border: themeProvider.isLightTheme
+                              ? null // 亮色模式：无边框（dark tag）
+                              : Border.all(
+                                  color: levelColor,
+                                  width: 1,
+                                ), // 暗色模式：彩色边框（plain tag）
                         ),
                         child: Text(
                           levelName,
                           style: TextStyle(
-                            color: levelColor,
+                            color: levelTagTextColor,
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
+                            letterSpacing: 0.2,
                           ),
                         ),
                       ),
@@ -207,7 +269,7 @@ class _CommuteAdviceWidgetState extends State<CommuteAdviceWidget> {
                               child: Text(
                                 advice.title,
                                 style: TextStyle(
-                                  color: AppColors.textPrimary,
+                                  color: textColor, // 使用级别颜色
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -224,9 +286,7 @@ class _CommuteAdviceWidgetState extends State<CommuteAdviceWidget> {
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: const Color(
-                                    0xFFFFB300,
-                                  ).withOpacity(0.15),
+                                  color: aiTextColor.withOpacity(0.15),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Row(
@@ -234,14 +294,14 @@ class _CommuteAdviceWidgetState extends State<CommuteAdviceWidget> {
                                   children: [
                                     Icon(
                                       Icons.auto_awesome,
-                                      color: const Color(0xFFFFB300),
+                                      color: aiTextColor,
                                       size: 10,
                                     ),
                                     const SizedBox(width: 2),
                                     Text(
                                       'AI',
                                       style: TextStyle(
-                                        color: const Color(0xFFFFB300),
+                                        color: aiTextColor,
                                         fontSize: 9,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -261,7 +321,7 @@ class _CommuteAdviceWidgetState extends State<CommuteAdviceWidget> {
                     Text(
                       advice.content,
                       style: TextStyle(
-                        color: AppColors.textPrimary,
+                        color: textColor, // 使用级别颜色
                         fontSize: 13,
                         height: 1.4,
                       ),

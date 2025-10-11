@@ -16,7 +16,7 @@ import '../models/weather_model.dart';
 import '../widgets/sun_moon_widget.dart';
 import '../widgets/life_index_widget.dart';
 import '../widgets/weather_animation_widget.dart';
-import '../widgets/app_menu.dart';
+import '../widgets/app_drawer.dart';
 import '../widgets/weather_alert_widget.dart';
 import '../widgets/commute_advice_widget.dart';
 import '../services/weather_alert_service.dart';
@@ -415,6 +415,7 @@ class _TodayScreenState extends State<TodayScreen>
         AppColors.setThemeProvider(themeProvider);
 
         return Scaffold(
+          drawer: const AppDrawer(),
           body: Container(
             decoration: BoxDecoration(gradient: AppColors.primaryGradient),
             child: Consumer<WeatherProvider>(
@@ -643,7 +644,23 @@ class _TodayScreenState extends State<TodayScreen>
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const AppMenu(), // 菜单按钮
+                  // 齿轮图标按钮 - 打开抽屉菜单
+                  Builder(
+                    builder: (BuildContext scaffoldContext) {
+                      return IconButton(
+                        icon: Icon(
+                          Icons.settings,
+                          color: context.read<ThemeProvider>().getColor(
+                            'headerIconColor',
+                          ),
+                          size: AppColors.titleBarDecorIconSize,
+                        ),
+                        onPressed: () {
+                          Scaffold.of(scaffoldContext).openDrawer();
+                        },
+                      );
+                    },
+                  ),
                   Expanded(
                     child: Center(
                       child: Column(
@@ -965,22 +982,23 @@ class _TodayScreenState extends State<TodayScreen>
                     ),
                   ),
                   const Spacer(),
-                  // AQI数值
+                  // AQI数值（缩小尺寸，与后面文字高度一致）
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
+                      horizontal: 8,
+                      vertical: 2,
                     ),
                     decoration: BoxDecoration(
                       color: color,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
                       '$aqi',
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 18,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
+                        height: 1.2,
                       ),
                     ),
                   ),

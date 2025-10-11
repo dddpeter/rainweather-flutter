@@ -85,7 +85,7 @@ class _WeatherAlertSettingsScreenState
               children: [
                 Icon(
                   Icons.settings,
-                  color: AppColors.accentBlue,
+                  color: AppColors.primaryBlue,
                   size: AppConstants.sectionTitleIconSize,
                 ),
                 const SizedBox(width: 8),
@@ -151,7 +151,7 @@ class _WeatherAlertSettingsScreenState
               children: [
                 Icon(
                   Icons.directions_car,
-                  color: AppColors.accentBlue,
+                  color: AppColors.primaryBlue,
                   size: AppConstants.sectionTitleIconSize,
                 ),
                 const SizedBox(width: 8),
@@ -283,7 +283,7 @@ class _WeatherAlertSettingsScreenState
               children: [
                 Icon(
                   Icons.air,
-                  color: AppColors.accentBlue,
+                  color: AppColors.primaryBlue,
                   size: AppConstants.sectionTitleIconSize,
                 ),
                 const SizedBox(width: 8),
@@ -354,7 +354,7 @@ class _WeatherAlertSettingsScreenState
               children: [
                 Icon(
                   Icons.thermostat,
-                  color: AppColors.accentBlue,
+                  color: AppColors.primaryBlue,
                   size: AppConstants.sectionTitleIconSize,
                 ),
                 const SizedBox(width: 8),
@@ -449,7 +449,7 @@ class _WeatherAlertSettingsScreenState
               children: [
                 Icon(
                   Icons.notifications,
-                  color: AppColors.accentBlue,
+                  color: AppColors.primaryBlue,
                   size: AppConstants.sectionTitleIconSize,
                 ),
                 const SizedBox(width: 8),
@@ -487,20 +487,22 @@ class _WeatherAlertSettingsScreenState
                 return Card(
                   elevation: 0,
                   color: hasPermission
-                      ? Colors.green.withOpacity(0.1)
-                      : Colors.orange.withOpacity(0.1),
+                      ? AppColors.accentGreen.withOpacity(0.1)
+                      : AppColors.warning.withOpacity(0.1),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                     side: BorderSide(
                       color: hasPermission
-                          ? Colors.green.withOpacity(0.3)
-                          : Colors.orange.withOpacity(0.3),
+                          ? AppColors.accentGreen.withOpacity(0.3)
+                          : AppColors.warning.withOpacity(0.3),
                     ),
                   ),
                   child: ListTile(
                     leading: Icon(
                       hasPermission ? Icons.check_circle : Icons.warning,
-                      color: hasPermission ? Colors.green : Colors.orange,
+                      color: hasPermission
+                          ? AppColors.accentGreen
+                          : AppColors.warning,
                     ),
                     title: Text(
                       hasPermission ? '通知权限已授予' : '需要通知权限',
@@ -522,16 +524,16 @@ class _WeatherAlertSettingsScreenState
                               if (granted) {
                                 setState(() {});
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('通知权限已授予'),
-                                    backgroundColor: Colors.green,
+                                  SnackBar(
+                                    content: const Text('通知权限已授予'),
+                                    backgroundColor: AppColors.accentGreen,
                                   ),
                                 );
                               } else {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('通知权限被拒绝，请在系统设置中手动开启'),
-                                    backgroundColor: Colors.orange,
+                                  SnackBar(
+                                    content: const Text('通知权限被拒绝，请在系统设置中手动开启'),
+                                    backgroundColor: AppColors.warning,
                                   ),
                                 );
                               }
@@ -653,7 +655,7 @@ class _WeatherAlertSettingsScreenState
               children: [
                 Icon(
                   Icons.rule,
-                  color: AppColors.accentBlue,
+                  color: AppColors.primaryBlue,
                   size: AppConstants.sectionTitleIconSize,
                 ),
                 const SizedBox(width: 8),
@@ -676,7 +678,7 @@ class _WeatherAlertSettingsScreenState
               '冰雹、雨凇 - 砸车、砸伤人',
               '中度霾、重度霾、严重霾 - PM2.5>150，健康风险',
               '冻雨 - 电线/路面结冰，极易翻车',
-            ], Colors.red),
+            ], const Color(0xFFD32F2F)),
 
             const SizedBox(height: 16),
 
@@ -685,7 +687,7 @@ class _WeatherAlertSettingsScreenState
               '雾、浓雾、强浓雾 - 机场/高速出行前',
               '雨夹雪、雨雪天气 - 早晨通勤',
               '浮尘、扬沙 - 儿童/老人外出',
-            ], Colors.orange),
+            ], AppColors.warning),
           ],
         ),
       ),
@@ -747,7 +749,7 @@ class _WeatherAlertSettingsScreenState
       ),
       value: value,
       onChanged: onChanged,
-      activeColor: AppColors.accentBlue,
+      activeColor: AppColors.primaryBlue,
       contentPadding: EdgeInsets.zero,
     );
   }
@@ -809,7 +811,7 @@ class _WeatherAlertSettingsScreenState
                         children: [
                           Icon(
                             Icons.access_time,
-                            color: AppColors.accentBlue,
+                            color: AppColors.primaryBlue,
                             size: 20,
                           ),
                           const SizedBox(width: 8),
@@ -879,7 +881,7 @@ class _WeatherAlertSettingsScreenState
                         children: [
                           Icon(
                             Icons.access_time_filled,
-                            color: AppColors.accentBlue,
+                            color: AppColors.primaryBlue,
                             size: 20,
                           ),
                           const SizedBox(width: 8),
@@ -960,7 +962,7 @@ class _WeatherAlertSettingsScreenState
                   child: Icon(
                     Icons.remove,
                     color: value > min
-                        ? AppColors.accentBlue
+                        ? AppColors.primaryBlue
                         : AppColors.textSecondary.withOpacity(0.3),
                     size: 24,
                   ),
@@ -1004,7 +1006,7 @@ class _WeatherAlertSettingsScreenState
                   child: Icon(
                     Icons.add,
                     color: value < max
-                        ? AppColors.accentBlue
+                        ? AppColors.primaryBlue
                         : AppColors.textSecondary.withOpacity(0.3),
                     size: 24,
                   ),
@@ -1062,11 +1064,11 @@ class _WeatherAlertSettingsScreenState
                 });
                 _saveSettings();
               },
-              selectedColor: AppColors.accentBlue.withOpacity(0.2),
-              checkmarkColor: AppColors.accentBlue,
+              selectedColor: AppColors.primaryBlue.withOpacity(0.2),
+              checkmarkColor: AppColors.primaryBlue,
               labelStyle: TextStyle(
                 color: isSelected
-                    ? AppColors.accentBlue
+                    ? AppColors.primaryBlue
                     : AppColors.textSecondary,
                 fontSize: 12,
               ),

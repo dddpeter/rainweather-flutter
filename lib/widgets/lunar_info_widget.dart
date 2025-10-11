@@ -61,6 +61,7 @@ class LunarInfoWidget extends StatelessWidget {
                         lunarInfo.lunarDay,
                       ),
                       const Color(0xFFFFB74D), // 橙色
+                      isFirstColumn: true,
                     ),
                   ),
                   const SizedBox(width: 4),
@@ -70,6 +71,7 @@ class LunarInfoWidget extends StatelessWidget {
                       '生肖',
                       '${lunarInfo.yearAnimal}年',
                       const Color(0xFF64DD17), // 绿色
+                      isFirstColumn: false,
                     ),
                   ),
                 ],
@@ -83,6 +85,7 @@ class LunarInfoWidget extends StatelessWidget {
                       '星座',
                       lunarInfo.constellation,
                       const Color(0xFFFFB74D), // 橙色
+                      isFirstColumn: true,
                     ),
                   ),
                   const SizedBox(width: 4),
@@ -92,6 +95,7 @@ class LunarInfoWidget extends StatelessWidget {
                       '干支',
                       lunarInfo.dayGanZhi,
                       const Color(0xFF64DD17), // 绿色
+                      isFirstColumn: false,
                     ),
                   ),
                 ],
@@ -117,22 +121,55 @@ class LunarInfoWidget extends StatelessWidget {
     IconData icon,
     String label,
     String value,
-    Color iconColor,
-  ) {
+    Color iconColor, {
+    bool isFirstColumn = false,
+  }) {
     return Builder(
       builder: (context) {
         final themeProvider = Provider.of<ThemeProvider>(
           context,
           listen: false,
         );
-        // 与详细信息卡片完全一致的透明度
-        final backgroundOpacity = themeProvider.isLightTheme ? 0.15 : 0.25;
-        final iconBackgroundOpacity = themeProvider.isLightTheme ? 0.2 : 0.3;
+
+        // 根据所在列和主题决定颜色
+        Color finalIconColor;
+        Color backgroundColor;
+        Color textColor;
+        double iconBackgroundOpacity;
+
+        // 背景色的基础颜色（橙色或绿色）
+        final baseColor = isFirstColumn
+            ? const Color(0xFFFFB74D) // 第一列橙色
+            : const Color(0xFF64DD17); // 第二列绿色
+
+        if (themeProvider.isLightTheme) {
+          // 亮色模式：图标主题深蓝色，背景保持橙/绿半透明，文字主题深蓝
+          finalIconColor = const Color(0xFF012d78); // 图标主题深蓝色
+          backgroundColor = baseColor.withOpacity(0.25); // 背景保持橙/绿半透明
+          textColor = const Color(0xFF012d78); // 主题深蓝字
+          iconBackgroundOpacity = 0.2;
+        } else {
+          // 暗色模式：图标白色，背景橙/绿半透明，文字白色
+          finalIconColor = Colors.white; // 图标白色
+          backgroundColor = baseColor.withOpacity(0.25); // 背景橙/绿半透明
+          textColor = AppColors.textPrimary; // 白字
+          iconBackgroundOpacity = 0.3;
+        }
 
         return Container(
           decoration: BoxDecoration(
-            color: iconColor.withOpacity(backgroundOpacity), // 根据主题调整透明度
+            color: backgroundColor, // 根据主题调整颜色
             borderRadius: BorderRadius.circular(4), // 与详细信息卡片一致
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(
+                  themeProvider.isLightTheme ? 0.08 : 0.15,
+                ),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+                spreadRadius: 0,
+              ),
+            ],
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
@@ -144,17 +181,19 @@ class LunarInfoWidget extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: iconColor.withOpacity(iconBackgroundOpacity),
+                        color: finalIconColor.withOpacity(
+                          iconBackgroundOpacity,
+                        ),
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: Icon(icon, color: iconColor, size: 16),
+                      child: Icon(icon, color: finalIconColor, size: 16),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         label,
                         style: TextStyle(
-                          color: AppColors.textSecondary,
+                          color: textColor, // 使用配对的文字颜色
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
                           letterSpacing: 0.2,
@@ -168,7 +207,7 @@ class LunarInfoWidget extends StatelessWidget {
                 Text(
                   value,
                   style: TextStyle(
-                    color: AppColors.textPrimary,
+                    color: textColor, // 使用配对的文字颜色
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     height: 1.2,
@@ -272,19 +311,51 @@ class YiJiWidget extends StatelessWidget {
           context,
           listen: false,
         );
-        // 与今日提醒卡片完全一致的透明度
-        final backgroundOpacity = themeProvider.isLightTheme ? 0.08 : 0.25;
-        final iconBackgroundOpacity = themeProvider.isLightTheme ? 0.12 : 0.3;
+
+        // 根据主题决定颜色（与节气小卡片一致）
+        Color iconColorFinal;
+        Color backgroundColor;
+        Color textColor;
+        double iconBackgroundOpacity;
+
+        // 黄道吉日在暗色模式下使用琥珀金色
+        final isHuangDaoDay = label == '黄道吉日';
+        final baseColor = (isHuangDaoDay && !themeProvider.isLightTheme)
+            ? const Color(0xFFFFB300) // 暗色模式黄道吉日使用琥珀金色
+            : color;
+
+        if (themeProvider.isLightTheme) {
+          // 亮色模式：图标主题深蓝色，背景保持原色半透明，文字主题深蓝
+          iconColorFinal = const Color(0xFF012d78); // 图标主题深蓝色
+          backgroundColor = color.withOpacity(0.25); // 背景保持原色半透明
+          textColor = const Color(0xFF012d78); // 主题深蓝字
+          iconBackgroundOpacity = 0.2;
+        } else {
+          // 暗色模式：图标白色，背景原色半透明（黄道吉日用琥珀金），文字白色
+          iconColorFinal = Colors.white; // 图标白色
+          backgroundColor = baseColor.withOpacity(0.25); // 背景原色半透明
+          textColor = AppColors.textPrimary; // 白字
+          iconBackgroundOpacity = 0.3;
+        }
 
         return Container(
-          padding: const EdgeInsets.all(12), // 与今日提醒一致
+          padding: const EdgeInsets.symmetric(
+            vertical: 12,
+            horizontal: 14,
+          ), // 与节气小卡片一致
           decoration: BoxDecoration(
-            color: color.withOpacity(backgroundOpacity),
+            color: backgroundColor,
             borderRadius: BorderRadius.circular(4),
-            border: Border.all(
-              color: color.withOpacity(0.15),
-              width: 1,
-            ), // 与今日提醒一致
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(
+                  themeProvider.isLightTheme ? 0.08 : 0.15,
+                ),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+                spreadRadius: 0,
+              ),
+            ],
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -292,10 +363,10 @@ class YiJiWidget extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(iconBackgroundOpacity),
+                  color: iconColorFinal.withOpacity(iconBackgroundOpacity),
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: Icon(icon, color: color, size: 18), // 与今日提醒一致
+                child: Icon(icon, color: iconColorFinal, size: 16), // 与节气小卡片一致
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -305,16 +376,17 @@ class YiJiWidget extends StatelessWidget {
                     Text(
                       label,
                       style: TextStyle(
-                        color: color,
+                        color: textColor, // 使用配对的文字颜色
                         fontSize: 13,
-                        fontWeight: FontWeight.bold, // 与今日提醒一致
+                        fontWeight: FontWeight.w500, // 与节气小卡片一致
+                        letterSpacing: 0.2,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       text,
                       style: TextStyle(
-                        color: AppColors.textPrimary,
+                        color: textColor, // 使用配对的文字颜色
                         fontSize: 14,
                         height: 1.4,
                       ),
@@ -401,20 +473,48 @@ class SolarTermListWidget extends StatelessWidget {
           context,
           listen: false,
         );
-        // 与详细信息卡片完全一致的透明度
-        final backgroundOpacity = themeProvider.isLightTheme ? 0.15 : 0.25;
-        final iconBackgroundOpacity = themeProvider.isLightTheme ? 0.2 : 0.3;
 
-        final itemColor = isToday
-            ? AppColors.warning
-            : AppColors.accentBlue; // 换成蓝色
+        // 根据主题决定颜色
+        Color iconColor;
+        Color backgroundColor;
+        Color textColor;
+        double iconBackgroundOpacity;
+
+        // 背景色的基础颜色（太阳红色或琥珀金色）
+        final baseColor = themeProvider.isLightTheme
+            ? const Color(0xFFE53935) // 亮色模式：太阳红色
+            : const Color(0xFFFFB300); // 暗色模式：琥珀金色
+
+        if (themeProvider.isLightTheme) {
+          // 亮色模式：图标主题深蓝色，背景太阳红半透明，文字主题深蓝
+          iconColor = const Color(0xFF012d78); // 图标主题深蓝色
+          backgroundColor = baseColor.withOpacity(0.25); // 背景太阳红半透明
+          textColor = const Color(0xFF012d78); // 主题深蓝字
+          iconBackgroundOpacity = 0.2;
+        } else {
+          // 暗色模式：图标白色，背景琥珀金半透明，文字白色
+          iconColor = Colors.white; // 图标白色
+          backgroundColor = baseColor.withOpacity(0.25); // 背景琥珀金半透明
+          textColor = AppColors.textPrimary; // 白字
+          iconBackgroundOpacity = 0.3;
+        }
 
         return Container(
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
           decoration: BoxDecoration(
-            color: itemColor.withOpacity(backgroundOpacity),
+            color: backgroundColor,
             borderRadius: BorderRadius.circular(4),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(
+                  themeProvider.isLightTheme ? 0.08 : 0.15,
+                ),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+                spreadRadius: 0,
+              ),
+            ],
           ),
           child: Row(
             children: [
@@ -422,10 +522,13 @@ class SolarTermListWidget extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: itemColor.withOpacity(iconBackgroundOpacity),
+                  color: iconColor.withOpacity(iconBackgroundOpacity),
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: Text(term.emoji, style: const TextStyle(fontSize: 20)),
+                child: Text(
+                  term.emoji,
+                  style: TextStyle(fontSize: 20, color: iconColor),
+                ),
               ),
               const SizedBox(width: 8),
 
@@ -439,7 +542,7 @@ class SolarTermListWidget extends StatelessWidget {
                         Text(
                           term.name,
                           style: TextStyle(
-                            color: AppColors.textSecondary,
+                            color: textColor, // 使用配对的文字颜色
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
                             letterSpacing: 0.2,
@@ -471,7 +574,7 @@ class SolarTermListWidget extends StatelessWidget {
                     Text(
                       term.description,
                       style: TextStyle(
-                        color: AppColors.textSecondary,
+                        color: textColor, // 使用配对的文字颜色
                         fontSize: 13,
                         height: 1.3,
                         fontWeight: FontWeight.w500,
@@ -488,7 +591,7 @@ class SolarTermListWidget extends StatelessWidget {
                   Text(
                     '${term.date.month}/${term.date.day}',
                     style: TextStyle(
-                      color: AppColors.textPrimary,
+                      color: textColor, // 使用配对的文字颜色
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                     ),
@@ -502,7 +605,7 @@ class SolarTermListWidget extends StatelessWidget {
                           ? '明天'
                           : '${daysFromNow}天',
                       style: TextStyle(
-                        color: AppColors.textSecondary,
+                        color: textColor, // 使用配对的文字颜色
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
                       ),

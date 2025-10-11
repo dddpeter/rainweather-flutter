@@ -143,6 +143,182 @@ final commuteAdvices = weatherProvider.commuteAdvices;
 - 包含current.alerts（气象预警）
 - 所有城市的天气数据
 
+## 天气数据结构样例
+
+### 完整天气API响应结构
+```json
+{
+  "code": 200,
+  "message": "successful",
+  "data": {
+    "current": {
+      // 当前天气数据
+      "current": {
+        "temperature": "15",           // 温度
+        "weather": "小雨",             // 天气现象
+        "weatherIndex": "07",          // 天气代码
+        "weatherPic": "n07",           // 天气图标
+        "humidity": "100",             // 湿度
+        "winddir": "东风",             // 风向
+        "windpower": "1级",            // 风力
+        "feelstemperature": "16",      // 体感温度
+        "airpressure": "954",          // 气压
+        "visibility": "20.1",          // 能见度
+        "reporttime": "21:10"          // 报告时间
+      },
+      
+      // 空气质量
+      "air": {
+        "AQI": "12",                   // AQI数值
+        "levelIndex": "优"             // 质量等级
+      },
+      
+      // 气象预警（原始预警，来自天气API）
+      "alerts": [
+        {
+          "alertid": "61000041600000_202510091940316_1011108010005",
+          "publishTime": "2025-10-09 19:40:26",
+          "city": "汉中",
+          "provice": "陕西",
+          "type": "地质灾害气象风险",      // 预警类型
+          "level": "橙色",                // 预警级别
+          "levelNumber": "03",            // 级别代码
+          "typeNumber": "00",             // 类型代码
+          "alertPic": "icon_warning_0003.png",
+          "content": "省自然资源厅联合省气象局..."  // 预警内容
+        }
+      ],
+      
+      // 农历和天气提示
+      "nongLi": "2025-10-11  星期六  八月二十",
+      "tips": "明天白天有雨，请提前计划行程"
+    },
+    
+    // 24小时天气预报
+    "forecast24h": [
+      {
+        "forecasttime": "22:00",       // 预报时间
+        "temperature": "16℃",          // 温度
+        "weather": "中雨",             // 天气
+        "weatherCode": "08",           // 天气代码
+        "weatherPic": "n08",           // 天气图标
+        "windDir": "西北风",           // 风向
+        "windPower": "2级",            // 风力
+        "windDirectionDegree": "315"   // 风向角度
+      }
+      // ... 共24条
+    ],
+    
+    // 15日天气预报
+    "forecast15d": [
+      {
+        "forecasttime": "10/10",       // 日期
+        "week": "周五",                // 星期
+        "reporttime": "2025-10-11 18:00:00.0",
+        
+        // 上午天气
+        "weather_am": "小雨",
+        "weather_index_am": "07",
+        "weather_am_pic": "d07",
+        "temperature_am": "23",        // 上午温度
+        "winddir_am": "东北风",
+        "windpower_am": "4级",
+        
+        // 下午天气
+        "weather_pm": "大雨",
+        "weather_index_pm": "09",
+        "weather_pm_pic": "n09",
+        "temperature_pm": "17",        // 下午温度
+        "winddir_pm": "西北风",
+        "windpower_pm": "4级",
+        
+        // 日出日落
+        "sunrise_sunset": "06:53|18:25"
+      }
+      // ... 共15条
+    ]
+  }
+}
+```
+
+### 天气代码对照表
+```
+00 - 晴
+01 - 多云
+02 - 阴
+03 - 阵雨
+07 - 小雨
+08 - 中雨
+09 - 大雨
+10 - 暴雨
+11 - 大暴雨
+13 - 雷阵雨
+14 - 雨夹雪
+19 - 小雪
+20 - 中雪
+21 - 大雪
+26 - 雾
+29 - 霾
+53 - 浮尘
+54 - 扬沙
+55 - 沙尘暴
+```
+
+### 预警级别对照
+- **红色预警**: 最高级别，极其危险
+- **橙色预警**: 高级别，非常危险
+- **黄色预警**: 中级别，需要注意
+- **蓝色预警**: 低级别，一般关注
+
+### 数据使用规范
+
+#### 访问当前天气
+```dart
+final current = weather.current?.current;
+final temperature = current?.temperature;  // "15"
+final weatherType = current?.weather;      // "小雨"
+```
+
+#### 访问气象预警（原始预警）
+```dart
+final alerts = weather.current?.alerts;    // 来自API的官方预警
+if (alerts != null && alerts.isNotEmpty) {
+  final firstAlert = alerts[0];
+  final level = firstAlert.level;          // "橙色"
+  final type = firstAlert.type;            // "地质灾害气象风险"
+}
+```
+
+#### 访问24小时预报
+```dart
+final hourly = weather.forecast24h;
+if (hourly != null && hourly.isNotEmpty) {
+  final nextHour = hourly[0];
+  final temp = nextHour.temperature;       // "16℃"
+  final weather = nextHour.weather;        // "中雨"
+}
+```
+
+#### 访问15日预报
+```dart
+final forecast15d = weather.forecast15d;
+if (forecast15d != null && forecast15d.isNotEmpty) {
+  final day = forecast15d[0];
+  final amWeather = day.weather_am;        // "小雨"
+  final pmWeather = day.weather_pm;        // "大雨"
+  final tempAm = day.temperature_am;       // "23"
+  final tempPm = day.temperature_pm;       // "17"
+}
+```
+
+### ⚠️ 注意事项
+
+1. **温度单位**: 24小时预报带"℃"，15日预报不带单位
+2. **天气图标**: 日间用`d`前缀，夜间用`n`前缀（如`d07`、`n07`）
+3. **字段命名**: 15日预报使用下划线（如`weather_am`），24小时使用驼峰命名（如`weatherCode`）
+4. **null安全**: 所有字段都可能为null，使用时需要安全访问（`?.`）
+5. **气象预警**: 只有当地气象部门发布时才有数据，平时可能为空数组
+
 ## 重要提醒
 
 ❗ 开发时请注意区分这三个概念，不要混淆：
@@ -233,15 +409,25 @@ Row(
 - **列间距**: `4px`
 - **行间距**: `4px`
 - **圆角**: `borderRadius: 4px`
-- **背景透明度**: 
-  - 亮色模式: `0.15`
-  - 暗色模式: `0.25`
+- **背景色**: 
+  - **亮色模式**: 使用深色模式的背景色（简单方案）
+    - 第一列: 橙色 `#FFB74D`，半透明 `0.25`
+    - 第二列: 绿色 `#64DD17`，半透明 `0.25`
+    - 节气卡片: 琥珀金 `#FFB300`，半透明 `0.25`
+    - 今日提示（城市天气）: 主题深蓝 `#012d78` / 橄榄绿 `#6B8E23`，半透明 `0.25`
+  - **暗色模式**: 使用半透明背景
+    - 透明度: `0.25`
 - **边框**: 无边框
 - **内边距**: `vertical: 12px, horizontal: 14px`
-- **颜色配置**:
-  - 第一列: `Color(0xFFFFB74D)` (橙色)
-  - 第二列: `Color(0xFF64DD17)` (绿色)
-  - ⚠️ **避免使用蓝色系**：暗色模式下App背景是深蓝色，蓝色系小卡片对比度不足
+- **浮起效果**: 添加阴影让小卡片浮在大卡片之上
+  - 阴影颜色: 亮色模式 `Colors.black.withOpacity(0.08)`，暗色模式 `Colors.black.withOpacity(0.15)`
+  - 模糊半径: `6`
+  - 偏移量: `Offset(0, 2)`
+  - 扩散半径: `0`
+- **图标和文字颜色**:
+  - 亮色模式: 图标主题深蓝 `Color(0xFF012d78)`，文字主题深蓝
+  - 暗色模式: 图标白色 `Colors.white`，文字白色
+  - 背景色: 保持橙色 `#FFB74D` / 绿色 `#64DD17` / 琥珀金 `#FFB300` 的半透明效果
 
 #### 4. 小卡片内图标/标签容器
 ```dart
@@ -356,16 +542,121 @@ Padding(
 - ✅ 24小时天气 (`HourlyWeatherWidget`)
 - ✅ 农历信息 (`LunarInfoWidget`)
 - ✅ 日月信息 (`SunMoonWidget`)
+- ✅ 即将到来的节气 (`SolarTermListWidget`)
 
-#### 8. 通勤提醒级别颜色
+#### 8. 特殊卡片颜色配置
+
+**简单方案：亮色模式使用深色模式的背景色，主题深蓝字**
+
+**详细信息、生活指数、农历信息小卡片**:
+- **亮色模式**: 
+  - 背景色: 第一列橙色 `#FFB74D`，第二列绿色 `#64DD17`，半透明 `0.25`
+  - 图标颜色: 主题深蓝 `Color(0xFF012d78)`
+  - 文字颜色: 主题深蓝 `Color(0xFF012d78)`
+- **暗色模式**: 
+  - 背景色: 橙色/绿色半透明 `0.25`
+  - 图标颜色: 白色 `Colors.white`
+  - 文字颜色: 白色
+
+**节气小卡片**:
+- **亮色模式**: 
+  - 背景色: 太阳红 `#E53935`，半透明 `0.25`
+  - 图标颜色: 主题深蓝 `Color(0xFF012d78)`
+  - 文字颜色: 主题深蓝 `Color(0xFF012d78)`
+- **暗色模式**: 
+  - 背景色: 琥珀金 `#FFB300`，半透明 `0.25`
+  - 图标颜色: 白色 `Colors.white`
+  - 文字颜色: 白色
+
+**宜忌提醒小卡片**（与节气小卡片风格一致）:
+- **亮色模式**: 
+  - 背景色: 宜绿色、忌红色、吉日橙色，半透明 `0.25`
+  - 图标颜色: 主题深蓝 `Color(0xFF012d78)`
+  - 文字颜色: 主题深蓝 `Color(0xFF012d78)`
+- **暗色模式**: 
+  - 背景色: 宜绿色、忌红色半透明 `0.25`；**黄道吉日琥珀金 `#FFB300`**
+  - 图标颜色: 白色 `Colors.white`
+  - 文字颜色: 白色
+- 无边框，带浮起效果，图标大小 `16px`
+
+**今日提示小卡片**（城市天气）:
+- **亮色模式**: 
+  - 背景色: 第一列主题深蓝 `#012d78`，第二列橄榄绿 `#6B8E23`，半透明 `0.25`
+  - 图标颜色: 主题深蓝 `Color(0xFF012d78)`
+  - 文字颜色: 主题深蓝 `Color(0xFF012d78)`
+- **暗色模式**: 
+  - 背景色: 橙色/绿色半透明 `0.25`
+  - 图标颜色: 白色 `Colors.white`
+  - 文字颜色: 白色
+
+**通勤提醒级别小卡片配色**（着重提醒设计）:
+- **亮色模式**: 
+  - 背景: **主题浅蓝色渐变**（带透明度，着重提醒）
+    - 渐变方向: `topLeft → bottomRight`
+    - 起始色: `#E1F5FE`，25% 透明度 (`0x40E1F5FE`)
+    - 结束色: `#81D4FA`，38% 透明度 (`0x6081D4FA`)
+  - 边框: 级别色边框，宽度 `1px`
+  - 文字颜色: 级别原色（红/橙/绿/薄荷灰绿）
+  - **级别标签**: Element UI dark tag 风格
+    - 背景: 级别原色（不透明）
+    - 文字: 白色 `Colors.white`
+    - 边框: 无
+    - 内边距: `horizontal: 8, vertical: 4`
+- **暗色模式**: 
+  - 背景色: 级别色半透明 `0.25`
+  - 边框: 无边框
+  - 图标颜色: 白色 `Colors.white`
+  - 文字颜色: 级别原色
+  - **级别标签**: Element UI plain tag 风格
+    - 背景: 级别色半透明 `0.25`
+    - 文字: 级别原色
+    - 边框: 级别原色，宽度 `1px`
+    - 内边距: `horizontal: 8, vertical: 4`
+
+**天气提醒级别小卡片配色**（亮色模式使用深色模式的颜色）:
+- 红色预警: 红色 `Colors.red`，半透明 `0.25`，主题深蓝字
+- 黄色预警: 橙色 `Colors.orange`，半透明 `0.25`，主题深蓝字
+- 蓝色预警: 蓝色 `Colors.blue`，半透明 `0.25`，主题深蓝字
+- 信息提醒: 绿色 `Colors.green`，半透明 `0.25`，主题深蓝字
+
+#### 9. 通勤提醒级别颜色
 - 🔴 严重 (critical): `Color(0xFFD32F2F)` - 红色
 - 🟠 警告 (warning): `Color(0xFFF57C00)` - 橙色
 - 🟢 提示 (info): `Color(0xFF64DD17)` - 亮绿色
-- 🟢 建议 (normal): `Color(0xFF388E3C)` - 深绿色
+- 🌿 建议 (normal): `Color(0xFFB5C7C5)` - 薄荷灰绿（亮暗模式通用）
 
-#### 9. 色彩使用原则
+**级别标签文字颜色**：
+- 亮色模式: 使用级别原色（`getLevelColor()`）
+- 暗色模式: 使用级别原色（`getLevelColor()`）
+- **⚠️ 已取消反色逻辑**: 小卡片背景色使用活泼半透明色配对清晰字体，级别标签不再需要反色
+
+**AI标签颜色**（主题自适应）：
+- 原色: `Color(0xFFFFB300)` - 金琥珀色
+- 反色: `Color(0xFF004CFF)` - 蓝色
+- 亮色模式: 使用反色（蓝色），提高对比度
+- 暗色模式: 使用原色（金琥珀色）
+
+**级别标签文字描边效果**（提高识别度）：
+- 描边宽度: `0.5 pt`
+- 描边模糊半径: `0.5`
+- 描边颜色（主题自适应）:
+  - 亮色模式: `Colors.white.withOpacity(0.4)` - 白色40%
+  - 暗色模式: `Colors.black.withOpacity(0.1)` - 黑色10%
+- 实现方式: 使用4个方向的`Shadow`（上下左右）模拟描边效果
+
+**小卡片浮起效果**（增强层次感）：
+- 阴影颜色（主题自适应）:
+  - 亮色模式: `Colors.black.withOpacity(0.08)` - 黑色8%
+  - 暗色模式: `Colors.black.withOpacity(0.15)` - 黑色15%
+- 模糊半径: `6`
+- 偏移量: `Offset(0, 2)` - 向下偏移2px
+- 扩散半径: `0`
+- 效果: 小卡片看起来浮在大卡片之上，增加层次感
+
+#### 10. 色彩使用原则
 
 **⚠️ 重要：避免在内部小卡片中使用蓝色系**
+**⚠️ 重要：避免在设计的时候颜色写死，务必考虑亮色和暗色的情况，今日天气页面和城市天气页面头部除外**
 
 由于暗色模式下App背景色为深蓝色（`primaryGradient`），内部小卡片使用蓝色系会导致对比度不足，难以辨识。
 
@@ -380,4 +671,298 @@ Padding(
 **例外情况：**
 - 仅标题栏图标可使用蓝色（如 `AppColors.accentBlue`）
 - 大卡片背景（非内部小卡片）可使用蓝色
+
+## 应用主题颜色系统
+
+### 1. 主背景色（App全局背景）
+
+#### 暗色模式背景
+- **渐变方式**: `LinearGradient`
+- **起点**: `Alignment.topLeft` (左上)
+- **终点**: `Alignment.bottomRight` (右下)
+- **颜色**:
+  - 起始色: `Color(0xFF012d78)` - 深蓝色（#012d78）
+  - 结束色: `Color(0xFF0A1B3D)` - 更深的蓝色
+
+#### 亮色模式背景
+- **渐变方式**: `LinearGradient`
+- **起点**: `Alignment.topLeft` (左上)
+- **终点**: `Alignment.bottomRight` (右下)
+- **颜色**:
+  - 起始色: `Color(0xFFF0F8FF)` - 浅蓝白色（基于#8edafc）
+  - 结束色: `Color(0xFFE1F5FE)` - 极浅蓝色
+
+### 2. 核心主题色定义（AppColors）
+
+#### 主色调 (`primaryBlue`)
+- **暗色模式**: `Color(0xFF4A90E2)` - 亮蓝色
+- **亮色模式**: `Color(0xFF012d78)` - 深蓝色
+
+#### 强调色 (`accentBlue`)
+- **暗色模式**: `Color(0xFF8edafc)` - 指定的亮蓝色
+- **亮色模式**: `Color(0xFF8edafc)` - 指定的亮蓝色（保持一致）
+
+#### 文字颜色
+**主要文字** (`textPrimary`):
+- **暗色模式**: `Color(0xFFFFFFFF)` - 纯白色
+- **亮色模式**: `Color(0xFF001A4D)` - 深蓝色，高对比度
+
+**次要文字** (`textSecondary`):
+- **暗色模式**: `Color(0xFFE8F4FD)` - 接近#8edafc的亮色
+- **亮色模式**: `Color(0xFF003366)` - 深蓝色次要文字
+
+**辅助文字** (`textTertiary`):
+- **暗色模式**: `Color(0xFFB8D9F5)` - 中等亮度
+- **亮色模式**: `Color(0xFF6B7280)` - 较浅的灰色
+
+#### 背景色
+**主背景** (`backgroundPrimary`):
+- **暗色模式**: `Color(0xFF0A1B3D)` - 深蓝背景
+- **亮色模式**: `Color(0xFFF0F8FF)` - 浅蓝白色背景
+
+**次背景/表面** (`backgroundSecondary`/`surface`):
+- **暗色模式**: `Color(0xFF1A2F5D)` - 稍亮表面
+- **亮色模式**: `Color(0xFFFFFFFF)` - 纯白表面
+
+#### 卡片相关
+**卡片背景** (`materialCardColor`):
+- **暗色模式**: `Color(0x25FFFFFF)` - 半透明白色（25%）
+- **亮色模式**: `Color(0xFFFFFFFF)` - 纯白色
+
+**卡片阴影** (`cardShadowColor`):
+- **暗色模式**: `Colors.black.withOpacity(0.3)` - 黑色30%
+- **亮色模式**: `Colors.black.withOpacity(0.1)` - 黑色10%
+
+**卡片边框** (`cardBorder`):
+- **暗色模式**: `Color(0x35FFFFFF)` - 半透明白色边框
+- **亮色模式**: `Color(0xFFE1F5FE)` - 浅蓝边框
+
+**卡片阴影高度** (`cardElevation`):
+- **暗色模式**: `2` - 较明显的阴影
+- **亮色模式**: `1` - 轻微阴影
+
+#### 状态颜色
+**成功色** (`success` / `accentGreen`):
+- **暗色模式**: `Color(0xFF4CAF50)` - 绿色
+- **亮色模式**: `Color(0xFF2E7D32)` - 深绿色
+
+**警告色** (`warning`):
+- **暗色模式**: `Color(0xFFFFB74D)` - 橙色
+- **亮色模式**: `Color(0xFFE65100)` - 深橙色
+
+**错误色** (`error`):
+- **暗色模式**: `Color(0xFFFF6B6B)` - 浅红色
+- **亮色模式**: `Color(0xFFD32F2F)` - 深红色
+
+#### 温度颜色
+**高温** (`highTemp`):
+- **暗色模式**: `Color(0xFFFF5722)` - 橙红色
+- **亮色模式**: `Color(0xFFD32F2F)` - 红色
+
+**低温** (`lowTemp`):
+- **暗色模式**: `Color(0xFF8edafc)` - 亮蓝色
+- **亮色模式**: `Color(0xFF012d78)` - 主题蓝色
+
+### 3. 颜色使用场景规范
+
+#### 交互控件颜色选择
+**Switch 开关**:
+- 激活色: `AppColors.primaryBlue` (暗色=亮蓝，亮色=深蓝)
+
+**按钮主色**:
+- 主按钮: `AppColors.primaryBlue`
+- 次按钮: `AppColors.textSecondary`
+- 危险按钮: `AppColors.error`
+
+**图标颜色**:
+- 标题图标: `AppColors.primaryBlue` 或特定色（如通知=橙色）
+- 时间图标: `AppColors.primaryBlue`
+- 增减按钮: `AppColors.primaryBlue`（激活状态）
+
+#### 卡片内部小卡片颜色规范
+**第一列小卡片**:
+- 推荐颜色: `Color(0xFFFFB74D)` - 橙色
+- 背景透明度: 亮色 `0.15`，暗色 `0.25`
+- 图标容器透明度: 亮色 `0.2`，暗色 `0.3`
+
+**第二列小卡片**:
+- 推荐颜色: `Color(0xFF64DD17)` - 绿色
+- 背景透明度: 亮色 `0.15`，暗色 `0.25`
+- 图标容器透明度: 亮色 `0.2`，暗色 `0.3`
+
+**⚠️ 禁止使用蓝色系**（第一列、第二列小卡片内）
+
+### 4. AppColors 使用指南
+
+#### 推荐使用方式
+```dart
+// 方式1：使用主题扩展（最推荐）
+context.appTheme.textPrimary
+
+// 方式2：静态方法（推荐）
+AppColors.of(context).textPrimary
+
+// 方式3：全局访问（需要先调用 setThemeProvider）
+AppColors.textPrimary
+```
+
+#### 在有状态组件中初始化
+```dart
+@override
+Widget build(BuildContext context) {
+  final themeProvider = context.read<ThemeProvider>();
+  AppColors.setThemeProvider(themeProvider);
+  // ...
+}
+```
+
+#### 主题切换时自动更新
+- 使用 `Consumer<ThemeProvider>` 包裹需要响应主题变化的组件
+- 或在父组件中调用 `AppColors.setThemeProvider(themeProvider)`
+
+### 5. 抽屉菜单头部颜色规范
+
+#### 亮色模式头部渐变
+```dart
+LinearGradient(
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+  colors: [
+    Color(0xFF64B5F6), // 浅蓝色
+    Color(0xFF42A5F5), // 中蓝色
+  ],
+)
+```
+- 文字颜色: `Colors.white` (白色)
+
+#### 暗色模式头部渐变
+- 使用 `AppColors.primaryGradient`
+- 文字颜色: `Colors.white` (白色)
+
+### 6. 动态颜色选择原则
+
+#### 需要主题适配的颜色
+- ✅ 文字颜色（主要/次要/辅助）
+- ✅ 背景色（主背景/次背景）
+- ✅ 卡片背景和边框
+- ✅ 图标颜色（交互类）
+- ✅ 状态颜色（成功/警告/错误）
+- ✅ Switch、Checkbox等控件激活色
+
+#### 固定颜色（不随主题变化）
+- ✅ 天气相关色（晴天黄、雨天蓝等）
+- ✅ 空气质量色（优绿、良黄绿等）
+- ✅ 特定级别色（通勤提醒级别）
+
+#### 特殊适配颜色
+**温度颜色**:
+- 根据主题调整明暗度
+- 高温: 暗色=橙红，亮色=红色
+- 低温: 暗色=亮蓝，亮色=深蓝
+
+**通勤提醒级别标签文字**:
+- 亮色模式: 使用反色（`getLevelInvertedColor()`）
+- 暗色模式: 使用原色（`getLevelColor()`）
+
+**AI标签文字**:
+- 亮色模式: 蓝色 `#004CFF`（金琥珀色的反色）
+- 暗色模式: 金琥珀色 `#FFB300`（原色）
+
+### 7. 透明度使用规范
+
+#### 卡片透明度（主题适配）
+- 大卡片背景（暗色模式）: `0x25FFFFFF` (15%)
+- 大卡片背景（亮色模式）: 不透明白色
+
+#### 小卡片透明度（内部小卡片）
+- 背景透明度: 亮色 `0.15`，暗色 `0.25`
+- 图标容器背景: 亮色 `0.2`，暗色 `0.3`
+
+#### 描边/阴影透明度
+- 亮色模式描边: 白色 `0.4`
+- 暗色模式描边: 黑色 `0.1`
+- 亮色模式阴影: 黑色 `0.1`
+- 暗色模式阴影: 黑色 `0.3`
+
+### 8. 颜色命名规范
+
+#### 使用 AppColors 常量
+- ✅ `AppColors.primaryBlue` - 主题蓝色（自适应）
+- ✅ `AppColors.textPrimary` - 主要文字（自适应）
+- ✅ `AppColors.warning` - 警告色（自适应）
+- ✅ `AppColors.accentGreen` - 强调绿色（自适应）
+
+#### 避免硬编码
+- ❌ `Colors.blue` - 不适配主题
+- ❌ `Color(0xFF123456)` - 直接写在UI代码中
+- ✅ 特殊颜色定义为常量或在 AppColors 中定义
+
+#### 临时颜色使用
+如需使用非 AppColors 定义的颜色：
+```dart
+// 不推荐（硬编码）
+color: Colors.red
+
+// 推荐（定义为常量）
+static const myCustomColor = Color(0xFFD32F2F);
+color: myCustomColor
+
+// 更推荐（主题适配）
+color: themeProvider.isLightTheme 
+  ? Color(0xFFD32F2F)  // 亮色
+  : Color(0xFFFF6B6B)  // 暗色
+```
+
+### 9. 常用颜色速查表
+
+| 用途 | 暗色模式 | 亮色模式 | AppColors 常量 |
+|------|----------|----------|----------------|
+| App背景 | `#012d78→#0A1B3D` 渐变 | `#F0F8FF→#E1F5FE` 渐变 | `primaryGradient` |
+| 卡片背景 | `#FFFFFF25` (15%白) | `#FFFFFF` (纯白) | `materialCardColor` |
+| 主文字 | `#FFFFFF` (白色) | `#001A4D` (深蓝) | `textPrimary` |
+| 次文字 | `#E8F4FD` (浅蓝) | `#003366` (深蓝) | `textSecondary` |
+| 主题色 | `#4A90E2` (亮蓝) | `#012d78` (深蓝) | `primaryBlue` |
+| 成功色 | `#4CAF50` (绿) | `#2E7D32` (深绿) | `accentGreen` |
+| 警告色 | `#FFB74D` (橙) | `#E65100` (深橙) | `warning` |
+| 错误色 | `#FF6B6B` (浅红) | `#D32F2F` (深红) | `error` |
+
+### 10. Drawer 抽屉菜单颜色规范
+
+#### 头部背景
+- 使用 `AppColors.primaryGradient`（与App背景一致）
+- **暗色模式**: 深蓝渐变 `#012d78 → #0A1B3D`
+- **亮色模式**: 浅蓝渐变 `#F0F8FF → #E1F5FE`
+
+#### 头部文字
+- **亮色模式**: 
+  - 标题: `AppColors.primaryBlue` (深蓝色)
+  - 副标题: `AppColors.textSecondary` (次要文字色)
+- **暗色模式**: 
+  - 标题: `Colors.white` (白色)
+  - 副标题: `Colors.white.withOpacity(0.9)` (半透明白色)
+
+#### 头部Logo
+- 尺寸: 48×48
+- 圆角: 10px
+- 背景: 白色容器（提高可见度）
+- 阴影: `Colors.black.withOpacity(0.1)`, blurRadius: 8, offset: (0, 2)
+- 图片: `assets/images/app_icon.png`
+
+#### 菜单项
+**图标颜色统一使用主题色** (`AppColors.primaryBlue`):
+- 图标容器背景: `primaryBlue.withOpacity(0.1)`
+- 图标颜色: `AppColors.primaryBlue`（暗色=亮蓝，亮色=深蓝）
+- 标题文字: `AppColors.textPrimary`
+- 副标题文字: `AppColors.textSecondary`
+- 右箭头: `AppColors.textTertiary`
+
+#### 二级菜单（ExpansionTile）
+- 父菜单图标: `AppColors.primaryBlue`（统一主题色）
+- 展开/收起图标:
+  - 展开时: `AppColors.textPrimary`
+  - 收起时: `AppColors.textSecondary`
+- 子菜单项:
+  - 缩进: `left: 72px`
+  - 图标: `AppColors.primaryBlue`（统一主题色）
+  - 文字: `AppColors.textPrimary`
 

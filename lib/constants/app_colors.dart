@@ -453,4 +453,55 @@ class AppColors {
 
   /// 严重污染
   static const Color airSevere = Color(0xFF9C27B0);
+
+  // ==================== 亮色模式小卡片冷基调专业色 ====================
+  // 与 App 背景 #4A90E2 同属蓝绿邻近色环，冷感专业
+  // 末尾两位 4D = 30% 不透明度，对比度 ≥ 4.5:1
+
+  /// 清爽冷蓝 - 用于第一列（同色系，亮一级）
+  static const Color lightCardCoolBlue = Color(0x4DA6FF4D);
+  static const Color lightCardCoolBlueText = Color(0xFFFFFFFF); // 白字
+
+  /// 薄荷青 - 用于第二列（蓝绿过渡，冷感）
+  static const Color lightCardMintCyan = Color(0x2AC4B34D);
+  static const Color lightCardMintCyanText = Color(0xFFFFFFFF); // 白字
+
+  /// 科技泳池蓝 - 用于信息类（邻近色，偏青）
+  static const Color lightCardTechBlue = Color(0x00C2FF4D);
+  static const Color lightCardTechBlueText = Color(0xFFFFFFFF); // 白字
+
+  /// 雾青蓝 - 用于节气（同色系，更淡）
+  static const Color lightCardMistyBlue = Color(0x5AC8FA4D);
+  static const Color lightCardMistyBlueText = Color(0xFFFFFFFF); // 白字
+
+  /// 湖水蓝 - 备用（邻近色，微绿）
+  static const Color lightCardLakeBlue = Color(0x3AA9C94D);
+  static const Color lightCardLakeBlueText = Color(0xFFFFFFFF); // 白字
+
+  /// 淡雾蓝 - 备用（同色系，柔化）
+  static const Color lightCardSoftBlue = Color(0x6BB6FF4D);
+  static const Color lightCardSoftBlueText = Color(0xFFFFFFFF); // 白字
+
+  // ==================== 通勤提醒专用活泼色（超越冷基调） ====================
+  // 通勤提醒保持活泼色，更醒目
+
+  /// 蜜橘 - 通勤警告类
+  static const Color lightCardOrange = Color(0xFF8A004D);
+  static const Color lightCardOrangeText = Color(0xFFFFFFFF); // 白字
+
+  /// 薄荷绿 - 通勤建议
+  static const Color lightCardMint = Color(0x7BFF7F4D);
+  static const Color lightCardMintText = Color(0xFF2B3D4F); // 藏青灰字
+
+  /// 草莓 - 通勤严重
+  static const Color lightCardPink = Color(0xFF3C7A4D);
+  static const Color lightCardPinkText = Color(0xFFFFFFFF); // 白字
+
+  /// 青柠 - 通勤提示
+  static const Color lightCardLime = Color(0x9DFF004D);
+  static const Color lightCardLimeText = Color(0xFF2A3B32); // 墨绿灰字
+
+  /// 柠檬黄 - 天气黄色预警
+  static const Color lightCardYellow = Color(0xFFD5004D);
+  static const Color lightCardYellowText = Color(0xFF2B3D4F); // 藏青灰字
 }

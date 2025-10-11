@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
 import '../providers/weather_provider.dart';
 import '../providers/theme_provider.dart';
 import '../widgets/weather_chart.dart';
@@ -195,7 +194,7 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
                             tabs: const [
                               Tab(text: '当前天气'),
                               Tab(text: '24小时&15日'),
-                              Tab(text: '预警信息'),
+                              Tab(text: 'AI总结'),
                             ],
                           ),
                         ),
@@ -369,7 +368,10 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
   Widget _buildCurrentWeatherTab(WeatherProvider weatherProvider) {
     return RefreshIndicator(
       onRefresh: () async {
-        await weatherProvider.getWeatherForCity(widget.cityName);
+        await weatherProvider.getWeatherForCity(
+          widget.cityName,
+          forceRefreshAI: true,
+        );
       },
       color: AppColors.primaryBlue,
       backgroundColor: AppColors.backgroundSecondary,
@@ -411,7 +413,10 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
 
     return RefreshIndicator(
       onRefresh: () async {
-        await weatherProvider.getWeatherForCity(widget.cityName);
+        await weatherProvider.getWeatherForCity(
+          widget.cityName,
+          forceRefreshAI: true,
+        );
       },
       color: AppColors.primaryBlue,
       backgroundColor: AppColors.backgroundSecondary,
@@ -505,194 +510,167 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
 
   // 第三个标签页：预警信息
   Widget _buildAlertsTab(WeatherProvider weatherProvider) {
-    final weather = weatherProvider.currentWeather;
-    final alerts = weather?.current?.alerts ?? [];
-
-    if (alerts.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.check_circle_outline,
-              color: AppColors.accentGreen,
-              size: 64,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              '暂无预警信息',
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '当前天气状况良好',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
-            ),
-          ],
-        ),
-      );
-    }
-
-    // 按发布时间排序，最新发布的往前放
-    final sortedAlerts = List<WeatherAlert>.from(alerts);
-    sortedAlerts.sort((a, b) {
-      // 如果发布时间为空，放到最后
-      if (a.publishTime == null && b.publishTime == null) return 0;
-      if (a.publishTime == null) return 1;
-      if (b.publishTime == null) return -1;
-
-      try {
-        // 尝试解析时间格式，支持多种格式
-        DateTime timeA = _parseDateTime(a.publishTime!);
-        DateTime timeB = _parseDateTime(b.publishTime!);
-        return timeB.compareTo(timeA); // 降序：新的在前
-      } catch (e) {
-        // 如果解析失败，按字符串比较
-        return b.publishTime!.compareTo(a.publishTime!);
-      }
-    });
-
     return RefreshIndicator(
       onRefresh: () async {
-        await weatherProvider.getWeatherForCity(widget.cityName);
+        await weatherProvider.getWeatherForCity(
+          widget.cityName,
+          forceRefreshAI: true,
+        );
       },
       color: AppColors.primaryBlue,
       backgroundColor: AppColors.backgroundSecondary,
-      child: ListView.builder(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(
           horizontal: AppConstants.screenHorizontalPadding,
           vertical: 16,
         ),
-        itemCount: sortedAlerts.length,
-        itemBuilder: (context, index) {
-          final alert = sortedAlerts[index];
-          return _buildAlertCard(alert, index);
-        },
+        child: Column(
+          children: [
+            // AI智能助手（24小时天气总结）
+            _buildAIWeatherSummary(weatherProvider),
+            AppColors.cardSpacingWidget,
+
+            // 15日天气AI总结
+            _buildAI15dSummary(weatherProvider),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildAlertCard(WeatherAlert alert, int index) {
-    final levelColor = _getAlertLevelColor(alert.level);
-    final levelBgColor = levelColor.withOpacity(0.08);
+  /// 构建AI智能助手卡片（24小时天气总结）
+  Widget _buildAIWeatherSummary(WeatherProvider weatherProvider) {
+    final themeProvider = context.read<ThemeProvider>();
+    final aiColor = themeProvider.isLightTheme
+        ? const Color(0xFFE65100) // 深橙色
+        : const Color(0xFFFFB300); // 琥珀金色
 
     return Card(
       elevation: AppColors.cardElevation,
       shadowColor: AppColors.cardShadowColor,
       color: AppColors.materialCardColor,
       surfaceTintColor: Colors.transparent,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-        side: BorderSide(color: levelColor, width: 2),
-      ),
-      margin: EdgeInsets.only(bottom: AppColors.cardSpacing),
-      child: InkWell(
-        onTap: () => _showAlertDetailDialog(alert),
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header: Type and Level
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: levelBgColor,
-                      borderRadius: BorderRadius.circular(8),
+      shape: AppColors.cardShape,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 标题
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: aiColor.withOpacity(
+                      themeProvider.isLightTheme ? 0.15 : 0.2,
                     ),
-                    child: Icon(
-                      _getAlertIcon(alert.type),
-                      color: levelColor,
-                      size: 24,
-                    ),
+                    borderRadius: BorderRadius.circular(6),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          alert.type ?? '未知类型',
-                          style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: levelColor,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                '${alert.level ?? "未知"}预警',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              alert.city ?? '',
-                              style: TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  // 点击提示图标
-                  Icon(
-                    Icons.arrow_forward_ios,
-                    color: AppColors.textSecondary,
-                    size: 16,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Publish Time
-              if (alert.publishTime != null) ...[
-                Row(
-                  children: [
-                    Icon(
-                      Icons.access_time_rounded,
-                      color: AppColors.textSecondary,
-                      size: 16,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      '发布时间：${alert.publishTime}',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
+                  child: Icon(Icons.auto_awesome, color: aiColor, size: 16),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(width: 8),
+                Text(
+                  'AI智能助手',
+                  style: TextStyle(
+                    color: aiColor,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Spacer(),
+                if (weatherProvider.isGeneratingSummary)
+                  SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(aiColor),
+                    ),
+                  ),
               ],
+            ),
+            if (weatherProvider.weatherSummary != null) ...[
+              const SizedBox(height: 6),
+              Text(
+                weatherProvider.weatherSummary!,
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 14,
+                  height: 1.4,
+                ),
+              ),
             ],
-          ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 构建15日天气AI总结卡片
+  Widget _buildAI15dSummary(WeatherProvider weatherProvider) {
+    final themeProvider = context.read<ThemeProvider>();
+    final titleColor = themeProvider.isLightTheme
+        ? const Color(0xFFE65100) // 深橙色
+        : const Color(0xFFFFB300); // 琥珀金色
+
+    return Card(
+      elevation: AppColors.cardElevation,
+      shadowColor: AppColors.cardShadowColor,
+      color: AppColors.materialCardColor,
+      surfaceTintColor: Colors.transparent,
+      shape: AppColors.cardShape,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 标题
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: titleColor.withOpacity(
+                      themeProvider.isLightTheme ? 0.15 : 0.2,
+                    ),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Icon(Icons.auto_awesome, color: titleColor, size: 16),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '15日天气总结',
+                  style: TextStyle(
+                    color: titleColor,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Spacer(),
+                if (weatherProvider.isGenerating15dSummary)
+                  SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(titleColor),
+                    ),
+                  ),
+              ],
+            ),
+            if (weatherProvider.forecast15dSummary != null) ...[
+              const SizedBox(height: 6),
+              Text(
+                weatherProvider.forecast15dSummary!,
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 14,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ],
         ),
       ),
     );
@@ -1042,14 +1020,49 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
 
   Widget _buildTipItem(IconData icon, String text, Color color) {
     final themeProvider = context.read<ThemeProvider>();
-    final backgroundOpacity = themeProvider.isLightTheme ? 0.15 : 0.25;
-    final iconBackgroundOpacity = themeProvider.isLightTheme ? 0.2 : 0.3;
+    // 根据传入的color判断是橙色还是绿色
+    final isOrange = color == AppColors.warning || color.value == 0xFFFFB74D;
+
+    // 根据颜色和主题决定样式
+    Color backgroundColor;
+    Color iconColor;
+    Color textColor;
+    double iconBackgroundOpacity;
+
+    // 背景色的基础颜色（主题深蓝或橄榄绿）
+    final baseColor = isOrange
+        ? const Color(0xFF012d78) // 主题深蓝
+        : const Color(0xFF6B8E23); // 橄榄绿
+
+    if (themeProvider.isLightTheme) {
+      // 亮色模式：图标主题深蓝色，背景保持深蓝/橄榄绿半透明，文字主题深蓝
+      iconColor = const Color(0xFF012d78); // 图标主题深蓝色
+      backgroundColor = baseColor.withOpacity(0.25); // 背景保持深蓝/橄榄绿半透明
+      textColor = const Color(0xFF012d78); // 主题深蓝字
+      iconBackgroundOpacity = 0.2;
+    } else {
+      // 暗色模式：图标白色，背景橙/绿半透明，文字白色
+      iconColor = Colors.white; // 图标白色
+      backgroundColor = color.withOpacity(0.25); // 背景橙/绿半透明
+      textColor = AppColors.textPrimary; // 白字
+      iconBackgroundOpacity = 0.3;
+    }
 
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(backgroundOpacity),
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(4),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(
+              themeProvider.isLightTheme ? 0.08 : 0.15,
+            ),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+            spreadRadius: 0,
+          ),
+        ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1057,17 +1070,17 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: color.withOpacity(iconBackgroundOpacity),
+              color: iconColor.withOpacity(iconBackgroundOpacity),
               borderRadius: BorderRadius.circular(4),
             ),
-            child: Icon(icon, color: color, size: 16),
+            child: Icon(icon, color: iconColor, size: 16),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               text,
               style: TextStyle(
-                color: AppColors.textPrimary,
+                color: textColor, // 使用配对的文字颜色
                 fontSize: 14,
                 height: 1.5,
               ),
@@ -1112,189 +1125,6 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
     } catch (e) {
       return '根据天气情况适当增减衣物';
     }
-  }
-
-  Color _getAlertLevelColor(String? level) {
-    if (level == null) return AppColors.textSecondary;
-
-    switch (level) {
-      case '红色':
-        return const Color(0xFFD32F2F);
-      case '橙色':
-        return const Color(0xFFFF6F00);
-      case '黄色':
-        return const Color(0xFFF57C00);
-      case '蓝色':
-        return const Color(0xFF1976D2);
-      default:
-        return AppColors.warning;
-    }
-  }
-
-  IconData _getAlertIcon(String? type) {
-    if (type == null) return Icons.warning_rounded;
-
-    if (type.contains('暴雨') || type.contains('雨')) {
-      return Icons.water_drop_rounded;
-    } else if (type.contains('地质') ||
-        type.contains('滑坡') ||
-        type.contains('泥石流')) {
-      return Icons.landslide_rounded;
-    } else if (type.contains('大雾') || type.contains('雾')) {
-      return Icons.foggy;
-    } else if (type.contains('雷') || type.contains('电')) {
-      return Icons.thunderstorm_rounded;
-    } else if (type.contains('台风') || type.contains('风')) {
-      return Icons.air_rounded;
-    } else if (type.contains('高温') || type.contains('温')) {
-      return Icons.thermostat_rounded;
-    } else if (type.contains('寒') || type.contains('冰') || type.contains('雪')) {
-      return Icons.ac_unit_rounded;
-    } else {
-      return Icons.warning_rounded;
-    }
-  }
-
-  void _showAlertDetailDialog(WeatherAlert alert) {
-    final levelColor = _getAlertLevelColor(alert.level);
-    final levelBgColor = levelColor.withOpacity(0.08);
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: levelBgColor,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  _getAlertIcon(alert.type),
-                  color: levelColor,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      alert.type ?? '未知类型',
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: levelColor,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            '${alert.level ?? "未知"}预警',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          alert.city ?? '',
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // 发布时间
-                if (alert.publishTime != null) ...[
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.access_time_rounded,
-                        color: AppColors.textSecondary,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        '发布时间：${alert.publishTime}',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                ],
-
-                // 详细内容
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.borderColor.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: levelColor.withOpacity(0.2),
-                      width: 1,
-                    ),
-                  ),
-                  child: Text(
-                    alert.content ?? '暂无详细内容',
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 14,
-                      height: 1.6,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                '关闭',
-                style: TextStyle(
-                  color: levelColor,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
   }
 
   Widget _buildForecastCard(
@@ -1634,40 +1464,6 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
     }
 
     return value.toString();
-  }
-
-  /// 解析时间字符串，支持多种格式
-  DateTime _parseDateTime(String timeString) {
-    // 尝试多种时间格式
-    final formats = [
-      'yyyy-MM-dd HH:mm:ss',
-      'yyyy/MM/dd HH:mm:ss',
-      'yyyy-MM-dd HH:mm',
-      'yyyy/MM/dd HH:mm',
-      'yyyy-MM-dd',
-      'yyyy/MM/dd',
-      'MM-dd HH:mm',
-      'MM/dd HH:mm',
-    ];
-
-    for (String format in formats) {
-      try {
-        // 使用 intl 包的 DateFormat 来解析
-        final dateFormat = DateFormat(format);
-        return dateFormat.parse(timeString);
-      } catch (e) {
-        // 继续尝试下一个格式
-        continue;
-      }
-    }
-
-    // 如果所有格式都失败，尝试直接解析
-    try {
-      return DateTime.parse(timeString);
-    } catch (e) {
-      // 如果还是失败，返回当前时间
-      return DateTime.now();
-    }
   }
 
   /// 构建气象预警图标按钮（仅显示原始预警，与主要城市列表卡片一致）

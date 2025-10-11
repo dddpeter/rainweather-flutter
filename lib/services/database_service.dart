@@ -338,6 +338,68 @@ class DatabaseService {
     return null;
   }
 
+  /// Store AI summary (24-hour weather summary)
+  /// 缓存有效期：6小时
+  Future<void> putAISummary(String key, String summary) async {
+    final db = await database;
+    await db.insert('weather_cache', {
+      'key': key,
+      'data': summary,
+      'type': 'AISummary',
+      'created_at': DateTime.now().millisecondsSinceEpoch,
+      'expires_at': DateTime.now()
+          .add(const Duration(hours: 6))
+          .millisecondsSinceEpoch,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  /// Get AI summary (24-hour weather summary)
+  /// 如果缓存超过6小时，返回null
+  Future<String?> getAISummary(String key) async {
+    final db = await database;
+    final result = await db.query(
+      'weather_cache',
+      where: 'key = ? AND type = ? AND expires_at > ?',
+      whereArgs: [key, 'AISummary', DateTime.now().millisecondsSinceEpoch],
+    );
+
+    if (result.isNotEmpty) {
+      return result.first['data'] as String;
+    }
+    return null;
+  }
+
+  /// Store AI 15-day forecast summary
+  /// 缓存有效期：6小时
+  Future<void> putAI15dSummary(String key, String summary) async {
+    final db = await database;
+    await db.insert('weather_cache', {
+      'key': key,
+      'data': summary,
+      'type': 'AI15dSummary',
+      'created_at': DateTime.now().millisecondsSinceEpoch,
+      'expires_at': DateTime.now()
+          .add(const Duration(hours: 6))
+          .millisecondsSinceEpoch,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  /// Get AI 15-day forecast summary
+  /// 如果缓存超过6小时，返回null
+  Future<String?> getAI15dSummary(String key) async {
+    final db = await database;
+    final result = await db.query(
+      'weather_cache',
+      where: 'key = ? AND type = ? AND expires_at > ?',
+      whereArgs: [key, 'AI15dSummary', DateTime.now().millisecondsSinceEpoch],
+    );
+
+    if (result.isNotEmpty) {
+      return result.first['data'] as String;
+    }
+    return null;
+  }
+
   /// Store location data
   Future<void> putLocationData(String key, LocationModel locationData) async {
     final db = await database;

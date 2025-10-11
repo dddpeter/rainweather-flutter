@@ -104,13 +104,24 @@ class CommuteAdviceModel {
       case CommuteAdviceLevel.info:
         return const Color(0xFF64DD17); // 绿色（与详细信息卡片第二列一致）
       case CommuteAdviceLevel.normal:
-        return const Color(0xFF388E3C); // 深绿色
+        return const Color(0xFFB5C7C5); // 薄荷灰绿（亮暗模式通用）
     }
   }
 
   /// 获取级别对应的背景色
   Color getLevelBackgroundColor() {
     return getLevelColor();
+  }
+
+  /// 获取级别颜色的反色（用于亮色模式下的文字）
+  Color getLevelInvertedColor() {
+    final color = getLevelColor();
+    return Color.fromARGB(
+      255,
+      255 - color.red,
+      255 - color.green,
+      255 - color.blue,
+    );
   }
 
   /// 获取级别名称

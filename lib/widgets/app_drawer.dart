@@ -10,198 +10,329 @@ import '../screens/weather_alert_test_screen.dart';
 import '../screens/all_location_test_screen.dart';
 import '../screens/lunar_calendar_screen.dart';
 
-class AppMenu extends StatelessWidget {
-  const AppMenu({super.key});
+/// 应用抽屉菜单
+class AppDrawer extends StatelessWidget {
+  const AppDrawer({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
-        return PopupMenuButton<String>(
-          // Material Design 3: 圆角和阴影
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          elevation: 3,
-          color: AppColors.backgroundSecondary,
-          surfaceTintColor: Colors.transparent,
-          icon: Padding(
-            padding: const EdgeInsets.all(8),
-            child: Icon(
-              Icons.settings,
-              color: themeProvider.getColor('headerIconColor'),
-              size: AppColors.titleBarDecorIconSize,
-            ),
+        return Drawer(
+          backgroundColor: AppColors.backgroundPrimary,
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              // 头部
+              _buildDrawerHeader(context, themeProvider),
+
+              // 基础功能组
+              _buildSectionTitle('基础功能'),
+              _buildMenuItem(
+                context,
+                icon: themeProvider.isLightTheme
+                    ? Icons.light_mode
+                    : Icons.dark_mode,
+                title: '主题设置',
+                subtitle: _getThemeSubtitle(themeProvider),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showThemeDialog(context);
+                },
+              ),
+              _buildMenuItem(
+                context,
+                icon: Icons.calendar_view_month_rounded,
+                title: '黄历节日',
+                subtitle: '查看农历、节气、宜忌',
+                onTap: () {
+                  Navigator.pop(context);
+                  _navigateToLaoHuangLi(context);
+                },
+              ),
+              _buildMenuItem(
+                context,
+                icon: Icons.notifications_active,
+                title: '天气提醒设置',
+                subtitle: '配置通勤时段和阈值',
+                onTap: () {
+                  Navigator.pop(context);
+                  _navigateToWeatherAlertSettings(context);
+                },
+              ),
+
+              const Divider(height: 24, indent: 16, endIndent: 16),
+
+              // 测试功能组（二级菜单，可展开/收起）
+              _buildTestFunctionsMenu(context),
+
+              const Divider(height: 24, indent: 16, endIndent: 16),
+
+              // 关于应用
+              _buildMenuItem(
+                context,
+                icon: Icons.info_outline,
+                title: '关于应用',
+                subtitle: 'v${AppVersion.version}',
+                onTap: () {
+                  Navigator.pop(context);
+                  _showAboutDialog(context);
+                },
+              ),
+
+              const SizedBox(height: 16),
+            ],
           ),
-          onSelected: (value) => _handleMenuSelection(context, value),
-          itemBuilder: (BuildContext context) => [
-            // 主题切换
-            PopupMenuItem<String>(
-              value: 'theme',
-              child: Row(
-                children: [
-                  Icon(
-                    themeProvider.isLightTheme
-                        ? Icons.light_mode
-                        : Icons.dark_mode,
-                    color: AppColors.textPrimary,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  Text('主题设置', style: TextStyle(color: AppColors.textPrimary)),
-                ],
-              ),
-            ),
-            // 老黄历
-            PopupMenuItem<String>(
-              value: 'lao_huang_li',
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.calendar_view_month_rounded,
-                    color: AppColors.warning,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  Text('黄历节日', style: TextStyle(color: AppColors.textPrimary)),
-                ],
-              ),
-            ),
-            // 天气提醒设置
-            PopupMenuItem<String>(
-              value: 'weather_alert_settings',
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.notifications_active,
-                    color: AppColors.warning,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    '天气提醒设置',
-                    style: TextStyle(color: AppColors.textPrimary),
-                  ),
-                ],
-              ),
-            ),
-            // 天气提醒测试
-            PopupMenuItem<String>(
-              value: 'weather_alert_test',
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.bug_report,
-                    color: AppColors.accentGreen,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    '天气提醒测试',
-                    style: TextStyle(color: AppColors.textPrimary),
-                  ),
-                ],
-              ),
-            ),
-            const PopupMenuDivider(),
-            // 天气动画测试
-            PopupMenuItem<String>(
-              value: 'weather_test',
-              child: Row(
-                children: [
-                  Icon(Icons.animation, color: AppColors.textPrimary, size: 20),
-                  const SizedBox(width: 12),
-                  Text(
-                    '天气动画测试',
-                    style: TextStyle(color: AppColors.textPrimary),
-                  ),
-                ],
-              ),
-            ),
-            // 天气布局测试
-            PopupMenuItem<String>(
-              value: 'weather_layout_test',
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.format_align_center,
-                    color: AppColors.primaryBlue,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    '天气布局测试',
-                    style: TextStyle(color: AppColors.textPrimary),
-                  ),
-                ],
-              ),
-            ),
-            // 定位服务测试
-            PopupMenuItem<String>(
-              value: 'all_location_test',
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.location_on,
-                    color: AppColors.accentGreen,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    '定位服务测试',
-                    style: TextStyle(color: AppColors.textPrimary),
-                  ),
-                ],
-              ),
-            ),
-            const PopupMenuDivider(),
-            // 版本信息
-            PopupMenuItem<String>(
-              value: 'about',
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    color: AppColors.textSecondary,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  Text('关于应用', style: TextStyle(color: AppColors.textPrimary)),
-                ],
-              ),
-            ),
-          ],
         );
       },
     );
   }
 
-  void _handleMenuSelection(BuildContext context, String value) {
-    switch (value) {
-      case 'theme':
-        _showThemeDialog(context);
-        break;
-      case 'lao_huang_li':
-        _navigateToLaoHuangLi(context);
-        break;
-      case 'weather_test':
-        _navigateToWeatherTest(context);
-        break;
-      case 'weather_layout_test':
-        _navigateToWeatherLayoutTest(context);
-        break;
-      case 'all_location_test':
-        _navigateToAllLocationTest(context);
-        break;
-      case 'weather_alert_settings':
-        _navigateToWeatherAlertSettings(context);
-        break;
-      case 'weather_alert_test':
-        _navigateToWeatherAlertTest(context);
-        break;
-      case 'about':
-        _showAboutDialog(context);
-        break;
+  /// 构建抽屉头部
+  Widget _buildDrawerHeader(BuildContext context, ThemeProvider themeProvider) {
+    // 使用App背景渐变色
+    final headerDecoration = BoxDecoration(gradient: AppColors.primaryGradient);
+
+    // 根据主题调整文字颜色
+    final textColor = themeProvider.isLightTheme
+        ? AppColors
+              .primaryBlue // 亮色模式：深蓝色
+        : Colors.white; // 暗色模式：白色
+
+    final subtextColor = themeProvider.isLightTheme
+        ? AppColors
+              .textSecondary // 亮色模式：次要文字色
+        : Colors.white.withOpacity(0.9); // 暗色模式：半透明白色
+
+    return DrawerHeader(
+      decoration: headerDecoration,
+      margin: EdgeInsets.zero,
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // 应用图标（添加背景容器提高可见度）
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.asset(
+                'assets/images/app_icon.png',
+                width: 48,
+                height: 48,
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // 应用名称
+          Text(
+            AppVersion.appName,
+            style: TextStyle(
+              color: textColor,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          // 应用描述
+          Text(
+            AppVersion.description,
+            style: TextStyle(color: subtextColor, fontSize: 12),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 构建分组标题
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      child: Text(
+        title,
+        style: TextStyle(
+          color: AppColors.textSecondary,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
+  /// 构建测试功能二级菜单
+  Widget _buildTestFunctionsMenu(BuildContext context) {
+    // 统一使用主题色
+    final iconColor = AppColors.primaryBlue;
+
+    return ExpansionTile(
+      leading: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: iconColor.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(Icons.science, color: iconColor, size: 22),
+      ),
+      title: Text(
+        '测试功能',
+        style: TextStyle(
+          color: AppColors.textPrimary,
+          fontSize: 15,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      subtitle: Text(
+        '开发调试工具',
+        style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+      ),
+      iconColor: AppColors.textPrimary,
+      collapsedIconColor: AppColors.textSecondary,
+      children: [
+        _buildSubMenuItem(
+          context,
+          icon: Icons.bug_report,
+          title: '天气提醒测试',
+          onTap: () {
+            Navigator.pop(context);
+            _navigateToWeatherAlertTest(context);
+          },
+        ),
+        _buildSubMenuItem(
+          context,
+          icon: Icons.animation,
+          title: '天气动画测试',
+          onTap: () {
+            Navigator.pop(context);
+            _navigateToWeatherTest(context);
+          },
+        ),
+        _buildSubMenuItem(
+          context,
+          icon: Icons.format_align_center,
+          title: '天气布局测试',
+          onTap: () {
+            Navigator.pop(context);
+            _navigateToWeatherLayoutTest(context);
+          },
+        ),
+        _buildSubMenuItem(
+          context,
+          icon: Icons.location_on,
+          title: '定位服务测试',
+          onTap: () {
+            Navigator.pop(context);
+            _navigateToAllLocationTest(context);
+          },
+        ),
+      ],
+    );
+  }
+
+  /// 构建二级菜单项
+  Widget _buildSubMenuItem(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    // 统一使用主题色
+    final iconColor = AppColors.primaryBlue;
+
+    return ListTile(
+      contentPadding: const EdgeInsets.only(left: 72, right: 16),
+      leading: Icon(icon, color: iconColor, size: 20),
+      title: Text(
+        title,
+        style: TextStyle(
+          color: AppColors.textPrimary,
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+        ),
+      ),
+      trailing: Icon(
+        Icons.chevron_right,
+        color: AppColors.textTertiary,
+        size: 18,
+      ),
+      onTap: onTap,
+    );
+  }
+
+  /// 构建菜单项
+  Widget _buildMenuItem(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    String? subtitle,
+    required VoidCallback onTap,
+  }) {
+    // 统一使用主题色
+    final iconColor = AppColors.primaryBlue;
+
+    return ListTile(
+      leading: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: iconColor.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(icon, color: iconColor, size: 22),
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          color: AppColors.textPrimary,
+          fontSize: 15,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      subtitle: subtitle != null
+          ? Text(
+              subtitle,
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+            )
+          : null,
+      trailing: Icon(
+        Icons.chevron_right,
+        color: AppColors.textTertiary,
+        size: 20,
+      ),
+      onTap: onTap,
+    );
+  }
+
+  /// 获取主题副标题
+  String _getThemeSubtitle(ThemeProvider themeProvider) {
+    switch (themeProvider.themeMode) {
+      case AppThemeMode.light:
+        return '亮色模式';
+      case AppThemeMode.dark:
+        return '暗色模式';
+      case AppThemeMode.system:
+        return '跟随系统';
     }
   }
+
+  // ==================== 导航方法 ====================
 
   void _navigateToLaoHuangLi(BuildContext context) {
     Navigator.push(
@@ -251,37 +382,32 @@ class AppMenu extends StatelessWidget {
     );
   }
 
+  // ==================== 对话框方法 ====================
+
   void _showThemeDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return Consumer<ThemeProvider>(
           builder: (context, themeProvider, child) {
-            // 确保AppColors始终使用最新的主题状态
             AppColors.setThemeProvider(themeProvider);
 
             return AlertDialog(
-              // Material Design 3: 弹窗样式
               backgroundColor: AppColors.backgroundSecondary,
               surfaceTintColor: Colors.transparent,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8), // Material Design 3 标准
+                borderRadius: BorderRadius.circular(8),
               ),
               elevation: 3,
               title: Text(
                 '主题设置',
                 style: TextStyle(
                   color: AppColors.textPrimary,
-                  fontSize: 24, // M3: 更大的标题
-                  fontWeight: FontWeight.w500, // M3: Medium weight
+                  fontSize: 24,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-              contentPadding: const EdgeInsets.fromLTRB(
-                24,
-                16,
-                24,
-                8,
-              ), // M3: 标准padding
+              contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -310,17 +436,11 @@ class AppMenu extends StatelessWidget {
                   ),
                 ],
               ),
-              actionsPadding: const EdgeInsets.fromLTRB(
-                24,
-                0,
-                24,
-                16,
-              ), // M3: 标准padding
+              actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
                   style: TextButton.styleFrom(
-                    // M3: 按钮样式
                     foregroundColor: AppColors.primaryBlue,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -349,22 +469,17 @@ class AppMenu extends StatelessWidget {
   ) {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
-        // 确保AppColors始终使用最新的主题状态
         AppColors.setThemeProvider(themeProvider);
 
-        // Material Design 3: 选项卡片样式
         return Container(
           margin: const EdgeInsets.symmetric(vertical: 2),
           decoration: BoxDecoration(
             color: isSelected
                 ? AppColors.primaryBlue.withOpacity(0.15)
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(8), // M3: 更大的圆角
+            borderRadius: BorderRadius.circular(8),
             border: isSelected
-                ? Border.all(
-                    color: AppColors.primaryBlue,
-                    width: 2,
-                  ) // M3: 更粗的边框
+                ? Border.all(color: AppColors.primaryBlue, width: 2)
                 : Border.all(
                     color: AppColors.borderColor.withOpacity(0.3),
                     width: 1,
@@ -380,7 +495,7 @@ class AppMenu extends StatelessWidget {
               color: isSelected
                   ? AppColors.primaryBlue
                   : AppColors.textSecondary,
-              size: 24, // M3: 稍大的图标
+              size: 24,
             ),
             title: Text(
               title,
@@ -388,9 +503,7 @@ class AppMenu extends StatelessWidget {
                 color: isSelected
                     ? AppColors.primaryBlue
                     : AppColors.textPrimary,
-                fontWeight: isSelected
-                    ? FontWeight.w600
-                    : FontWeight.w400, // M3: 适中的字重
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                 fontSize: 16,
               ),
             ),
@@ -398,12 +511,11 @@ class AppMenu extends StatelessWidget {
                 ? Icon(
                     Icons.check_circle,
                     color: AppColors.primaryBlue,
-                    size: 24, // M3: 稍大的图标
+                    size: 24,
                   )
-                : const SizedBox(width: 24), // 占位以保持对齐
+                : const SizedBox(width: 24),
             onTap: () {
               themeProvider.setThemeMode(mode);
-              // 立即更新AppColors
               AppColors.setThemeProvider(themeProvider);
               Navigator.of(context).pop();
             },
@@ -417,7 +529,6 @@ class AppMenu extends StatelessWidget {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        // Material Design 3: 弹窗样式
         return AlertDialog(
           backgroundColor: AppColors.backgroundSecondary,
           surfaceTintColor: Colors.transparent,
@@ -468,7 +579,6 @@ class AppMenu extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              // 版本更新说明
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -488,14 +598,12 @@ class AppMenu extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
+                      '• 全新Drawer抽屉菜单设计\n'
                       '• Material Design 3 规范完善\n'
-                      '• AI智能助手配色优化（琥珀金色）\n'
-                      '• 通勤提醒与天气提醒设计统一\n'
-                      '• 内部小卡片禁用蓝色系\n'
-                      '• 今日提醒卡片位置前移\n'
-                      '• AI标签智能显示\n'
-                      '• 通勤建议标题动态生成\n'
-                      '• 小卡片点击交互优化',
+                      '• 通勤提醒级别标签反色优化\n'
+                      '• AI标签主题自适应配色\n'
+                      '• 城市天气AI总结智能缓存\n'
+                      '• 空气质量卡片样式优化',
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,

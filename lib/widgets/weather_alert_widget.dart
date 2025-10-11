@@ -148,7 +148,21 @@ class _WeatherAlertWidgetState extends State<WeatherAlertWidget> {
     bool showFullContent = true,
   }) {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    final backgroundOpacity = themeProvider.isLightTheme ? 0.15 : 0.25;
+
+    // 根据级别和主题决定颜色
+    Color backgroundColor;
+    Color textColor;
+
+    if (themeProvider.isLightTheme) {
+      // 亮色模式：使用深色模式的背景色，主题深蓝字
+      final levelColor = _getAlertBackgroundColor(alert.level);
+      backgroundColor = levelColor.withOpacity(0.25); // 使用深色模式的颜色
+      textColor = const Color(0xFF012d78); // 主题深蓝字
+    } else {
+      // 暗色模式：使用半透明
+      backgroundColor = _getAlertBackgroundColor(alert.level).withOpacity(0.25);
+      textColor = AppColors.textPrimary;
+    }
 
     return InkWell(
       onTap: widget.onTap, // 点击小卡片跳转到天气提醒详情页
@@ -157,20 +171,28 @@ class _WeatherAlertWidgetState extends State<WeatherAlertWidget> {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: _getAlertBackgroundColor(
-            alert.level,
-          ).withOpacity(backgroundOpacity),
+          color: backgroundColor,
           borderRadius: BorderRadius.circular(4),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(
+                themeProvider.isLightTheme ? 0.08 : 0.15,
+              ),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+              spreadRadius: 0,
+            ),
+          ],
         ),
         child: showFullContent
-            ? _buildFullAlertContent(alert)
-            : _buildCollapsedAlertContent(alert),
+            ? _buildFullAlertContent(alert, textColor)
+            : _buildCollapsedAlertContent(alert, textColor),
       ),
     );
   }
 
   /// 构建收起状态的提醒内容（只显示标题）
-  Widget _buildCollapsedAlertContent(WeatherAlertModel alert) {
+  Widget _buildCollapsedAlertContent(WeatherAlertModel alert, Color textColor) {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
     final iconBackgroundOpacity = themeProvider.isLightTheme ? 0.2 : 0.3;
 
@@ -232,7 +254,7 @@ class _WeatherAlertWidgetState extends State<WeatherAlertWidget> {
   }
 
   /// 构建展开状态的提醒内容（显示完整信息）
-  Widget _buildFullAlertContent(WeatherAlertModel alert) {
+  Widget _buildFullAlertContent(WeatherAlertModel alert, Color textColor) {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
     final iconBackgroundOpacity = themeProvider.isLightTheme ? 0.2 : 0.3;
 
@@ -557,7 +579,7 @@ class WeatherAlertDetailScreen extends StatelessWidget {
                     ...commuteAdvices.map(
                       (advice) => Container(
                         margin: const EdgeInsets.only(bottom: 16),
-                        child: _buildCommuteCard(advice),
+                        child: _buildCommuteCard(advice, context),
                       ),
                     ),
                   ],
@@ -772,9 +794,21 @@ class WeatherAlertDetailScreen extends StatelessWidget {
   }
 
   /// 构建通勤提醒卡片
-  Widget _buildCommuteCard(CommuteAdviceModel advice) {
+  Widget _buildCommuteCard(CommuteAdviceModel advice, BuildContext context) {
     final levelColor = advice.getLevelColor();
     final levelName = advice.getLevelName();
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final iconBackgroundOpacity = themeProvider.isLightTheme ? 0.2 : 0.3;
+
+    // 亮色模式下使用反色文字，提高对比度
+    final textColor = themeProvider.isLightTheme
+        ? advice.getLevelInvertedColor()
+        : levelColor;
+
+    // AI标签颜色（金琥珀色）及其反色
+    const aiColor = Color(0xFFFFB300); // 金琥珀色
+    const aiInvertedColor = Color(0xFF004CFF); // 反色（蓝色）
+    final aiTextColor = themeProvider.isLightTheme ? aiInvertedColor : aiColor;
 
     return Card(
       elevation: AppColors.cardElevation,
@@ -797,15 +831,46 @@ class WeatherAlertDetailScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: levelColor.withOpacity(0.15),
+                    color: levelColor.withOpacity(iconBackgroundOpacity),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
                     levelName,
                     style: TextStyle(
-                      color: levelColor,
+                      color: textColor,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
+                      // 添加半透明描边，提高识别度
+                      shadows: [
+                        Shadow(
+                          offset: const Offset(0.5, 0.5),
+                          blurRadius: 0.5,
+                          color: themeProvider.isLightTheme
+                              ? Colors.white.withOpacity(0.4) // 亮色模式：白色40%
+                              : Colors.black.withOpacity(0.1), // 暗色模式：黑色10%
+                        ),
+                        Shadow(
+                          offset: const Offset(-0.5, -0.5),
+                          blurRadius: 0.5,
+                          color: themeProvider.isLightTheme
+                              ? Colors.white.withOpacity(0.4)
+                              : Colors.black.withOpacity(0.1),
+                        ),
+                        Shadow(
+                          offset: const Offset(0.5, -0.5),
+                          blurRadius: 0.5,
+                          color: themeProvider.isLightTheme
+                              ? Colors.white.withOpacity(0.4)
+                              : Colors.black.withOpacity(0.1),
+                        ),
+                        Shadow(
+                          offset: const Offset(-0.5, 0.5),
+                          blurRadius: 0.5,
+                          color: themeProvider.isLightTheme
+                              ? Colors.white.withOpacity(0.4)
+                              : Colors.black.withOpacity(0.1),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -832,7 +897,7 @@ class WeatherAlertDetailScreen extends StatelessWidget {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFB300).withOpacity(0.15),
+                            color: aiTextColor.withOpacity(0.15),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Row(
@@ -840,14 +905,14 @@ class WeatherAlertDetailScreen extends StatelessWidget {
                             children: [
                               Icon(
                                 Icons.auto_awesome,
-                                color: const Color(0xFFFFB300),
+                                color: aiTextColor,
                                 size: 10,
                               ),
                               const SizedBox(width: 2),
                               Text(
                                 'AI',
                                 style: TextStyle(
-                                  color: const Color(0xFFFFB300),
+                                  color: aiTextColor,
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
                                 ),

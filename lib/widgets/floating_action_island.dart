@@ -85,6 +85,7 @@ class _FloatingActionIslandState extends State<FloatingActionIsland>
   void _toggle() {
     setState(() {
       _isExpanded = !_isExpanded;
+      print('🏝️ 浮动岛状态切换: ${_isExpanded ? "展开" : "收起"}');
       if (_isExpanded) {
         _controller.forward();
       } else {
@@ -96,6 +97,9 @@ class _FloatingActionIslandState extends State<FloatingActionIsland>
   @override
   Widget build(BuildContext context) {
     final themeProvider = context.read<ThemeProvider>();
+
+    print('🏝️ FloatingActionIsland build: 接收到 ${widget.actions.length} 个操作');
+    print('🏝️ 展开状态: $_isExpanded');
 
     return NotificationListener<ScrollNotification>(
       onNotification: (notification) {
@@ -127,14 +131,19 @@ class _FloatingActionIslandState extends State<FloatingActionIsland>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.end,
-              children: List.generate(
-                widget.actions.length,
-                (index) => _buildActionButton(
-                  widget.actions[index],
-                  index,
-                  themeProvider,
-                ),
-              ).reversed.toList(), // 反转列表，从下往上展开
+              children: () {
+                print('🔢 开始生成 ${widget.actions.length} 个操作按钮...');
+                final buttons = List.generate(
+                  widget.actions.length,
+                  (index) => _buildActionButton(
+                    widget.actions[index],
+                    index,
+                    themeProvider,
+                  ),
+                ).reversed.toList();
+                print('✅ 操作按钮生成完成，共 ${buttons.length} 个');
+                return buttons;
+              }(),
             ),
           ),
 
@@ -226,6 +235,8 @@ class _FloatingActionIslandState extends State<FloatingActionIsland>
     ThemeProvider themeProvider,
   ) {
     final buttonBgColor = action.backgroundColor ?? AppColors.primaryBlue;
+
+    print('🔘 创建操作按钮 #$index: ${action.label}');
 
     return ScaleTransition(
       scale: _expandAnimation,

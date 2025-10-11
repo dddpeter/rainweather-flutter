@@ -16,10 +16,8 @@ import '../models/weather_model.dart';
 import '../widgets/sun_moon_widget.dart';
 import '../widgets/life_index_widget.dart';
 import '../widgets/weather_animation_widget.dart';
-import '../widgets/app_drawer.dart';
 import '../widgets/weather_alert_widget.dart';
 import '../widgets/commute_advice_widget.dart';
-import '../widgets/floating_action_island.dart';
 import '../services/weather_alert_service.dart';
 import '../services/database_service.dart';
 import '../services/location_change_notifier.dart';
@@ -417,206 +415,202 @@ class _TodayScreenState extends State<TodayScreen>
 
         return Consumer<WeatherProvider>(
           builder: (context, weatherProvider, child) {
-            return Scaffold(
-              drawer: const AppDrawer(),
-              floatingActionButton: _buildFloatingActionIsland(weatherProvider),
-              body: Container(
-                decoration: BoxDecoration(gradient: AppColors.primaryGradient),
-                child: Builder(
-                  builder: (context) {
-                    print('🔥 TodayScreen build called 🔥');
+            return Container(
+              decoration: BoxDecoration(gradient: AppColors.primaryGradient),
+              child: Builder(
+                builder: (context) {
+                  print('🔥 TodayScreen build called 🔥');
+                  print(
+                    '🌡️ Current weather temp: ${weatherProvider.currentWeather?.current?.current?.temperature}',
+                  );
+                  print(
+                    '📍 Current location: ${weatherProvider.currentLocation?.district}',
+                  );
+                  print(
+                    '🏠 Original location: ${weatherProvider.originalLocation?.district}',
+                  );
+                  print(
+                    '💾 Current location weather: ${weatherProvider.currentLocationWeather != null}',
+                  );
+
+                  // 检查是否需要恢复当前定位数据
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    // 使用标签页索引来判断当前是否在今日页面
+                    final isTodayTab = weatherProvider.currentTabIndex == 0;
+                    final navigator = Navigator.of(context);
+                    final canPop = navigator.canPop();
+
+                    // 更新可见性状态
+                    _isVisible = !canPop;
+
                     print(
-                      '🌡️ Current weather temp: ${weatherProvider.currentWeather?.current?.current?.temperature}',
-                    );
-                    print(
-                      '📍 Current location: ${weatherProvider.currentLocation?.district}',
-                    );
-                    print(
-                      '🏠 Original location: ${weatherProvider.originalLocation?.district}',
-                    );
-                    print(
-                      '💾 Current location weather: ${weatherProvider.currentLocationWeather != null}',
+                      '📱 TodayScreen build - tabIndex: ${weatherProvider.currentTabIndex}, isTodayTab: $isTodayTab',
                     );
 
-                    // 检查是否需要恢复当前定位数据
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      // 使用标签页索引来判断当前是否在今日页面
-                      final isTodayTab = weatherProvider.currentTabIndex == 0;
-                      final navigator = Navigator.of(context);
-                      final canPop = navigator.canPop();
-
-                      // 更新可见性状态
-                      _isVisible = !canPop;
-
+                    // 如果当前在今日页面且显示的是城市数据，则恢复
+                    if (isTodayTab &&
+                        weatherProvider.currentLocationWeather != null &&
+                        weatherProvider.originalLocation != null &&
+                        weatherProvider.isShowingCityWeather) {
                       print(
-                        '📱 TodayScreen build - tabIndex: ${weatherProvider.currentTabIndex}, isTodayTab: $isTodayTab',
+                        '=== TodayScreen build - checking if restore needed ===',
                       );
-
-                      // 如果当前在今日页面且显示的是城市数据，则恢复
-                      if (isTodayTab &&
-                          weatherProvider.currentLocationWeather != null &&
-                          weatherProvider.originalLocation != null &&
-                          weatherProvider.isShowingCityWeather) {
-                        print(
-                          '=== TodayScreen build - checking if restore needed ===',
-                        );
-                        print(
-                          '🔍 isShowingCityWeather: ${weatherProvider.isShowingCityWeather}',
-                        );
-                        print(
-                          '📱 _isVisible: $_isVisible, canPop: $canPop, isTodayTab: $isTodayTab',
-                        );
-                        print(
-                          'Current location: ${weatherProvider.currentLocation?.district}',
-                        );
-                        print(
-                          'Original location: ${weatherProvider.originalLocation?.district}',
-                        );
-                        print(
-                          '=== TodayScreen build - calling restoreCurrentLocationWeather ===',
-                        );
-                        weatherProvider.restoreCurrentLocationWeather();
-                      } else {
-                        print(
-                          '🚫 TodayScreen build - no restore needed: isTodayTab=$isTodayTab, _isVisible=$_isVisible, canPop=$canPop, isShowingCityWeather=${weatherProvider.isShowingCityWeather}',
-                        );
-                      }
-                    });
-
-                    if (weatherProvider.isLoading &&
-                        weatherProvider.currentWeather == null) {
-                      return Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.accentBlue,
-                        ),
+                      print(
+                        '🔍 isShowingCityWeather: ${weatherProvider.isShowingCityWeather}',
+                      );
+                      print(
+                        '📱 _isVisible: $_isVisible, canPop: $canPop, isTodayTab: $isTodayTab',
+                      );
+                      print(
+                        'Current location: ${weatherProvider.currentLocation?.district}',
+                      );
+                      print(
+                        'Original location: ${weatherProvider.originalLocation?.district}',
+                      );
+                      print(
+                        '=== TodayScreen build - calling restoreCurrentLocationWeather ===',
+                      );
+                      weatherProvider.restoreCurrentLocationWeather();
+                    } else {
+                      print(
+                        '🚫 TodayScreen build - no restore needed: isTodayTab=$isTodayTab, _isVisible=$_isVisible, canPop=$canPop, isShowingCityWeather=${weatherProvider.isShowingCityWeather}',
                       );
                     }
+                  });
 
-                    if (weatherProvider.error != null &&
-                        weatherProvider.currentWeather == null) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.error_outline,
-                              size: 64,
-                              color: AppColors.error,
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              weatherProvider.error!,
-                              style: TextStyle(
-                                color: AppColors.textPrimary,
-                                fontSize: 16,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 16),
-                            ElevatedButton(
-                              onPressed: () => _handleRefreshWithFeedback(
-                                context,
-                                weatherProvider,
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.accentBlue,
-                                foregroundColor: AppColors.textPrimary,
-                              ),
-                              child: Text('重试'),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-
-                    return RefreshIndicator(
-                      onRefresh: () async {
-                        // iOS触觉反馈
-                        if (Platform.isIOS) {
-                          HapticFeedback.mediumImpact();
-                        }
-
-                        await weatherProvider.refreshWeatherData();
-
-                        // iOS触觉反馈 - 刷新完成
-                        if (Platform.isIOS) {
-                          HapticFeedback.lightImpact();
-                        }
-
-                        // 手动刷新时分析提醒（但不发送重复通知）
-                        if (weatherProvider.currentWeather != null &&
-                            weatherProvider.currentLocation != null) {
-                          print('🔄 TodayScreen: 手动刷新天气提醒');
-                          final newAlerts = await _alertService.analyzeWeather(
-                            weatherProvider.currentWeather!,
-                            weatherProvider.currentLocation!,
-                          );
-                          print(
-                            '🔄 TodayScreen: 手动刷新天气提醒完成，新增提醒数量: ${newAlerts.length}',
-                          );
-
-                          // iOS触觉反馈 - 有新提醒
-                          if (Platform.isIOS && newAlerts.isNotEmpty) {
-                            HapticFeedback.heavyImpact();
-                          }
-
-                          if (mounted) {
-                            setState(() {}); // 刷新UI显示提醒
-                          }
-                        }
-                      },
-                      color: AppColors.primaryBlue,
-                      backgroundColor: AppColors.backgroundSecondary,
-                      child: SingleChildScrollView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        child: Column(
-                          children: [
-                            _buildTopWeatherSection(weatherProvider),
-                            AppColors.cardSpacingWidget,
-                            // 通勤提醒卡片（通勤建议，不包含气象预警和天气提醒）
-                            const CommuteAdviceWidget(),
-                            // 只有在有通勤建议时才显示间距
-                            if (weatherProvider.commuteAdvices.isNotEmpty)
-                              AppColors.cardSpacingWidget,
-                            // 空气质量卡片
-                            _buildAirQualityCard(weatherProvider),
-                            AppColors.cardSpacingWidget,
-                            // 24小时天气
-                            _buildHourlyWeather(weatherProvider),
-                            AppColors.cardSpacingWidget,
-                            // 使用缓存数据时，显示上午/下午分时段信息
-                            if (weatherProvider.isUsingCachedData)
-                              _buildTimePeriodDetails(weatherProvider),
-                            // 详细信息卡片（非缓存时显示）
-                            if (!weatherProvider.isUsingCachedData)
-                              WeatherDetailsWidget(
-                                weather: weatherProvider.currentWeather,
-                              ),
-                            AppColors.cardSpacingWidget,
-                            // 生活指数
-                            LifeIndexWidget(weatherProvider: weatherProvider),
-                            AppColors.cardSpacingWidget,
-                            const SunMoonWidget(),
-                            AppColors.cardSpacingWidget,
-                            _buildTemperatureChart(weatherProvider),
-                            AppColors.cardSpacingWidget,
-                            // 农历信息
-                            _buildLunarInfo(),
-                            AppColors.cardSpacingWidget,
-                            // 宜忌信息
-                            _buildYiJiInfo(),
-                            AppColors.cardSpacingWidget,
-                            // 即将到来的节气
-                            _buildUpcomingSolarTerms(),
-                            const SizedBox(
-                              height: 80,
-                            ), // Space for bottom buttons
-                          ],
-                        ),
+                  if (weatherProvider.isLoading &&
+                      weatherProvider.currentWeather == null) {
+                    return Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.accentBlue,
                       ),
                     );
-                  },
-                ),
+                  }
+
+                  if (weatherProvider.error != null &&
+                      weatherProvider.currentWeather == null) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            size: 64,
+                            color: AppColors.error,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            weatherProvider.error!,
+                            style: TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 16,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: () => _handleRefreshWithFeedback(
+                              context,
+                              weatherProvider,
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.accentBlue,
+                              foregroundColor: AppColors.textPrimary,
+                            ),
+                            child: Text('重试'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return RefreshIndicator(
+                    onRefresh: () async {
+                      // iOS触觉反馈
+                      if (Platform.isIOS) {
+                        HapticFeedback.mediumImpact();
+                      }
+
+                      await weatherProvider.refreshWeatherData();
+
+                      // iOS触觉反馈 - 刷新完成
+                      if (Platform.isIOS) {
+                        HapticFeedback.lightImpact();
+                      }
+
+                      // 手动刷新时分析提醒（但不发送重复通知）
+                      if (weatherProvider.currentWeather != null &&
+                          weatherProvider.currentLocation != null) {
+                        print('🔄 TodayScreen: 手动刷新天气提醒');
+                        final newAlerts = await _alertService.analyzeWeather(
+                          weatherProvider.currentWeather!,
+                          weatherProvider.currentLocation!,
+                        );
+                        print(
+                          '🔄 TodayScreen: 手动刷新天气提醒完成，新增提醒数量: ${newAlerts.length}',
+                        );
+
+                        // iOS触觉反馈 - 有新提醒
+                        if (Platform.isIOS && newAlerts.isNotEmpty) {
+                          HapticFeedback.heavyImpact();
+                        }
+
+                        if (mounted) {
+                          setState(() {}); // 刷新UI显示提醒
+                        }
+                      }
+                    },
+                    color: AppColors.primaryBlue,
+                    backgroundColor: AppColors.backgroundSecondary,
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Column(
+                        children: [
+                          _buildTopWeatherSection(weatherProvider),
+                          AppColors.cardSpacingWidget,
+                          // 通勤提醒卡片（通勤建议，不包含气象预警和天气提醒）
+                          const CommuteAdviceWidget(),
+                          // 只有在有通勤建议时才显示间距
+                          if (weatherProvider.commuteAdvices.isNotEmpty)
+                            AppColors.cardSpacingWidget,
+                          // 空气质量卡片
+                          _buildAirQualityCard(weatherProvider),
+                          AppColors.cardSpacingWidget,
+                          // 24小时天气
+                          _buildHourlyWeather(weatherProvider),
+                          AppColors.cardSpacingWidget,
+                          // 使用缓存数据时，显示上午/下午分时段信息
+                          if (weatherProvider.isUsingCachedData)
+                            _buildTimePeriodDetails(weatherProvider),
+                          // 详细信息卡片（非缓存时显示）
+                          if (!weatherProvider.isUsingCachedData)
+                            WeatherDetailsWidget(
+                              weather: weatherProvider.currentWeather,
+                            ),
+                          AppColors.cardSpacingWidget,
+                          // 生活指数
+                          LifeIndexWidget(weatherProvider: weatherProvider),
+                          AppColors.cardSpacingWidget,
+                          const SunMoonWidget(),
+                          AppColors.cardSpacingWidget,
+                          _buildTemperatureChart(weatherProvider),
+                          AppColors.cardSpacingWidget,
+                          // 农历信息
+                          _buildLunarInfo(),
+                          AppColors.cardSpacingWidget,
+                          // 宜忌信息
+                          _buildYiJiInfo(),
+                          AppColors.cardSpacingWidget,
+                          // 即将到来的节气
+                          _buildUpcomingSolarTerms(),
+                          const SizedBox(
+                            height: 80,
+                          ), // Space for bottom buttons
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
             );
           },
@@ -1645,114 +1639,5 @@ class _TodayScreenState extends State<TodayScreen>
       print('❌ 获取节气信息失败: $e');
       return const SizedBox.shrink();
     }
-  }
-
-  /// 构建浮动操作岛
-  Widget _buildFloatingActionIsland(WeatherProvider weatherProvider) {
-    final themeProvider = context.read<ThemeProvider>();
-
-    return FloatingActionIsland(
-      mainIcon: Icons.menu_rounded,
-      mainTooltip: '快捷操作',
-      actions: [
-        // 刷新天气
-        IslandAction(
-          icon: Icons.refresh_rounded,
-          label: '刷新天气',
-          onTap: () => _handleRefreshWithFeedback(context, weatherProvider),
-          backgroundColor: AppColors.primaryBlue,
-        ),
-        // 设置
-        IslandAction(
-          icon: Icons.settings_rounded,
-          label: '设置',
-          onTap: () {
-            Scaffold.of(context).openDrawer();
-          },
-          backgroundColor: AppColors.primaryBlue,
-        ),
-        // 主题切换
-        IslandAction(
-          icon: themeProvider.isLightTheme
-              ? Icons.dark_mode_rounded
-              : Icons.light_mode_rounded,
-          label: themeProvider.isLightTheme ? '暗色' : '亮色',
-          onTap: () {
-            // 切换主题：亮色→暗色，暗色→亮色
-            themeProvider.setThemeMode(
-              themeProvider.isLightTheme
-                  ? AppThemeMode.dark
-                  : AppThemeMode.light,
-            );
-          },
-          backgroundColor: AppColors.primaryBlue,
-        ),
-        // AI智能助手
-        IslandAction(
-          icon: Icons.auto_awesome,
-          label: 'AI助手',
-          onTap: () {
-            // 重新生成AI摘要
-            weatherProvider.generateWeatherSummary(forceRefresh: true);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('正在重新生成AI摘要...'),
-                duration: const Duration(seconds: 2),
-                backgroundColor: AppColors.primaryBlue,
-              ),
-            );
-          },
-          backgroundColor: const Color(0xFFFFB300),
-        ),
-        // 综合提醒
-        IslandAction(
-          icon: Icons.notifications_active,
-          label: '综合提醒',
-          onTap: () {
-            final currentCity = _getDisplayCity(
-              weatherProvider.currentLocation,
-            );
-            final smartAlerts = _alertService.getAlertsForCity(
-              currentCity,
-              weatherProvider.currentLocation,
-            );
-            final commuteAdvices = weatherProvider.commuteAdvices;
-
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => WeatherAlertDetailScreen(
-                  alerts: smartAlerts,
-                  commuteAdvices: commuteAdvices,
-                ),
-              ),
-            );
-          },
-          backgroundColor: AppColors.error,
-        ),
-        // 分享天气
-        IslandAction(
-          icon: Icons.share,
-          label: '分享天气',
-          onTap: () {
-            final weather = weatherProvider.currentWeather?.current?.current;
-            final location = weatherProvider.currentLocation;
-            final temp = weather?.temperature ?? '--';
-            final weatherType = weather?.weather ?? '--';
-            final city = location?.district ?? location?.city ?? '未知';
-
-            // TODO: 实现分享功能（可以使用 share_plus 包）
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('$city 今日天气：$weatherType $temp℃'),
-                duration: const Duration(seconds: 2),
-                backgroundColor: AppColors.accentGreen,
-              ),
-            );
-          },
-          backgroundColor: AppColors.accentGreen,
-        ),
-      ],
-    );
   }
 }

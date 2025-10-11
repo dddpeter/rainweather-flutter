@@ -14,6 +14,11 @@ import 'screens/app_splash_screen.dart';
 import 'widgets/city_card_skeleton.dart';
 import 'widgets/floating_action_island.dart';
 import 'widgets/app_drawer.dart';
+import 'widgets/weather_alert_widget.dart';
+import 'screens/outfit_advisor_screen.dart';
+import 'screens/health_advisor_screen.dart';
+import 'screens/extreme_weather_alert_screen.dart';
+import 'services/weather_alert_service.dart';
 import 'models/city_model.dart';
 import 'constants/app_colors.dart';
 import 'constants/app_constants.dart';
@@ -544,6 +549,8 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   Widget _buildFloatingActionIsland() {
     return Consumer2<WeatherProvider, ThemeProvider>(
       builder: (context, weatherProvider, themeProvider, child) {
+        print('🏝️ MainScreen: 当前tab索引 = $_currentIndex');
+
         // 根据当前页面显示不同的操作
         List<IslandAction> actions = [];
 
@@ -551,7 +558,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
         actions.addAll([
           IslandAction(
             icon: Icons.refresh_rounded,
-            label: '刷新',
+            label: _currentIndex == 0 ? '刷新天气' : '刷新',
             onTap: () async {
               await weatherProvider.forceRefreshWithLocation();
             },
@@ -581,6 +588,125 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
             backgroundColor: AppColors.primaryBlue,
           ),
         ]);
+
+        // 今日天气页面专属功能
+        if (_currentIndex == 0) {
+          actions.addAll([
+            // AI智能助手
+            IslandAction(
+              icon: Icons.auto_awesome,
+              label: 'AI助手',
+              onTap: () {
+                weatherProvider.generateWeatherSummary(forceRefresh: true);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('正在重新生成AI摘要...'),
+                    duration: const Duration(seconds: 2),
+                    backgroundColor: AppColors.primaryBlue,
+                  ),
+                );
+              },
+              backgroundColor: const Color(0xFFFFB300),
+            ),
+            // 综合提醒
+            IslandAction(
+              icon: Icons.notifications_active,
+              label: '综合提醒',
+              onTap: () {
+                final alertService = WeatherAlertService.instance;
+                final currentLocation = weatherProvider.currentLocation;
+                final district =
+                    currentLocation?.district ?? currentLocation?.city ?? '未知';
+
+                final smartAlerts = alertService.getAlertsForCity(
+                  district,
+                  currentLocation,
+                );
+                final commuteAdvices = weatherProvider.commuteAdvices;
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => WeatherAlertDetailScreen(
+                      alerts: smartAlerts,
+                      commuteAdvices: commuteAdvices,
+                    ),
+                  ),
+                );
+              },
+              backgroundColor: AppColors.error,
+            ),
+            // 分享天气
+            IslandAction(
+              icon: Icons.share,
+              label: '分享天气',
+              onTap: () {
+                final weather =
+                    weatherProvider.currentWeather?.current?.current;
+                final location = weatherProvider.currentLocation;
+                final temp = weather?.temperature ?? '--';
+                final weatherType = weather?.weather ?? '--';
+                final city = location?.district ?? location?.city ?? '未知';
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('$city 今日天气：$weatherType $temp℃'),
+                    duration: const Duration(seconds: 2),
+                    backgroundColor: AppColors.accentGreen,
+                  ),
+                );
+              },
+              backgroundColor: AppColors.accentGreen,
+            ),
+            // 智能穿搭顾问
+            IslandAction(
+              icon: Icons.checkroom_rounded,
+              label: '穿搭顾问',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const OutfitAdvisorScreen(),
+                  ),
+                );
+              },
+              backgroundColor: const Color(0xFF9C27B0),
+            ),
+            // 健康管家
+            IslandAction(
+              icon: Icons.favorite_rounded,
+              label: '健康管家',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const HealthAdvisorScreen(),
+                  ),
+                );
+              },
+              backgroundColor: const Color(0xFFE91E63),
+            ),
+            // 异常天气预警
+            IslandAction(
+              icon: Icons.warning_rounded,
+              label: '异常预警',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ExtremeWeatherAlertScreen(),
+                  ),
+                );
+              },
+              backgroundColor: const Color(0xFFFF5722),
+            ),
+          ]);
+        }
+
+        print('🏝️ MainScreen: 浮动岛功能总数 = ${actions.length}');
+        for (var i = 0; i < actions.length; i++) {
+          print('  ${i + 1}. ${actions[i].label}');
+        }
 
         return FloatingActionIsland(
           mainIcon: Icons.menu_rounded,

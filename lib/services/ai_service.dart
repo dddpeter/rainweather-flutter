@@ -348,4 +348,183 @@ ${windPower != null ? '- 风力：$windPower' : ''}
     // 移除可能的标点符号
     return cleaned.replaceFirst(RegExp(r'^[：:]\s*'), '');
   }
+
+  /// 构建智能穿搭顾问Prompt
+  String buildOutfitAdvisorPrompt({
+    required String currentWeather,
+    required String temperature,
+    required String feelsLike,
+    required String windPower,
+    required String humidity,
+    List<String>? hourlyWeather,
+    String? minTemp,
+    String? maxTemp,
+  }) {
+    final hourlyInfo = hourlyWeather != null && hourlyWeather.isNotEmpty
+        ? '未来24小时天气变化：${hourlyWeather.take(8).join('、')}'
+        : '';
+
+    return '''
+你是一位专业的时尚穿搭顾问，请根据以下天气信息为用户提供今日穿搭建议：
+
+当前天气信息：
+- 天气状况：$currentWeather
+- 实际温度：$temperature℃
+- 体感温度：$feelsLike℃
+- 风力等级：$windPower
+- 湿度：$humidity%
+- 今日温度范围：${minTemp ?? '--'}℃ ~ ${maxTemp ?? '--'}℃
+$hourlyInfo
+
+请提供以下穿搭建议（严格按照格式，总字数控制在200-250字）：
+
+**核心推荐**
+简要说明今日穿搭核心要点（30-40字）
+
+**上装建议**
+具体的上装搭配（外套、衬衫、T恤等），包含材质和款式（40-50字）
+
+**下装建议**
+具体的下装搭配（裤装、裙装等），包含材质和款式（30-40字）
+
+**配饰推荐**
+根据天气推荐配饰（帽子、围巾、墨镜、雨具等）（30-40字）
+
+**色彩搭配**
+推荐适合今日天气的色彩搭配方案（20-30字）
+
+**特别提示**
+根据天气变化给出的特别注意事项（30-40字）
+
+要求：
+1. 建议要具体、实用、易操作
+2. 考虑温度变化和体感差异
+3. 雨天必须提醒雨具
+4. 大风天提醒防风
+5. 温差大提醒分层穿搭
+6. 语言亲切、专业
+7. 严格按照上述格式输出，不要添加额外的空行
+''';
+  }
+
+  /// 构建健康管家Prompt
+  String buildHealthAdvisorPrompt({
+    required String currentWeather,
+    required String temperature,
+    required String feelsLike,
+    required String aqi,
+    required String aqiLevel,
+    required String humidity,
+    required String windPower,
+    String userGroup = 'general', // general, elderly, children, allergy
+  }) {
+    String userGroupDesc = '';
+    switch (userGroup) {
+      case 'elderly':
+        userGroupDesc = '老年人群体（需要特别关注心血管、呼吸系统、关节等）';
+        break;
+      case 'children':
+        userGroupDesc = '儿童群体（需要特别关注免疫力、皮肤、呼吸道等）';
+        break;
+      case 'allergy':
+        userGroupDesc = '过敏体质人群（需要特别关注过敏源、空气质量、花粉等）';
+        break;
+      default:
+        userGroupDesc = '一般人群';
+    }
+
+    return '''
+你是一位专业的健康管理顾问，请根据以下天气和空气质量信息，为$userGroupDesc提供今日健康建议：
+
+天气信息：
+- 天气状况：$currentWeather
+- 实际温度：$temperature℃
+- 体感温度：$feelsLike℃
+- 湿度：$humidity%
+- 风力：$windPower
+- 空气质量：$aqiLevel（AQI $aqi）
+
+请提供以下健康建议（严格按照格式，总字数控制在180-220字）：
+
+**健康风险提示**
+根据天气和空气质量，指出今日主要健康风险（30-40字）
+
+**出行建议**
+是否适合户外活动、运动，最佳出行时段（30-40字）
+
+**饮食建议**
+根据天气推荐适合的饮食和补水方案（30-40字）
+
+**防护措施**
+必要的健康防护措施（口罩、防晒、保暖等）（30-40字）
+
+**特殊提醒**
+针对${userGroupDesc.split('（')[0]}的特别注意事项（40-50字）
+
+要求：
+1. 针对目标人群的特点给出专业建议
+2. 老年人重点关注心血管和关节
+3. 儿童重点关注免疫力和呼吸道
+4. 过敏体质重点关注过敏源和空气质量
+5. AQI>100必须提醒减少户外活动
+6. 温差>10℃提醒预防感冒
+7. 语言温暖、专业、易懂
+8. 严格按照上述格式输出
+''';
+  }
+
+  /// 构建异常天气预警Prompt
+  String buildExtremeWeatherAlertPrompt({
+    required String currentWeather,
+    required String temperature,
+    required String windPower,
+    required String visibility,
+    String? alerts, // 官方气象预警
+    List<String>? hourlyWeather,
+  }) {
+    final alertInfo = alerts != null && alerts.isNotEmpty
+        ? '官方预警：$alerts'
+        : '暂无官方预警';
+
+    final hourlyInfo = hourlyWeather != null && hourlyWeather.isNotEmpty
+        ? '未来24小时：${hourlyWeather.take(6).join('→')}'
+        : '';
+
+    return '''
+你是一位专业的气象安全顾问，请根据以下信息分析是否存在异常天气，并给出安全提醒：
+
+天气信息：
+- 当前天气：$currentWeather
+- 温度：$temperature℃
+- 风力：$windPower
+- 能见度：$visibility km
+- $alertInfo
+$hourlyInfo
+
+请分析并提供预警建议（严格按照格式，总字数控制在150-200字）：
+
+**天气异常判断**
+是否存在异常天气？（暴雨、暴雪、强风、高温、低温、浓雾、雷暴等）（20-30字）
+
+**风险等级**
+评估风险等级：高危/中危/低危/正常（10字以内）
+
+**主要风险**
+列出主要的安全风险点（30-40字）
+
+**安全建议**
+具体的安全防范措施和行动建议（50-70字）
+
+**紧急提醒**
+如果是高危天气，给出紧急提醒（有则30-40字，无则省略此项）
+
+判断标准：
+1. 暴雨、暴雪、雷暴 → 高危
+2. 大雨、大雪、7级以上大风 → 中危
+3. 中雨、中雪、浓雾、高温>38℃、低温<-10℃ → 低危
+4. 其他情况 → 正常
+5. 有官方预警必须重点提示
+6. 严格按照上述格式输出
+''';
+  }
 }

@@ -71,6 +71,10 @@ dependencies:
   
   # Lunar Calendar (农历/黄历)
   lunar: ^1.7.4
+  
+  # Screenshot & Share
+  screenshot: ^3.0.0
+  gal: ^2.3.0
 
 dev_dependencies:
   flutter_test:

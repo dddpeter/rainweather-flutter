@@ -19,6 +19,7 @@ import 'screens/outfit_advisor_screen.dart';
 import 'screens/health_advisor_screen.dart';
 import 'screens/extreme_weather_alert_screen.dart';
 import 'services/weather_alert_service.dart';
+import 'services/weather_share_service.dart';
 import 'models/city_model.dart';
 import 'constants/app_colors.dart';
 import 'constants/app_constants.dart';
@@ -441,15 +442,27 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     try {
       final weatherProvider = context.read<WeatherProvider>();
 
-      // 确保有数据时才更新
-      if (weatherProvider.currentWeather != null &&
-          weatherProvider.currentLocation != null) {
+      // ⚠️ 重要：只更新当前定位的数据，不更新城市数据
+      // 小组件应该始终显示当前定位的天气，而不是用户浏览的城市天气
+      if (weatherProvider.currentLocationWeather != null &&
+          weatherProvider.originalLocation != null) {
         final widgetService = WeatherWidgetService.getInstance();
-        widgetService.updateWidget(
-          weatherData: weatherProvider.currentWeather!,
-          location: weatherProvider.currentLocation!,
+
+        print('📱 MainScreen: 进入后台时准备更新小组件');
+        print(
+          '   当前显示的数据: ${weatherProvider.currentWeather?.current?.current?.temperature}℃ (可能是城市数据)',
         );
-        print('📱 MainScreen: 进入后台时更新小组件');
+        print(
+          '   定位数据: ${weatherProvider.currentLocationWeather?.current?.current?.temperature}℃',
+        );
+        print('   是否显示城市数据: ${weatherProvider.isShowingCityWeather}');
+        print('   将使用定位数据更新小组件 ✅');
+
+        widgetService.updateWidget(
+          weatherData: weatherProvider.currentLocationWeather!,
+          location: weatherProvider.originalLocation!,
+        );
+        print('📱 MainScreen: 小组件已更新（使用定位数据）');
       }
     } catch (e) {
       print('❌ MainScreen: 更新小组件失败: $e');
@@ -640,20 +653,29 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
             IslandAction(
               icon: Icons.share,
               label: '分享天气',
-              onTap: () {
-                final weather =
-                    weatherProvider.currentWeather?.current?.current;
+              onTap: () async {
+                final weather = weatherProvider.currentWeather;
                 final location = weatherProvider.currentLocation;
-                final temp = weather?.temperature ?? '--';
-                final weatherType = weather?.weather ?? '--';
-                final city = location?.district ?? location?.city ?? '未知';
+                final themeProvider = context.read<ThemeProvider>();
+                final sunMoonIndexData = weatherProvider.sunMoonIndexData;
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('$city 今日天气：$weatherType $temp℃'),
-                    duration: const Duration(seconds: 2),
-                    backgroundColor: AppColors.accentGreen,
-                  ),
+                if (weather == null || location == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('天气数据加载中，请稍后再试'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                  return;
+                }
+
+                // 生成并保存天气海报（传入紫外线数据）
+                await WeatherShareService.instance.generateAndSavePoster(
+                  context: context,
+                  weather: weather,
+                  location: location,
+                  themeProvider: themeProvider,
+                  sunMoonIndexData: sunMoonIndexData,
                 );
               },
               backgroundColor: AppColors.accentGreen,

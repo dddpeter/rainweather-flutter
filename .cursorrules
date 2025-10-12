@@ -329,6 +329,39 @@ FloatingActionIsland(
 - **智能标签**: 暗色模式下标签背景与对应按钮背景色保持一致，亮色模式使用卡片背景色
 - **位置优化**: 浮动岛位于右下角（right: 16px, bottom: 72px），接近底部导航栏上方
 
+## 小组件数据更新规则
+
+### ⚠️ 重要：小组件只显示当前定位的天气数据
+
+小组件应该始终显示当前定位的天气数据，而不是城市天气页面的数据。
+
+#### 更新规则：
+```dart
+// ✅ 正确：使用当前定位的数据
+_widgetService.updateWidget(
+  weatherData: _currentLocationWeather!,
+  location: _originalLocation!,
+);
+
+// ❌ 错误：使用当前显示的数据（可能是城市数据）
+_widgetService.updateWidget(
+  weatherData: _currentWeather!,
+  location: _currentLocation!,
+);
+```
+
+#### 实现位置：
+- `weather_provider.dart` 的 `_refreshLocationAndWeather()` 方法
+- `weather_provider.dart` 的 `refreshWeatherData()` 方法
+- `weather_provider.dart` 的 `forceRefreshWithLocation()` 方法
+
+#### 关键变量：
+- `_currentLocationWeather`: 当前定位的天气数据（永远不变）
+- `_originalLocation`: 当前定位的位置信息（永远不变）
+- `_currentWeather`: 当前显示的天气数据（可能是定位数据或城市数据）
+- `_currentLocation`: 当前显示的位置信息（可能是定位位置或城市位置）
+- `_isShowingCityWeather`: 标记当前是否显示城市数据
+
 ## 数据库表结构
 
 ### weather_alerts（天气提醒）
@@ -514,7 +547,7 @@ if (forecast15d != null && forecast15d.isNotEmpty) {
 
 ### ⚠️ 注意事项
 
-1. **温度单位**: 24小时预报带"℃"，15日预报不带单位
+1. **温度单位**: 24小时预报带"℃"，15日预报不带单位，只要温度带单位就是℃
 2. **天气图标**: 日间用`d`前缀，夜间用`n`前缀（如`d07`、`n07`）
 3. **字段命名**: 15日预报使用下划线（如`weather_am`），24小时使用驼峰命名（如`weatherCode`）
 4. **null安全**: 所有字段都可能为null，使用时需要安全访问（`?.`）

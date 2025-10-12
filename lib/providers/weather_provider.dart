@@ -417,11 +417,11 @@ class WeatherProvider extends ChangeNotifier {
             notifyListeners();
           }
 
-          // 更新小组件
-          if (_currentWeather != null && _currentLocation != null) {
+          // 更新小组件（只更新当前定位的数据，不更新城市数据）
+          if (_currentLocationWeather != null && _originalLocation != null) {
             _widgetService.updateWidget(
-              weatherData: _currentWeather!,
-              location: _currentLocation!,
+              weatherData: _currentLocationWeather!,
+              location: _originalLocation!,
             );
           }
 
@@ -708,11 +708,11 @@ class WeatherProvider extends ChangeNotifier {
         print('📍 WeatherProvider: refreshWeatherData 准备发送定位成功通知');
         LocationChangeNotifier().notifyLocationSuccess(_currentLocation!);
 
-        // 更新小组件
-        if (_currentWeather != null) {
+        // 更新小组件（只更新当前定位的数据，不更新城市数据）
+        if (_currentLocationWeather != null && _originalLocation != null) {
           _widgetService.updateWidget(
-            weatherData: _currentWeather!,
-            location: _currentLocation!,
+            weatherData: _currentLocationWeather!,
+            location: _originalLocation!,
           );
         }
 
@@ -1605,13 +1605,13 @@ class WeatherProvider extends ChangeNotifier {
       _setLoading(false);
       _isLocationRefreshing = false; // 释放全局锁
 
-      // 更新小组件（确保数据及时同步）
-      if (_currentWeather != null &&
-          _currentLocation != null &&
+      // 更新小组件（只更新当前定位的数据，不更新城市数据）
+      if (_currentLocationWeather != null &&
+          _originalLocation != null &&
           _error == null) {
         _widgetService.updateWidget(
-          weatherData: _currentWeather!,
-          location: _currentLocation!,
+          weatherData: _currentLocationWeather!,
+          location: _originalLocation!,
         );
 
         // 强制刷新成功后，重新生成AI智能摘要

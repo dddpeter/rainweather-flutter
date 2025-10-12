@@ -15,6 +15,7 @@ import '../widgets/forecast15d_chart.dart';
 import '../widgets/weather_details_widget.dart';
 import '../widgets/ai_content_widget.dart';
 import '../models/weather_model.dart';
+import '../utils/weather_icon_helper.dart';
 import 'weather_alerts_screen.dart';
 
 class CityWeatherTabsScreen extends StatefulWidget {
@@ -821,22 +822,12 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
 
   /// 获取空气质量等级文本
   String _getAirQualityLevelText(int aqi) {
-    if (aqi <= 50) return '优';
-    if (aqi <= 100) return '良';
-    if (aqi <= 150) return '轻度污染';
-    if (aqi <= 200) return '中度污染';
-    if (aqi <= 300) return '重度污染';
-    return '严重污染';
+    return WeatherIconHelper.getAirQualityLevelText(aqi);
   }
 
   /// 获取空气质量颜色
   Color _getAirQualityColor(int aqi) {
-    if (aqi <= 50) return AppColors.airExcellent; // 优
-    if (aqi <= 100) return AppColors.airGood; // 良
-    if (aqi <= 150) return AppColors.airLight; // 轻度污染
-    if (aqi <= 200) return AppColors.airModerate; // 中度污染
-    if (aqi <= 300) return AppColors.airHeavy; // 重度污染
-    return AppColors.airSevere; // 严重污染
+    return WeatherIconHelper.getAirQualityColor(aqi);
   }
 
   Widget _buildWeatherTipsCard(WeatherProvider weatherProvider) {
@@ -1152,15 +1143,7 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
   ) {
     // 判断是白天还是夜间（根据时段）
     // 注意：上午使用pm数据（夜间），下午使用am数据（白天）
-    final isNight = period == '上午';
-
-    // 获取中文天气图标路径
-    String getChineseWeatherIcon(String weatherType, bool isNight) {
-      final iconMap = isNight
-          ? AppConstants.chineseNightWeatherImages
-          : AppConstants.chineseWeatherImages;
-      return iconMap[weatherType] ?? iconMap['晴'] ?? '晴.png';
-    }
+    final isNight = WeatherIconHelper.isNightByPeriod(period);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1181,21 +1164,7 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
               width: 32,
               height: 32,
               alignment: Alignment.center,
-              child: Image.asset(
-                'assets/images/${getChineseWeatherIcon(weather, isNight)}',
-                width: 28,
-                height: 28,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  // 加载失败时显示默认图标
-                  return Image.asset(
-                    'assets/images/不清楚.png',
-                    width: 28,
-                    height: 28,
-                    fit: BoxFit.contain,
-                  );
-                },
-              ),
+              child: WeatherIconHelper.buildWeatherIcon(weather, isNight, 28),
             ),
             const SizedBox(width: 4),
             // Temperature

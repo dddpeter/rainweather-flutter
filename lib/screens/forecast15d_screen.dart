@@ -9,6 +9,7 @@ import '../constants/app_colors.dart';
 import '../constants/app_constants.dart';
 import '../widgets/forecast15d_chart.dart';
 import '../widgets/ai_content_widget.dart';
+import '../utils/weather_icon_helper.dart';
 import 'daily_weather_detail_screen.dart';
 
 class Forecast15dScreen extends StatefulWidget {
@@ -447,15 +448,7 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
   ) {
     // 判断是白天还是夜间（根据时段）
     // 注意：上午使用pm数据（夜间），下午使用am数据（白天）
-    final isNight = period == '上午';
-
-    // 获取中文天气图标路径
-    String getChineseWeatherIcon(String weatherType, bool isNight) {
-      final iconMap = isNight
-          ? AppConstants.chineseNightWeatherImages
-          : AppConstants.chineseWeatherImages;
-      return iconMap[weatherType] ?? iconMap['晴'] ?? '晴.png';
-    }
+    final isNight = WeatherIconHelper.isNightByPeriod(period);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -476,21 +469,7 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
               width: 32,
               height: 32,
               alignment: Alignment.center,
-              child: Image.asset(
-                'assets/images/${getChineseWeatherIcon(weather, isNight)}',
-                width: 28,
-                height: 28,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  // 加载失败时显示默认图标
-                  return Image.asset(
-                    'assets/images/不清楚.png',
-                    width: 28,
-                    height: 28,
-                    fit: BoxFit.contain,
-                  );
-                },
-              ),
+              child: WeatherIconHelper.buildWeatherIcon(weather, isNight, 28),
             ),
             const SizedBox(width: 4),
             // Temperature

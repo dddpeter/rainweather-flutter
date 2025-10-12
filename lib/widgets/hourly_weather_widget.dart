@@ -5,6 +5,7 @@ import '../services/weather_service.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_constants.dart';
 import '../providers/theme_provider.dart';
+import '../utils/weather_icon_helper.dart';
 
 class HourlyWeatherWidget extends StatelessWidget {
   final List<HourlyWeather>? hourlyForecast;
@@ -109,14 +110,8 @@ class HourlyWeatherWidget extends StatelessWidget {
     final weatherDesc = hour.weather ?? '晴'; // 天气描述
 
     // 判断是白天还是夜间（根据小时）
-    final hourValue = _getHourValue(hour.forecasttime ?? '');
-    final isNight = hourValue < 6 || hourValue >= 18;
-
-    // 获取中文天气图标路径
-    final iconMap = isNight
-        ? AppConstants.chineseNightWeatherImages
-        : AppConstants.chineseWeatherImages;
-    final iconPath = iconMap[weatherDesc] ?? iconMap['晴'] ?? '晴.png';
+    final hourValue = WeatherIconHelper.getHourValue(hour.forecasttime ?? '');
+    final isNight = WeatherIconHelper.isNightByHour(hourValue);
 
     return Container(
       width: 70, // 80 -> 70 (减少宽度)
@@ -133,21 +128,7 @@ class HourlyWeatherWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 3), // 8 -> 3 (约1/3)
-          Image.asset(
-            'assets/images/$iconPath',
-            width: 24,
-            height: 24,
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) {
-              // 加载失败时显示默认图标
-              return Image.asset(
-                'assets/images/不清楚.png',
-                width: 24,
-                height: 24,
-                fit: BoxFit.contain,
-              );
-            },
-          ),
+          WeatherIconHelper.buildWeatherIcon(weatherDesc, isNight, 24),
           const SizedBox(height: 2), // 图标和描述间距
           Text(
             weatherDesc,
@@ -171,20 +152,6 @@ class HourlyWeatherWidget extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  int _getHourValue(String timeStr) {
-    try {
-      if (timeStr.contains(':')) {
-        final parts = timeStr.split(':');
-        if (parts.isNotEmpty) {
-          return int.parse(parts[0]);
-        }
-      }
-      return 12; // 默认白天
-    } catch (e) {
-      return 12;
-    }
   }
 
   String _formatHourTime(String timeStr) {

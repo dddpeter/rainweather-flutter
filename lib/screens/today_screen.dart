@@ -25,6 +25,7 @@ import '../services/page_activation_observer.dart';
 import '../services/lunar_service.dart';
 import '../widgets/lunar_info_widget.dart';
 import '../widgets/weather_details_widget.dart';
+import '../utils/weather_icon_helper.dart';
 import 'hourly_screen.dart';
 
 class TodayScreen extends StatefulWidget {
@@ -1172,22 +1173,12 @@ class _TodayScreenState extends State<TodayScreen>
   }
 
   String _getAirQualityLevelText(int aqi) {
-    if (aqi <= 50) return '优';
-    if (aqi <= 100) return '良';
-    if (aqi <= 150) return '轻度污染';
-    if (aqi <= 200) return '中度污染';
-    if (aqi <= 300) return '重度污染';
-    return '严重污染';
+    return WeatherIconHelper.getAirQualityLevelText(aqi);
   }
 
   /// 获取空气质量颜色
   Color _getAirQualityColor(int aqi) {
-    if (aqi <= 50) return AppColors.airExcellent; // 优
-    if (aqi <= 100) return AppColors.airGood; // 良
-    if (aqi <= 150) return AppColors.airLight; // 轻度污染
-    if (aqi <= 200) return AppColors.airModerate; // 中度污染
-    if (aqi <= 300) return AppColors.airHeavy; // 重度污染
-    return AppColors.airSevere; // 严重污染
+    return WeatherIconHelper.getAirQualityColor(aqi);
   }
 
   /// 构建上午/下午分时段信息（使用缓存数据时）
@@ -1265,13 +1256,7 @@ class _TodayScreenState extends State<TodayScreen>
   ) {
     // 判断是白天还是夜间（根据时段）
     // 注意：上午使用pm数据（夜间），下午使用am数据（白天）
-    final isNight = period == '上午';
-
-    // 获取中文天气图标路径
-    final iconMap = isNight
-        ? AppConstants.chineseNightWeatherImages
-        : AppConstants.chineseWeatherImages;
-    final iconPath = iconMap[weather] ?? iconMap['晴'] ?? '晴.png';
+    final isNight = WeatherIconHelper.isNightByPeriod(period);
 
     return Card(
       elevation: AppColors.cardElevation,
@@ -1300,21 +1285,7 @@ class _TodayScreenState extends State<TodayScreen>
             ),
             const SizedBox(height: 8), // 标题和图标的间隙
             // 天气PNG图标（48px）
-            Image.asset(
-              'assets/images/$iconPath',
-              width: 48,
-              height: 48,
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) {
-                // 加载失败时显示默认图标
-                return Image.asset(
-                  'assets/images/不清楚.png',
-                  width: 48,
-                  height: 48,
-                  fit: BoxFit.contain,
-                );
-              },
-            ),
+            WeatherIconHelper.buildWeatherIcon(weather, isNight, 48),
             const SizedBox(height: 4), // 图标和天气描述的距离（更近）
             // 天气描述（再缩小）
             Text(

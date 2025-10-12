@@ -43,10 +43,10 @@ class ChartStyles {
   // ==================== 间距 ====================
 
   /// X轴标签预留空间
-  static const double bottomTitlesReservedSize = 30.0;
+  static const double bottomTitlesReservedSize = 20.0;
 
   /// Y轴标签预留空间
-  static const double leftTitlesReservedSize = 35.0;
+  static const double leftTitlesReservedSize = 45.0;
 
   /// 数据标签与数据点的垂直间距
   static const double dataLabelVerticalOffset = 12.0;
@@ -77,22 +77,10 @@ class ChartStyles {
     );
   }
 
-  /// 获取边框配置（显示X轴和Y轴线）
+  /// 获取边框配置（X轴和Y轴线都透明）
   static FlBorderData getBorderData() {
     return FlBorderData(
-      show: true,
-      border: Border(
-        left: BorderSide(
-          color: AppColors.textSecondary.withOpacity(axisLineOpacity),
-          width: axisLineWidth,
-        ),
-        bottom: BorderSide(
-          color: AppColors.textSecondary.withOpacity(axisLineOpacity),
-          width: axisLineWidth,
-        ),
-        right: BorderSide.none,
-        top: BorderSide.none,
-      ),
+      show: false, // 隐藏所有边框线
     );
   }
 

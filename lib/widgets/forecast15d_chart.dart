@@ -51,100 +51,136 @@ class Forecast15dChart extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Expanded(
-                child: Builder(
-                  builder: (context) {
-                    // 准备图表数据
-                    final lineBarsData = [
-                      // 最高温度线
-                      ChartStyles.createLineChartBarData(
-                        spots: chartData.asMap().entries.map((entry) {
-                          return FlSpot(
-                            entry.key.toDouble(),
-                            entry.value['maxTemp'],
-                          );
-                        }).toList(),
-                        color: AppColors.highTemp,
-                        isCurved: true,
-                        showDataLabels: true,
-                        showBelowArea: false,
-                      ),
-                      // 最低温度线
-                      ChartStyles.createLineChartBarData(
-                        spots: chartData.asMap().entries.map((entry) {
-                          return FlSpot(
-                            entry.key.toDouble(),
-                            entry.value['minTemp'],
-                          );
-                        }).toList(),
-                        color: AppColors.lowTemp,
-                        isCurved: true,
-                        showDataLabels: true,
-                        showBelowArea: false,
-                      ),
-                    ];
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    // 计算图表宽度：每个数据点约50px的间距，最小为屏幕宽度
+                    final chartWidth = (chartData.length * 50.0).clamp(
+                      constraints.maxWidth,
+                      double.infinity,
+                    );
 
-                    return LineChart(
-                      LineChartData(
-                        gridData: ChartStyles.getGridData(
-                          showVertical: false,
-                          horizontalInterval: 5,
-                        ),
-                        titlesData: FlTitlesData(
-                          show: true,
-                          rightTitles: const AxisTitles(
-                            sideTitles: SideTitles(showTitles: false),
-                          ),
-                          topTitles: const AxisTitles(
-                            sideTitles: SideTitles(showTitles: false),
-                          ),
-                          bottomTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: true,
-                              reservedSize:
-                                  ChartStyles.bottomTitlesReservedSize,
-                              interval: 2,
-                              getTitlesWidget: (value, meta) {
-                                if (value.toInt() >= 0 &&
-                                    value.toInt() < chartData.length) {
-                                  final day = chartData[value.toInt()];
-                                  return Padding(
-                                    padding: const EdgeInsets.only(top: 8),
-                                    child: Text(
-                                      day['date'],
-                                      style: ChartStyles.getAxisLabelStyle(),
-                                    ),
+                    return SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: SizedBox(
+                        width: chartWidth,
+                        height: constraints.maxHeight,
+                        child: Builder(
+                          builder: (context) {
+                            // 准备图表数据
+                            final lineBarsData = [
+                              // 最高温度线
+                              ChartStyles.createLineChartBarData(
+                                spots: chartData.asMap().entries.map((entry) {
+                                  return FlSpot(
+                                    entry.key.toDouble(),
+                                    entry.value['maxTemp'],
                                   );
-                                }
-                                return const Text('');
-                              },
-                            ),
-                          ),
-                          leftTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: true,
-                              interval: 10,
-                              reservedSize: ChartStyles.leftTitlesReservedSize,
-                              getTitlesWidget: (value, meta) {
-                                return Text(
-                                  '${value.toInt()}℃',
-                                  style: ChartStyles.getYAxisLabelStyle(),
-                                );
-                              },
-                            ),
-                          ),
+                                }).toList(),
+                                color: AppColors.highTemp,
+                                isCurved: true,
+                                showDataLabels: true,
+                                showBelowArea: false,
+                              ),
+                              // 最低温度线
+                              ChartStyles.createLineChartBarData(
+                                spots: chartData.asMap().entries.map((entry) {
+                                  return FlSpot(
+                                    entry.key.toDouble(),
+                                    entry.value['minTemp'],
+                                  );
+                                }).toList(),
+                                color: AppColors.lowTemp,
+                                isCurved: true,
+                                showDataLabels: true,
+                                showBelowArea: false,
+                              ),
+                            ];
+
+                            return Stack(
+                              children: [
+                                // 图表主体
+                                LineChart(
+                                  LineChartData(
+                                    gridData: ChartStyles.getGridData(
+                                      showVertical: true,
+                                      horizontalInterval: 5,
+                                    ),
+                                    titlesData: FlTitlesData(
+                                      show: true,
+                                      rightTitles: const AxisTitles(
+                                        sideTitles: SideTitles(
+                                          showTitles: false,
+                                          reservedSize: 23, // 为右侧预留空间
+                                        ),
+                                      ),
+                                      topTitles: const AxisTitles(
+                                        sideTitles: SideTitles(
+                                          showTitles: false,
+                                        ),
+                                      ),
+                                      bottomTitles: AxisTitles(
+                                        sideTitles: SideTitles(
+                                          showTitles: true,
+                                          reservedSize: ChartStyles
+                                              .bottomTitlesReservedSize,
+                                          interval: 2,
+                                          getTitlesWidget: (value, meta) {
+                                            if (value.toInt() >= 0 &&
+                                                value.toInt() <
+                                                    chartData.length) {
+                                              final day =
+                                                  chartData[value.toInt()];
+                                              return Padding(
+                                                padding: const EdgeInsets.only(
+                                                  top: 8,
+                                                ),
+                                                child: Text(
+                                                  day['date'],
+                                                  style:
+                                                      ChartStyles.getAxisLabelStyle(),
+                                                ),
+                                              );
+                                            }
+                                            return const Text('');
+                                          },
+                                        ),
+                                      ),
+                                      leftTitles: AxisTitles(
+                                        sideTitles: SideTitles(
+                                          showTitles: true,
+                                          interval: 10,
+                                          reservedSize: ChartStyles
+                                              .leftTitlesReservedSize,
+                                          getTitlesWidget: (value, meta) {
+                                            return Text(
+                                              '${value.toInt()}℃',
+                                              style:
+                                                  ChartStyles.getYAxisLabelStyle(),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                    borderData: ChartStyles.getBorderData(),
+                                    minX: 0,
+                                    maxX: (chartData.length - 1).toDouble(),
+                                    minY: _getMinTemperature(chartData) - 5,
+                                    maxY:
+                                        _getMaxTemperature(chartData) +
+                                        8, // 增加顶部空间，为图标和温度值预留位置
+                                    lineBarsData: lineBarsData,
+                                    // 禁用默认的数据标签显示，使用自定义的天气图标+温度
+                                    lineTouchData: LineTouchData(
+                                      enabled: false,
+                                    ),
+                                  ),
+                                ),
+                                // 天气图标叠加层
+                                _buildWeatherIconsOverlay(chartData),
+                              ],
+                            );
+                          },
                         ),
-                        borderData: ChartStyles.getBorderData(),
-                        minX: 0,
-                        maxX: (chartData.length - 1).toDouble(),
-                        minY: _getMinTemperature(chartData) - 5,
-                        maxY: _getMaxTemperature(chartData) + 5,
-                        lineBarsData: lineBarsData,
-                        // 显示数据标签
-                        lineTouchData: ChartStyles.getM3TouchDataWithLabels(),
-                        showingTooltipIndicators:
-                            ChartStyles.generateShowingIndicators(
-                              lineBarsData: lineBarsData,
-                            ),
                       ),
                     );
                   },
@@ -176,6 +212,8 @@ class Forecast15dChart extends StatelessWidget {
         'maxTemp': maxTemp.toDouble(),
         'minTemp': minTemp.toDouble(),
         'date': date,
+        'weatherAm': day.weather_am ?? '晴', // 白天天气（高温）
+        'weatherPm': day.weather_pm ?? '晴', // 夜间天气（低温）
       };
     }).toList();
   }
@@ -214,5 +252,176 @@ class Forecast15dChart extends StatelessWidget {
     return data
         .map((d) => d['maxTemp'] as double)
         .reduce((a, b) => a > b ? a : b);
+  }
+
+  /// 构建天气图标叠加层
+  Widget _buildWeatherIconsOverlay(List<Map<String, dynamic>> chartData) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final chartWidth = constraints.maxWidth;
+        final chartHeight = constraints.maxHeight;
+
+        // 计算图表实际绘制区域（去除左侧Y轴、右侧预留空间和底部X轴的空间）
+        final leftPadding = ChartStyles.leftTitlesReservedSize;
+        final rightPadding = 23.0; // 与rightTitles的reservedSize保持一致
+        final bottomPadding = ChartStyles.bottomTitlesReservedSize;
+        final availableWidth = chartWidth - leftPadding - rightPadding;
+        final availableHeight = chartHeight - bottomPadding;
+
+        // 温度范围（与图表的 minY/maxY 保持一致）
+        final minTemp = _getMinTemperature(chartData) - 5;
+        final maxTemp = _getMaxTemperature(chartData) + 8; // 与图表 maxY 保持一致
+        final tempRange = maxTemp - minTemp;
+
+        List<Widget> icons = [];
+
+        // 为每个数据点添加天气图标
+        for (int i = 0; i < chartData.length; i++) {
+          final day = chartData[i];
+
+          // 计算X坐标（在曲线数据点上）
+          final xRatio = chartData.length > 1
+              ? i / (chartData.length - 1)
+              : 0.5;
+          final xPos = leftPadding + (availableWidth * xRatio);
+
+          // 高温点的天气图标（12点天气 - weather_am）
+          final highTemp = day['maxTemp'] as double;
+          final highTempYRatio = (maxTemp - highTemp) / tempRange;
+          final highTempYPos = availableHeight * highTempYRatio;
+
+          // 获取白天天气图标
+          final dayWeatherIcon = _getChineseWeatherIcon(
+            day['weatherAm'] ?? '晴',
+            false,
+          );
+
+          icons.add(
+            Positioned(
+              left: xPos - 12, // 图标宽度的一半
+              top: highTempYPos - 32, // 在高温点上方
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset(
+                    'assets/images/$dayWeatherIcon',
+                    width: 24,
+                    height: 24,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const SizedBox(width: 24, height: 24);
+                    },
+                  ),
+                  const SizedBox(width: 1),
+                  Text(
+                    '${highTemp.toInt()}',
+                    style: TextStyle(
+                      color: AppColors.highTemp,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      shadows: [
+                        // 白色描边效果（四个方向）
+                        Shadow(
+                          color: AppColors.cardBackground,
+                          offset: const Offset(-0.8, -0.8),
+                          blurRadius: 0.5,
+                        ),
+                        Shadow(
+                          color: AppColors.cardBackground,
+                          offset: const Offset(0.8, -0.8),
+                          blurRadius: 0.5,
+                        ),
+                        Shadow(
+                          color: AppColors.cardBackground,
+                          offset: const Offset(0.8, 0.8),
+                          blurRadius: 0.5,
+                        ),
+                        Shadow(
+                          color: AppColors.cardBackground,
+                          offset: const Offset(-0.8, 0.8),
+                          blurRadius: 0.5,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+
+          // 低温点的天气图标（0点天气 - weather_pm）
+          final lowTemp = day['minTemp'] as double;
+          final lowTempYRatio = (maxTemp - lowTemp) / tempRange;
+          final lowTempYPos = availableHeight * lowTempYRatio;
+
+          // 获取夜间天气图标
+          final nightWeatherIcon = _getChineseWeatherIcon(
+            day['weatherPm'] ?? '晴',
+            true,
+          );
+
+          icons.add(
+            Positioned(
+              left: xPos - 12, // 图标宽度的一半
+              top: lowTempYPos + 12, // 在低温点下方
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset(
+                    'assets/images/$nightWeatherIcon',
+                    width: 24,
+                    height: 24,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const SizedBox(width: 24, height: 24);
+                    },
+                  ),
+                  const SizedBox(width: 1),
+                  Text(
+                    '${lowTemp.toInt()}',
+                    style: TextStyle(
+                      color: AppColors.lowTemp,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      shadows: [
+                        // 白色描边效果（四个方向）
+                        Shadow(
+                          color: AppColors.cardBackground,
+                          offset: const Offset(-0.8, -0.8),
+                          blurRadius: 0.5,
+                        ),
+                        Shadow(
+                          color: AppColors.cardBackground,
+                          offset: const Offset(0.8, -0.8),
+                          blurRadius: 0.5,
+                        ),
+                        Shadow(
+                          color: AppColors.cardBackground,
+                          offset: const Offset(0.8, 0.8),
+                          blurRadius: 0.5,
+                        ),
+                        Shadow(
+                          color: AppColors.cardBackground,
+                          offset: const Offset(-0.8, 0.8),
+                          blurRadius: 0.5,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return Stack(children: icons);
+      },
+    );
+  }
+
+  /// 获取中文天气图标路径
+  String _getChineseWeatherIcon(String weatherType, bool isNight) {
+    final iconMap = isNight
+        ? AppConstants.chineseNightWeatherImages
+        : AppConstants.chineseWeatherImages;
+    return iconMap[weatherType] ?? iconMap['晴'] ?? '晴.png';
   }
 }

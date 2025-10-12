@@ -598,12 +598,12 @@ class AppDrawer extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '• 🎨 AI智能助手独立卡片设计\n'
-                      '• 🌌 头部卡片背景图片效果\n'
-                      '• 🎯 天气图标系统全面升级\n'
-                      '• 📱 空气质量卡片组件化\n'
-                      '• 🎨 卡片样式统一优化\n'
-                      '• 🌈 渐变背景和阴影效果',
+                      '• 📊 7日温度趋势图数据点优化\n'
+                      '• 📈 24小时温度趋势图支持滑动\n'
+                      '• 📉 15日温度趋势图支持滑动\n'
+                      '• 🌤️ 智能天气图标显示\n'
+                      '• 🎨 图表视觉效果优化\n'
+                      '• 📱 网格线和布局优化',
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,

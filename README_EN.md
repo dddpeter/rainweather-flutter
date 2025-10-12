@@ -228,7 +228,56 @@ This Flutter app is a complete refactor of the original Android weather app with
 
 ## Changelog
 
-### v1.11.0 (Latest - 2025-10-10)
+### v1.12.1 (Latest - 2025-01-12)
+
+**Temperature Trend Charts Comprehensive Optimization**
+- 📊 **7-Day Temperature Chart**: Added weather icons and temperature values at data points for intuitive daily weather display
+- 📈 **24-Hour Temperature Chart**: Added weather icons and temperature values with horizontal scrolling support
+- 📉 **15-Day Temperature Chart**: Added weather icons and temperature values with horizontal scrolling and vertical grid lines
+- 🎨 **Visual Optimization**: Hidden X/Y axis lines, added vertical grid lines, temperature values with stroke effect
+- 🌤️ **Smart Icons**: Automatically displays day/night weather icons based on time
+- 📱 **Layout Optimization**: Increased chart height, adjusted top spacing to ensure complete icon display
+- 🎯 **Interaction Optimization**: 24-hour and 15-day charts support horizontal scrolling for smooth data viewing
+
+### v1.12.0 (2025-01-11)
+
+**AI Smart Assistant Independent Card Design**
+- 🎨 AI smart assistant separated from header card into independent card
+- 🌌 Deep purple to deep blue gradient background, tech-inspired design
+- ✨ Golden amber icons and text, more prominent on dark background
+- 📱 Spacing design aligned with city weather header for better coordination
+
+**Header Background Image Effect**
+- 🌌 Added camping scene background image to today's weather and city weather headers
+- 🎨 Background image transparency control without affecting text readability
+- 🏕️ Creates natural, warm outdoor atmosphere
+- 📱 Fixed deep blue background with subtle texture effect
+
+**Weather Icon System Comprehensive Upgrade**
+- 🎯 Fully replaced emoji icons with Chinese PNG icons
+- 🌙 Day/night mode support with automatic night icon switching
+- 📱 Complete coverage of 71 weather types
+- 🔧 Automatic fallback handling for icon loading failures
+
+**Air Quality Card Componentization**
+- 📱 Extracted as independent reusable component `AirQualityCard`
+- 🎨 Unified card style and spacing design
+- 🔄 Supports reuse in today's weather and city weather pages
+- 📐 Follows Material Design 3 standards
+
+**Card Style Unification Optimization**
+- 🎨 All cards follow unified Material Design 3 design standards
+- 📐 Unified standards for border radius, spacing, shadows, and transparency
+- 🌈 Enhanced visual hierarchy with gradient backgrounds and shadow effects
+- 🎯 Clear color constraints to avoid contrast issues
+
+**Visual Effect Enhancement**
+- 🌈 Multi-layer gradient background effects
+- ✨ Smart transparency hierarchy design
+- 🎨 Golden glow and shadow effects
+- 📱 Responsive layout adaptation
+
+### v1.11.0 (2025-10-10)
 
 **Material Design 3 Enhancement**
 - 🎨 Comprehensive MD3 card design standards with unified styling

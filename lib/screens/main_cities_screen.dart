@@ -418,6 +418,7 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
                                   child: Card(
                                     elevation: AppColors.cardElevation,
                                     shadowColor: AppColors.cardShadowColor,
+                                    // 使用统一的卡片背景色（自动适配亮暗模式）
                                     color: AppColors.materialCardColor,
                                     shape: AppColors.cardShape,
                                     child: InkWell(
@@ -492,38 +493,72 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
                                                                           4,
                                                                     ),
                                                                     decoration: BoxDecoration(
-                                                                      color: AppColors
-                                                                          .accentGreen
-                                                                          .withOpacity(
-                                                                            0.15,
-                                                                          ),
+                                                                      // 亮色模式：无背景色，暗色模式：绿色背景
+                                                                      color:
+                                                                          Provider.of<
+                                                                                ThemeProvider
+                                                                              >(
+                                                                                context,
+                                                                                listen: false,
+                                                                              )
+                                                                              .isLightTheme
+                                                                          ? const Color.fromARGB(
+                                                                              30,
+                                                                              3,
+                                                                              113,
+                                                                              1,
+                                                                            )
+                                                                          : const Color(
+                                                                              0xFF64DD17,
+                                                                            ).withOpacity(
+                                                                              0.25,
+                                                                            ),
                                                                       borderRadius:
                                                                           BorderRadius.circular(
                                                                             12,
                                                                           ),
-                                                                      border: Border.all(
-                                                                        color: AppColors
-                                                                            .accentGreen
-                                                                            .withOpacity(
-                                                                              0.6,
-                                                                            ),
-                                                                        width:
-                                                                            1.5,
-                                                                      ),
-                                                                      // 添加阴影效果
-                                                                      boxShadow: [
-                                                                        BoxShadow(
-                                                                          color: AppColors.accentGreen.withOpacity(
-                                                                            0.2,
-                                                                          ),
-                                                                          blurRadius:
-                                                                              4,
-                                                                          offset: const Offset(
-                                                                            0,
-                                                                            2,
-                                                                          ),
-                                                                        ),
-                                                                      ],
+                                                                      // 亮色模式：添加边框
+                                                                      border:
+                                                                          Provider.of<
+                                                                                ThemeProvider
+                                                                              >(
+                                                                                context,
+                                                                                listen: false,
+                                                                              )
+                                                                              .isLightTheme
+                                                                          ? Border.all(
+                                                                              color: const Color.fromARGB(
+                                                                                255,
+                                                                                3,
+                                                                                113,
+                                                                                1,
+                                                                              ),
+                                                                              width: 1,
+                                                                            )
+                                                                          : null,
+                                                                      // 参考详细信息卡片的阴影（亮色模式无阴影）
+                                                                      boxShadow:
+                                                                          Provider.of<
+                                                                                ThemeProvider
+                                                                              >(
+                                                                                context,
+                                                                                listen: false,
+                                                                              )
+                                                                              .isLightTheme
+                                                                          ? null
+                                                                          : [
+                                                                              BoxShadow(
+                                                                                color: Colors.black.withOpacity(
+                                                                                  0.15,
+                                                                                ),
+                                                                                blurRadius: 6,
+                                                                                offset: const Offset(
+                                                                                  0,
+                                                                                  2,
+                                                                                ),
+                                                                                spreadRadius: 0,
+                                                                              ),
+                                                                            ],
                                                                     ),
                                                                     child: Row(
                                                                       mainAxisSize:
@@ -533,10 +568,24 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
                                                                         Icon(
                                                                           Icons
                                                                               .my_location,
+                                                                          // 参考详细信息卡片：亮色用绿色，暗色用白色
                                                                           color:
-                                                                              AppColors.accentGreen,
+                                                                              Provider.of<
+                                                                                    ThemeProvider
+                                                                                  >(
+                                                                                    context,
+                                                                                    listen: false,
+                                                                                  )
+                                                                                  .isLightTheme
+                                                                              ? const Color.fromARGB(
+                                                                                  255,
+                                                                                  3,
+                                                                                  113,
+                                                                                  1,
+                                                                                )
+                                                                              : Colors.white,
                                                                           size:
-                                                                              16,
+                                                                              14,
                                                                         ),
                                                                         const SizedBox(
                                                                           width:
@@ -545,10 +594,24 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
                                                                         Text(
                                                                           '当前位置',
                                                                           style: TextStyle(
+                                                                            // 参考详细信息卡片：亮色用深蓝，暗色用白色
                                                                             color:
-                                                                                AppColors.accentGreen,
+                                                                                Provider.of<
+                                                                                      ThemeProvider
+                                                                                    >(
+                                                                                      context,
+                                                                                      listen: false,
+                                                                                    )
+                                                                                    .isLightTheme
+                                                                                ? const Color.fromARGB(
+                                                                                    255,
+                                                                                    3,
+                                                                                    113,
+                                                                                    1,
+                                                                                  )
+                                                                                : Colors.white,
                                                                             fontSize:
-                                                                                11,
+                                                                                10,
                                                                             fontWeight:
                                                                                 FontWeight.bold,
                                                                           ),
@@ -730,6 +793,8 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
     if (current == null) return const SizedBox.shrink();
 
     final weatherDesc = current.weather ?? '晴';
+    final temperature = current.temperature ?? '--';
+    final feelsLike = current.feelstemperature;
 
     // 获取空气质量数据
     final air = cityWeather?.current?.air ?? cityWeather?.air;
@@ -738,103 +803,264 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
     // 判断是白天还是夜间
     final isDay = weatherProvider.isDayTime();
 
-    return Padding(
-      padding: const EdgeInsets.only(top: 2),
+    // 获取主题
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+
+    return Container(
+      margin: const EdgeInsets.only(top: 0),
+      padding: const EdgeInsets.only(left: 8, right: 8, bottom: 8, top: 0),
+      decoration: BoxDecoration(
+        // 亮色模式：无背景色（透明），暗色模式：轻微背景色
+        color: themeProvider.isLightTheme
+            ? Colors.transparent
+            : AppColors.textPrimary.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(8),
+        // 参考详细信息卡片的阴影设计
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(
+              themeProvider.isLightTheme ? 0.001 : 0.15,
+            ),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+            spreadRadius: 0,
+          ),
+        ],
+      ),
       child: Row(
         children: [
-          // 天气图标（放大）
-          WeatherIconHelper.buildWeatherIcon(weatherDesc, !isDay, 48),
-          const SizedBox(width: 12),
-          // 温度（独立显示）
-          Text(
-            '${current.temperature ?? '--'}℃',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 28,
-              fontWeight: FontWeight.w600,
-              height: 1.0,
-            ),
+          // 天气图标容器（亮色模式无背景）
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: themeProvider.isLightTheme
+                ? null // 亮色模式：无装饰
+                : BoxDecoration(
+                    // 暗色模式：保持橙色背景
+                    color: const Color(0xFFFFB74D).withOpacity(0.25),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.15),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                        spreadRadius: 0,
+                      ),
+                    ],
+                  ),
+            child: WeatherIconHelper.buildWeatherIcon(weatherDesc, !isDay, 44),
           ),
+          const SizedBox(width: 14),
+
+          // 温度和体感温度
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 温度
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    temperature,
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 34,
+                      fontWeight: FontWeight.w700,
+                      height: 1.0,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      '℃',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        height: 1.0,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              // 体感温度
+              if (feelsLike != null && feelsLike != temperature)
+                Text(
+                  '体感 $feelsLike℃',
+                  style: TextStyle(
+                    color: AppColors.textTertiary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+            ],
+          ),
+
           const SizedBox(width: 12),
-          // 天气描述和风力（垂直布局，在温度右边）
+
+          // 天气描述、风力、空气质量、湿度（垂直布局）
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                // 天气描述
-                Text(
-                  weatherDesc,
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 14,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                // 风力
-                if (current.windpower != null) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    '${current.winddir ?? ''}${current.windpower}',
-                    style: TextStyle(
-                      color: AppColors.textTertiary,
-                      fontSize: 11,
+                // 天气描述（带图标）
+                Row(
+                  children: [
+                    Icon(
+                      Icons.wb_sunny_outlined,
+                      size: 14,
+                      // 参考详细信息：亮色用深蓝，暗色用白色
+                      color: themeProvider.isLightTheme
+                          ? const Color(0xFF012d78)
+                          : Colors.white,
                     ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        weatherDesc,
+                        style: TextStyle(
+                          // 参考详细信息卡片的文字颜色
+                          color: themeProvider.isLightTheme
+                              ? const Color(0xFF012d78)
+                              : AppColors.textPrimary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+
+                // 风力（带图标）
+                if (current.windpower != null)
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.air,
+                        size: 13,
+                        color: themeProvider.isLightTheme
+                            ? const Color(0xFF012d78)
+                            : Colors.white,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${current.winddir ?? ''}${current.windpower}',
+                        style: TextStyle(
+                          color: themeProvider.isLightTheme
+                              ? const Color(0xFF012d78)
+                              : AppColors.textPrimary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                // 湿度（带图标）
+                if (current.humidity != null) ...[
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.water_drop_outlined,
+                        size: 13,
+                        color: themeProvider.isLightTheme
+                            ? const Color(0xFF012d78)
+                            : Colors.white,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '湿度 ${current.humidity}%',
+                        style: TextStyle(
+                          color: themeProvider.isLightTheme
+                              ? const Color(0xFF012d78)
+                              : AppColors.textPrimary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ],
             ),
           ),
-          // 空气质量和湿度
-          if (aqi != null || current.humidity != null) ...[
+
+          // 空气质量标签（右侧，固定宽度）
+          if (aqi != null) ...[
             const SizedBox(width: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // 空气质量（新增）
-                if (aqi != null) ...[
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.air,
-                        color: _getAirQualityColor(aqi),
-                        size: 12,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'AQI $aqi',
-                        style: TextStyle(
-                          color: _getAirQualityColor(aqi),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
+            SizedBox(
+              width: 62, // 固定宽度
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                decoration: BoxDecoration(
+                  // 参考AQI组件：亮暗模式都使用透明背景（亮色15%，暗色25%）
+                  color: WeatherIconHelper.getAirQualityColor(
+                    aqi,
+                  ).withOpacity(themeProvider.isLightTheme ? 0.15 : 0.25),
+                  borderRadius: BorderRadius.circular(8),
+                  // 添加0.8px边框（使用AQI颜色）
+                  border: Border.all(
+                    color: WeatherIconHelper.getAirQualityColor(
+                      aqi,
+                    ).withOpacity(themeProvider.isLightTheme ? 0.4 : 0.3),
+                    width: 0.8,
                   ),
-                  const SizedBox(height: 2),
-                ],
-                // 湿度
-                if (current.humidity != null)
-                  Text(
-                    '湿度 ${current.humidity}%',
-                    style: TextStyle(
-                      color: AppColors.accentGreen,
-                      fontSize: 11,
+                  // 参考详细信息卡片的阴影
+                  boxShadow: themeProvider.isLightTheme
+                      ? null // 亮色模式无阴影
+                      : [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.15),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                            spreadRadius: 0,
+                          ),
+                        ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'AQI',
+                      style: TextStyle(
+                        color: WeatherIconHelper.getAirQualityColor(aqi),
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.5,
+                      ),
                     ),
-                  ),
-              ],
+                    const SizedBox(height: 3),
+                    Text(
+                      '$aqi',
+                      style: TextStyle(
+                        color: WeatherIconHelper.getAirQualityColor(aqi),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        height: 1.0,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      WeatherIconHelper.getAirQualityLevelText(aqi),
+                      style: TextStyle(
+                        color: WeatherIconHelper.getAirQualityColor(aqi),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ],
       ),
     );
-  }
-
-  /// 获取空气质量颜色
-  Color _getAirQualityColor(int aqi) {
-    return WeatherIconHelper.getAirQualityColor(aqi);
   }
 
   /// Show add city dialog

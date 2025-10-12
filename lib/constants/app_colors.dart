@@ -52,6 +52,21 @@ class AppColors {
     }
   }
 
+  // ==================== 通用卡片背景色 ====================
+  // 适用于所有大卡片（详细信息、生活指数、空气质量、图表等）
+  // 必须在 Map 之前定义，以便在 Map 中引用
+
+  /// 亮色模式卡片背景 - 暖白色（淡粉米白，不透明）
+  static const Color lightCardBackground = Color(0xFFFDF7F7); // #FDF7F7
+
+  /// 暗色模式卡片背景 - 半透明白色
+  static const Color darkCardBackground = Color(0x30FFFFFF); // 白色 透明度
+
+  /// 今日天气和城市天气页面头部大卡片背景 - 固定深蓝色（不区分亮暗模式）
+  static const Color weatherHeaderCardBackground = Color(
+    0xFF0A1B3D,
+  ); // 深蓝色，固定不变
+
   // 暗色主题配色（默认）- 基于#012d78深蓝色
   static const Map<String, Color> darkColors = {
     'primary': Color(0xFF4A90E2), // 基于#012d78的亮蓝色
@@ -64,7 +79,7 @@ class AppColors {
     'textTertiary': Color(0xFFB8D9F5), // 中等亮度的文字
     'border': Color(0xFF2D4A7D), // 基于主色的边框
     'glassBackground': Color(0x30FFFFFF),
-    'cardBackground': Color(0x25FFFFFF), // 半透明白色卡片
+    'cardBackground': darkCardBackground, // 使用统一定义的暗色卡片背景
     'currentTagCardBackground': Color(0x40FFFFFF), // 当前tag卡片背景（更亮的半透明）
     'cardBorder': Color(0x35FFFFFF), // 卡片边框
     'buttonShadow': Color(0x30000000),
@@ -100,7 +115,7 @@ class AppColors {
     'textTertiary': Color(0xFF6B7280), // 较浅的文字，用于未激活状态
     'border': Color(0xFFB8D9F5), // 基于#8edafc的浅边框
     'glassBackground': Color(0x20FFFFFF), // 亮色半透明
-    'cardBackground': Color(0xFFFFFFFF), // 纯白卡片背景
+    'cardBackground': lightCardBackground, // 使用统一定义的亮色卡片背景
     'currentTagCardBackground': Color(0xFFE3F2FD), // 当前tag卡片背景（浅蓝色）
     'cardBorder': Color(0xFFE1F5FE), // 浅蓝边框
     'buttonShadow': Color(0x15000000), // 浅阴影
@@ -344,11 +359,21 @@ class AppColors {
 
   // ==================== Material Design 卡片样式 ====================
 
-  /// 卡片间距样式 - Material Design 3 推荐的最小间距
+  /// 卡片外层左右 margin - 与 AppConstants.screenHorizontalPadding 保持一致（8.0）
+  static const double cardHorizontalMargin =
+      8.0; // 已在 AppConstants.screenHorizontalPadding 定义
+
+  /// 卡片之间的上下间距 - Material Design 3 推荐的最小间距
   static const double cardSpacing = 12.0;
 
   /// 卡片间距Widget - 用于大卡片之间的标准间距
   static Widget get cardSpacingWidget => const SizedBox(height: cardSpacing);
+
+  /// 大卡片内部 padding - 标准内边距（详细信息、空气质量、图表等）
+  static const double cardInnerPadding = 16.0;
+
+  /// 图表卡片内部 padding - 为图表留更多空间（温度趋势、15日图表等）
+  static const double chartCardInnerPadding = 12.0;
 
   /// Material 卡片的 elevation（根据主题调整）
   static double get cardElevation =>
@@ -362,8 +387,10 @@ class AppColors {
   static RoundedRectangleBorder get smallCardShape =>
       RoundedRectangleBorder(borderRadius: BorderRadius.circular(4));
 
-  /// Material 卡片的颜色（使用 cardBackground）
-  static Color get materialCardColor => _getColor('cardBackground');
+  /// Material 卡片的颜色（根据主题返回对应的卡片背景色）
+  static Color get materialCardColor => _themeProvider?.isLightTheme == true
+      ? lightCardBackground // 亮色模式：淡琥珀金
+      : darkCardBackground; // 暗色模式：半透明白色
 
   /// Material 卡片的阴影颜色（亮色主题用淡色，暗色主题用深色）
   static Color get cardShadowColor => _themeProvider?.isLightTheme == true

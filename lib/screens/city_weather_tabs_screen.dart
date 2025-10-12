@@ -14,6 +14,7 @@ import '../widgets/hourly_list.dart';
 import '../widgets/forecast15d_chart.dart';
 import '../widgets/weather_details_widget.dart';
 import '../widgets/ai_content_widget.dart';
+import '../widgets/air_quality_card.dart';
 import '../models/weather_model.dart';
 import '../utils/weather_icon_helper.dart';
 import 'weather_alerts_screen.dart';
@@ -231,7 +232,14 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        gradient: context.read<ThemeProvider>().headerGradient,
+        // 固定深蓝色背景（不区分亮暗模式）
+        color: AppColors.weatherHeaderCardBackground,
+        // 添加露营场景背景图片（透明化处理）
+        image: const DecorationImage(
+          image: AssetImage('assets/images/backgroud.png'),
+          fit: BoxFit.cover,
+          opacity: 0.3, // 临时提高透明度用于测试图片加载
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -246,6 +254,7 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
           padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 16.0),
           child: Column(
             children: [
+               const SizedBox(height: 8),
               // City name and navigation
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -288,7 +297,7 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
                   _buildAlertIcon(context, weatherProvider),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 32),
 
               // Weather animation, weather text and temperature
               Row(
@@ -346,7 +355,7 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
 
               // 农历日期
               if (weather?.current?.nongLi != null) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: 60),
                 Text(
                   weather!.current!.nongLi!,
                   style: TextStyle(
@@ -358,6 +367,7 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
                     letterSpacing: 0.5,
                   ),
                 ),
+              
               ],
             ],
           ),
@@ -383,7 +393,7 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
           children: [
             const SizedBox(height: 16),
             // 空气质量卡片
-            _buildAirQualityCard(weatherProvider),
+            AirQualityCard(weather: weatherProvider.currentWeather),
             AppColors.cardSpacingWidget,
             // 今日提醒卡片（在详细信息前面）
             _buildWeatherTipsCard(weatherProvider),
@@ -607,227 +617,6 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
         ),
       ),
     );
-  }
-
-  /// 构建空气质量卡片
-  Widget _buildAirQualityCard(WeatherProvider weatherProvider) {
-    final weather = weatherProvider.currentWeather;
-    final air = weather?.current?.air ?? weather?.air;
-
-    if (air == null) {
-      return const SizedBox.shrink();
-    }
-
-    final aqi = int.tryParse(air.AQI ?? '');
-    if (aqi == null) {
-      return const SizedBox.shrink();
-    }
-
-    final level = air.levelIndex ?? _getAirQualityLevelText(aqi);
-    final color = _getAirQualityColor(aqi);
-
-    // 计算标尺位置（0-500范围）
-    final progress = (aqi / 500).clamp(0.0, 1.0);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppConstants.screenHorizontalPadding,
-      ),
-      child: Card(
-        elevation: AppColors.cardElevation,
-        shadowColor: AppColors.cardShadowColor,
-        color: AppColors.materialCardColor,
-        shape: AppColors.cardShape,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 标题行
-              Row(
-                children: [
-                  Icon(
-                    Icons.air,
-                    color: color,
-                    size: AppConstants.sectionTitleIconSize,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '空气质量',
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: AppConstants.sectionTitleFontSize,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const Spacer(),
-                  // AQI数值（缩小尺寸，与后面文字高度一致）
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: color,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      '$aqi',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        height: 1.2,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    level,
-                    style: TextStyle(
-                      color: color,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // 空气质量标尺
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 标尺背景和进度
-                  Stack(
-                    children: [
-                      // 彩色渐变背景（6段）
-                      Container(
-                        height: 12,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(6),
-                          gradient: const LinearGradient(
-                            colors: [
-                              AppColors.airExcellent, // 优 0-50
-                              AppColors.airGood, // 良 50-100
-                              AppColors.airLight, // 轻度污染 100-150
-                              AppColors.airModerate, // 中度污染 150-200
-                              AppColors.airHeavy, // 重度污染 200-300
-                              AppColors.airSevere, // 严重污染 300-500
-                            ],
-                            stops: [0.0, 0.1, 0.2, 0.4, 0.6, 1.0],
-                          ),
-                        ),
-                      ),
-                      // 当前位置指示器
-                      Positioned(
-                        left:
-                            progress * (MediaQuery.of(context).size.width - 64),
-                        top: -4,
-                        child: Container(
-                          width: 20,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: color, width: 3),
-                            boxShadow: [
-                              BoxShadow(
-                                color: color.withOpacity(0.3),
-                                blurRadius: 8,
-                                spreadRadius: 2,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-
-                  // 刻度标签
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildScaleLabel('0'),
-                      _buildScaleLabel('50'),
-                      _buildScaleLabel('100'),
-                      _buildScaleLabel('150'),
-                      _buildScaleLabel('200'),
-                      _buildScaleLabel('300+'),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // 等级说明 - 平均分布占满一行
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(child: _buildLevelTag('优', AppColors.airExcellent)),
-                  const SizedBox(width: 4),
-                  Expanded(child: _buildLevelTag('良', AppColors.airGood)),
-                  const SizedBox(width: 4),
-                  Expanded(child: _buildLevelTag('轻度', AppColors.airLight)),
-                  const SizedBox(width: 4),
-                  Expanded(child: _buildLevelTag('中度', AppColors.airModerate)),
-                  const SizedBox(width: 4),
-                  Expanded(child: _buildLevelTag('重度', AppColors.airHeavy)),
-                  const SizedBox(width: 4),
-                  Expanded(child: _buildLevelTag('严重', AppColors.airSevere)),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// 构建刻度标签
-  Widget _buildScaleLabel(String text) {
-    return Text(
-      text,
-      style: TextStyle(
-        color: AppColors.textSecondary,
-        fontSize: 10,
-        fontWeight: FontWeight.w500,
-      ),
-    );
-  }
-
-  /// 构建等级标签
-  Widget _buildLevelTag(String text, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color.withOpacity(0.5), width: 1),
-      ),
-      child: Center(
-        child: Text(
-          text,
-          style: TextStyle(
-            color: color,
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ),
-    );
-  }
-
-  /// 获取空气质量等级文本
-  String _getAirQualityLevelText(int aqi) {
-    return WeatherIconHelper.getAirQualityLevelText(aqi);
-  }
-
-  /// 获取空气质量颜色
-  Color _getAirQualityColor(int aqi) {
-    return WeatherIconHelper.getAirQualityColor(aqi);
   }
 
   Widget _buildWeatherTipsCard(WeatherProvider weatherProvider) {

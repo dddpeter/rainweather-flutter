@@ -598,12 +598,12 @@ class AppDrawer extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '• 全新Drawer抽屉菜单设计\n'
-                      '• Material Design 3 规范完善\n'
-                      '• 通勤提醒级别标签反色优化\n'
-                      '• AI标签主题自适应配色\n'
-                      '• 城市天气AI总结智能缓存\n'
-                      '• 空气质量卡片样式优化',
+                      '• 🎨 AI智能助手独立卡片设计\n'
+                      '• 🌌 头部卡片背景图片效果\n'
+                      '• 🎯 天气图标系统全面升级\n'
+                      '• 📱 空气质量卡片组件化\n'
+                      '• 🎨 卡片样式统一优化\n'
+                      '• 🌈 渐变背景和阴影效果',
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,

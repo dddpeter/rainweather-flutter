@@ -106,8 +106,17 @@ class HourlyWeatherWidget extends StatelessWidget {
   Widget _buildHourlyItem(HourlyWeather hour, int index) {
     final time = _formatHourTime(hour.forecasttime ?? '');
     final temperature = _parseTemperature(hour.temperature ?? '');
-    final weatherIcon = weatherService.getWeatherIcon(hour.weather ?? '晴');
     final weatherDesc = hour.weather ?? '晴'; // 天气描述
+
+    // 判断是白天还是夜间（根据小时）
+    final hourValue = _getHourValue(hour.forecasttime ?? '');
+    final isNight = hourValue < 6 || hourValue >= 18;
+
+    // 获取中文天气图标路径
+    final iconMap = isNight
+        ? AppConstants.chineseNightWeatherImages
+        : AppConstants.chineseWeatherImages;
+    final iconPath = iconMap[weatherDesc] ?? iconMap['晴'] ?? '晴.png';
 
     return Container(
       width: 70, // 80 -> 70 (减少宽度)
@@ -124,9 +133,20 @@ class HourlyWeatherWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 3), // 8 -> 3 (约1/3)
-          Text(
-            weatherIcon,
-            style: const TextStyle(fontSize: 22), // 24 -> 22 (稍微缩小)
+          Image.asset(
+            'assets/images/$iconPath',
+            width: 24,
+            height: 24,
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) {
+              // 加载失败时显示默认图标
+              return Image.asset(
+                'assets/images/不清楚.png',
+                width: 24,
+                height: 24,
+                fit: BoxFit.contain,
+              );
+            },
           ),
           const SizedBox(height: 2), // 图标和描述间距
           Text(
@@ -151,6 +171,20 @@ class HourlyWeatherWidget extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  int _getHourValue(String timeStr) {
+    try {
+      if (timeStr.contains(':')) {
+        final parts = timeStr.split(':');
+        if (parts.isNotEmpty) {
+          return int.parse(parts[0]);
+        }
+      }
+      return 12; // 默认白天
+    } catch (e) {
+      return 12;
+    }
   }
 
   String _formatHourTime(String timeStr) {

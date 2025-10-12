@@ -146,7 +146,15 @@ class WeatherPageCommon {
 
     final temperature = weather.temperature ?? '--';
     final weatherDesc = weather.weather ?? '晴';
-    final weatherIcon = weatherService.getWeatherIcon(weatherDesc);
+
+    // 判断是白天还是夜间
+    final isDay = weatherService.isDayTime();
+
+    // 获取中文天气图标路径
+    final iconMap = isDay
+        ? AppConstants.chineseWeatherImages
+        : AppConstants.chineseNightWeatherImages;
+    final iconPath = iconMap[weatherDesc] ?? iconMap['晴'] ?? '晴.png';
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -160,7 +168,21 @@ class WeatherPageCommon {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(weatherIcon, style: const TextStyle(fontSize: 48)),
+                    Image.asset(
+                      'assets/images/$iconPath',
+                      width: 56,
+                      height: 56,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        // 加载失败时显示默认图标
+                        return Image.asset(
+                          'assets/images/不清楚.png',
+                          width: 56,
+                          height: 56,
+                          fit: BoxFit.contain,
+                        );
+                      },
+                    ),
                     const SizedBox(height: 8),
                     Text(
                       weatherDesc,

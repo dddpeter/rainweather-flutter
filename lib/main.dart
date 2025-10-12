@@ -1457,14 +1457,36 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
     final current = cityWeather?.current?.current;
     if (current == null) return const SizedBox.shrink();
 
+    final weatherDesc = current.weather ?? '晴';
+
+    // 判断是白天还是夜间
+    final isDay = weatherProvider.isDayTime();
+
+    // 获取中文天气图标路径
+    final iconMap = isDay
+        ? AppConstants.chineseWeatherImages
+        : AppConstants.chineseNightWeatherImages;
+    final iconPath = iconMap[weatherDesc] ?? iconMap['晴'] ?? '晴.png';
+
     return Padding(
       padding: const EdgeInsets.only(top: 8),
       child: Row(
         children: [
           // 天气图标
-          Text(
-            weatherProvider.getWeatherIcon(current.weather ?? '晴'),
-            style: TextStyle(fontSize: 32),
+          Image.asset(
+            'assets/images/$iconPath',
+            width: 36,
+            height: 36,
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) {
+              // 加载失败时显示默认图标
+              return Image.asset(
+                'assets/images/不清楚.png',
+                width: 36,
+                height: 36,
+                fit: BoxFit.contain,
+              );
+            },
           ),
           const SizedBox(width: 12),
           // 温度
@@ -1480,7 +1502,7 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
           // 天气描述
           Expanded(
             child: Text(
-              current.weather ?? '晴',
+              weatherDesc,
               style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
               overflow: TextOverflow.ellipsis,
             ),

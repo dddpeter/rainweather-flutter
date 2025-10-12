@@ -50,9 +50,13 @@ class WeatherPosterWidget extends StatelessWidget {
         : location.city;
     final provinceName = location.province;
 
-    // 获取天气图片（优先使用图片，降级到 emoji）
+    // 获取天气图片（优先使用旧图标，降级到中文PNG图标）
     final weatherImage = AppConstants.dayWeatherImages[weatherType];
-    final weatherEmoji = AppConstants.weatherIcons[weatherType] ?? '☁️';
+    // 使用中文PNG图标作为备用
+    final chineseWeatherIcon =
+        AppConstants.chineseWeatherImages[weatherType] ??
+        AppConstants.chineseWeatherImages['晴'] ??
+        '晴.png';
 
     // 获取紫外线强度
     String uvLevel = _getUVLevel(sunMoonIndexData, weatherType);
@@ -135,8 +139,18 @@ class WeatherPosterWidget extends StatelessWidget {
                 gradient: LinearGradient(
                   colors: [
                     const Color(0xFFFFB74D).withOpacity(0.8), // 橙色
-                    const ui.Color.fromARGB(255, 233, 96, 204).withOpacity(0.8), // 绿色
-                    const ui.Color.fromARGB(255, 17, 231, 82).withOpacity(0.8), // 蓝色
+                    const ui.Color.fromARGB(
+                      255,
+                      233,
+                      96,
+                      204,
+                    ).withOpacity(0.8), // 绿色
+                    const ui.Color.fromARGB(
+                      255,
+                      17,
+                      231,
+                      82,
+                    ).withOpacity(0.8), // 蓝色
                   ],
                 ),
               ),
@@ -244,20 +258,16 @@ class WeatherPosterWidget extends StatelessWidget {
                                   'assets/images/$weatherImage',
                                   fit: BoxFit.contain,
                                   errorBuilder: (context, error, stackTrace) {
-                                    // 图片加载失败时显示 emoji
-                                    return Center(
-                                      child: Text(
-                                        weatherEmoji,
-                                        style: const TextStyle(fontSize: 48),
-                                      ),
+                                    // 图片加载失败时显示中文PNG图标
+                                    return Image.asset(
+                                      'assets/images/$chineseWeatherIcon',
+                                      fit: BoxFit.contain,
                                     );
                                   },
                                 )
-                              : Center(
-                                  child: Text(
-                                    weatherEmoji,
-                                    style: const TextStyle(fontSize: 48),
-                                  ),
+                              : Image.asset(
+                                  'assets/images/$chineseWeatherIcon',
+                                  fit: BoxFit.contain,
                                 ),
                         ),
                         const SizedBox(width: 8),
@@ -415,7 +425,12 @@ class WeatherPosterWidget extends StatelessWidget {
                               end: Alignment.bottomRight,
                               colors: [
                                 (advice['color'] as Color).withOpacity(0.8),
-                                (const ui.Color.fromARGB(255, 244, 119, 23)).withOpacity(0.5),
+                                (const ui.Color.fromARGB(
+                                  255,
+                                  244,
+                                  119,
+                                  23,
+                                )).withOpacity(0.5),
                               ],
                             ),
                             borderRadius: BorderRadius.circular(16),

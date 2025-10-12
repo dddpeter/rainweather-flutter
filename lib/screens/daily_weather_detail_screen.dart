@@ -395,12 +395,6 @@ class DailyWeatherDetailScreen extends StatelessWidget {
     );
   }
 
-  /// 获取天气对应的emoji图标
-  String _getWeatherEmoji(String weather) {
-    // 使用与AppConstants.weatherIcons相同的映射逻辑
-    return AppConstants.weatherIcons[weather] ?? '☀️';
-  }
-
   /// 构建时段卡片
   Widget _buildPeriodCard(
     BuildContext context,
@@ -411,6 +405,18 @@ class DailyWeatherDetailScreen extends StatelessWidget {
     String windPower,
     Color accentColor,
   ) {
+    // 判断是白天还是夜间（根据时段）
+    // 注意：上午使用pm数据（夜间），下午使用am数据（白天）
+    final isNight = period == '上午';
+
+    // 获取中文天气图标路径
+    String getChineseWeatherIcon(String weatherType, bool isNight) {
+      final iconMap = isNight
+          ? AppConstants.chineseNightWeatherImages
+          : AppConstants.chineseWeatherImages;
+      return iconMap[weatherType] ?? iconMap['晴'] ?? '晴.png';
+    }
+
     return Card(
       elevation: AppColors.cardElevation,
       shadowColor: AppColors.cardShadowColor,
@@ -441,10 +447,21 @@ class DailyWeatherDetailScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8), // 标题和图标的间隙
-            // 天气emoji图标（42px）
-            Text(
-              _getWeatherEmoji(weather),
-              style: const TextStyle(fontSize: 42),
+            // 天气PNG图标（48px）
+            Image.asset(
+              'assets/images/${getChineseWeatherIcon(weather, isNight)}',
+              width: 48,
+              height: 48,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                // 加载失败时显示默认图标
+                return Image.asset(
+                  'assets/images/不清楚.png',
+                  width: 48,
+                  height: 48,
+                  fit: BoxFit.contain,
+                );
+              },
             ),
             const SizedBox(height: 4), // 图标和天气描述的距离（更近）
             // 天气描述（再缩小）

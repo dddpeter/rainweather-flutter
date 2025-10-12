@@ -94,6 +94,7 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/images/night/
     - assets/images/backgroud.png
     - assets/data/city.json
     - assets/data/

@@ -445,6 +445,18 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
     String windPower,
     WeatherProvider weatherProvider,
   ) {
+    // 判断是白天还是夜间（根据时段）
+    // 注意：上午使用pm数据（夜间），下午使用am数据（白天）
+    final isNight = period == '上午';
+
+    // 获取中文天气图标路径
+    String getChineseWeatherIcon(String weatherType, bool isNight) {
+      final iconMap = isNight
+          ? AppConstants.chineseNightWeatherImages
+          : AppConstants.chineseWeatherImages;
+      return iconMap[weatherType] ?? iconMap['晴'] ?? '晴.png';
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -459,16 +471,25 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
         const SizedBox(height: 4),
         Row(
           children: [
-            // Weather icon
+            // Weather icon - 使用中文PNG图标
             Container(
-              width: 24, // 增大宽度
-              height: 24, // 增大高度
-              alignment: Alignment.center, // 居中对齐
-              child: Text(
-                weatherProvider.getWeatherIcon(weather),
-                style: TextStyle(fontSize: 20), // 增大图标大小
-                textAlign: TextAlign.center, // 文字居中
-                overflow: TextOverflow.visible, // 允许溢出但控制在容器内
+              width: 32,
+              height: 32,
+              alignment: Alignment.center,
+              child: Image.asset(
+                'assets/images/${getChineseWeatherIcon(weather, isNight)}',
+                width: 28,
+                height: 28,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  // 加载失败时显示默认图标
+                  return Image.asset(
+                    'assets/images/不清楚.png',
+                    width: 28,
+                    height: 28,
+                    fit: BoxFit.contain,
+                  );
+                },
               ),
             ),
             const SizedBox(width: 4),

@@ -73,7 +73,17 @@ class HourlyList extends StatelessWidget {
   Widget _buildHourlyItem(HourlyWeather hour, int index) {
     final time = _formatTime(hour.forecasttime ?? '');
     final temperature = _parseTemperature(hour.temperature ?? '');
-    final weatherIcon = weatherService.getWeatherIcon(hour.weather ?? '晴');
+    final weatherDesc = hour.weather ?? '晴';
+
+    // 判断是白天还是夜间（根据小时）
+    final hourValue = _getHourValue(hour.forecasttime ?? '');
+    final isNight = hourValue < 6 || hourValue >= 18;
+
+    // 获取中文天气图标路径
+    final iconMap = isNight
+        ? AppConstants.chineseNightWeatherImages
+        : AppConstants.chineseWeatherImages;
+    final iconPath = iconMap[weatherDesc] ?? iconMap['晴'] ?? '晴.png';
 
     return Container(
       padding: EdgeInsets.symmetric(
@@ -108,7 +118,21 @@ class HourlyList extends StatelessWidget {
           SizedBox(
             width: 50,
             child: Center(
-              child: Text(weatherIcon, style: const TextStyle(fontSize: 24)),
+              child: Image.asset(
+                'assets/images/$iconPath',
+                width: 28,
+                height: 28,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  // 加载失败时显示默认图标
+                  return Image.asset(
+                    'assets/images/不清楚.png',
+                    width: 28,
+                    height: 28,
+                    fit: BoxFit.contain,
+                  );
+                },
+              ),
             ),
           ),
 
@@ -128,7 +152,7 @@ class HourlyList extends StatelessWidget {
           // 天气描述
           Expanded(
             child: Text(
-              hour.weather ?? '晴',
+              weatherDesc,
               style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 14,
@@ -149,6 +173,20 @@ class HourlyList extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  int _getHourValue(String timeStr) {
+    try {
+      if (timeStr.contains(':')) {
+        final parts = timeStr.split(':');
+        if (parts.isNotEmpty) {
+          return int.parse(parts[0]);
+        }
+      }
+      return 12; // 默认白天
+    } catch (e) {
+      return 12;
+    }
   }
 
   String _formatTime(String timeStr) {

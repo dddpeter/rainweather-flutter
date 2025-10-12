@@ -660,22 +660,23 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
                     ),
                   ),
                   const Spacer(),
-                  // AQI数值
+                  // AQI数值（缩小尺寸，与后面文字高度一致）
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
+                      horizontal: 8,
+                      vertical: 2,
                     ),
                     decoration: BoxDecoration(
                       color: color,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
                       '$aqi',
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 18,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
+                        height: 1.2,
                       ),
                     ),
                   ),

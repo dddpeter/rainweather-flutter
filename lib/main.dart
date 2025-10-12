@@ -1459,6 +1459,10 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
 
     final weatherDesc = current.weather ?? '晴';
 
+    // 获取空气质量数据
+    final air = cityWeather?.current?.air ?? cityWeather?.air;
+    final aqi = air != null ? int.tryParse(air.AQI ?? '') : null;
+
     // 判断是白天还是夜间
     final isDay = weatherProvider.isDayTime();
 
@@ -1469,63 +1473,102 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
     final iconPath = iconMap[weatherDesc] ?? iconMap['晴'] ?? '晴.png';
 
     return Padding(
-      padding: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.only(top: 2),
       child: Row(
         children: [
-          // 天气图标
+          // 天气图标（放大）
           Image.asset(
             'assets/images/$iconPath',
-            width: 36,
-            height: 36,
+            width: 48,
+            height: 48,
             fit: BoxFit.contain,
             errorBuilder: (context, error, stackTrace) {
               // 加载失败时显示默认图标
               return Image.asset(
                 'assets/images/不清楚.png',
-                width: 36,
-                height: 36,
+                width: 48,
+                height: 48,
                 fit: BoxFit.contain,
               );
             },
           ),
           const SizedBox(width: 12),
-          // 温度
+          // 温度（独立显示）
           Text(
             '${current.temperature ?? '--'}℃',
             style: TextStyle(
               color: AppColors.textPrimary,
               fontSize: 28,
               fontWeight: FontWeight.w600,
+              height: 1.0,
             ),
           ),
           const SizedBox(width: 12),
-          // 天气描述
+          // 天气描述和风力（垂直布局，在温度右边）
           Expanded(
-            child: Text(
-              weatherDesc,
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
-              overflow: TextOverflow.ellipsis,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 天气描述
+                Text(
+                  weatherDesc,
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 14,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                // 风力
+                if (current.windpower != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    '${current.winddir ?? ''}${current.windpower}',
+                    style: TextStyle(
+                      color: AppColors.textTertiary,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
-          // 湿度和风力
-          if (current.humidity != null || current.windpower != null) ...[
+          // 空气质量和湿度
+          if (aqi != null || current.humidity != null) ...[
             const SizedBox(width: 8),
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
               children: [
+                // 空气质量（新增）
+                if (aqi != null) ...[
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.air,
+                        color: _getAirQualityColor(aqi),
+                        size: 12,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'AQI $aqi',
+                        style: TextStyle(
+                          color: _getAirQualityColor(aqi),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                ],
+                // 湿度
                 if (current.humidity != null)
                   Text(
                     '湿度 ${current.humidity}%',
                     style: TextStyle(
                       color: AppColors.accentGreen,
-                      fontSize: 11,
-                    ),
-                  ),
-                if (current.windpower != null)
-                  Text(
-                    '${current.winddir ?? ''}${current.windpower}',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
                       fontSize: 11,
                     ),
                   ),
@@ -1535,6 +1578,16 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
         ],
       ),
     );
+  }
+
+  /// 获取空气质量颜色
+  Color _getAirQualityColor(int aqi) {
+    if (aqi <= 50) return AppColors.airExcellent; // 优
+    if (aqi <= 100) return AppColors.airGood; // 良
+    if (aqi <= 150) return AppColors.airLight; // 轻度污染
+    if (aqi <= 200) return AppColors.airModerate; // 中度污染
+    if (aqi <= 300) return AppColors.airHeavy; // 重度污染
+    return AppColors.airSevere; // 严重污染
   }
 
   /// Show add city dialog

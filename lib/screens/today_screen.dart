@@ -17,7 +17,7 @@ import '../widgets/sun_moon_widget.dart';
 import '../widgets/life_index_widget.dart';
 import '../widgets/weather_animation_widget.dart';
 import '../widgets/weather_alert_widget.dart';
-import '../widgets/commute_advice_widget.dart';
+import '../widgets/ai_smart_assistant_widget.dart';
 import '../services/weather_alert_service.dart';
 import '../services/database_service.dart';
 import '../services/location_change_notifier.dart';
@@ -570,18 +570,9 @@ class _TodayScreenState extends State<TodayScreen>
                         children: [
                           _buildTopWeatherSection(weatherProvider),
                           AppColors.cardSpacingWidget,
-                          // AI智能助手卡片（移到空气指数前面）
-                          if (weatherProvider.weatherSummary != null ||
-                              weatherProvider.isGeneratingSummary)
-                            _buildAIWeatherSummaryCard(weatherProvider),
-                          if (weatherProvider.weatherSummary != null ||
-                              weatherProvider.isGeneratingSummary)
-                            AppColors.cardSpacingWidget,
-                          // 通勤提醒卡片（通勤建议，不包含气象预警和天气提醒）
-                          const CommuteAdviceWidget(),
-                          // 只有在有通勤建议时才显示间距
-                          if (weatherProvider.commuteAdvices.isNotEmpty)
-                            AppColors.cardSpacingWidget,
+                          // AI智能助手卡片（整合天气摘要和通勤提醒）
+                          const AISmartAssistantWidget(),
+                          AppColors.cardSpacingWidget,
                           // 空气质量卡片
                           AirQualityCard(
                             weather: weatherProvider.currentWeather,
@@ -851,156 +842,6 @@ class _TodayScreenState extends State<TodayScreen>
           ),
         ),
       ),
-    );
-  }
-
-  /// 构建AI智能天气摘要卡片（独立卡片版本）
-  Widget _buildAIWeatherSummaryCard(WeatherProvider weatherProvider) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppConstants.screenHorizontalPadding,
-      ),
-      child: Card(
-        elevation: AppColors.cardElevation,
-        shadowColor: AppColors.cardShadowColor,
-        color: AppColors.materialCardColor,
-        shape: AppColors.cardShape,
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            // AI智能助手专用渐变背景：深紫到深蓝
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color(0xFF4A148C).withOpacity(0.9), // 深紫
-                Color(0xFF1A237E).withOpacity(0.9), // 深蓝
-                Color(0xFF0D47A1).withOpacity(0.9), // 更深蓝
-              ],
-            ),
-            // 添加微妙的几何图案效果（不使用图片）
-            boxShadow: [
-              BoxShadow(
-                color: Color(0xFFFFB300).withOpacity(0.1), // 金色光晕
-                blurRadius: 20,
-                offset: const Offset(0, 4),
-                spreadRadius: 2,
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 16.0),
-            child: _buildAIWeatherSummaryContent(weatherProvider),
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// 构建AI智能天气摘要内容
-  Widget _buildAIWeatherSummaryContent(WeatherProvider weatherProvider) {
-    // 使用金色/琥珀色系，在深蓝背景上更醒目
-    const aiColor = Color(0xFFFFB300); // 琥珀色
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // 标题栏
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [aiColor.withOpacity(0.3), aiColor.withOpacity(0.1)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: aiColor.withOpacity(0.5), width: 1.5),
-                boxShadow: [
-                  BoxShadow(
-                    color: aiColor.withOpacity(0.2),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Icon(Icons.auto_awesome, color: aiColor, size: 18),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'AI智能助手',
-                    style: TextStyle(
-                      color: aiColor,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  Text(
-                    '智能分析天气趋势',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 6),
-            if (weatherProvider.isGeneratingSummary)
-              SizedBox(
-                width: 12,
-                height: 12,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(aiColor),
-                ),
-              ),
-          ],
-        ),
-        // 内容区域
-        if (weatherProvider.weatherSummary != null) ...[
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.white.withOpacity(0.15),
-                  Colors.white.withOpacity(0.08),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: aiColor.withOpacity(0.3), width: 1),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Text(
-              weatherProvider.weatherSummary!,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                height: 1.5,
-                letterSpacing: 0.3,
-              ),
-            ),
-          ),
-        ],
-      ],
     );
   }
 

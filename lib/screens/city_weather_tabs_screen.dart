@@ -254,7 +254,7 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
           padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 16.0),
           child: Column(
             children: [
-               const SizedBox(height: 8),
+              const SizedBox(height: 8),
               // City name and navigation
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -367,7 +367,6 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
                     letterSpacing: 0.5,
                   ),
                 ),
-              
               ],
             ],
           ),
@@ -542,12 +541,22 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
             AIContentWidget(
               title: 'AI智能助手',
               icon: Icons.auto_awesome,
+              cityName: widget.cityName, // 传入城市名称
               fetchAIContent: () async {
-                if (weatherProvider.weatherSummary != null) {
-                  return weatherProvider.weatherSummary!;
+                try {
+                  if (weatherProvider.weatherSummary != null &&
+                      weatherProvider.weatherSummary!.isNotEmpty) {
+                    return weatherProvider.weatherSummary!;
+                  }
+                  await weatherProvider.generateWeatherSummary(
+                    cityName: widget.cityName, // 传入城市名称
+                  );
+                  return weatherProvider.weatherSummary ??
+                      '今日天气舒适，适合出行。注意温差变化，合理增减衣物。';
+                } catch (e) {
+                  print('❌ 加载AI智能助手失败: $e');
+                  return '今日天气舒适，适合出行。注意温差变化，合理增减衣物。';
                 }
-                await weatherProvider.generateWeatherSummary();
-                return weatherProvider.weatherSummary ?? '';
               },
               defaultContent: '今日天气舒适，适合出行。注意温差变化，合理增减衣物。',
             ),
@@ -557,12 +566,22 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
             AIContentWidget(
               title: '15日天气趋势',
               icon: Icons.trending_up,
+              cityName: widget.cityName, // 传入城市名称
               fetchAIContent: () async {
-                if (weatherProvider.forecast15dSummary != null) {
-                  return weatherProvider.forecast15dSummary!;
+                try {
+                  if (weatherProvider.forecast15dSummary != null &&
+                      weatherProvider.forecast15dSummary!.isNotEmpty) {
+                    return weatherProvider.forecast15dSummary!;
+                  }
+                  await weatherProvider.generateForecast15dSummary(
+                    cityName: widget.cityName, // 传入城市名称
+                  );
+                  return weatherProvider.forecast15dSummary ??
+                      '未来半月天气平稳，温度变化不大，适合安排户外活动。';
+                } catch (e) {
+                  print('❌ 加载15日天气趋势失败: $e');
+                  return '未来半月天气平稳，温度变化不大，适合安排户外活动。';
                 }
-                await weatherProvider.generateForecast15dSummary();
-                return weatherProvider.forecast15dSummary ?? '';
               },
               defaultContent: '未来半月天气平稳，温度变化不大，适合安排户外活动。',
             ),

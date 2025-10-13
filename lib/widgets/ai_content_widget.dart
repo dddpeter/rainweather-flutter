@@ -18,6 +18,7 @@ class AIContentWidget extends StatefulWidget {
   final String defaultContent; // 降级内容
   final VoidCallback? onRefresh; // 刷新回调（可选）
   final bool useCustomStyle; // 是否使用自定义样式（今日天气页面特殊样式）
+  final String? cityName; // 城市名称，用于区分不同城市的AI内容
 
   const AIContentWidget({
     super.key,
@@ -27,6 +28,7 @@ class AIContentWidget extends StatefulWidget {
     required this.defaultContent,
     this.onRefresh,
     this.useCustomStyle = false, // 默认使用标准卡片样式
+    this.cityName, // 添加城市名称参数
   });
 
   @override
@@ -42,6 +44,19 @@ class _AIContentWidgetState extends State<AIContentWidget> {
   void initState() {
     super.initState();
     _loadAIContent();
+  }
+
+  @override
+  void didUpdateWidget(covariant AIContentWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // ⚠️ 只比较 cityName，不要比较 fetchAIContent（函数引用每次都不同）
+    // 避免无限循环重新加载
+    if (oldWidget.cityName != widget.cityName) {
+      print(
+        '🔄 AIContentWidget: 城市变化 ${oldWidget.cityName} -> ${widget.cityName}，重新加载',
+      );
+      _loadAIContent();
+    }
   }
 
   Future<void> _loadAIContent() async {
@@ -201,30 +216,20 @@ class _AIContentWidgetState extends State<AIContentWidget> {
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0.0, end: 1.0),
       duration: const Duration(milliseconds: 1500),
+      // ⚠️ 使用无限循环动画，避免使用 onEnd + setState 导致过多的重建
+      child: Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(4),
+          color: AppColors.textSecondary.withOpacity(0.1),
+        ),
+      ),
       builder: (context, value, child) {
-        return Container(
-          width: width,
-          height: height,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(4),
-            gradient: LinearGradient(
-              begin: Alignment(-1.0 + (value * 2), 0.0),
-              end: Alignment(1.0 + (value * 2), 0.0),
-              colors: [
-                AppColors.textSecondary.withOpacity(0.1),
-                AppColors.textSecondary.withOpacity(0.2),
-                AppColors.textSecondary.withOpacity(0.1),
-              ],
-              stops: const [0.0, 0.5, 1.0],
-            ),
-          ),
+        return Opacity(
+          opacity: 0.3 + (value * 0.7), // 0.3 -> 1.0 循环闪烁
+          child: child,
         );
-      },
-      onEnd: () {
-        // 循环动画
-        if (mounted && _isLoading) {
-          setState(() {});
-        }
       },
     );
   }

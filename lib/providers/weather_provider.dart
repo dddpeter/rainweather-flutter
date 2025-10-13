@@ -739,6 +739,10 @@ class WeatherProvider extends ChangeNotifier {
   }) async {
     _setLoading(true);
     _error = null;
+    // 清空之前的AI摘要，避免显示其他城市的数据
+    _weatherSummary = null;
+    _forecast15dSummary = null;
+    notifyListeners(); // 通知界面更新，显示加载状态
 
     try {
       // Create location for the city
@@ -815,11 +819,17 @@ class WeatherProvider extends ChangeNotifier {
 
       // 切换城市后，重新生成AI智能摘要（基于当前城市天气）
       if (_currentWeather != null) {
-        generateWeatherSummary(forceRefresh: forceRefreshAI);
+        generateWeatherSummary(
+          forceRefresh: forceRefreshAI,
+          cityName: cityName, // 传入城市名称，确保AI总结使用正确的城市
+        );
 
         // 生成15日天气总结
         if (_forecast15d != null && _forecast15d!.isNotEmpty) {
-          generateForecast15dSummary(forceRefresh: forceRefreshAI);
+          generateForecast15dSummary(
+            forceRefresh: forceRefreshAI,
+            cityName: cityName, // 传入城市名称，确保AI总结使用正确的城市
+          );
         }
       }
     } catch (e) {
@@ -2192,7 +2202,11 @@ class WeatherProvider extends ChangeNotifier {
 
   /// 生成智能天气摘要
   /// [forceRefresh] 是否强制刷新，忽略缓存（默认false）
-  Future<void> generateWeatherSummary({bool forceRefresh = false}) async {
+  /// [cityName] 城市名称（可选），用于城市天气页面，不传则使用当前定位城市
+  Future<void> generateWeatherSummary({
+    bool forceRefresh = false,
+    String? cityName,
+  }) async {
     if (_currentWeather == null) {
       print('⚠️ 无天气数据，无法生成智能摘要');
       return;
@@ -2203,8 +2217,13 @@ class WeatherProvider extends ChangeNotifier {
       return;
     }
 
-    _isGeneratingSummary = true;
-    notifyListeners();
+    try {
+      _isGeneratingSummary = true;
+      notifyListeners();
+    } catch (e) {
+      print('❌ 设置生成状态失败: $e');
+      return;
+    }
 
     // 先准备数据（在try外层，确保catch也能访问）
     final current = _currentWeather!.current?.current;
@@ -2231,10 +2250,14 @@ class WeatherProvider extends ChangeNotifier {
 
     try {
       // 构建缓存key（包含城市名、天气、温度等关键信息）
-      final cityName =
-          _currentLocation?.district ?? _currentLocation?.city ?? '未知';
+      // 如果传入了城市名称，使用传入的；否则使用当前定位城市
+      final targetCityName =
+          cityName ??
+          _currentLocation?.district ??
+          _currentLocation?.city ??
+          '未知';
       final cacheKey =
-          'ai_summary:$cityName:${current.weather}:${current.temperature}';
+          'ai_summary:$targetCityName:${current.weather}:${current.temperature}';
 
       // 如果不是强制刷新，先尝试从缓存获取
       if (!forceRefresh) {
@@ -2282,13 +2305,22 @@ class WeatherProvider extends ChangeNotifier {
     } catch (e) {
       print('❌ 生成智能摘要异常: $e');
       // 失败时使用默认文案
-      _weatherSummary = _generateDefaultWeatherSummary(
-        current,
-        upcomingWeather,
-      );
+      try {
+        _weatherSummary = _generateDefaultWeatherSummary(
+          current,
+          upcomingWeather,
+        );
+      } catch (e2) {
+        print('❌ 生成默认摘要也失败: $e2');
+        _weatherSummary = '天气数据加载中，请稍候...';
+      }
     } finally {
-      _isGeneratingSummary = false;
-      notifyListeners();
+      try {
+        _isGeneratingSummary = false;
+        notifyListeners();
+      } catch (e) {
+        print('❌ 重置生成状态失败: $e');
+      }
     }
   }
 
@@ -2326,7 +2358,11 @@ class WeatherProvider extends ChangeNotifier {
 
   /// 生成15日天气总结
   /// [forceRefresh] 是否强制刷新，忽略缓存（默认false）
-  Future<void> generateForecast15dSummary({bool forceRefresh = false}) async {
+  /// [cityName] 城市名称（可选），用于城市天气页面，不传则使用当前定位城市
+  Future<void> generateForecast15dSummary({
+    bool forceRefresh = false,
+    String? cityName,
+  }) async {
     if (_forecast15d == null || _forecast15d!.isEmpty) {
       print('⚠️ 无15日预报数据，无法生成总结');
       return;
@@ -2337,8 +2373,13 @@ class WeatherProvider extends ChangeNotifier {
       return;
     }
 
-    _isGenerating15dSummary = true;
-    notifyListeners();
+    try {
+      _isGenerating15dSummary = true;
+      notifyListeners();
+    } catch (e) {
+      print('❌ 设置15日生成状态失败: $e');
+      return;
+    }
 
     try {
       // 构建天气数据
@@ -2354,13 +2395,17 @@ class WeatherProvider extends ChangeNotifier {
       }
 
       // 构建缓存key（包含城市名和主要天气类型）
-      final cityName =
-          _currentLocation?.district ?? _currentLocation?.city ?? '未知';
+      // 如果传入了城市名称，使用传入的；否则使用当前定位城市
+      final targetCityName =
+          cityName ??
+          _currentLocation?.district ??
+          _currentLocation?.city ??
+          '未知';
       final mainWeathers = dailyForecasts
           .take(5)
           .map((d) => d['weather'])
           .join(',');
-      final cacheKey = 'ai_15d_summary:$cityName:$mainWeathers';
+      final cacheKey = 'ai_15d_summary:$targetCityName:$mainWeathers';
 
       // 如果不是强制刷新，先尝试从缓存获取
       if (!forceRefresh) {
@@ -2379,9 +2424,15 @@ class WeatherProvider extends ChangeNotifier {
       print('\n🎨 开始生成AI 15日天气总结...');
 
       // 构建prompt
+      // 使用传入的城市名称，如果没有传入则使用当前定位城市
+      final promptCityName =
+          cityName ??
+          _currentLocation?.district ??
+          _currentLocation?.city ??
+          '当前位置';
       final prompt = _aiService.buildForecast15dSummaryPrompt(
         dailyForecasts: dailyForecasts,
-        cityName: _currentLocation?.district ?? '当前位置',
+        cityName: promptCityName,
       );
 
       // 调用AI
@@ -2401,10 +2452,19 @@ class WeatherProvider extends ChangeNotifier {
     } catch (e) {
       print('❌ 生成15日天气总结异常: $e');
       // 失败时使用简单的默认文案
-      _forecast15dSummary = _getDefault15dSummary();
+      try {
+        _forecast15dSummary = _getDefault15dSummary();
+      } catch (e2) {
+        print('❌ 生成默认15日总结也失败: $e2');
+        _forecast15dSummary = '未来15天天气预报数据加载中，请稍候...';
+      }
     } finally {
-      _isGenerating15dSummary = false;
-      notifyListeners();
+      try {
+        _isGenerating15dSummary = false;
+        notifyListeners();
+      } catch (e) {
+        print('❌ 重置15日生成状态失败: $e');
+      }
     }
   }
 

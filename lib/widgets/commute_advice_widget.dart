@@ -4,7 +4,6 @@ import '../providers/weather_provider.dart';
 import '../providers/theme_provider.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_constants.dart';
-import '../models/commute_advice_model.dart';
 
 /// 通勤建议组件
 class CommuteAdviceWidget extends StatefulWidget {
@@ -44,95 +43,117 @@ class _CommuteAdviceWidgetState extends State<CommuteAdviceWidget> {
                 color: AppColors.materialCardColor,
                 surfaceTintColor: Colors.transparent,
                 shape: AppColors.cardShape,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // 标题行（可点击展开/收起）
-                      InkWell(
-                        onTap: () {
-                          setState(() {
-                            _isExpanded = !_isExpanded;
-                          });
-                          // 展开时标记全部为已读
-                          if (_isExpanded && unreadCount > 0) {
-                            weatherProvider.markAllCommuteAdvicesAsRead();
-                          }
-                        },
-                        borderRadius: BorderRadius.circular(8),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Row(
-                            children: [
-                              // 图标
-                              Icon(
-                                Icons.commute_rounded,
-                                color: AppColors.warning,
-                                size: AppConstants.sectionTitleIconSize,
-                              ),
-                              const SizedBox(width: 8),
-                              // 标题（固定文字）
-                              Text(
-                                '通勤提醒',
-                                style: TextStyle(
-                                  color: AppColors.textPrimary,
-                                  fontSize: AppConstants.sectionTitleFontSize,
-                                  fontWeight: FontWeight.bold,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    // ✨ AI智能助手专用渐变背景：深紫到深蓝
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFF4A148C).withOpacity(0.9), // 深紫
+                        Color(0xFF1A237E).withOpacity(0.9), // 深蓝
+                        Color(0xFF0D47A1).withOpacity(0.9), // 更深蓝
+                      ],
+                    ),
+                    // 添加微妙的几何图案效果（金色光晕）
+                    boxShadow: [
+                      BoxShadow(
+                        color: Color(0xFFFFB300).withOpacity(0.1), // 金色光晕
+                        blurRadius: 20,
+                        offset: const Offset(0, 4),
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // 标题行（可点击展开/收起）
+                        InkWell(
+                          onTap: () {
+                            setState(() {
+                              _isExpanded = !_isExpanded;
+                            });
+                            // 展开时标记全部为已读
+                            if (_isExpanded && unreadCount > 0) {
+                              weatherProvider.markAllCommuteAdvicesAsRead();
+                            }
+                          },
+                          borderRadius: BorderRadius.circular(8),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: Row(
+                              children: [
+                                // 图标
+                                Icon(
+                                  Icons.commute_rounded,
+                                  color: const Color(0xFFFFB300), // 金琥珀色
+                                  size: AppConstants.sectionTitleIconSize,
                                 ),
-                              ),
-                              const SizedBox(width: 8),
-                              // 建议数量标签（始终显示）
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.textSecondary.withOpacity(
-                                    0.1,
-                                  ),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  '${advices.length}条',
+                                const SizedBox(width: 8),
+                                // 标题（固定文字）
+                                Text(
+                                  '通勤提醒',
                                   style: TextStyle(
-                                    color: AppColors.textSecondary,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w500,
+                                    color: Colors.white, // 白色文字
+                                    fontSize: AppConstants.sectionTitleFontSize,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                              ),
-                              const Spacer(),
-                              // 展开/收起图标（展开朝下，收起朝右）
-                              Icon(
-                                _isExpanded
-                                    ? Icons.keyboard_arrow_down
-                                    : Icons.keyboard_arrow_right,
-                                color: AppColors.textSecondary,
-                                size: 20,
-                              ),
-                            ],
+                                const SizedBox(width: 8),
+                                // 建议数量标签（始终显示）
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    '${advices.length}条',
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                const Spacer(),
+                                // 展开/收起图标（展开朝下，收起朝右）
+                                Icon(
+                                  _isExpanded
+                                      ? Icons.keyboard_arrow_down
+                                      : Icons.keyboard_arrow_right,
+                                  color: Colors.white70,
+                                  size: 20,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
 
-                      // 建议列表（收起时显示第一条，展开时显示所有）
-                      const SizedBox(height: 12),
-                      ...() {
-                        final sortedAdvices = List.from(advices);
-                        sortedAdvices.sort(
-                          (a, b) => a.priority.compareTo(b.priority),
-                        );
-                        // 收起时只显示第一条，展开时显示所有
-                        final displayAdvices = _isExpanded
-                            ? sortedAdvices
-                            : [sortedAdvices.first];
-                        return displayAdvices.map(
-                          (advice) => _buildAdviceItem(advice, !_isExpanded),
-                        );
-                      }(),
-                    ],
+                        // 建议列表（收起时显示第一条，展开时显示所有）
+                        const SizedBox(height: 12),
+                        ...() {
+                          final sortedAdvices = List.from(advices);
+                          sortedAdvices.sort(
+                            (a, b) => a.priority.compareTo(b.priority),
+                          );
+                          // 收起时只显示第一条，展开时显示所有
+                          final displayAdvices = _isExpanded
+                              ? sortedAdvices
+                              : [sortedAdvices.first];
+                          return displayAdvices.map(
+                            (advice) => _buildAdviceItem(advice, !_isExpanded),
+                          );
+                        }(),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -143,84 +164,44 @@ class _CommuteAdviceWidgetState extends State<CommuteAdviceWidget> {
     );
   }
 
-  /// 构建单个建议项（参考生活指数卡片样式，收起时可点击展开）
+  /// 构建单个建议项（AI智能助手风格，简洁文字展示）
   Widget _buildAdviceItem(advice, bool isCollapsed) {
     final levelColor = advice.getLevelColor();
-    final levelBgColor = advice.getLevelBackgroundColor();
     final levelName = advice.getLevelName();
+    const aiColor = Color(0xFFFFB300); // 琥珀色
 
-    final themeProvider = context.read<ThemeProvider>();
-
-    // 根据级别和主题决定颜色
-    Gradient? backgroundGradient; // 亮色模式使用渐变
-    Color? backgroundColor; // 暗色模式使用纯色
-    Color textColor;
-    Color borderColor;
-    Color levelTagBgColor; // 级别标签背景色
-    Color levelTagTextColor; // 级别标签文字色
-
-    if (themeProvider.isLightTheme) {
-      // 亮色模式：主题浅蓝色渐变（带透明度），着重提醒
-      backgroundGradient = const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          Color(0x40E1F5FE), // 浅蓝色，25% 透明度
-          Color(0x6081D4FA), // 较深浅蓝色，38% 透明度
-        ],
-      );
-      backgroundColor = null; // 使用渐变，不使用纯色
-      textColor = levelColor; // 文字使用级别原色
-      borderColor = levelColor; // 边框使用级别原色
-      // Element UI dark tag 风格：深色背景 + 白字
-      levelTagBgColor = levelColor; // 级别标签背景使用级别原色（不透明）
-      levelTagTextColor = Colors.white; // 级别标签白字
-    } else {
-      // 暗色模式：保持原有风格
-      backgroundGradient = null; // 不使用渐变
-      backgroundColor = levelBgColor.withOpacity(0.25);
-      textColor = levelColor; // 使用原色
-      borderColor = Colors.transparent; // 无边框
-      // Element UI plain tag 风格：半透明背景 + 彩色边框 + 彩色文字
-      levelTagBgColor = levelBgColor.withOpacity(0.25); // 半透明背景
-      levelTagTextColor = levelColor; // 级别原色文字
-    }
-
-    // AI标签颜色（金琥珀色）及其反色
-    const aiColor = Color(0xFFFFB300); // 金琥珀色
-    const aiInvertedColor = Color(0xFF004CFF); // 反色（蓝色）
-    final aiTextColor = themeProvider.isLightTheme ? aiInvertedColor : aiColor;
-
+    // ✨ 使用和AI智能助手完全一致的样式：金琥珀色边框和渐变背景
     return InkWell(
       onTap: isCollapsed
           ? () {
-              // 收起时点击小卡片展开
+              // 收起时点击展开
               setState(() {
                 _isExpanded = true;
               });
             }
           : null, // 展开时不响应点击
-      borderRadius: BorderRadius.circular(4),
+      borderRadius: BorderRadius.circular(12),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
+        margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: backgroundColor, // 暗色模式使用纯色
-          gradient: backgroundGradient, // 亮色模式使用渐变
-          borderRadius: BorderRadius.circular(4),
-          border: borderColor != Colors.transparent
-              ? Border.all(color: borderColor, width: 1) // 亮色模式添加边框
-              : null, // 暗色模式无边框
+          gradient: LinearGradient(
+            colors: [
+              Colors.white.withOpacity(0.15),
+              Colors.white.withOpacity(0.08),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: aiColor.withOpacity(0.3), width: 1),
           boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(
-                themeProvider.isLightTheme ? 0.08 : 0.15,
-              ),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-              spreadRadius: 0,
-            ),
-          ],
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -235,26 +216,20 @@ class _CommuteAdviceWidgetState extends State<CommuteAdviceWidget> {
                 children: [
                   Row(
                     children: [
-                      // 级别标签（亮色=Element UI dark tag，暗色=Element UI plain tag）
+                      // 级别标签 - 保留颜色
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 8,
                           vertical: 4,
-                        ), // Element UI tag 风格内边距
+                        ),
                         decoration: BoxDecoration(
-                          color: levelTagBgColor,
+                          color: levelColor,
                           borderRadius: BorderRadius.circular(4),
-                          border: themeProvider.isLightTheme
-                              ? null // 亮色模式：无边框（dark tag）
-                              : Border.all(
-                                  color: levelColor,
-                                  width: 1,
-                                ), // 暗色模式：彩色边框（plain tag）
                         ),
                         child: Text(
                           levelName,
                           style: TextStyle(
-                            color: levelTagTextColor,
+                            color: Colors.white,
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 0.2,
@@ -269,7 +244,7 @@ class _CommuteAdviceWidgetState extends State<CommuteAdviceWidget> {
                               child: Text(
                                 advice.title,
                                 style: TextStyle(
-                                  color: textColor, // 使用级别颜色
+                                  color: Colors.white, // 白色文字
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -277,16 +252,18 @@ class _CommuteAdviceWidgetState extends State<CommuteAdviceWidget> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            // AI标签（仅AI生成的建议显示）
+                            // AI标签（金琥珀色）
                             if (advice.adviceType == 'ai_smart') ...[
                               const SizedBox(width: 6),
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 4,
+                                  horizontal: 6,
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: aiTextColor.withOpacity(0.15),
+                                  color: const Color(
+                                    0xFFFFB300,
+                                  ).withOpacity(0.25),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Row(
@@ -294,15 +271,15 @@ class _CommuteAdviceWidgetState extends State<CommuteAdviceWidget> {
                                   children: [
                                     Icon(
                                       Icons.auto_awesome,
-                                      color: aiTextColor,
+                                      color: const Color(0xFFFFB300),
                                       size: 10,
                                     ),
                                     const SizedBox(width: 2),
                                     Text(
                                       'AI',
                                       style: TextStyle(
-                                        color: aiTextColor,
-                                        fontSize: 9,
+                                        color: const Color(0xFFFFB300),
+                                        fontSize: 10,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -321,9 +298,9 @@ class _CommuteAdviceWidgetState extends State<CommuteAdviceWidget> {
                     Text(
                       advice.content,
                       style: TextStyle(
-                        color: textColor, // 使用级别颜色
-                        fontSize: 13,
-                        height: 1.4,
+                        color: Colors.white70, // 半透明白色
+                        fontSize: 14,
+                        height: 1.5,
                       ),
                     ),
                   ],

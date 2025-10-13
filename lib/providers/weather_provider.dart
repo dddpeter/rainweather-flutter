@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import '../models/weather_model.dart';
@@ -14,17 +16,18 @@ import '../services/sun_moon_index_service.dart';
 import '../services/weather_widget_service.dart';
 import '../services/commute_advice_service.dart';
 import '../services/ai_service.dart';
+import '../services/smart_cache_service.dart';
 import '../models/commute_advice_model.dart';
 import '../constants/app_constants.dart';
 import '../utils/app_state_manager.dart';
 import '../utils/city_name_matcher.dart';
 import '../services/location_change_notifier.dart';
-import 'dart:async';
 
 class WeatherProvider extends ChangeNotifier {
   final WeatherService _weatherService = WeatherService.getInstance();
   final LocationService _locationService = LocationService.getInstance();
   final DatabaseService _databaseService = DatabaseService.getInstance();
+  final SmartCacheService _smartCache = SmartCacheService();
   final CityService _cityService = CityService.getInstance();
   final WeatherAlertService _alertService = WeatherAlertService.instance;
   final WeatherWidgetService _widgetService =
@@ -604,9 +607,14 @@ class WeatherProvider extends ChangeNotifier {
 
       // Check if we have valid cached weather data
       final weatherKey = '${location.district}:${AppConstants.weatherAllKey}';
-      WeatherModel? cachedWeather = await _databaseService.getWeatherData(
-        weatherKey,
+
+      // 🚀 优先使用智能缓存（内存+SQLite）
+      WeatherModel? cachedWeather = await _getWeatherFromSmartCache(
+        location.district,
       );
+
+      // 如果智能缓存未命中，尝试旧的数据库缓存
+      cachedWeather ??= await _databaseService.getWeatherData(weatherKey);
 
       if (cachedWeather != null) {
         // Use cached data
@@ -650,6 +658,9 @@ class WeatherProvider extends ChangeNotifier {
 
           // Save weather data to cache
           await _databaseService.putWeatherData(weatherKey, weather);
+
+          // 🚀 同时存储到智能缓存
+          await _putWeatherToSmartCache(location.district, weather);
 
           // Cache location in service
           _locationService.setCachedLocation(location);
@@ -974,7 +985,11 @@ class WeatherProvider extends ChangeNotifier {
 
       // 如果不强制刷新，尝试使用缓存
       if (!forceRefresh) {
-        cachedWeather = await _databaseService.getWeatherData(weatherKey);
+        // 🚀 优先使用智能缓存
+        cachedWeather = await _getWeatherFromSmartCache(cityName);
+
+        // 如果智能缓存未命中，尝试旧的数据库缓存
+        cachedWeather ??= await _databaseService.getWeatherData(weatherKey);
 
         // 如果启用过期检查，且缓存过期，则需要刷新
         if (cachedWeather != null && checkExpiration) {
@@ -1019,6 +1034,9 @@ class WeatherProvider extends ChangeNotifier {
 
           // 保存到缓存
           await _databaseService.putWeatherData(weatherKey, weather);
+
+          // 🚀 同时存储到智能缓存
+          await _putWeatherToSmartCache(cityName, weather);
 
           // 只为当前定位城市分析天气提醒（智能提醒）
           // 其他城市只使用气象预警（原始预警数据）
@@ -2767,6 +2785,51 @@ class WeatherProvider extends ChangeNotifier {
       }
     } catch (e) {
       print('❌ 清理通勤建议失败: $e');
+    }
+  }
+
+  // ========== 智能缓存辅助方法 ==========
+
+  /// 使用智能缓存获取天气数据
+  Future<WeatherModel?> _getWeatherFromSmartCache(String cityName) async {
+    try {
+      final cacheKey = '$cityName:weather';
+      final cachedJson = await _smartCache.getData(
+        key: cacheKey,
+        type: CacheDataType.currentWeather,
+      );
+
+      if (cachedJson != null) {
+        final weatherData = WeatherModel.fromJson(
+          Map<String, dynamic>.from(jsonDecode(cachedJson) as Map),
+        );
+        print('💾 智能缓存命中: $cityName');
+        return weatherData;
+      }
+
+      print('🔄 智能缓存未命中: $cityName');
+      return null;
+    } catch (e) {
+      print('❌ 智能缓存读取失败: $cityName, 错误: $e');
+      return null;
+    }
+  }
+
+  /// 将天气数据存储到智能缓存
+  Future<void> _putWeatherToSmartCache(
+    String cityName,
+    WeatherModel weather,
+  ) async {
+    try {
+      final cacheKey = '$cityName:weather';
+      await _smartCache.putData(
+        key: cacheKey,
+        data: weather.toJson(),
+        type: CacheDataType.currentWeather,
+      );
+      print('💾 天气数据已存入智能缓存: $cityName');
+    } catch (e) {
+      print('❌ 智能缓存存储失败: $cityName, 错误: $e');
     }
   }
 

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -21,6 +22,7 @@ import 'constants/app_colors.dart';
 import 'constants/theme_extensions.dart';
 import 'services/location_service.dart';
 import 'services/notification_service.dart';
+import 'services/smart_cache_service.dart';
 import 'services/baidu_location_service.dart';
 import 'services/amap_location_service.dart';
 import 'services/tencent_location_service.dart';
@@ -38,6 +40,20 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 // 应用在后台的时间戳
 DateTime? _appInBackgroundSince;
+
+/// 启动后台缓存清理任务
+void _startBackgroundCacheCleaner() {
+  print('🧹 启动后台缓存清理任务（每30分钟）');
+
+  // 每30分钟清理一次过期缓存
+  Timer.periodic(const Duration(minutes: 30), (timer) async {
+    try {
+      await SmartCacheService().clearExpiredCache();
+    } catch (e) {
+      print('❌ 后台缓存清理失败: $e');
+    }
+  });
+}
 
 /// 路由观察者，用于监听页面切换
 class _RouteObserver extends RouteObserver<PageRoute<dynamic>> {
@@ -78,6 +94,18 @@ class _RouteObserver extends RouteObserver<PageRoute<dynamic>> {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 🚀 预加载智能缓存到内存
+  try {
+    print('🚀 预加载智能缓存...');
+    await SmartCacheService().preloadCommonData();
+    print('✅ 智能缓存预加载完成');
+  } catch (e) {
+    print('❌ 智能缓存预加载失败: $e');
+  }
+
+  // 🧹 启动后台缓存清理任务
+  _startBackgroundCacheCleaner();
 
   // 初始化通知服务并请求权限
   try {

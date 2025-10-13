@@ -39,6 +39,7 @@ class _AIContentWidgetState extends State<AIContentWidget> {
   String? _content; // AI内容
   bool _isLoading = true; // 加载状态
   bool _hasError = false; // 错误状态
+  bool _isTimeout = false; // 超时状态
 
   @override
   void initState() {
@@ -65,6 +66,7 @@ class _AIContentWidgetState extends State<AIContentWidget> {
     setState(() {
       _isLoading = true;
       _hasError = false;
+      _isTimeout = false;
     });
 
     try {
@@ -81,9 +83,13 @@ class _AIContentWidgetState extends State<AIContentWidget> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _content = widget.defaultContent; // 降级到默认内容
           _isLoading = false;
           _hasError = true;
+          // 判断是否为超时错误
+          if (e.toString().contains('TimeoutException') ||
+              e.toString().contains('timeout')) {
+            _isTimeout = true;
+          }
         });
       }
     }
@@ -137,7 +143,7 @@ class _AIContentWidgetState extends State<AIContentWidget> {
                           (themeProvider.isLightTheme
                                   ? const Color(0xFF004CFF)
                                   : const Color(0xFFFFB300))
-                              .withOpacity(0.15),
+                              .withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Row(
@@ -187,7 +193,7 @@ class _AIContentWidgetState extends State<AIContentWidget> {
       // 加载状态：显示骨架屏
       return _buildSkeletonLoading();
     } else if (_hasError) {
-      // 错误状态：显示重试按钮
+      // 错误状态：根据是否为超时显示不同内容
       return _buildErrorState();
     } else {
       // 成功状态：显示AI内容（带渐入动画）
@@ -222,7 +228,7 @@ class _AIContentWidgetState extends State<AIContentWidget> {
         height: height,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(4),
-          color: AppColors.textSecondary.withOpacity(0.1),
+          color: AppColors.textSecondary.withValues(alpha: 0.1),
         ),
       ),
       builder: (context, value, child) {
@@ -267,14 +273,27 @@ class _AIContentWidgetState extends State<AIContentWidget> {
       key: const ValueKey('error'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          _content ?? widget.defaultContent,
-          style: TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 14,
-            height: 1.5,
+        // 根据是否为超时显示不同内容
+        if (_isTimeout)
+          // 超时状态：显示"暂未获取到结果"
+          Text(
+            '暂未获取到结果',
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 14,
+              height: 1.5,
+            ),
+          )
+        else
+          // 其他错误：显示默认内容
+          Text(
+            widget.defaultContent,
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 14,
+              height: 1.5,
+            ),
           ),
-        ),
         const SizedBox(height: 12),
         Row(
           children: [

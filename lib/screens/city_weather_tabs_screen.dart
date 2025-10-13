@@ -551,11 +551,16 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
                   await weatherProvider.generateWeatherSummary(
                     cityName: widget.cityName, // 传入城市名称
                   );
-                  return weatherProvider.weatherSummary ??
-                      '今日天气舒适，适合出行。注意温差变化，合理增减衣物。';
+                  if (weatherProvider.weatherSummary != null &&
+                      weatherProvider.weatherSummary!.isNotEmpty) {
+                    return weatherProvider.weatherSummary!;
+                  }
+                  // 如果没有获取到内容，抛出异常让AIContentWidget处理
+                  throw Exception('未获取到AI内容');
                 } catch (e) {
                   print('❌ 加载AI智能助手失败: $e');
-                  return '今日天气舒适，适合出行。注意温差变化，合理增减衣物。';
+                  // 重新抛出异常，让AIContentWidget处理
+                  rethrow;
                 }
               },
               defaultContent: '今日天气舒适，适合出行。注意温差变化，合理增减衣物。',
@@ -576,11 +581,16 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
                   await weatherProvider.generateForecast15dSummary(
                     cityName: widget.cityName, // 传入城市名称
                   );
-                  return weatherProvider.forecast15dSummary ??
-                      '未来半月天气平稳，温度变化不大，适合安排户外活动。';
+                  if (weatherProvider.forecast15dSummary != null &&
+                      weatherProvider.forecast15dSummary!.isNotEmpty) {
+                    return weatherProvider.forecast15dSummary!;
+                  }
+                  // 如果没有获取到内容，抛出异常让AIContentWidget处理
+                  throw Exception('未获取到AI内容');
                 } catch (e) {
                   print('❌ 加载15日天气趋势失败: $e');
-                  return '未来半月天气平稳，温度变化不大，适合安排户外活动。';
+                  // 重新抛出异常，让AIContentWidget处理
+                  rethrow;
                 }
               },
               defaultContent: '未来半月天气平稳，温度变化不大，适合安排户外活动。',

@@ -56,18 +56,27 @@ class SmartCacheService {
   DatabaseService get _databaseService => DatabaseService.getInstance();
 
   /// 获取数据类型的过期时间
+  ///
+  /// 优化后的缓存策略：
+  /// - 当前天气：10分钟（天气不会5分钟内剧烈变化）
+  /// - 小时预报：30分钟（小时预报每小时更新一次）
+  /// - 日预报：1小时（日预报变化不频繁）
+  /// - 城市列表：24小时（城市数据基本不变）
+  /// - 定位数据：1小时（用户位置变化频率低）
+  /// - AI摘要：6小时（AI内容相对稳定）
+  /// - 日月数据：6小时（日出日落时间固定）
   Duration _getExpirationForType(CacheDataType type) {
     switch (type) {
       case CacheDataType.currentWeather:
-        return const Duration(minutes: 5);
+        return const Duration(minutes: 10); // 优化：5→10分钟
       case CacheDataType.hourlyForecast:
-        return const Duration(minutes: 15);
+        return const Duration(minutes: 30); // 优化：15→30分钟
       case CacheDataType.dailyForecast:
         return const Duration(hours: 1);
       case CacheDataType.cityList:
         return const Duration(hours: 24);
       case CacheDataType.locationData:
-        return const Duration(minutes: 10);
+        return const Duration(hours: 1); // 优化：10分钟→1小时
       case CacheDataType.aiSummary:
         return const Duration(hours: 6);
       case CacheDataType.sunMoonData:

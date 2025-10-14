@@ -571,7 +571,9 @@ class _TodayScreenState extends State<TodayScreen>
                           _buildTopWeatherSection(weatherProvider),
                           AppColors.cardSpacingWidget,
                           // AI智能助手卡片（整合天气摘要和通勤提醒）
-                          const AISmartAssistantWidget(),
+                          AISmartAssistantWidget(
+                            key: ValueKey(weatherProvider.weatherSummary),
+                          ),
                           AppColors.cardSpacingWidget,
                           // 空气质量卡片
                           AirQualityCard(
@@ -655,8 +657,8 @@ class _TodayScreenState extends State<TodayScreen>
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // 左侧占位（保持对称）
-                  const SizedBox(width: 40),
+                  // 左侧：主题切换按钮
+                  _buildThemeToggleButton(context, weatherProvider),
                   Expanded(
                     child: Center(
                       child: Column(
@@ -1235,6 +1237,39 @@ class _TodayScreenState extends State<TodayScreen>
             MaterialPageRoute(builder: (context) => const HourlyScreen()),
           );
         },
+      ),
+    );
+  }
+
+  /// 构建主题切换按钮
+  Widget _buildThemeToggleButton(
+    BuildContext context,
+    WeatherProvider weatherProvider,
+  ) {
+    final themeProvider = context.watch<ThemeProvider>();
+    final isLightTheme = themeProvider.isLightTheme;
+
+    return SizedBox(
+      width: 40,
+      height: 40,
+      child: IconButton(
+        icon: Icon(
+          isLightTheme ? Icons.dark_mode : Icons.light_mode,
+          color: context.read<ThemeProvider>().getColor('headerTextPrimary'),
+          size: 24,
+        ),
+        onPressed: () {
+          // iOS触觉反馈
+          if (Platform.isIOS) {
+            HapticFeedback.mediumImpact();
+          }
+          // 切换亮色/暗色模式
+          themeProvider.setThemeMode(
+            isLightTheme ? AppThemeMode.dark : AppThemeMode.light,
+          );
+        },
+        padding: EdgeInsets.zero,
+        tooltip: isLightTheme ? '切换到暗色模式' : '切换到亮色模式',
       ),
     );
   }

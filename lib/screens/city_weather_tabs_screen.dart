@@ -542,6 +542,11 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
               title: 'AI智能助手',
               icon: Icons.auto_awesome,
               cityName: widget.cityName, // 传入城市名称
+              refreshKey: weatherProvider
+                  .currentWeather
+                  ?.current
+                  ?.current
+                  ?.reporttime, // 使用报告时间作为刷新键
               fetchAIContent: () async {
                 try {
                   if (weatherProvider.weatherSummary != null &&
@@ -572,6 +577,11 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
               title: '15日天气趋势',
               icon: Icons.trending_up,
               cityName: widget.cityName, // 传入城市名称
+              refreshKey: weatherProvider
+                  .currentWeather
+                  ?.current
+                  ?.current
+                  ?.reporttime, // 使用报告时间作为刷新键
               fetchAIContent: () async {
                 try {
                   if (weatherProvider.forecast15dSummary != null &&

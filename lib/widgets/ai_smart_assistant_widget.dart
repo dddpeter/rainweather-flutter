@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../providers/weather_provider.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_constants.dart';
+import '../services/weather_alert_service.dart';
+import 'weather_alert_widget.dart';
 
 /// 增强版AI智能助手组件 - 整合天气摘要和通勤提醒
 class AISmartAssistantWidget extends StatefulWidget {
@@ -19,7 +21,8 @@ class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final weatherProvider = context.read<WeatherProvider>();
+    // ⚠️ 使用 watch 而不是 read，监听 weatherProvider 的变化
+    final weatherProvider = context.watch<WeatherProvider>();
 
     final advices = weatherProvider.commuteAdvices;
     final hasCommuteAdvices = advices.isNotEmpty;
@@ -207,8 +210,8 @@ class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
     final sortedAdvices = List.from(advices);
     sortedAdvices.sort((a, b) => a.priority.compareTo(b.priority));
 
-    // 收起时只显示第一条，展开时显示所有
-    final displayAdvices = isExpanded ? sortedAdvices : [sortedAdvices.first];
+    // 始终只显示第一条（最重要的）
+    final displayAdvice = sortedAdvices.first;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -249,29 +252,44 @@ class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
           ],
         ),
         const SizedBox(height: 8),
-        // 通勤建议列表
-        ...displayAdvices.map(
-          (advice) => _buildCommuteAdviceItem(advice, !isExpanded),
-        ),
+        // 通勤建议（只显示第一条，显示4行：标题1行+内容3行）
+        _buildCommuteAdviceItem(displayAdvice, advices),
       ],
     );
   }
 
   /// 构建单个通勤建议项
-  Widget _buildCommuteAdviceItem(dynamic advice, bool isCollapsed) {
+  /// [advice] 当前显示的建议对象
+  /// [allAdvices] 所有建议列表（用于跳转页面）
+  Widget _buildCommuteAdviceItem(dynamic advice, List<dynamic> allAdvices) {
     final levelColor = advice.getLevelColor();
     final levelName = advice.getLevelName();
     const aiColor = Color(0xFFFFB300); // 金琥珀色
+    final weatherProvider = context.read<WeatherProvider>();
+    final alertService = WeatherAlertService.instance;
 
     return InkWell(
-      onTap: isCollapsed
-          ? () {
-              // 收起时点击展开
-              setState(() {
-                _isExpanded = true;
-              });
-            }
-          : null, // 展开时不响应点击
+      onTap: () {
+        // 点击打开综合提醒页面
+        final currentLocation = weatherProvider.currentLocation;
+        final currentCity =
+            currentLocation?.district ?? currentLocation?.city ?? '未知';
+        // 获取天气提醒（智能提醒）
+        final smartAlerts = alertService.getAlertsForCity(
+          currentCity,
+          currentLocation,
+        );
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => WeatherAlertDetailScreen(
+              alerts: smartAlerts,
+              commuteAdvices: allAdvices.cast(),
+            ),
+          ),
+        );
+      },
       borderRadius: BorderRadius.circular(12),
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
@@ -385,18 +403,18 @@ class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
                       ),
                     ],
                   ),
-                  // 收起时不显示详细内容，展开时显示
-                  if (!isCollapsed) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      advice.content,
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                        height: 1.5,
-                      ),
+                  // 始终显示内容（3行，省略号结尾）
+                  const SizedBox(height: 8),
+                  Text(
+                    advice.content,
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
+                      height: 1.5,
                     ),
-                  ],
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ],
               ),
             ),

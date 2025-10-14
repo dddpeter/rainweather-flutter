@@ -217,7 +217,12 @@ class WeatherProvider extends ChangeNotifier {
 
       // 使用缓存数据先生成一次AI智能摘要（快速显示）
       // 后台刷新成功后会用最新数据重新生成
-      generateWeatherSummary();
+      // ✨ 先尝试从缓存加载AI摘要
+      await _loadCachedAISummary();
+      // 如果缓存中没有，再异步生成
+      if (_weatherSummary == null) {
+        generateWeatherSummary();
+      }
 
       // 3. 后台异步刷新（不阻塞UI）
       _backgroundRefresh();
@@ -2218,6 +2223,40 @@ class WeatherProvider extends ChangeNotifier {
     }
   }
 
+  /// 从缓存加载AI摘要（快速启动时使用）
+  Future<void> _loadCachedAISummary() async {
+    try {
+      if (_currentWeather == null || _currentLocation == null) {
+        print('⚠️ 无天气数据或位置信息，跳过加载缓存摘要');
+        return;
+      }
+
+      final current = _currentWeather!.current?.current;
+      if (current == null) {
+        print('⚠️ 无当前天气数据，跳过加载缓存摘要');
+        return;
+      }
+
+      // 构建缓存key
+      final targetCityName =
+          _currentLocation?.district ?? _currentLocation?.city ?? '未知';
+      final cacheKey =
+          'ai_summary:$targetCityName:${current.weather}:${current.temperature}';
+
+      // 尝试从缓存获取
+      final cachedSummary = await _databaseService.getAISummary(cacheKey);
+      if (cachedSummary != null && cachedSummary.isNotEmpty) {
+        _weatherSummary = cachedSummary;
+        print('✅ 从缓存加载AI摘要: $_weatherSummary');
+        notifyListeners();
+      } else {
+        print('📦 缓存中没有AI摘要，需要生成');
+      }
+    } catch (e) {
+      print('❌ 加载缓存AI摘要失败: $e');
+    }
+  }
+
   /// 生成智能天气摘要
   /// [forceRefresh] 是否强制刷新，忽略缓存（默认false）
   /// [cityName] 城市名称（可选），用于城市天气页面，不传则使用当前定位城市
@@ -2643,33 +2682,18 @@ class WeatherProvider extends ChangeNotifier {
 
       // 获取当前通勤时段
       final currentTimeSlot = CommuteAdviceService.getCurrentCommuteTimeSlot();
-      final now = DateTime.now();
 
       // 过滤逻辑：
       // 1. 如果当前在通勤时段，只显示当前时段的建议
-      // 2. 如果不在通勤时段，不显示任何建议（已过期）
+      // 2. 如果不在通勤时段，显示今日的所有建议（允许回顾）
       final filteredAdvices = advices.where((advice) {
         if (currentTimeSlot != null) {
           // 在通勤时段内，只显示当前时段的建议
           return advice.timeSlot == currentTimeSlot;
         } else {
-          // 不在通勤时段，检查时段是否已结束
-          final settings = WeatherAlertService.instance.settings;
-          final currentMinutes = now.hour * 60 + now.minute;
-
-          if (advice.timeSlot == CommuteTimeSlot.morning) {
-            final morningEndMinutes =
-                settings.commuteTime.morningEnd.hour * 60 +
-                settings.commuteTime.morningEnd.minute;
-            // 早高峰已结束，不显示
-            return currentMinutes < morningEndMinutes;
-          } else {
-            final eveningEndMinutes =
-                settings.commuteTime.eveningEnd.hour * 60 +
-                settings.commuteTime.eveningEnd.minute;
-            // 晚高峰已结束，不显示
-            return currentMinutes < eveningEndMinutes;
-          }
+          // 不在通勤时段，显示今日所有建议（允许用户回顾）
+          // 只要是今天的建议，就显示
+          return true;
         }
       }).toList();
 

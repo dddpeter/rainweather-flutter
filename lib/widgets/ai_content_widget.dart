@@ -19,6 +19,7 @@ class AIContentWidget extends StatefulWidget {
   final VoidCallback? onRefresh; // 刷新回调（可选）
   final bool useCustomStyle; // 是否使用自定义样式（今日天气页面特殊样式）
   final String? cityName; // 城市名称，用于区分不同城市的AI内容
+  final String? refreshKey; // 刷新键，用于触发重新加载
 
   const AIContentWidget({
     super.key,
@@ -29,6 +30,7 @@ class AIContentWidget extends StatefulWidget {
     this.onRefresh,
     this.useCustomStyle = false, // 默认使用标准卡片样式
     this.cityName, // 添加城市名称参数
+    this.refreshKey, // 添加刷新键参数
   });
 
   @override
@@ -50,11 +52,12 @@ class _AIContentWidgetState extends State<AIContentWidget> {
   @override
   void didUpdateWidget(covariant AIContentWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // ⚠️ 只比较 cityName，不要比较 fetchAIContent（函数引用每次都不同）
+    // ⚠️ 检查城市名称或刷新键的变化，不要比较 fetchAIContent（函数引用每次都不同）
     // 避免无限循环重新加载
-    if (oldWidget.cityName != widget.cityName) {
+    if (oldWidget.cityName != widget.cityName ||
+        oldWidget.refreshKey != widget.refreshKey) {
       print(
-        '🔄 AIContentWidget: 城市变化 ${oldWidget.cityName} -> ${widget.cityName}，重新加载',
+        '🔄 AIContentWidget: 城市变化 ${oldWidget.cityName} -> ${widget.cityName} 或刷新键变化，重新加载',
       );
       _loadAIContent();
     }

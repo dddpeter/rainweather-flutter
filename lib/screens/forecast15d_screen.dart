@@ -231,14 +231,30 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
                             child: AIContentWidget(
                               title: '15日天气趋势',
                               icon: Icons.trending_up,
+                              refreshKey: weatherProvider
+                                  .currentWeather
+                                  ?.current
+                                  ?.current
+                                  ?.reporttime, // 使用报告时间作为刷新键
                               fetchAIContent: () async {
                                 if (weatherProvider.forecast15dSummary !=
-                                    null) {
+                                        null &&
+                                    weatherProvider
+                                        .forecast15dSummary!
+                                        .isNotEmpty) {
                                   return weatherProvider.forecast15dSummary!;
                                 }
                                 await weatherProvider
                                     .generateForecast15dSummary();
-                                return weatherProvider.forecast15dSummary ?? '';
+                                if (weatherProvider.forecast15dSummary !=
+                                        null &&
+                                    weatherProvider
+                                        .forecast15dSummary!
+                                        .isNotEmpty) {
+                                  return weatherProvider.forecast15dSummary!;
+                                }
+                                // 如果没有获取到内容，抛出异常让AIContentWidget处理
+                                throw Exception('未获取到AI内容');
                               },
                               defaultContent: '未来半月天气平稳，温度变化不大，适合安排户外活动。',
                             ),

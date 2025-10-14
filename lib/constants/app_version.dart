@@ -8,10 +8,10 @@ class AppVersion {
 
   /// 应用版本号（显示用）
   /// 格式: "主版本号.次版本号.修订号"
-  static const String version = '1.12.1';
+  static const String version = '1.12.3';
 
   /// 应用构建号
-  static const int buildNumber = 13;
+  static const int buildNumber = 15;
 
   /// 完整版本信息
   /// 格式: "版本号+构建号"
@@ -30,7 +30,7 @@ class AppVersion {
   static const String description = '一款简洁美观的智能天气预报应用';
 
   /// 版本发布日期
-  static const String releaseDate = '2025-01-12';
+  static const String releaseDate = '2025-01-14';
 
   /// 获取版本信息摘要
   static String getVersionSummary() {

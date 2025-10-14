@@ -228,7 +228,17 @@ This Flutter app is a complete refactor of the original Android weather app with
 
 ## Changelog
 
-### v1.12.1 (Latest - 2025-01-12)
+### v1.12.3 (Latest - 2025-01-14)
+
+**AI Smart Assistant Comprehensive Optimization**
+- ✨ **Startup Optimization**: AI summary loads from cache first, avoiding "generating" flicker
+- 🚗 **Commute Reminders**: Show today's historical reminders even outside commute hours for review
+- 📱 **Card Interaction**: Commute reminders show 4 lines (1 title + 3 content), tap to jump to comprehensive reminder page
+- 🏝️ **Floating Island**: Static opacity increased to 60% for better visibility for elderly users (from 15%)
+- 🌓 **Theme Quick Switch**: Added light/dark theme toggle icon in upper left of today screen
+- 🎯 **Interaction Simplification**: Removed multi-layer expansion logic, one-step access to details
+
+### v1.12.1 (2025-01-12)
 
 **Temperature Trend Charts Comprehensive Optimization**
 - 📊 **7-Day Temperature Chart**: Added weather icons and temperature values at data points for intuitive daily weather display

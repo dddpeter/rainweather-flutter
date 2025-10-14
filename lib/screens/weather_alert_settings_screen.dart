@@ -46,21 +46,16 @@ class _WeatherAlertSettingsScreenState
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildBasicSettings(),
-                    AppColors.cardSpacingWidget,
                     _buildCommuteSettings(),
-                    AppColors.cardSpacingWidget,
                     _buildAirQualitySettings(),
-                    AppColors.cardSpacingWidget,
                     _buildTemperatureSettings(),
-                    AppColors.cardSpacingWidget,
                     _buildNotificationSettings(),
-                    AppColors.cardSpacingWidget,
                     _buildAlertRules(),
+                    const SizedBox(height: 16),
                   ],
                 ),
               ),
@@ -71,13 +66,14 @@ class _WeatherAlertSettingsScreenState
   /// 基础设置
   Widget _buildBasicSettings() {
     return Card(
-      elevation: AppColors.cardElevation,
-      shadowColor: AppColors.cardShadowColor,
+      elevation: 0,
+      shadowColor: Colors.transparent,
       color: AppColors.materialCardColor,
       surfaceTintColor: Colors.transparent,
-      shape: AppColors.cardShape,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -137,13 +133,14 @@ class _WeatherAlertSettingsScreenState
   /// 通勤设置
   Widget _buildCommuteSettings() {
     return Card(
-      elevation: AppColors.cardElevation,
-      shadowColor: AppColors.cardShadowColor,
+      elevation: 0,
+      shadowColor: Colors.transparent,
       color: AppColors.materialCardColor,
       surfaceTintColor: Colors.transparent,
-      shape: AppColors.cardShape,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -269,13 +266,14 @@ class _WeatherAlertSettingsScreenState
   /// 空气质量设置
   Widget _buildAirQualitySettings() {
     return Card(
-      elevation: AppColors.cardElevation,
-      shadowColor: AppColors.cardShadowColor,
+      elevation: 0,
+      shadowColor: Colors.transparent,
       color: AppColors.materialCardColor,
       surfaceTintColor: Colors.transparent,
-      shape: AppColors.cardShape,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -340,13 +338,14 @@ class _WeatherAlertSettingsScreenState
   /// 温度设置
   Widget _buildTemperatureSettings() {
     return Card(
-      elevation: AppColors.cardElevation,
-      shadowColor: AppColors.cardShadowColor,
+      elevation: 0,
+      shadowColor: Colors.transparent,
       color: AppColors.materialCardColor,
       surfaceTintColor: Colors.transparent,
-      shape: AppColors.cardShape,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -435,13 +434,14 @@ class _WeatherAlertSettingsScreenState
   /// 通知设置
   Widget _buildNotificationSettings() {
     return Card(
-      elevation: AppColors.cardElevation,
-      shadowColor: AppColors.cardShadowColor,
+      elevation: 0,
+      shadowColor: Colors.transparent,
       color: AppColors.materialCardColor,
       surfaceTintColor: Colors.transparent,
-      shape: AppColors.cardShape,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -641,13 +641,14 @@ class _WeatherAlertSettingsScreenState
   /// 提醒规则说明
   Widget _buildAlertRules() {
     return Card(
-      elevation: AppColors.cardElevation,
-      shadowColor: AppColors.cardShadowColor,
+      elevation: 0,
+      shadowColor: Colors.transparent,
       color: AppColors.materialCardColor,
       surfaceTintColor: Colors.transparent,
-      shape: AppColors.cardShape,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -769,11 +770,11 @@ class _WeatherAlertSettingsScreenState
           title,
           style: TextStyle(
             color: AppColors.textPrimary,
-            fontSize: 14,
+            fontSize: 13,
             fontWeight: FontWeight.w500,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         Row(
           children: [
             // 开始时间
@@ -796,8 +797,8 @@ class _WeatherAlertSettingsScreenState
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
+                    horizontal: 12,
+                    vertical: 10,
                   ),
                   decoration: BoxDecoration(
                     color: AppColors.cardBackground,
@@ -812,14 +813,14 @@ class _WeatherAlertSettingsScreenState
                           Icon(
                             Icons.access_time,
                             color: AppColors.primaryBlue,
-                            size: 20,
+                            size: 18,
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 6),
                           Text(
                             '$startTime',
                             style: TextStyle(
                               color: AppColors.textPrimary,
-                              fontSize: 16,
+                              fontSize: 13,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -829,7 +830,7 @@ class _WeatherAlertSettingsScreenState
                         '开始',
                         style: TextStyle(
                           color: AppColors.textSecondary,
-                          fontSize: 12,
+                          fontSize: 11,
                         ),
                       ),
                     ],
@@ -839,11 +840,11 @@ class _WeatherAlertSettingsScreenState
             ),
             // 连接线
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Icon(
                 Icons.arrow_forward,
                 color: AppColors.textSecondary,
-                size: 20,
+                size: 18,
               ),
             ),
             // 结束时间
@@ -866,8 +867,8 @@ class _WeatherAlertSettingsScreenState
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
+                    horizontal: 12,
+                    vertical: 10,
                   ),
                   decoration: BoxDecoration(
                     color: AppColors.cardBackground,
@@ -882,14 +883,14 @@ class _WeatherAlertSettingsScreenState
                           Icon(
                             Icons.access_time_filled,
                             color: AppColors.primaryBlue,
-                            size: 20,
+                            size: 18,
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 6),
                           Text(
                             '$endTime',
                             style: TextStyle(
                               color: AppColors.textPrimary,
-                              fontSize: 16,
+                              fontSize: 13,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -899,7 +900,7 @@ class _WeatherAlertSettingsScreenState
                         '结束',
                         style: TextStyle(
                           color: AppColors.textSecondary,
-                          fontSize: 12,
+                          fontSize: 11,
                         ),
                       ),
                     ],
@@ -1036,13 +1037,14 @@ class _WeatherAlertSettingsScreenState
           '工作日设置',
           style: TextStyle(
             color: AppColors.textPrimary,
-            fontSize: 14,
+            fontSize: 13,
             fontWeight: FontWeight.w500,
           ),
         ),
         const SizedBox(height: 8),
         Wrap(
-          spacing: 8,
+          spacing: 6,
+          runSpacing: 6,
           children: List.generate(7, (index) {
             final dayNames = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
             final isSelected = workDays.contains(index + 1);
@@ -1070,7 +1072,7 @@ class _WeatherAlertSettingsScreenState
                 color: isSelected
                     ? AppColors.primaryBlue
                     : AppColors.textSecondary,
-                fontSize: 12,
+                fontSize: 11,
               ),
             );
           }),

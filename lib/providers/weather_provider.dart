@@ -17,6 +17,7 @@ import '../services/weather_widget_service.dart';
 import '../services/commute_advice_service.dart';
 import '../services/ai_service.dart';
 import '../services/smart_cache_service.dart';
+import '../services/notification_service.dart';
 import '../models/commute_advice_model.dart';
 import '../constants/app_constants.dart';
 import '../utils/app_state_manager.dart';
@@ -2721,6 +2722,19 @@ class WeatherProvider extends ChangeNotifier {
             '   - ${advice.timeSlot == CommuteTimeSlot.morning ? "早高峰" : "晚高峰"}: ${advice.title}',
           );
         }
+      }
+
+      // 🏝️ 更新灵动岛显示
+      if (_commuteAdvices.isNotEmpty) {
+        // 有通勤建议时显示或更新灵动岛
+        NotificationService.instance.showCommuteIslandNotification(
+          _commuteAdvices,
+        );
+        print('🏝️ 灵动岛已更新（${_commuteAdvices.length}条建议）');
+      } else {
+        // 没有建议时隐藏灵动岛
+        NotificationService.instance.hideCommuteIslandNotification();
+        print('🏝️ 灵动岛已隐藏');
       }
 
       notifyListeners();

@@ -6,6 +6,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import '../models/weather_alert_model.dart';
+import '../models/commute_advice_model.dart';
 import '../main.dart' as main_app;
 import '../widgets/weather_alert_widget.dart';
 import '../services/weather_alert_service.dart';
@@ -342,6 +343,139 @@ class NotificationService {
     }
   }
 
+  // 通勤提醒灵动岛通知ID（固定ID，用于更新和取消）
+  static const int _commuteIslandNotificationId = 999999;
+
+  /// 显示通勤提醒灵动岛（安卓专属）
+  /// 这是一个持久的前台通知，模拟iOS灵动岛效果
+  Future<void> showCommuteIslandNotification(
+    List<CommuteAdviceModel> advices,
+  ) async {
+    if (!_isEnabled || !_isInitialized) return;
+    if (advices.isEmpty) return;
+
+    // iOS使用系统的实时活动，这里只处理安卓
+    if (!Platform.isAndroid) return;
+
+    try {
+      // 按优先级排序，显示最重要的建议
+      final sortedAdvices = List<CommuteAdviceModel>.from(advices);
+      sortedAdvices.sort((a, b) => a.priority.compareTo(b.priority));
+      final mainAdvice = sortedAdvices.first;
+
+      // 获取时段名称
+      final timeSlotName = mainAdvice.timeSlot == CommuteTimeSlot.morning
+          ? '早高峰'
+          : '晚高峰';
+
+      // 根据级别确定颜色和重要性
+      final levelColor = mainAdvice.getLevelColor();
+      final isHighPriority =
+          mainAdvice.level == CommuteAdviceLevel.critical ||
+          mainAdvice.level == CommuteAdviceLevel.warning;
+
+      // 构建通知样式 - 使用BigTextStyle显示更多内容
+      final bigTextStyle = BigTextStyleInformation(
+        mainAdvice.content,
+        htmlFormatBigText: false,
+        contentTitle: '$timeSlotName ${mainAdvice.icon} ${mainAdvice.title}',
+        summaryText: '知雨天气 · ${advices.length}条通勤建议',
+        htmlFormatContentTitle: false,
+        htmlFormatSummaryText: false,
+      );
+
+      // 创建操作按钮
+      final AndroidNotificationDetails androidDetails =
+          AndroidNotificationDetails(
+            'commute_island', // 独立的渠道ID
+            '通勤提醒灵动岛',
+            channelDescription: '显示实时通勤建议的持久通知',
+            importance: isHighPriority
+                ? Importance.high
+                : Importance.defaultImportance,
+            priority: isHighPriority ? Priority.high : Priority.defaultPriority,
+            ongoing: true, // 持久显示，不能滑动关闭
+            autoCancel: false, // 点击后不自动关闭
+            icon: '@mipmap/ic_launcher',
+            color: levelColor,
+            playSound: false, // 灵动岛不播放声音
+            enableVibration: false, // 灵动岛不震动
+            styleInformation: bigTextStyle,
+            category: AndroidNotificationCategory.status,
+            visibility: NotificationVisibility.public,
+            showWhen: true,
+            // 添加操作按钮
+            actions: <AndroidNotificationAction>[
+              AndroidNotificationAction(
+                'view_details',
+                '查看详情',
+                showsUserInterface: true,
+                icon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+              ),
+              AndroidNotificationAction(
+                'dismiss',
+                '知道了',
+                cancelNotification: true,
+                showsUserInterface: false,
+              ),
+            ],
+            // 小图标样式
+            largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+          );
+
+      final NotificationDetails notificationDetails = NotificationDetails(
+        android: androidDetails,
+      );
+
+      await _notifications.show(
+        _commuteIslandNotificationId,
+        '$timeSlotName通勤建议',
+        mainAdvice.title,
+        notificationDetails,
+        payload: jsonEncode({
+          'type': 'commute_island',
+          'adviceCount': advices.length,
+          'timeSlot': mainAdvice.timeSlot.toString(),
+          'level': mainAdvice.level.toString(),
+        }),
+      );
+
+      if (kDebugMode) {
+        print(
+          'NotificationService: 通勤灵动岛已显示 - $timeSlotName, 级别: ${mainAdvice.getLevelName()}',
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('NotificationService: 显示通勤灵动岛失败 - $e');
+      }
+    }
+  }
+
+  /// 更新通勤提醒灵动岛
+  /// 当通勤建议更新时调用此方法更新灵动岛显示
+  Future<void> updateCommuteIslandNotification(
+    List<CommuteAdviceModel> advices,
+  ) async {
+    // 直接调用显示方法，会自动更新同ID的通知
+    await showCommuteIslandNotification(advices);
+  }
+
+  /// 隐藏通勤提醒灵动岛
+  /// 当通勤时段结束或用户关闭时调用
+  Future<void> hideCommuteIslandNotification() async {
+    try {
+      await _notifications.cancel(_commuteIslandNotificationId);
+      if (kDebugMode) {
+        print('NotificationService: 通勤灵动岛已隐藏');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('NotificationService: 隐藏通勤灵动岛失败 - $e');
+      }
+    }
+  }
+
   /// 通知点击处理
   void _onNotificationTapped(NotificationResponse response) {
     try {
@@ -354,7 +488,18 @@ class NotificationService {
           print('NotificationService: 通知被点击 - $type');
         }
 
-        // 导航到综合提醒页面
+        // 特殊处理通勤灵动岛的操作按钮
+        if (response.actionId == 'view_details') {
+          // 查看详情按钮：导航到综合提醒页面
+          _navigateToAlertDetailScreen();
+          return;
+        } else if (response.actionId == 'dismiss') {
+          // 知道了按钮：关闭灵动岛
+          hideCommuteIslandNotification();
+          return;
+        }
+
+        // 普通点击：导航到综合提醒页面
         _navigateToAlertDetailScreen();
       }
     } catch (e) {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/weather_provider.dart';
+import '../providers/theme_provider.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_constants.dart';
 import '../services/weather_alert_service.dart';
@@ -23,9 +24,15 @@ class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
   Widget build(BuildContext context) {
     // ⚠️ 使用 watch 而不是 read，监听 weatherProvider 的变化
     final weatherProvider = context.watch<WeatherProvider>();
+    final themeProvider = context.read<ThemeProvider>();
 
     final advices = weatherProvider.commuteAdvices;
     final hasCommuteAdvices = advices.isNotEmpty;
+
+    // AI标签颜色：金琥珀色（暗色）/ 蓝色（亮色）
+    final aiColor = themeProvider.isLightTheme
+        ? const Color(0xFF004CFF)
+        : const Color(0xFFFFB300);
 
     return Padding(
       padding: const EdgeInsets.symmetric(
@@ -37,108 +44,111 @@ class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
         color: AppColors.materialCardColor,
         surfaceTintColor: Colors.transparent,
         shape: AppColors.cardShape,
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            // ✨ AI智能助手专用渐变背景：深紫到深蓝
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color(0xFF4A148C).withOpacity(0.9), // 深紫
-                Color(0xFF1A237E).withOpacity(0.9), // 深蓝
-                Color(0xFF0D47A1).withOpacity(0.9), // 更深蓝
-              ],
-            ),
-            // 添加微妙的几何图案效果（金色光晕）
-            boxShadow: [
-              BoxShadow(
-                color: Color(0xFFFFB300).withOpacity(0.1), // 金色光晕
-                blurRadius: 20,
-                offset: const Offset(0, 4),
-                spreadRadius: 2,
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 标题行（可点击展开/收起）
-                InkWell(
-                  onTap: () {
-                    setState(() {
-                      _isExpanded = !_isExpanded;
-                    });
-                  },
-                  borderRadius: BorderRadius.circular(8),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Row(
-                      children: [
-                        // 图标
-                        Icon(
-                          Icons.auto_awesome,
-                          color: const Color(0xFFFFB300), // 金琥珀色
-                          size: AppConstants.sectionTitleIconSize,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 标题行（可点击展开/收起）
+              InkWell(
+                onTap: () {
+                  setState(() {
+                    _isExpanded = !_isExpanded;
+                  });
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    children: [
+                      // 图标（使用主题蓝色）
+                      Icon(
+                        Icons.auto_awesome,
+                        color: AppColors.accentBlue,
+                        size: AppConstants.sectionTitleIconSize,
+                      ),
+                      const SizedBox(width: 8),
+                      // 标题
+                      Text(
+                        'AI智能助手',
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: AppConstants.sectionTitleFontSize,
+                          fontWeight: FontWeight.bold,
                         ),
-                        const SizedBox(width: 8),
-                        // 标题
-                        Text(
-                          'AI智能助手',
+                      ),
+                      const SizedBox(width: 8),
+                      // 功能数量标签
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.textSecondary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          hasCommuteAdvices ? '2项' : '1项',
                           style: TextStyle(
-                            color: Colors.white, // 白色文字
-                            fontSize: AppConstants.sectionTitleFontSize,
-                            fontWeight: FontWeight.bold,
+                            color: AppColors.textSecondary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        // 功能数量标签
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            hasCommuteAdvices ? '2项' : '1项',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
+                      ),
+                      const Spacer(),
+                      // AI标签
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: aiColor.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.auto_awesome, color: aiColor, size: 10),
+                            const SizedBox(width: 2),
+                            Text(
+                              'AI',
+                              style: TextStyle(
+                                color: aiColor,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
+                          ],
                         ),
-                        const Spacer(),
-                        // 展开/收起图标
-                        Icon(
-                          _isExpanded
-                              ? Icons.keyboard_arrow_down
-                              : Icons.keyboard_arrow_right,
-                          color: Colors.white70,
-                          size: 20,
-                        ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(width: 8),
+                      // 展开/收起图标
+                      Icon(
+                        _isExpanded
+                            ? Icons.keyboard_arrow_down
+                            : Icons.keyboard_arrow_right,
+                        color: AppColors.textSecondary,
+                        size: 20,
+                      ),
+                    ],
                   ),
                 ),
+              ),
 
+              const SizedBox(height: 16),
+
+              // 天气摘要（始终显示）
+              _buildWeatherSummary(weatherProvider),
+
+              // 通勤提醒（如果有的话）
+              if (hasCommuteAdvices) ...[
                 const SizedBox(height: 16),
-
-                // 天气摘要（始终显示）
-                _buildWeatherSummary(weatherProvider),
-
-                // 通勤提醒（如果有的话）
-                if (hasCommuteAdvices) ...[
-                  const SizedBox(height: 16),
-                  _buildCommuteAdvicesSection(advices, _isExpanded),
-                ],
+                _buildCommuteAdvicesSection(advices, _isExpanded),
               ],
-            ),
+            ],
           ),
         ),
       ),
@@ -148,31 +158,31 @@ class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
   /// 构建天气摘要
   Widget _buildWeatherSummary(WeatherProvider weatherProvider) {
     final summary = weatherProvider.weatherSummary ?? '正在生成天气摘要...';
+    final themeProvider = context.read<ThemeProvider>();
+
+    // 橙色系背景（天气摘要）
+    final backgroundColor = const Color(0xFFFFB74D);
+    final iconColor = themeProvider.isLightTheme
+        ? const Color(0xFF012d78) // 亮色模式：主题深蓝
+        : Colors.white; // 暗色模式：白色
+    final textColor = themeProvider.isLightTheme
+        ? const Color(0xFF012d78) // 亮色模式：主题深蓝
+        : AppColors.textPrimary; // 暗色模式：白色
 
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        // 金琥珀色渐变背景
-        gradient: LinearGradient(
-          colors: [
-            const Color(0xFFFFB300).withOpacity(0.3), // 金琥珀色
-            const Color(0xFFFFB300).withOpacity(0.1), // 浅金琥珀色
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: backgroundColor.withOpacity(0.25),
         borderRadius: BorderRadius.circular(12),
-        // 金琥珀色边框
-        border: Border.all(
-          color: const Color(0xFFFFB300).withOpacity(0.5),
-          width: 1,
-        ),
-        // 金琥珀色阴影
+        // 浮起效果阴影
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFFFB300).withOpacity(0.2),
-            blurRadius: 8,
+            color: Colors.black.withOpacity(
+              themeProvider.isLightTheme ? 0.08 : 0.15,
+            ),
+            blurRadius: 6,
             offset: const Offset(0, 2),
+            spreadRadius: 0,
           ),
         ],
       ),
@@ -182,12 +192,21 @@ class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
           // 摘要标题
           Row(
             children: [
-              Icon(Icons.wb_sunny, color: const Color(0xFFFFB300), size: 16),
-              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: iconColor.withOpacity(
+                    themeProvider.isLightTheme ? 0.2 : 0.3,
+                  ),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Icon(Icons.wb_sunny, color: iconColor, size: 16),
+              ),
+              const SizedBox(width: 8),
               Text(
                 '天气摘要',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: textColor,
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),
@@ -198,7 +217,12 @@ class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
           // 摘要内容
           Text(
             summary,
-            style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
+            style: TextStyle(
+              color: textColor,
+              fontSize: 14,
+              height: 1.5,
+              fontWeight: FontWeight.w600, // AI内容加粗
+            ),
           ),
         ],
       ),
@@ -212,6 +236,15 @@ class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
 
     // 始终只显示第一条（最重要的）
     final displayAdvice = sortedAdvices.first;
+    final themeProvider = context.read<ThemeProvider>();
+
+    // 绿色系背景（通勤提醒）
+    final iconColor = themeProvider.isLightTheme
+        ? const Color(0xFF012d78) // 亮色模式：主题深蓝
+        : Colors.white; // 暗色模式：白色
+    final textColor = themeProvider.isLightTheme
+        ? const Color(0xFF012d78) // 亮色模式：主题深蓝
+        : AppColors.textPrimary; // 暗色模式：白色
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -219,16 +252,21 @@ class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
         // 通勤提醒标题
         Row(
           children: [
-            Icon(
-              Icons.commute_rounded,
-              color: const Color(0xFFFFB300),
-              size: 16,
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(
+                  themeProvider.isLightTheme ? 0.2 : 0.3,
+                ),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Icon(Icons.commute_rounded, color: iconColor, size: 16),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 8),
             Text(
               '通勤提醒',
               style: TextStyle(
-                color: Colors.white,
+                color: textColor,
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
               ),
@@ -237,13 +275,13 @@ class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
+                color: AppColors.textSecondary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
                 '${advices.length}条',
                 style: TextStyle(
-                  color: Colors.white70,
+                  color: AppColors.textSecondary,
                   fontSize: 10,
                   fontWeight: FontWeight.w500,
                 ),
@@ -264,9 +302,20 @@ class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
   Widget _buildCommuteAdviceItem(dynamic advice, List<dynamic> allAdvices) {
     final levelColor = advice.getLevelColor();
     final levelName = advice.getLevelName();
-    const aiColor = Color(0xFFFFB300); // 金琥珀色
     final weatherProvider = context.read<WeatherProvider>();
     final alertService = WeatherAlertService.instance;
+    final themeProvider = context.read<ThemeProvider>();
+
+    // 绿色系背景（通勤提醒）
+    final backgroundColor = const Color(0xFF64DD17);
+    final textColor = themeProvider.isLightTheme
+        ? const Color(0xFF012d78) // 亮色模式：主题深蓝
+        : AppColors.textPrimary; // 暗色模式：白色
+
+    // AI标签颜色
+    final aiColor = themeProvider.isLightTheme
+        ? const Color(0xFF004CFF)
+        : const Color(0xFFFFB300);
 
     return InkWell(
       onTap: () {
@@ -295,24 +344,17 @@ class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          // 金琥珀色渐变背景
-          gradient: LinearGradient(
-            colors: [
-              aiColor.withOpacity(0.3), // 金琥珀色
-              aiColor.withOpacity(0.1), // 浅金琥珀色
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          color: backgroundColor.withOpacity(0.25),
           borderRadius: BorderRadius.circular(12),
-          // 金琥珀色边框
-          border: Border.all(color: aiColor.withOpacity(0.5), width: 1),
-          // 金琥珀色阴影
+          // 浮起效果阴影
           boxShadow: [
             BoxShadow(
-              color: aiColor.withOpacity(0.2),
-              blurRadius: 8,
+              color: Colors.black.withOpacity(
+                themeProvider.isLightTheme ? 0.08 : 0.15,
+              ),
+              blurRadius: 6,
               offset: const Offset(0, 2),
+              spreadRadius: 0,
             ),
           ],
         ),
@@ -357,7 +399,7 @@ class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
                               child: Text(
                                 advice.title,
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: textColor,
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -374,7 +416,7 @@ class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: aiColor.withOpacity(0.25),
+                                  color: aiColor.withOpacity(0.15),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Row(
@@ -408,9 +450,10 @@ class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
                   Text(
                     advice.content,
                     style: TextStyle(
-                      color: Colors.white70,
+                      color: textColor,
                       fontSize: 14,
                       height: 1.5,
+                      fontWeight: FontWeight.w600, // AI内容加粗
                     ),
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,

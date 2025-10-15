@@ -123,7 +123,7 @@ class Forecast15dChart extends StatelessWidget {
                                           showTitles: true,
                                           reservedSize: ChartStyles
                                               .bottomTitlesReservedSize,
-                                          interval: 2,
+                                          interval: 1, // 显示所有日期
                                           getTitlesWidget: (value, meta) {
                                             if (value.toInt() >= 0 &&
                                                 value.toInt() <

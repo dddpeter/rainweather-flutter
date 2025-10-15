@@ -88,6 +88,34 @@ lib/
   - 保留15天历史记录
   - 时段结束自动清理
 
+#### 通勤提醒AI提示词规范
+
+**内容要求**：
+- **只包含两项建议**: 防雨 + 着装
+- **防雨建议**: 只有下雨/雨雪天气时才建议带伞，其他天气（晴天/阴天/雾霾）不建议带伞
+- **着装建议**: 根据温度给出具体衣物搭配（如：长袖衬衫+薄外套、羽绒服+保暖内衣、短袖T恤）
+- **字数要求**: 总字数60-80字，每条建议≤25字
+- **语言风格**: 亲切、口语化，先结论再理由
+
+**输出格式**：
+```
+🌞 早安！今天早高峰通勤建议——
+🌂 防雨：降水概率低，无需带伞。
+👔 着装：薄长袖+防晒衫，舒适透气。
+```
+
+**严格要求**：
+1. 第1行：问候语 + 时段 + "通勤建议——"
+2. 第2行：防雨建议（🌂 开头）
+3. 第3行：着装建议（👔 开头）
+4. 不要添加其他内容（如鞋履、防晒、空气、交通、彩蛋等）
+5. 建议之间不加空行
+6. 不要在开头或结尾添加额外空行
+
+**实现位置**：
+- `lib/services/ai_service.dart` - `buildCommutePrompt()` 方法
+- `lib/services/ai_service.dart` - `buildOptimizedCommutePrompt()` 方法
+
 ## 页面预警显示规则
 
 ### 今日天气页面（TodayScreen）
@@ -190,6 +218,150 @@ AIContentWidget(
 - ✅ 城市天气AI总结（24小时）
 - ✅ 城市天气AI总结（15日）
 - ✅ 15日预报页面AI总结
+- ✅ 今日天气页面AI智能助手
+
+### AI卡片统一样式规范
+
+所有AI卡片（包括AIContentWidget和AISmartAssistantWidget）应遵循统一的Material Design 3样式规范：
+
+#### 1. 标准AI卡片样式（AIContentWidget）
+
+**外层卡片**：
+```dart
+Card(
+  elevation: AppColors.cardElevation,              // 阴影高度（2-4）
+  shadowColor: AppColors.cardShadowColor,          // 阴影颜色
+  color: AppColors.materialCardColor,              // 背景色（自适应主题）
+  surfaceTintColor: Colors.transparent,            // 禁用 MD3 默认的表面着色
+  shape: AppColors.cardShape,                      // 圆角（8px）
+  child: Padding(
+    padding: const EdgeInsets.all(16),             // 标准内边距 16px
+    child: Column(...),
+  ),
+)
+```
+
+**标题栏**：
+- 图标：`AppColors.accentBlue`（主题蓝色）
+- 文字：`AppColors.textPrimary`（主要文字色），加粗
+- AI标签：金琥珀色#FFB300（暗色）/ 蓝色#004CFF（亮色），半透明背景0.15
+
+**AI标签样式**：
+```dart
+Container(
+  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+  decoration: BoxDecoration(
+    color: (themeProvider.isLightTheme 
+      ? const Color(0xFF004CFF)      // 亮色模式：蓝色
+      : const Color(0xFFFFB300))     // 暗色模式：金琥珀色
+      .withValues(alpha: 0.15),
+    borderRadius: BorderRadius.circular(4),
+  ),
+  child: Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Icon(Icons.auto_awesome, 
+        color: themeProvider.isLightTheme 
+          ? const Color(0xFF004CFF) 
+          : const Color(0xFFFFB300), 
+        size: 10),
+      const SizedBox(width: 2),
+      Text('AI', 
+        style: TextStyle(
+          color: themeProvider.isLightTheme 
+            ? const Color(0xFF004CFF) 
+            : const Color(0xFFFFB300),
+          fontSize: 10, 
+          fontWeight: FontWeight.bold)),
+    ],
+  ),
+)
+```
+
+**内容区域**：
+- 文字颜色：`AppColors.textPrimary`
+- 字号：14px
+- 行高：1.5
+- 字重：`FontWeight.w600`（AI内容加粗）
+- 渐进式展示：骨架屏 → AI内容渐入 → 失败降级
+- 错误/默认内容：`FontWeight.w500`（中等粗细）
+
+#### 2. AI智能助手卡片样式（AISmartAssistantWidget）
+
+**⚠️ 统一规范**：AISmartAssistantWidget 应使用与 AIContentWidget 相同的标准卡片样式，不使用特殊渐变背景。
+
+**外层卡片**：
+- 与 AIContentWidget 保持一致
+- 使用标准 Material Card 背景（`AppColors.materialCardColor`）
+- 不使用深紫到深蓝的渐变背景
+- 不使用金色光晕阴影
+
+**内部小卡片（天气摘要、通勤提醒）**：
+- 背景色：橙色系（天气摘要）、绿色系（通勤提醒）
+- 半透明度：亮色 0.15，暗色 0.25
+- 圆角：12px
+- 边框：无边框或半透明边框
+- 阴影：浮起效果，黑色半透明
+- 图标和文字颜色：
+  - 亮色模式：主题深蓝 #012d78
+  - 暗色模式：白色
+
+**AI标签样式**：
+- 与 AIContentWidget 保持一致
+- 金琥珀色#FFB300（暗色）/ 蓝色#004CFF（亮色）
+
+#### 3. AI卡片颜色规范
+
+**标题图标颜色**：
+- 统一使用 `AppColors.accentBlue`（主题蓝色）
+
+**AI标签颜色**：
+- 原色：`Color(0xFFFFB300)` - 金琥珀色
+- 反色：`Color(0xFF004CFF)` - 蓝色
+- 亮色模式：使用反色（蓝色），提高对比度
+- 暗色模式：使用原色（金琥珀色）
+
+**内部小卡片颜色**：
+- 天气摘要：橙色系 `Color(0xFFFFB74D)`，半透明 0.15-0.25
+- 通勤提醒：绿色系 `Color(0xFF64DD17)`，半透明 0.15-0.25
+- ⚠️ 避免使用蓝色系（对比度不足）
+
+**文字颜色**：
+- 亮色模式：主题深蓝 `Color(0xFF012d78)` 或 `AppColors.textPrimary`
+- 暗色模式：白色 `Colors.white` 或 `AppColors.textPrimary`
+
+**字体粗细**：
+- AI内容文字：`FontWeight.w600`（加粗，易读性更好）
+- 标题文字：`FontWeight.bold` 或 `FontWeight.w600`
+- AI标签文字：`FontWeight.bold`
+- 小卡片标题：`FontWeight.w600`
+- 小卡片内容：`FontWeight.w600`（AI内容加粗）
+
+#### 4. AI卡片适用范围
+
+- ✅ AIContentWidget（标准AI卡片）
+- ✅ AISmartAssistantWidget（今日天气页面AI助手）
+- ✅ 城市天气AI总结（24小时）
+- ✅ 城市天气AI总结（15日）
+- ✅ 15日预报页面AI总结
+
+#### 5. AI卡片设计原则
+
+1. **统一性**：所有AI卡片使用统一的 Material Design 3 样式
+2. **主题适配**：支持亮色/暗色模式自适应
+3. **渐进式展示**：提供良好的加载体验
+4. **降级策略**：AI失败时显示默认内容和重试按钮
+5. **可识别性**：通过AI标签明确标识AI生成内容
+6. **层次分明**：通过透明度和阴影区分层次
+7. **避免过度设计**：不使用复杂的渐变背景和特殊效果
+8. **字体加粗**：AI生成的内容文字使用 `FontWeight.w600` 加粗，提高易读性和识别度
+
+#### 6. 实现文件
+
+- `lib/widgets/ai_content_widget.dart` - 标准AI卡片组件
+- `lib/widgets/ai_smart_assistant_widget.dart` - 今日天气AI助手组件
+- `lib/screens/city_weather_tabs_screen.dart` - 城市天气AI总结
+- `lib/screens/forecast15d_screen.dart` - 15日预报AI总结
 
 ## AI增强功能
 

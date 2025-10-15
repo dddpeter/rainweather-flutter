@@ -225,6 +225,15 @@ class WeatherProvider extends ChangeNotifier {
         generateWeatherSummary();
       }
 
+      // ✨ 加载15日AI总结缓存
+      await _loadCached15dSummary();
+      // 如果缓存中没有，再异步生成
+      if (_forecast15dSummary == null &&
+          _forecast15d != null &&
+          _forecast15d!.isNotEmpty) {
+        generateForecast15dSummary();
+      }
+
       // 3. 后台异步刷新（不阻塞UI）
       _backgroundRefresh();
     } catch (e) {
@@ -301,8 +310,14 @@ class WeatherProvider extends ChangeNotifier {
             print('✅ 后台数据刷新完成，已替换为最新数据');
             notifyListeners(); // 一次性通知UI
 
-            // 后台刷新成功后，重新生成AI智能摘要（使用最新数据）
+            // 后台刷新成功后，预生成所有AI内容（使用最新数据）
+            // 今日AI智能摘要
             generateWeatherSummary();
+
+            // 15日天气AI总结
+            if (_forecast15d != null && _forecast15d!.isNotEmpty) {
+              generateForecast15dSummary();
+            }
 
             // 后台刷新成功后，检查并生成通勤提醒
             await checkAndGenerateCommuteAdvices();
@@ -735,6 +750,11 @@ class WeatherProvider extends ChangeNotifier {
 
         // 刷新成功后，重新生成AI智能摘要
         generateWeatherSummary();
+
+        // 刷新成功后，生成15日天气AI总结
+        if (_forecast15d != null && _forecast15d!.isNotEmpty) {
+          generateForecast15dSummary();
+        }
 
         // 刷新成功后，检查并生成通勤提醒
         await checkAndGenerateCommuteAdvices();
@@ -2255,6 +2275,39 @@ class WeatherProvider extends ChangeNotifier {
       }
     } catch (e) {
       print('❌ 加载缓存AI摘要失败: $e');
+    }
+  }
+
+  /// 从缓存加载15日AI总结（快速启动时使用）
+  Future<void> _loadCached15dSummary() async {
+    try {
+      if (_forecast15d == null ||
+          _forecast15d!.isEmpty ||
+          _currentLocation == null) {
+        print('⚠️ 无15日预报数据或位置信息，跳过加载缓存15日总结');
+        return;
+      }
+
+      // 构建缓存key（与generateForecast15dSummary保持一致）
+      final targetCityName =
+          _currentLocation?.district ?? _currentLocation?.city ?? '未知';
+      final mainWeathers = _forecast15d!
+          .take(5)
+          .map((d) => d.weather_am ?? d.weather_pm ?? '未知')
+          .join(',');
+      final cacheKey = 'ai_15d_summary:$targetCityName:$mainWeathers';
+
+      // 尝试从缓存获取
+      final cachedSummary = await _databaseService.getAI15dSummary(cacheKey);
+      if (cachedSummary != null && cachedSummary.isNotEmpty) {
+        _forecast15dSummary = cachedSummary;
+        print('✅ 从缓存加载15日AI总结: $_forecast15dSummary');
+        notifyListeners();
+      } else {
+        print('📦 缓存中没有15日AI总结，需要生成');
+      }
+    } catch (e) {
+      print('❌ 加载缓存15日AI总结失败: $e');
     }
   }
 

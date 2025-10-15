@@ -265,6 +265,7 @@ class _AIContentWidgetState extends State<AIContentWidget> {
           color: AppColors.textPrimary,
           fontSize: 14,
           height: 1.5,
+          fontWeight: FontWeight.w600, // AI内容加粗
         ),
       ),
     );
@@ -285,6 +286,7 @@ class _AIContentWidgetState extends State<AIContentWidget> {
               color: AppColors.textSecondary,
               fontSize: 14,
               height: 1.5,
+              fontWeight: FontWeight.w500, // 提示文字中等粗细
             ),
           )
         else
@@ -295,6 +297,7 @@ class _AIContentWidgetState extends State<AIContentWidget> {
               color: AppColors.textSecondary,
               fontSize: 14,
               height: 1.5,
+              fontWeight: FontWeight.w500, // 默认内容中等粗细
             ),
           ),
         const SizedBox(height: 12),

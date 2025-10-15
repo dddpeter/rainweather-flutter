@@ -32,8 +32,8 @@ class AppConstants {
   static const double sectionTitleIconSize = 20.0;
 
   // UI Constants - Spacing (Material Design 3)
-  /// 屏幕边距 - 符合Material Design 3推荐标准
-  static const double screenHorizontalPadding = 8.0;
+  /// 屏幕边距 - 符合Material Design 3推荐标准（12dp更符合MD3紧凑布局）
+  static const double screenHorizontalPadding = 12.0;
 
   /// 大卡片之间的最小间距（12dp符合M3最小推荐值）
   static const double cardSpacing = 12.0;
@@ -215,6 +215,7 @@ class AppConstants {
     '中雪': '中雪.png',
     '大雪': '大雪.png',
     '暴雪': '暴雪.png',
+    '大暴雪': '大暴雪.png',
     '阵雪': '小雪.png', // 使用小雪代替
     '吹雪': '吹雪.png',
     '雨夹雪': '雨夹雪.png',
@@ -241,7 +242,7 @@ class AppConstants {
 
     // 其他特殊天气
     '冰雹': '冰雹.png',
-    '雨凇': '冰雹.png', // 使用冰雹代替
+    '雨凇': '雨凇.png',
     '平静': '晴.png', // 使用晴天代替
     '高温': '高温.png',
     '低温': '低温.png',
@@ -286,6 +287,7 @@ class AppConstants {
     '中雪': '中雪.png',
     '大雪': '大雪.png',
     '暴雪': '暴雪.png',
+    '大暴雪': '大暴雪.png',
     '阵雪': '小雪.png',
     '吹雪': '吹雪.png',
     '雨夹雪': 'night/雨夹雪.png',
@@ -312,7 +314,7 @@ class AppConstants {
 
     // 其他特殊天气 (使用日间图标)
     '冰雹': '冰雹.png',
-    '雨凇': '冰雹.png',
+    '雨凇': '雨凇.png',
     '平静': 'night/晴.png',
     '高温': '高温.png',
     '低温': '低温.png',

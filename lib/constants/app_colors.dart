@@ -359,9 +359,9 @@ class AppColors {
 
   // ==================== Material Design 卡片样式 ====================
 
-  /// 卡片外层左右 margin - 与 AppConstants.screenHorizontalPadding 保持一致（8.0）
+  /// 卡片外层左右 margin - 与 AppConstants.screenHorizontalPadding 保持一致（12.0）
   static const double cardHorizontalMargin =
-      8.0; // 已在 AppConstants.screenHorizontalPadding 定义
+      12.0; // 已在 AppConstants.screenHorizontalPadding 定义
 
   /// 卡片之间的上下间距 - Material Design 3 推荐的最小间距
   static const double cardSpacing = 12.0;

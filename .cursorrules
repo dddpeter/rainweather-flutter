@@ -773,14 +773,20 @@ if (forecast15d != null && forecast15d.isNotEmpty) {
 1. **卡片类型**: 使用 Elevated Card（带阴影的卡片）
 2. **圆角**: 使用 `borderRadius: 8px`（MD3 标准中等圆角）
 3. **阴影**: 使用 `elevation: 2-4`（轻度阴影）
-4. **间距**: 卡片之间保持 `8-16px` 间距
-5. **内边距**: 卡片内部内容距离边缘 `12-16px`
-6. **色彩系统**: 
+4. **屏幕边距**: 卡片左右边距 `12px`（`AppConstants.screenHorizontalPadding`）
+   - 符合 MD3 紧凑布局标准
+   - 为内容提供足够的呼吸空间
+   - 避免内容过于贴边
+5. **卡片间距**: 卡片之间保持 `12px` 垂直间距（`AppColors.cardSpacing`）
+6. **内边距**: 卡片内部内容距离边缘 `12-16px`
+   - 标准卡片：`16px`
+   - 图表卡片：`12px`（为图表留更多空间）
+7. **色彩系统**: 
    - 背景色自适应主题（亮色/暗色）
    - 使用半透明背景（亮色 15-25%，暗色 25-40%）
-7. **交互反馈**: 可点击卡片使用 InkWell 提供涟漪效果
-8. **无边框**: 内部小卡片原则上不使用边框（依靠透明度区分层次）
-9. **⚠️ 配色约束**: 大卡片内部小卡片**不使用蓝色系**（因为暗色模式App背景是深蓝色，蓝色系对比度不足）
+8. **交互反馈**: 可点击卡片使用 InkWell 提供涟漪效果
+9. **无边框**: 内部小卡片原则上不使用边框（依靠透明度区分层次）
+10. **⚠️ 配色约束**: 大卡片内部小卡片**不使用蓝色系**（因为暗色模式App背景是深蓝色，蓝色系对比度不足）
 
 #### MD3 透明度层次规范
 - **大卡片背景**: 半透明白色（亮色：白色，暗色：25% 白色）
@@ -799,7 +805,7 @@ if (forecast15d != null && forecast15d.isNotEmpty) {
 ```dart
 Padding(
   padding: const EdgeInsets.symmetric(
-    horizontal: AppConstants.screenHorizontalPadding,  // 左右边距（16px）
+    horizontal: AppConstants.screenHorizontalPadding,  // 左右边距（12px，符合MD3紧凑布局）
   ),
   child: Card(
     elevation: AppColors.cardElevation,              // 阴影高度（2-4）
@@ -815,8 +821,14 @@ Padding(
 )
 ```
 
-**卡片间距**:
-- 使用 `AppColors.cardSpacingWidget` 分隔卡片（8-16px）
+**卡片边距规范**:
+- **左右边距**: `12px` (`AppConstants.screenHorizontalPadding`)
+  - 符合 Material Design 3 紧凑布局标准
+  - 为内容提供足够的呼吸空间
+  - 避免内容过于贴边
+- **卡片间距**: 使用 `AppColors.cardSpacingWidget` 分隔卡片（12px）
+  - 垂直间距保持一致性
+  - 符合 MD3 最小推荐间距
 
 #### 2. 卡片标题栏
 ```dart

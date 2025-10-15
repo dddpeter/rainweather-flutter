@@ -9,6 +9,7 @@ import '../screens/weather_alert_settings_screen.dart';
 import '../screens/weather_alert_test_screen.dart';
 import '../screens/all_location_test_screen.dart';
 import '../screens/lunar_calendar_screen.dart';
+import '../screens/weather_icons_test_screen.dart';
 
 /// 应用抽屉菜单
 class AppDrawer extends StatelessWidget {
@@ -242,6 +243,15 @@ class AppDrawer extends StatelessWidget {
             _navigateToAllLocationTest(context);
           },
         ),
+        _buildSubMenuItem(
+          context,
+          icon: Icons.image,
+          title: '天气图标测试',
+          onTap: () {
+            Navigator.pop(context);
+            _navigateToWeatherIconsTest(context);
+          },
+        ),
       ],
     );
   }
@@ -363,6 +373,13 @@ class AppDrawer extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const AllLocationTestScreen()),
+    );
+  }
+
+  void _navigateToWeatherIconsTest(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const WeatherIconsTestScreen()),
     );
   }
 

@@ -409,79 +409,96 @@ class _TodayScreenState extends State<TodayScreen>
 
   @override
   Widget build(BuildContext context) {
-    // 使用Consumer监听主题变化，确保整个页面在主题切换时重建
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, _) {
+    // 使用Selector精确监听需要的状态，避免不必要的重建
+    return Selector<ThemeProvider, ThemeProvider>(
+      selector: (context, themeProvider) => themeProvider,
+      builder: (context, themeProvider, child) {
         // 确保AppColors使用最新的主题
         AppColors.setThemeProvider(themeProvider);
 
-        return Consumer<WeatherProvider>(
-          builder: (context, weatherProvider, child) {
+        return Selector<
+          WeatherProvider,
+          ({
+            WeatherModel? currentWeather,
+            LocationModel? currentLocation,
+            LocationModel? originalLocation,
+            WeatherModel? currentLocationWeather,
+            bool isShowingCityWeather,
+            int currentTabIndex,
+          })
+        >(
+          selector: (context, weatherProvider) => (
+            currentWeather: weatherProvider.currentWeather,
+            currentLocation: weatherProvider.currentLocation,
+            originalLocation: weatherProvider.originalLocation,
+            currentLocationWeather: weatherProvider.currentLocationWeather,
+            isShowingCityWeather: weatherProvider.isShowingCityWeather,
+            currentTabIndex: weatherProvider.currentTabIndex,
+          ),
+          builder: (context, data, child) {
             return Container(
               decoration: BoxDecoration(gradient: AppColors.primaryGradient),
               child: Builder(
                 builder: (context) {
                   print('🔥 TodayScreen build called 🔥');
                   print(
-                    '🌡️ Current weather temp: ${weatherProvider.currentWeather?.current?.current?.temperature}',
+                    '🌡️ Current weather temp: ${data.currentWeather?.current?.current?.temperature}',
                   );
                   print(
-                    '📍 Current location: ${weatherProvider.currentLocation?.district}',
+                    '📍 Current location: ${data.currentLocation?.district}',
                   );
                   print(
-                    '🏠 Original location: ${weatherProvider.originalLocation?.district}',
+                    '🏠 Original location: ${data.originalLocation?.district}',
                   );
                   print(
-                    '💾 Current location weather: ${weatherProvider.currentLocationWeather != null}',
+                    '💾 Current location weather: ${data.currentLocationWeather != null}',
                   );
 
-                  // 检查是否需要恢复当前定位数据
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    // 使用标签页索引来判断当前是否在今日页面
-                    final isTodayTab = weatherProvider.currentTabIndex == 0;
-                    final navigator = Navigator.of(context);
-                    final canPop = navigator.canPop();
+                  // 简化逻辑：只在必要时检查恢复
+                  final isTodayTab = data.currentTabIndex == 0;
+                  final navigator = Navigator.of(context);
+                  final canPop = navigator.canPop();
 
-                    // 更新可见性状态
-                    _isVisible = !canPop;
+                  // 更新可见性状态
+                  _isVisible = !canPop;
 
+                  print(
+                    '📱 TodayScreen build - tabIndex: ${data.currentTabIndex}, isTodayTab: $isTodayTab',
+                  );
+
+                  // 简化逻辑：只在必要时恢复定位数据
+                  if (isTodayTab &&
+                      data.currentLocationWeather != null &&
+                      data.originalLocation != null &&
+                      data.isShowingCityWeather) {
                     print(
-                      '📱 TodayScreen build - tabIndex: ${weatherProvider.currentTabIndex}, isTodayTab: $isTodayTab',
+                      '=== TodayScreen build - checking if restore needed ===',
                     );
+                    print(
+                      '🔍 isShowingCityWeather: ${data.isShowingCityWeather}',
+                    );
+                    print(
+                      '📱 _isVisible: $_isVisible, canPop: $canPop, isTodayTab: $isTodayTab',
+                    );
+                    print(
+                      'Current location: ${data.currentLocation?.district}',
+                    );
+                    print(
+                      'Original location: ${data.originalLocation?.district}',
+                    );
+                    print(
+                      '=== TodayScreen build - calling restoreCurrentLocationWeather ===',
+                    );
+                    context
+                        .read<WeatherProvider>()
+                        .restoreCurrentLocationWeather();
+                  } else {
+                    print(
+                      '🚫 TodayScreen build - no restore needed: isTodayTab=$isTodayTab, _isVisible=$_isVisible, canPop=$canPop, isShowingCityWeather=${data.isShowingCityWeather}',
+                    );
+                  }
 
-                    // 如果当前在今日页面且显示的是城市数据，则恢复
-                    if (isTodayTab &&
-                        weatherProvider.currentLocationWeather != null &&
-                        weatherProvider.originalLocation != null &&
-                        weatherProvider.isShowingCityWeather) {
-                      print(
-                        '=== TodayScreen build - checking if restore needed ===',
-                      );
-                      print(
-                        '🔍 isShowingCityWeather: ${weatherProvider.isShowingCityWeather}',
-                      );
-                      print(
-                        '📱 _isVisible: $_isVisible, canPop: $canPop, isTodayTab: $isTodayTab',
-                      );
-                      print(
-                        'Current location: ${weatherProvider.currentLocation?.district}',
-                      );
-                      print(
-                        'Original location: ${weatherProvider.originalLocation?.district}',
-                      );
-                      print(
-                        '=== TodayScreen build - calling restoreCurrentLocationWeather ===',
-                      );
-                      weatherProvider.restoreCurrentLocationWeather();
-                    } else {
-                      print(
-                        '🚫 TodayScreen build - no restore needed: isTodayTab=$isTodayTab, _isVisible=$_isVisible, canPop=$canPop, isShowingCityWeather=${weatherProvider.isShowingCityWeather}',
-                      );
-                    }
-                  });
-
-                  if (weatherProvider.isLoading &&
-                      weatherProvider.currentWeather == null) {
+                  if (data.currentWeather == null) {
                     return Center(
                       child: CircularProgressIndicator(
                         color: AppColors.accentBlue,
@@ -489,8 +506,9 @@ class _TodayScreenState extends State<TodayScreen>
                     );
                   }
 
+                  final weatherProvider = context.read<WeatherProvider>();
                   if (weatherProvider.error != null &&
-                      weatherProvider.currentWeather == null) {
+                      data.currentWeather == null) {
                     return Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -541,12 +559,12 @@ class _TodayScreenState extends State<TodayScreen>
                       }
 
                       // 手动刷新时分析提醒（但不发送重复通知）
-                      if (weatherProvider.currentWeather != null &&
-                          weatherProvider.currentLocation != null) {
+                      if (data.currentWeather != null &&
+                          data.currentLocation != null) {
                         print('🔄 TodayScreen: 手动刷新天气提醒');
                         final newAlerts = await _alertService.analyzeWeather(
-                          weatherProvider.currentWeather!,
-                          weatherProvider.currentLocation!,
+                          data.currentWeather!,
+                          data.currentLocation!,
                         );
                         print(
                           '🔄 TodayScreen: 手动刷新天气提醒完成，新增提醒数量: ${newAlerts.length}',
@@ -572,13 +590,11 @@ class _TodayScreenState extends State<TodayScreen>
                           AppColors.cardSpacingWidget,
                           // AI智能助手卡片（整合天气摘要和通勤提醒）
                           AISmartAssistantWidget(
-                            key: ValueKey(weatherProvider.weatherSummary),
+                            key: const ValueKey('today_ai_smart_assistant'),
                           ),
                           AppColors.cardSpacingWidget,
                           // 空气质量卡片
-                          AirQualityCard(
-                            weather: weatherProvider.currentWeather,
-                          ),
+                          AirQualityCard(weather: data.currentWeather),
                           AppColors.cardSpacingWidget,
                           // 24小时天气
                           _buildHourlyWeather(weatherProvider),
@@ -588,9 +604,7 @@ class _TodayScreenState extends State<TodayScreen>
                             _buildTimePeriodDetails(weatherProvider),
                           // 详细信息卡片（非缓存时显示）
                           if (!weatherProvider.isUsingCachedData)
-                            WeatherDetailsWidget(
-                              weather: weatherProvider.currentWeather,
-                            ),
+                            WeatherDetailsWidget(weather: data.currentWeather),
                           AppColors.cardSpacingWidget,
                           // 生活指数
                           LifeIndexWidget(weatherProvider: weatherProvider),

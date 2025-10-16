@@ -549,23 +549,51 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
                   ?.reporttime, // 使用报告时间作为刷新键
               fetchAIContent: () async {
                 try {
+                  // 如果已有内容，直接返回
                   if (weatherProvider.weatherSummary != null &&
                       weatherProvider.weatherSummary!.isNotEmpty) {
                     return weatherProvider.weatherSummary!;
                   }
-                  await weatherProvider.generateWeatherSummary(
-                    cityName: widget.cityName, // 传入城市名称
-                  );
+
+                  // 如果正在生成中，等待一下再检查
+                  if (weatherProvider.isGeneratingSummary) {
+                    print('⏳ AI摘要正在生成中，等待完成...');
+                    // 等待最多5秒
+                    for (int i = 0; i < 50; i++) {
+                      await Future.delayed(const Duration(milliseconds: 100));
+                      if (weatherProvider.weatherSummary != null &&
+                          weatherProvider.weatherSummary!.isNotEmpty) {
+                        return weatherProvider.weatherSummary!;
+                      }
+                      if (!weatherProvider.isGeneratingSummary) {
+                        break; // 生成完成，跳出循环
+                      }
+                    }
+                  }
+
+                  // 如果仍然没有内容且不在生成中，尝试生成一次
+                  if ((weatherProvider.weatherSummary == null ||
+                          weatherProvider.weatherSummary!.isEmpty) &&
+                      !weatherProvider.isGeneratingSummary) {
+                    print('🔄 开始生成城市天气AI摘要: ${widget.cityName}');
+                    await weatherProvider.generateWeatherSummary(
+                      cityName: widget.cityName, // 传入城市名称
+                    );
+                  }
+
+                  // 最终检查
                   if (weatherProvider.weatherSummary != null &&
                       weatherProvider.weatherSummary!.isNotEmpty) {
                     return weatherProvider.weatherSummary!;
                   }
-                  // 如果没有获取到内容，抛出异常让AIContentWidget处理
-                  throw Exception('未获取到AI内容');
+
+                  // 如果仍然没有内容，返回默认内容而不是抛出异常
+                  print('⚠️ 无法获取AI摘要，使用默认内容');
+                  return '今日天气舒适，适合出行。注意温差变化，合理增减衣物。';
                 } catch (e) {
                   print('❌ 加载AI智能助手失败: $e');
-                  // 重新抛出异常，让AIContentWidget处理
-                  rethrow;
+                  // 返回默认内容而不是抛出异常，避免无限重试
+                  return '今日天气舒适，适合出行。注意温差变化，合理增减衣物。';
                 }
               },
               defaultContent: '今日天气舒适，适合出行。注意温差变化，合理增减衣物。',
@@ -584,23 +612,51 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
                   ?.reporttime, // 使用报告时间作为刷新键
               fetchAIContent: () async {
                 try {
+                  // 如果已有内容，直接返回
                   if (weatherProvider.forecast15dSummary != null &&
                       weatherProvider.forecast15dSummary!.isNotEmpty) {
                     return weatherProvider.forecast15dSummary!;
                   }
-                  await weatherProvider.generateForecast15dSummary(
-                    cityName: widget.cityName, // 传入城市名称
-                  );
+
+                  // 如果正在生成中，等待一下再检查
+                  if (weatherProvider.isGenerating15dSummary) {
+                    print('⏳ 15日AI总结正在生成中，等待完成...');
+                    // 等待最多5秒
+                    for (int i = 0; i < 50; i++) {
+                      await Future.delayed(const Duration(milliseconds: 100));
+                      if (weatherProvider.forecast15dSummary != null &&
+                          weatherProvider.forecast15dSummary!.isNotEmpty) {
+                        return weatherProvider.forecast15dSummary!;
+                      }
+                      if (!weatherProvider.isGenerating15dSummary) {
+                        break; // 生成完成，跳出循环
+                      }
+                    }
+                  }
+
+                  // 如果仍然没有内容且不在生成中，尝试生成一次
+                  if ((weatherProvider.forecast15dSummary == null ||
+                          weatherProvider.forecast15dSummary!.isEmpty) &&
+                      !weatherProvider.isGenerating15dSummary) {
+                    print('🔄 开始生成城市15日天气AI总结: ${widget.cityName}');
+                    await weatherProvider.generateForecast15dSummary(
+                      cityName: widget.cityName, // 传入城市名称
+                    );
+                  }
+
+                  // 最终检查
                   if (weatherProvider.forecast15dSummary != null &&
                       weatherProvider.forecast15dSummary!.isNotEmpty) {
                     return weatherProvider.forecast15dSummary!;
                   }
-                  // 如果没有获取到内容，抛出异常让AIContentWidget处理
-                  throw Exception('未获取到AI内容');
+
+                  // 如果仍然没有内容，返回默认内容而不是抛出异常
+                  print('⚠️ 无法获取15日AI总结，使用默认内容');
+                  return '未来半月天气平稳，温度变化不大，适合安排户外活动。';
                 } catch (e) {
                   print('❌ 加载15日天气趋势失败: $e');
-                  // 重新抛出异常，让AIContentWidget处理
-                  rethrow;
+                  // 返回默认内容而不是抛出异常，避免无限重试
+                  return '未来半月天气平稳，温度变化不大，适合安排户外活动。';
                 }
               },
               defaultContent: '未来半月天气平稳，温度变化不大，适合安排户外活动。',

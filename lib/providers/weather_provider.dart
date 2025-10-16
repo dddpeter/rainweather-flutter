@@ -161,7 +161,7 @@ class WeatherProvider extends ChangeNotifier {
         return;
       }
 
-      // 2. 从SQLite加载缓存的天气数据（立即显示）
+      // 2. 从SQLite加载缓存的天气数据（立即显示，即使过期）
       final weatherKey =
           '${cachedLocation.district}:${AppConstants.weatherAllKey}';
       final cachedWeather = await _databaseService.getWeatherData(weatherKey);
@@ -176,11 +176,15 @@ class WeatherProvider extends ChangeNotifier {
         return;
       }
 
-      print('📦 使用SQLite缓存数据快速显示');
+      // 检查缓存是否过期（但不阻塞显示）
+      final isCacheExpired = await _isCacheExpired(weatherKey);
+      final cacheStatus = isCacheExpired ? '（已过期，将后台更新）' : '（有效）';
+
+      print('📦 使用SQLite缓存数据快速显示 $cacheStatus');
       print('   位置: ${cachedLocation.district}');
       print('   温度: ${cachedWeather.current?.current?.temperature ?? '--'}℃');
 
-      // 立即设置缓存数据并通知UI
+      // 立即设置缓存数据并通知UI（无论是否过期）
       _currentWeather = cachedWeather;
       _currentLocation = cachedLocation;
       _currentLocationWeather = cachedWeather;
@@ -208,7 +212,12 @@ class WeatherProvider extends ChangeNotifier {
       print('✅ SQLite缓存数据已显示，用户可立即查看');
       print('   - 24小时预报: ${_hourlyForecast?.length ?? 0}条');
       print('   - 15日预报: ${_forecast15d?.length ?? 0}天');
-      print('🔄 后台开始刷新最新数据...\n');
+
+      if (isCacheExpired) {
+        print('🔄 缓存已过期，后台开始刷新最新数据...\n');
+      } else {
+        print('🔄 后台开始刷新最新数据...\n');
+      }
 
       // 启动通勤建议清理定时器
       _startCommuteCleanupTimer();
@@ -483,8 +492,10 @@ class WeatherProvider extends ChangeNotifier {
       // 初始化城市数据（这里已经包含了loadMainCities的调用）
       await initializeCities();
 
-      // 清理过期缓存数据
-      await _cleanupExpiredCache();
+      // 异步清理过期缓存数据（不阻塞UI）
+      _cleanupExpiredCache().catchError((e) {
+        print('❌ 清理过期缓存失败: $e');
+      });
 
       // 先使用缓存的位置，不进行实时定位
       LocationModel? cachedLocation = _locationService.getCachedLocation();
@@ -509,8 +520,10 @@ class WeatherProvider extends ChangeNotifier {
         );
       }
 
-      // 清理默认位置的缓存数据
-      await clearDefaultLocationCache();
+      // 异步清理默认位置的缓存数据（不阻塞UI）
+      clearDefaultLocationCache().catchError((e) {
+        print('❌ 清理默认位置缓存失败: $e');
+      });
 
       // 重新加载主要城市列表，确保当前定位城市被包含
       await loadMainCities();
@@ -961,7 +974,11 @@ class WeatherProvider extends ChangeNotifier {
         }
 
         futures.add(
-          _loadSingleCityWeather(cityName, forceRefresh: forceRefresh),
+          _loadSingleCityWeather(
+            cityName,
+            forceRefresh: forceRefresh,
+            showExpiredCache: true, // 显示过期缓存，优化用户体验
+          ),
         );
       }
 
@@ -980,16 +997,31 @@ class WeatherProvider extends ChangeNotifier {
   /// 返回 true 表示缓存已过期或不存在，需要刷新
   Future<bool> _isCacheExpired(String cacheKey) async {
     try {
-      final cachedWeather = await _databaseService.getWeatherData(cacheKey);
-      if (cachedWeather == null) {
-        return true; // 无缓存，需要刷新
+      // 使用智能缓存检查是否过期
+      final isSmartCacheValid = await _smartCache.isCacheValid(
+        key: cacheKey.replaceAll(':', '_'),
+        type: CacheDataType.currentWeather,
+      );
+
+      if (!isSmartCacheValid) {
+        // 智能缓存已过期，检查数据库缓存
+        final cachedWeather = await _databaseService.getWeatherData(cacheKey);
+        if (cachedWeather == null) {
+          return true; // 无缓存，需要刷新
+        }
+
+        // 检查数据库缓存的年龄（假设15分钟后过期）
+        // 这里可以根据实际需求调整过期时间
+        final cacheAge = await _smartCache.getCacheAge(
+          cacheKey.replaceAll(':', '_'),
+        );
+        if (cacheAge != null && cacheAge.inMinutes > 15) {
+          print('🕒 数据库缓存已过期: ${cacheAge.inMinutes}分钟前');
+          return true;
+        }
       }
 
-      // 检查缓存时间（通过数据库的 timestamp 字段）
-      // 注意：这需要 DatabaseService 支持获取缓存时间
-      // 这里先简化处理，假设15分钟后过期
-      // TODO: 后续可以优化为从数据库读取缓存时间戳
-      return false; // 暂时假设有缓存就不过期
+      return false; // 缓存有效
     } catch (e) {
       print('Error checking cache expiration: $e');
       return true; // 出错时强制刷新
@@ -999,15 +1031,18 @@ class WeatherProvider extends ChangeNotifier {
   /// 加载单个城市的天气数据
   /// [forceRefresh] - 是否强制刷新（忽略缓存）
   /// [checkExpiration] - 是否检查缓存有效期（默认true）
+  /// [showExpiredCache] - 是否显示过期缓存（默认true，优化用户体验）
   Future<void> _loadSingleCityWeather(
     String cityName, {
     bool forceRefresh = false,
     bool checkExpiration = true,
+    bool showExpiredCache = true,
   }) async {
     try {
       // 检查是否有有效的缓存数据
       final weatherKey = '$cityName:${AppConstants.weatherAllKey}';
       WeatherModel? cachedWeather;
+      bool isCacheExpired = false;
 
       // 如果不强制刷新，尝试使用缓存
       if (!forceRefresh) {
@@ -1017,21 +1052,31 @@ class WeatherProvider extends ChangeNotifier {
         // 如果智能缓存未命中，尝试旧的数据库缓存
         cachedWeather ??= await _databaseService.getWeatherData(weatherKey);
 
-        // 如果启用过期检查，且缓存过期，则需要刷新
+        // 如果启用过期检查，检查缓存是否过期
         if (cachedWeather != null && checkExpiration) {
-          final isExpired = await _isCacheExpired(weatherKey);
-          if (isExpired) {
-            print('🕒 $cityName 缓存已过期，需要刷新');
+          isCacheExpired = await _isCacheExpired(weatherKey);
+          if (isCacheExpired && !showExpiredCache) {
+            print('🕒 $cityName 缓存已过期，不显示过期缓存');
             cachedWeather = null; // 清空缓存，强制刷新
+          } else if (isCacheExpired) {
+            print('🕒 $cityName 缓存已过期，但先显示过期缓存，后台更新');
           }
         }
       }
 
       if (cachedWeather != null && !forceRefresh) {
-        // 使用缓存数据
+        // 使用缓存数据（包括过期缓存）
         _mainCitiesWeather[cityName] = cachedWeather;
-        print('✅ Using cached weather data for $cityName in main cities');
+        final cacheStatus = isCacheExpired ? '（已过期）' : '（有效）';
+        print(
+          '✅ Using cached weather data for $cityName in main cities $cacheStatus',
+        );
         notifyListeners();
+
+        // 如果缓存过期，后台异步刷新
+        if (isCacheExpired) {
+          _refreshSingleCityWeatherInBackground(cityName);
+        }
       } else {
         // 从API获取新数据
         print('🌐 Fetching fresh weather data for $cityName in main cities');
@@ -1201,7 +1246,11 @@ class WeatherProvider extends ChangeNotifier {
       final firstCity = _mainCities.isNotEmpty ? _mainCities.first.name : null;
       if (firstCity != null) {
         print('🔄 刷新第一个卡片: $firstCity');
-        await _loadSingleCityWeather(firstCity, forceRefresh: true);
+        await _loadSingleCityWeather(
+          firstCity,
+          forceRefresh: true,
+          showExpiredCache: false, // 强制刷新时不显示过期缓存
+        );
 
         // 如果这是当前定位城市，也更新主天气数据
         if (firstCity == newLocation.district) {
@@ -2403,6 +2452,10 @@ class WeatherProvider extends ChangeNotifier {
         _weatherSummary = _aiService.parseAlertText(aiResponse);
         print('✅ AI摘要生成成功: $_weatherSummary');
 
+        // 立即通知UI更新
+        _isGeneratingSummary = false;
+        notifyListeners();
+
         // 保存到缓存（6小时有效期）
         await _databaseService.putAISummary(cacheKey, _weatherSummary!);
         print('💾 AI摘要已缓存');
@@ -2412,6 +2465,10 @@ class WeatherProvider extends ChangeNotifier {
           current,
           upcomingWeather,
         );
+
+        // 立即通知UI更新
+        _isGeneratingSummary = false;
+        notifyListeners();
       }
     } catch (e) {
       print('❌ 生成智能摘要异常: $e');
@@ -2426,11 +2483,14 @@ class WeatherProvider extends ChangeNotifier {
         _weatherSummary = '天气数据加载中，请稍候...';
       }
     } finally {
-      try {
-        _isGeneratingSummary = false;
-        notifyListeners();
-      } catch (e) {
-        print('❌ 重置生成状态失败: $e');
+      // 只有在异常情况下才需要重置状态（成功和失败的情况已经在上面处理了）
+      if (_isGeneratingSummary) {
+        try {
+          _isGeneratingSummary = false;
+          notifyListeners();
+        } catch (e) {
+          print('❌ 重置生成状态失败: $e');
+        }
       }
     }
   }
@@ -2553,12 +2613,20 @@ class WeatherProvider extends ChangeNotifier {
         _forecast15dSummary = _aiService.parseAlertText(aiResponse);
         print('✅ 15日天气总结生成成功: $_forecast15dSummary');
 
+        // 立即通知UI更新
+        _isGenerating15dSummary = false;
+        notifyListeners();
+
         // 保存到缓存（6小时有效期）
         await _databaseService.putAI15dSummary(cacheKey, _forecast15dSummary!);
         print('💾 15日天气总结已缓存');
       } else {
         print('❌ 15日天气总结生成失败，使用默认文案');
         _forecast15dSummary = _getDefault15dSummary();
+
+        // 立即通知UI更新
+        _isGenerating15dSummary = false;
+        notifyListeners();
       }
     } catch (e) {
       print('❌ 生成15日天气总结异常: $e');
@@ -2570,11 +2638,14 @@ class WeatherProvider extends ChangeNotifier {
         _forecast15dSummary = '未来15天天气预报数据加载中，请稍候...';
       }
     } finally {
-      try {
-        _isGenerating15dSummary = false;
-        notifyListeners();
-      } catch (e) {
-        print('❌ 重置15日生成状态失败: $e');
+      // 只有在异常情况下才需要重置状态（成功和失败的情况已经在上面处理了）
+      if (_isGenerating15dSummary) {
+        try {
+          _isGenerating15dSummary = false;
+          notifyListeners();
+        } catch (e) {
+          print('❌ 重置15日生成状态失败: $e');
+        }
       }
     }
   }
@@ -2880,6 +2951,51 @@ class WeatherProvider extends ChangeNotifier {
   }
 
   // ========== 智能缓存辅助方法 ==========
+
+  /// 后台刷新单个城市的天气数据
+  Future<void> _refreshSingleCityWeatherInBackground(String cityName) async {
+    try {
+      print('🔄 后台刷新城市天气数据: $cityName');
+
+      // 创建城市位置
+      LocationModel cityLocation = LocationModel(
+        address: cityName,
+        country: '中国',
+        province: '未知',
+        city: cityName,
+        district: cityName,
+        street: '',
+        adcode: '',
+        town: '',
+        lat: 0.0,
+        lng: 0.0,
+        isProxyDetected: false,
+      );
+
+      // 获取天气数据
+      final weatherData = await _weatherService.getWeatherDataForLocation(
+        cityLocation,
+      );
+      if (weatherData != null) {
+        // 更新内存中的数据
+        _mainCitiesWeather[cityName] = weatherData;
+
+        // 存储到智能缓存
+        await _putWeatherToSmartCache(cityName, weatherData);
+
+        // 存储到数据库缓存
+        final weatherKey = '$cityName:${AppConstants.weatherAllKey}';
+        await _databaseService.putWeatherData(weatherKey, weatherData);
+
+        print('✅ 后台刷新完成: $cityName');
+        notifyListeners();
+      } else {
+        print('❌ 后台刷新失败: $cityName - 无法获取数据');
+      }
+    } catch (e) {
+      print('❌ 后台刷新异常: $cityName - $e');
+    }
+  }
 
   /// 使用智能缓存获取天气数据
   Future<WeatherModel?> _getWeatherFromSmartCache(String cityName) async {

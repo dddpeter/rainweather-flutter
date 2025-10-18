@@ -89,6 +89,7 @@ class WeatherProvider extends ChangeNotifier {
   bool _isGeneratingSummary = false;
   String? _forecast15dSummary; // AI生成的15日天气总结
   bool _isGenerating15dSummary = false;
+  bool _isGeneratingCommuteAdvice = false; // 通勤建议生成状态
   final AIService _aiService = AIService();
 
   // Getters
@@ -2671,6 +2672,12 @@ class WeatherProvider extends ChangeNotifier {
 
   /// 检查并生成通勤建议
   Future<void> checkAndGenerateCommuteAdvices() async {
+    // 防止重复生成：如果正在生成中，直接返回
+    if (_isGeneratingCommuteAdvice) {
+      print('⏳ 通勤建议正在生成中，跳过重复调用');
+      return;
+    }
+
     // 检查是否在通勤时段
     if (!CommuteAdviceService.isInCommuteTime()) {
       print('⏰ 不在通勤时段，加载历史通勤建议');
@@ -2712,6 +2719,9 @@ class WeatherProvider extends ChangeNotifier {
     }
 
     try {
+      // 设置生成状态
+      _isGeneratingCommuteAdvice = true;
+
       print('\n╔════════════════════════════════════════╗');
       print('║  🚀 WeatherProvider: 通勤建议生成 ║');
       print('╚════════════════════════════════════════╝');
@@ -2734,6 +2744,7 @@ class WeatherProvider extends ChangeNotifier {
       if (advices.isEmpty) {
         print('ℹ️ 当前天气条件无需特别提醒');
         _hasShownCommuteAdviceToday = true;
+        _isGeneratingCommuteAdvice = false;
         print('');
         return;
       }
@@ -2764,11 +2775,12 @@ class WeatherProvider extends ChangeNotifier {
 
       // 加载通勤建议
       print('📂 加载通勤建议...');
-      await loadCommuteAdvices();
+      await loadCommuteAdvices(notifyUI: false);
       print('✅ 加载完成，当前建议数: ${_commuteAdvices.length}');
 
       // 标记今日已显示
       _hasShownCommuteAdviceToday = true;
+      _isGeneratingCommuteAdvice = false;
 
       print('\n╔════════════════════════════════════════╗');
       print('║  ✅ 通勤建议生成完成              ║');
@@ -2784,11 +2796,14 @@ class WeatherProvider extends ChangeNotifier {
 
       // 生成失败时，至少加载历史建议
       await loadCommuteAdvices();
+    } finally {
+      // 确保状态被重置
+      _isGeneratingCommuteAdvice = false;
     }
   }
 
   /// 加载通勤建议
-  Future<void> loadCommuteAdvices() async {
+  Future<void> loadCommuteAdvices({bool notifyUI = true}) async {
     try {
       print('\n📚 开始加载通勤建议...');
 
@@ -2801,7 +2816,7 @@ class WeatherProvider extends ChangeNotifier {
       if (advices.isEmpty) {
         print('   ℹ️ 数据库中没有今日通勤建议');
         _commuteAdvices = [];
-        notifyListeners();
+        if (notifyUI) notifyListeners();
         return;
       }
 
@@ -2861,7 +2876,7 @@ class WeatherProvider extends ChangeNotifier {
         print('🏝️ 灵动岛已隐藏');
       }
 
-      notifyListeners();
+      if (notifyUI) notifyListeners();
     } catch (e) {
       print('❌ 加载通勤建议失败: $e');
     }

@@ -334,7 +334,7 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
               ),
 
               // 农历日期 - Material Design 3
-              if (weather?.current?.nongLi != null) ...[
+              if (weather?.current?.nonaLi != null) ...[
                 const SizedBox(height: 8),
                 Text(
                   weather!.current!.nongLi!,
@@ -526,21 +526,21 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
     );
   }
 
-  /// 获取详细信息项图标颜色
-  Color _getDetailItemIconColor(IconData icon) {
-    // 使用更明快、活泼的两种颜色：橙色和蓝色
-    if (icon == Icons.water_drop ||
-        icon == Icons.air ||
-        icon == Icons.eco ||
-        icon == Icons.checkroom ||
-        icon == Icons.local_hospital) {
-      // 橙色系 - 明快活泼
-      return const Color(0xFFFFB74D); // 在亮色和暗色主题下都使用相同的橙色
-    } else {
-      // 蓝色系 - 明快清新
-      return const Color(0xFF4FC3F7); // 在亮色和暗色主题下都使用相同的蓝色
-    }
-  }
+  // /// 获取详细信息项图标颜色
+  // Color _getDetailItemIconColor(IconData icon) {
+  //   // 使用更明快、活泼的两种颜色：橙色和蓝色
+  //   if (icon == Icons.water_drop ||
+  //       icon == Icons.air ||
+  //       icon == Icons.eco ||
+  //       icon == Icons.checkroom ||
+  //       icon == Icons.local_hospital) {
+  //     // 橙色系 - 明快活泼
+  //     return const Color(0xFFFFB74D); // 在亮色和暗色主题下都使用相同的橙色
+  //   } else {
+  //     // 蓝色系 - 明快清新
+  //     return const Color(0xFF4FC3F7); // 在亮色和暗色主题下都使用相同的蓝色
+  //   }
+  // }
 
   /// 根据温度和天气生成穿衣建议
   String _getClothingSuggestion(String temperature, String? weather) {
@@ -581,5 +581,3 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
     }
   }
 }
-
-class _DetailItem {}

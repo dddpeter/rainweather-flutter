@@ -75,10 +75,12 @@ class _AppSplashScreenState extends State<AppSplashScreen>
         await AppStateManager().markAppFullyStarted();
 
         // 跳转到主界面（此时已显示缓存数据，后台正在刷新）
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const MainScreen()),
-          (Route<dynamic> route) => false,
-        );
+        if (mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const MainScreen()),
+            (Route<dynamic> route) => false,
+          );
+        }
 
         print('✅ 启动完成，界面已显示（后台继续刷新数据）');
       }

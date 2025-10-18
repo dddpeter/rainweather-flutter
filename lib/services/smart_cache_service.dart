@@ -244,15 +244,15 @@ class SmartCacheService {
     }
   }
 
-  /// 获取缓存统计信息
-  Map<String, dynamic> getCacheStats() {
-    return {
-      'memory_cache_size': _memoryCache.length,
-      'memory_cache_max': _maxMemoryCacheSize,
-      'memory_cache_usage':
-          '${(_memoryCache.length / _maxMemoryCacheSize * 100).toStringAsFixed(1)}%',
-    };
-  }
+  // /// 获取缓存统计信息
+  // Map<String, dynamic> getCacheStats() {
+  //   return {
+  //     'memory_cache_size': _memoryCache.length,
+  //     'memory_cache_max': _maxMemoryCacheSize,
+  //     'memory_cache_usage':
+  //         '${(_memoryCache.length / _maxMemoryCacheSize * 100).toStringAsFixed(1)}%',
+  //   };
+  // }
 
   // ========== 私有方法 ==========
 

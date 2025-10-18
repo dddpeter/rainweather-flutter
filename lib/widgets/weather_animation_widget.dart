@@ -341,17 +341,17 @@ class _WeatherAnimationWidgetState extends State<WeatherAnimationWidget>
   }
 
   // 暴风雨动画
-  Widget _buildStormAnimation() {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_mainAnimation, _particleController]),
-      builder: (context, child) {
-        return CustomPaint(
-          painter: StormPainter(_mainAnimation.value, _particleAnimation.value),
-          size: Size(widget.size, widget.size),
-        );
-      },
-    );
-  }
+  // Widget _buildStormAnimation() {
+  //   return AnimatedBuilder(
+  //     animation: Listenable.merge([_mainAnimation, _particleController]),
+  //     builder: (context, child) {
+  //       return CustomPaint(
+  //         painter: StormPainter(_mainAnimation.value, _particleAnimation.value),
+  //         size: Size(widget.size, widget.size),
+  //       );
+  //     },
+  //   );
+  // }
 
   // 雪天动画
   // 小雪动画
@@ -600,20 +600,20 @@ class _WeatherAnimationWidgetState extends State<WeatherAnimationWidget>
   }
 
   // 极端暴雨动画
-  Widget _buildExtremeRainAnimation() {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_mainAnimation, _particleController]),
-      builder: (context, child) {
-        return CustomPaint(
-          painter: ExtremeRainPainter(
-            _mainAnimation.value,
-            _particleAnimation.value,
-          ),
-          size: Size(widget.size, widget.size),
-        );
-      },
-    );
-  }
+  // Widget _buildExtremeRainAnimation() {
+  //   return AnimatedBuilder(
+  //     animation: Listenable.merge([_mainAnimation, _particleController]),
+  //     builder: (context, child) {
+  //       return CustomPaint(
+  //         painter: ExtremeRainPainter(
+  //           _mainAnimation.value,
+  //           _particleAnimation.value,
+  //         ),
+  //         size: Size(widget.size, widget.size),
+  //       );
+  //     },
+  //   );
+  // }
 
   // 雷阵雨动画
   Widget _buildThunderstormAnimation() {

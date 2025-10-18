@@ -9,11 +9,11 @@ class CustomBottomNavigationV2 extends StatelessWidget {
   final List<BottomNavigationItem> items;
 
   const CustomBottomNavigationV2({
-    Key? key,
+    super.key,
     required this.currentIndex,
     required this.onTap,
     required this.items,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

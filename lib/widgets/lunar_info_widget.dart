@@ -9,7 +9,7 @@ import '../providers/theme_provider.dart';
 class LunarInfoWidget extends StatelessWidget {
   final LunarInfo lunarInfo;
 
-  const LunarInfoWidget({Key? key, required this.lunarInfo}) : super(key: key);
+  const LunarInfoWidget({super.key, required this.lunarInfo});
 
   @override
   Widget build(BuildContext context) {
@@ -227,7 +227,7 @@ class LunarInfoWidget extends StatelessWidget {
 class YiJiWidget extends StatelessWidget {
   final LunarInfo lunarInfo;
 
-  const YiJiWidget({Key? key, required this.lunarInfo}) : super(key: key);
+  const YiJiWidget({super.key, required this.lunarInfo});
 
   @override
   Widget build(BuildContext context) {
@@ -408,10 +408,10 @@ class SolarTermListWidget extends StatelessWidget {
   final String title;
 
   const SolarTermListWidget({
-    Key? key,
+    super.key,
     required this.solarTerms,
     this.title = '即将到来的节气',
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

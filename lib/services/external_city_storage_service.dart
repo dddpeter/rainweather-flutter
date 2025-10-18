@@ -244,35 +244,35 @@ class ExternalCityStorageService {
     }
   }
 
-  /// 获取数据库文件路径（用于调试）
-  Future<String?> getDatabasePath() async {
-    try {
-      Directory? externalDir;
+  // /// 获取数据库文件路径（用于调试）
+  // Future<String?> getDatabasePath() async {
+  //   try {
+  //     Directory? externalDir;
 
-      if (Platform.isAndroid) {
-        final appDir = await getExternalStorageDirectory();
-        if (appDir != null) {
-          final pathParts = appDir.path.split('/');
-          final baseIndex = pathParts.indexOf('Android');
-          if (baseIndex > 0) {
-            final basePath = pathParts.sublist(0, baseIndex).join('/');
-            externalDir = Directory('$basePath/Documents');
-          }
-        }
-        externalDir ??= Directory('/storage/emulated/0/Documents');
-      } else if (Platform.isIOS) {
-        externalDir = await getApplicationDocumentsDirectory();
-      }
+  //     if (Platform.isAndroid) {
+  //       final appDir = await getExternalStorageDirectory();
+  //       if (appDir != null) {
+  //         final pathParts = appDir.path.split('/');
+  //         final baseIndex = pathParts.indexOf('Android');
+  //         if (baseIndex > 0) {
+  //           final basePath = pathParts.sublist(0, baseIndex).join('/');
+  //           externalDir = Directory('$basePath/Documents');
+  //         }
+  //       }
+  //       externalDir ??= Directory('/storage/emulated/0/Documents');
+  //     } else if (Platform.isIOS) {
+  //       externalDir = await getApplicationDocumentsDirectory();
+  //     }
 
-      if (externalDir == null) return null;
+  //     if (externalDir == null) return null;
 
-      final dbDir = Directory(join(externalDir.path, 'RainWeather'));
-      return join(dbDir.path, 'user_cities.db');
-    } catch (e) {
-      print('❌ 获取数据库路径失败: $e');
-      return null;
-    }
-  }
+  //     final dbDir = Directory(join(externalDir.path, 'RainWeather'));
+  //     return join(dbDir.path, 'user_cities.db');
+  //   } catch (e) {
+  //     print('❌ 获取数据库路径失败: $e');
+  //     return null;
+  //   }
+  // }
 
   /// 获取统计信息
   Future<Map<String, dynamic>> getStats() async {
@@ -281,11 +281,14 @@ class ExternalCityStorageService {
       final result = await db.rawQuery(
         'SELECT COUNT(*) as count FROM user_cities',
       );
-      final count = result.first['count'] as int;
-      final dbPath = await getDatabasePath();
+      final countValue = result.first['count'];
+      final count = countValue is int
+          ? countValue
+          : int.tryParse(countValue.toString()) ?? 0;
 
-      return {'count': count, 'path': dbPath};
+      return {'count': count, 'path': null};
     } catch (e) {
+      print('❌ 获取统计信息失败: $e');
       return {'count': 0, 'path': null, 'error': e.toString()};
     }
   }

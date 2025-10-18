@@ -19,7 +19,7 @@ class AppStateManager {
   bool _isInitializing = false;
 
   // 初始化完成时间戳
-  DateTime? _initializationTime;
+  // DateTime? _initializationTime;
 
   // 最后一次定位时间
   DateTime? _lastLocationTime;
@@ -48,7 +48,7 @@ class AppStateManager {
   Future<void> markAppFullyStarted() async {
     print('🚀 AppStateManager: 应用已完全启动');
     _isAppFullyStarted = true;
-    _initializationTime = DateTime.now();
+    // _initializationTime = DateTime.now();
 
     // 保存到持久化状态
     await _ensureInitialized();
@@ -134,7 +134,7 @@ class AppStateManager {
     print('🔄 AppStateManager: 重置应用状态');
     _isAppFullyStarted = false;
     _isInitializing = false;
-    _initializationTime = null;
+    // _initializationTime = null;
     _lastLocationTime = null;
 
     // 清除持久化状态
@@ -155,19 +155,19 @@ class AppStateManager {
     }
   }
 
-  /// 获取状态信息（用于调试）
-  Future<Map<String, dynamic>> getStatusInfo() async {
-    await _ensureInitialized();
-    final canPerform = await canPerformLocation();
+  // /// 获取状态信息（用于调试）
+  // Future<Map<String, dynamic>> getStatusInfo() async {
+  //   await _ensureInitialized();
+  //   final canPerform = await canPerformLocation();
 
-    return {
-      'isAppFullyStarted': _isAppFullyStarted,
-      'isInitializing': _isInitializing,
-      'initializationTime': _initializationTime?.toIso8601String(),
-      'lastLocationTime': _lastLocationTime?.toIso8601String(),
-      'canPerformLocation': canPerform,
-      'canFetchWeatherData': canFetchWeatherData(),
-      'wasKilledBySystem': await wasKilledBySystem(),
-    };
-  }
+  //   return {
+  //     'isAppFullyStarted': _isAppFullyStarted,
+  //     'isInitializing': _isInitializing,
+  //     'initializationTime': _initializationTime?.toIso8601String(),
+  //     'lastLocationTime': _lastLocationTime?.toIso8601String(),
+  //     'canPerformLocation': canPerform,
+  //     'canFetchWeatherData': canFetchWeatherData(),
+  //     'wasKilledBySystem': await wasKilledBySystem(),
+  //   };
+  // }
 }

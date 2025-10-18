@@ -12,10 +12,10 @@ class LifeIndexWidget extends StatelessWidget {
   final bool showContainer;
 
   const LifeIndexWidget({
-    Key? key,
+    super.key,
     required this.weatherProvider,
     this.showContainer = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -329,9 +329,9 @@ class LunarCalendar {
 
   /// 将公历日期转换为农历
   static Map<String, dynamic> solarToLunar(DateTime date) {
-    int year = date.year;
-    int month = date.month;
-    int day = date.day;
+    // int year = date.year;
+    // int month = date.month;
+    // int day = date.day;
 
     // 计算与1900年1月31日（农历1900年正月初一）的天数差
     int offset = 0;

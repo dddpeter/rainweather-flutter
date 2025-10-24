@@ -334,7 +334,7 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
               ),
 
               // 农历日期 - Material Design 3
-              if (weather?.current?.nonaLi != null) ...[
+              if (weather?.current?.nongLi != null) ...[
                 const SizedBox(height: 8),
                 Text(
                   weather!.current!.nongLi!,

@@ -16,6 +16,7 @@ import 'widgets/weather_alert_widget.dart';
 import 'screens/outfit_advisor_screen.dart';
 import 'screens/health_advisor_screen.dart';
 import 'screens/extreme_weather_alert_screen.dart';
+// import 'screens/radar_screen.dart'; // 已移除雷达图功能
 import 'services/weather_alert_service.dart';
 import 'services/weather_share_service.dart';
 import 'constants/app_colors.dart';
@@ -443,6 +444,9 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
 
         // 使用恢复管理器处理恢复
         AppRecoveryManager().handleResume(weatherProvider);
+
+        // 应用恢复时也更新小组件
+        _updateWidgetOnPause();
         break;
 
       case AppLifecycleState.detached:
@@ -741,6 +745,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
               },
               backgroundColor: const Color(0xFFFF5722),
             ),
+            // 天气雷达图功能已移除
           ]);
         }
 

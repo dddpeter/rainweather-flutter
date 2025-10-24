@@ -5,5 +5,22 @@
     
     <!-- 启动页背景色 - 浅色模式（固定使用暗色：深蓝色） -->
     <color name="launch_background">#012d78</color>
+    
+    <!-- 小组件颜色 - 暗色主题 -->
+    <color name="widget_background">#2C2C2E</color>
+    <color name="widget_text_primary">#FFFFFF</color>
+    <color name="widget_text_secondary">#E8F4FD</color>
+    <color name="widget_text_tertiary">#B8D9F5</color>
+    <color name="widget_divider">#3A3A3C</color>
+    <color name="widget_temperature">#FFFFFF</color>
+    <color name="widget_temp_high">#FFFFFF</color>
+    <color name="widget_temp_low">#E8F4FD</color>
+    
+    <!-- 功能色彩 - 简化版 -->
+    <color name="widget_temperature_color">#FF6B35</color>
+    <color name="widget_weather_color">#4ECDC4</color>
+    <color name="widget_lunar_color">#FFD93D</color>
+    <color name="widget_air_quality_color">#6BCF7F</color>
+    <color name="widget_advice_color">#B8D9F5</color>
+    <color name="widget_forecast_color">#E8F4FD</color>
 </resources>
-

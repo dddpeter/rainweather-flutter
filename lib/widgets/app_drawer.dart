@@ -10,6 +10,7 @@ import '../screens/weather_alert_test_screen.dart';
 import '../screens/all_location_test_screen.dart';
 import '../screens/lunar_calendar_screen.dart';
 import '../screens/weather_icons_test_screen.dart';
+// import '../screens/radar_screen.dart'; // 已移除雷达图功能
 
 /// 应用抽屉菜单
 class AppDrawer extends StatelessWidget {
@@ -62,6 +63,7 @@ class AppDrawer extends StatelessWidget {
                 },
               ),
 
+              // 天气雷达图功能已移除
               const Divider(height: 24, indent: 16, endIndent: 16),
 
               // 测试功能组（二级菜单，可展开/收起）
@@ -398,6 +400,8 @@ class AppDrawer extends StatelessWidget {
       MaterialPageRoute(builder: (context) => const WeatherAlertTestScreen()),
     );
   }
+
+  // 雷达图导航方法已移除
 
   // ==================== 对话框方法 ====================
 

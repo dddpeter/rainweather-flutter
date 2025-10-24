@@ -4,182 +4,196 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="12dp"
+    android:padding="16dp"
     android:background="@drawable/widget_background">
 
-    <!-- 第一行：日期、星期、农历 -->
+    <!-- 顶部区域：位置 + 当前温度 + 今日高低温度 -->
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp">
 
-        <TextView
-            android:id="@+id/text_date"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentStart="true"
-            android:text="10月07日"
-            android:textSize="15sp"
-            android:textColor="@color/widget_text_primary"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/text_weekday"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_toEndOf="@id/text_date"
-            android:layout_marginStart="6dp"
-            android:text="周二"
-            android:textSize="15sp"
-            android:textColor="@color/widget_text_secondary"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/text_lunar"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:text="九月初五"
-            android:textSize="14sp"
-            android:textColor="@color/widget_text_tertiary"
-            android:textStyle="bold" />
-    </RelativeLayout>
-
-    <!-- 主内容容器：包含第二、三、四行，垂直居中 -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:gravity="center_vertical">
-
-        <!-- 第二行：当前天气和温度 -->
+        <!-- 位置和日期信息（顶部一行） -->
         <LinearLayout
+            android:id="@+id/text_location"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:paddingTop="4dp"
-            android:paddingBottom="4dp"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
             android:orientation="horizontal"
-            android:gravity="center_vertical">
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:paddingStart="18dp"
-            android:orientation="horizontal"
-            android:gravity="center">
-
-            <ImageView
-                android:id="@+id/image_weather_icon"
-                android:layout_width="68dp"
-                android:layout_height="68dp"
-                android:src="@drawable/q"
-                android:scaleType="fitCenter"
-                android:contentDescription="天气图标" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_marginStart="24dp"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
             android:gravity="start">
 
+            <!-- 地点 -->
             <TextView
-                android:id="@+id/text_temperature"
+                android:id="@+id/text_location_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="17℃"
-                android:textSize="36sp"
-                android:textColor="@color/widget_temperature"
+                android:text="北京市朝阳区"
+                android:textSize="15sp"
+                android:textColor="@color/widget_text_primary"
                 android:textStyle="bold" />
 
+            <!-- 分隔符 -->
             <TextView
-                android:id="@+id/text_weather"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="0dp"
-                android:text="晴"
-                android:textSize="20sp"
+                android:layout_marginHorizontal="8dp"
+                android:text="·"
+                android:textSize="15sp"
+                android:textColor="@color/widget_text_secondary" />
+
+            <!-- 公历日期和星期 -->
+            <TextView
+                android:id="@+id/text_gregorian_date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="10月24日 星期五"
+                android:textSize="15sp"
+                android:textColor="@color/widget_text_primary"
+                android:textStyle="bold" />
+
+            <!-- 分隔符 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="8dp"
+                android:text="·"
+                android:textSize="15sp"
+                android:textColor="@color/widget_text_secondary" />
+
+            <!-- 农历日期 -->
+            <TextView
+                android:id="@+id/text_lunar_date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="八月二十"
+                android:textSize="15sp"
                 android:textColor="@color/widget_text_primary"
                 android:textStyle="bold" />
         </LinearLayout>
-        </LinearLayout>
 
-        <!-- 第三行：位置、空气、风力、降雨 -->
+        <!-- 天气信息区域（左右布局） -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:orientation="horizontal">
-
-            <TextView
-                android:id="@+id/text_location"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="📍 朝阳区"
-                android:textSize="12sp"
-                android:textColor="@color/widget_text_secondary"
-                android:textStyle="bold"
-                android:maxLines="1"
-                android:ellipsize="end" />
-
-            <TextView
-                android:id="@+id/text_aqi"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:text="空气 良"
-                android:textSize="12sp"
-                android:textColor="@color/widget_text_secondary"
-                android:textStyle="bold"
-                android:maxLines="1"
-                android:ellipsize="end" />
-
-            <TextView
-                android:id="@+id/text_wind"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:text="东南风2级"
-                android:textSize="12sp"
-                android:textColor="@color/widget_text_secondary"
-                android:textStyle="bold"
-                android:maxLines="1"
-                android:ellipsize="end" />
-
-            <TextView
-                android:id="@+id/text_rain"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:text="💧今日无雨"
-                android:textSize="12sp"
-                android:textColor="@color/widget_text_secondary"
-                android:textStyle="bold"
-                android:maxLines="1"
-                android:ellipsize="end" />
-        </LinearLayout>
-
-        <!-- 分隔线 -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginTop="6dp"
-            android:background="@color/widget_divider" />
-
-        <!-- 第四行：5日天气预报 -->
-        <LinearLayout
-            android:id="@+id/layout_forecast"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_below="@id/text_location"
+            android:layout_marginTop="8dp"
             android:orientation="horizontal"
-            android:gravity="center">
+            android:gravity="center_vertical">
 
-        <!-- 每日预报 -->
+            <!-- 左侧：天气图标和温度 -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="bottom">
+
+                <ImageView
+                    android:id="@+id/image_current_weather_icon"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/dy"
+                    android:scaleType="fitCenter"
+                    android:contentDescription="当前天气" />
+
+                <TextView
+                    android:id="@+id/text_current_temp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_gravity="center_vertical"
+                    android:text="9°"
+                    android:textSize="28sp"
+                    android:textColor="@color/widget_temperature_color"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- 右侧：天气文字、温度、空气质量 -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="end">
+
+                <!-- 天气文字 -->
+                <TextView
+                    android:id="@+id/text_current_weather"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="多云"
+                    android:textSize="18sp"
+                    android:textColor="@color/widget_weather_color"
+                    android:textStyle="bold" />
+
+                <!-- 今日高低温度（一行） -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:orientation="horizontal"
+                    android:gravity="end">
+
+                    <TextView
+                        android:id="@+id/text_today_high"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="最高 13°"
+                        android:textSize="12sp"
+                        android:textColor="@color/widget_temperature_color"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text=" "
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/text_today_low"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="最低 4°"
+                        android:textSize="12sp"
+                        android:textColor="@color/widget_temperature_color"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- 空气质量 -->
+                <TextView
+                    android:id="@+id/text_air_quality"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="空气质量 优"
+                    android:textSize="12sp"
+                    android:textColor="@color/widget_air_quality_color"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+    </RelativeLayout>
+
+    <!-- 生活提示 -->
+    <TextView
+        android:id="@+id/text_life_tips"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
+        android:text="生活提示：建议穿薄外套，无需带伞"
+        android:textSize="12sp"
+        android:textColor="@color/widget_text_tertiary"
+        android:textStyle="bold" />
+
+    <!-- 24小时天气预报（中间区域） -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <!-- 24小时预报项目1 -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_weight="1"
@@ -187,62 +201,36 @@
             android:orientation="vertical"
             android:gravity="center">
 
-            <LinearLayout
+            <TextView
+                android:id="@+id/hourly_time_1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center">
-                
-                <TextView
-                    android:id="@+id/forecast_day1_date"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="明天"
-                    android:textSize="11sp"
-                    android:textColor="@color/widget_text_secondary"
-                    android:textStyle="bold" />
-                
-                <TextView
-                    android:id="@+id/forecast_day1_weekday"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text=" 周二"
-                    android:textSize="10sp"
-                    android:textColor="@color/widget_text_tertiary"
-                    android:textStyle="bold" />
-            </LinearLayout>
+                android:text="21时"
+                android:textSize="12sp"
+                android:textColor="@color/widget_text_secondary"
+                android:textStyle="bold" />
 
             <ImageView
-                android:id="@+id/forecast_day1_weather"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:layout_marginTop="2dp"
-                android:src="@drawable/q"
+                android:id="@+id/hourly_weather_1"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_marginTop="4dp"
+                android:src="@drawable/dy"
                 android:scaleType="fitCenter"
                 android:contentDescription="天气" />
 
             <TextView
-                android:id="@+id/forecast_day1_temp_high"
+                android:id="@+id/hourly_temp_1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="20℃"
-                android:textSize="10sp"
-                android:textColor="@color/widget_temp_high"
-                android:textStyle="bold"
-                android:gravity="center" />
-            
-            <TextView
-                android:id="@+id/forecast_day1_temp_low"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="1dp"
-                android:text="10℃"
-                android:textSize="10sp"
-                android:textColor="@color/widget_temp_low"
-                android:gravity="center" />
+                android:text="9°"
+                android:textSize="12sp"
+                android:textColor="@color/widget_text_secondary"
+                android:textStyle="bold" />
         </LinearLayout>
 
+        <!-- 24小时预报项目2 -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_weight="1"
@@ -250,62 +238,147 @@
             android:orientation="vertical"
             android:gravity="center">
 
-            <LinearLayout
+            <TextView
+                android:id="@+id/hourly_time_2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center">
-                
-                <TextView
-                    android:id="@+id/forecast_day2_date"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="10/09"
-                    android:textSize="11sp"
-                    android:textColor="@color/widget_text_secondary"
-                    android:textStyle="bold" />
-                
-                <TextView
-                    android:id="@+id/forecast_day2_weekday"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text=" 周三"
-                    android:textSize="10sp"
-                    android:textColor="@color/widget_text_tertiary"
-                    android:textStyle="bold" />
-            </LinearLayout>
+                android:text="22时"
+                android:textSize="12sp"
+                android:textColor="@color/widget_text_secondary"
+                android:textStyle="bold" />
 
             <ImageView
-                android:id="@+id/forecast_day2_weather"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:id="@+id/hourly_weather_2"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_marginTop="4dp"
+                android:src="@drawable/dy"
+                android:scaleType="fitCenter"
+                android:contentDescription="天气" />
+
+            <TextView
+                android:id="@+id/hourly_temp_2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="9°"
+                android:textSize="12sp"
+                android:textColor="@color/widget_text_secondary"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- 24小时预报项目3 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/hourly_time_3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="23时"
+                android:textSize="12sp"
+                android:textColor="@color/widget_text_secondary"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:id="@+id/hourly_weather_3"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_marginTop="4dp"
+                android:src="@drawable/dy"
+                android:scaleType="fitCenter"
+                android:contentDescription="天气" />
+
+            <TextView
+                android:id="@+id/hourly_temp_3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="9°"
+                android:textSize="12sp"
+                android:textColor="@color/widget_text_secondary"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- 24小时预报项目4 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/hourly_time_4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0时"
+                android:textSize="12sp"
+                android:textColor="@color/widget_text_secondary"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:id="@+id/hourly_weather_4"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_marginTop="4dp"
+                android:src="@drawable/dy"
+                android:scaleType="fitCenter"
+                android:contentDescription="天气" />
+
+            <TextView
+                android:id="@+id/hourly_temp_4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="9°"
+                android:textSize="12sp"
+                android:textColor="@color/widget_text_secondary"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- 24小时预报项目5 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/hourly_time_5"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="1时"
+                android:textSize="12sp"
+                android:textColor="@color/widget_text_secondary"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:id="@+id/hourly_weather_5"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
                 android:layout_marginTop="2dp"
                 android:src="@drawable/dy"
                 android:scaleType="fitCenter"
                 android:contentDescription="天气" />
 
             <TextView
-                android:id="@+id/forecast_day2_temp_high"
+                android:id="@+id/hourly_temp_5"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="18℃"
-                android:textSize="10sp"
-                android:textColor="@color/widget_temp_high"
-                android:textStyle="bold"
-                android:gravity="center" />
-            
-            <TextView
-                android:id="@+id/forecast_day2_temp_low"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="1dp"
-                android:text="12℃"
-                android:textSize="10sp"
-                android:textColor="@color/widget_temp_low"
-                android:gravity="center" />
+                android:text="8°"
+                android:textSize="12sp"
+                android:textColor="@color/widget_text_secondary"
+                android:textStyle="bold" />
         </LinearLayout>
 
+        <!-- 24小时预报项目6 -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_weight="1"
@@ -313,62 +386,36 @@
             android:orientation="vertical"
             android:gravity="center">
 
-            <LinearLayout
+            <TextView
+                android:id="@+id/hourly_time_6"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center">
-                
-                <TextView
-                    android:id="@+id/forecast_day3_date"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="10/10"
-                    android:textSize="11sp"
-                    android:textColor="@color/widget_text_secondary"
-                    android:textStyle="bold" />
-                
-                <TextView
-                    android:id="@+id/forecast_day3_weekday"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text=" 周四"
-                    android:textSize="10sp"
-                    android:textColor="@color/widget_text_tertiary"
-                    android:textStyle="bold" />
-            </LinearLayout>
+                android:text="2时"
+                android:textSize="12sp"
+                android:textColor="@color/widget_text_secondary"
+                android:textStyle="bold" />
 
             <ImageView
-                android:id="@+id/forecast_day3_weather"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:id="@+id/hourly_weather_6"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
                 android:layout_marginTop="2dp"
-                android:src="@drawable/xy"
+                android:src="@drawable/dy"
                 android:scaleType="fitCenter"
                 android:contentDescription="天气" />
 
             <TextView
-                android:id="@+id/forecast_day3_temp_high"
+                android:id="@+id/hourly_temp_6"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="15℃"
-                android:textSize="10sp"
-                android:textColor="@color/widget_temp_high"
-                android:textStyle="bold"
-                android:gravity="center" />
-            
-            <TextView
-                android:id="@+id/forecast_day3_temp_low"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="1dp"
-                android:text="10℃"
-                android:textSize="10sp"
-                android:textColor="@color/widget_temp_low"
-                android:gravity="center" />
+                android:text="7°"
+                android:textSize="12sp"
+                android:textColor="@color/widget_text_secondary"
+                android:textStyle="bold" />
         </LinearLayout>
 
+        <!-- 24小时预报项目7 -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_weight="1"
@@ -376,62 +423,36 @@
             android:orientation="vertical"
             android:gravity="center">
 
-            <LinearLayout
+            <TextView
+                android:id="@+id/hourly_time_7"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center">
-                
-                <TextView
-                    android:id="@+id/forecast_day4_date"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="10/11"
-                    android:textSize="11sp"
-                    android:textColor="@color/widget_text_secondary"
-                    android:textStyle="bold" />
-                
-                <TextView
-                    android:id="@+id/forecast_day4_weekday"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text=" 周五"
-                    android:textSize="10sp"
-                    android:textColor="@color/widget_text_tertiary"
-                    android:textStyle="bold" />
-            </LinearLayout>
+                android:text="3时"
+                android:textSize="12sp"
+                android:textColor="@color/widget_text_secondary"
+                android:textStyle="bold" />
 
             <ImageView
-                android:id="@+id/forecast_day4_weather"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:id="@+id/hourly_weather_7"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
                 android:layout_marginTop="2dp"
-                android:src="@drawable/dyq"
+                android:src="@drawable/dy"
                 android:scaleType="fitCenter"
                 android:contentDescription="天气" />
 
             <TextView
-                android:id="@+id/forecast_day4_temp_high"
+                android:id="@+id/hourly_temp_7"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="16℃"
-                android:textSize="10sp"
-                android:textColor="@color/widget_temp_high"
-                android:textStyle="bold"
-                android:gravity="center" />
-            
-            <TextView
-                android:id="@+id/forecast_day4_temp_low"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="1dp"
-                android:text="11℃"
-                android:textSize="10sp"
-                android:textColor="@color/widget_temp_low"
-                android:gravity="center" />
+                android:text="6°"
+                android:textSize="12sp"
+                android:textColor="@color/widget_text_secondary"
+                android:textStyle="bold" />
         </LinearLayout>
 
+        <!-- 24小时预报项目8 -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_weight="1"
@@ -439,64 +460,492 @@
             android:orientation="vertical"
             android:gravity="center">
 
-            <LinearLayout
+            <TextView
+                android:id="@+id/hourly_time_8"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center">
-                
-                <TextView
-                    android:id="@+id/forecast_day5_date"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="10/12"
-                    android:textSize="11sp"
-                    android:textColor="@color/widget_text_secondary"
-                    android:textStyle="bold" />
-                
-                <TextView
-                    android:id="@+id/forecast_day5_weekday"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text=" 周六"
-                    android:textSize="10sp"
-                    android:textColor="@color/widget_text_tertiary"
-                    android:textStyle="bold" />
-            </LinearLayout>
+                android:text="4时"
+                android:textSize="12sp"
+                android:textColor="@color/widget_text_secondary"
+                android:textStyle="bold" />
 
             <ImageView
-                android:id="@+id/forecast_day5_weather"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:id="@+id/hourly_weather_8"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
                 android:layout_marginTop="2dp"
-                android:src="@drawable/q"
+                android:src="@drawable/dy"
                 android:scaleType="fitCenter"
                 android:contentDescription="天气" />
 
             <TextView
-                android:id="@+id/forecast_day5_temp_high"
+                android:id="@+id/hourly_temp_8"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="19℃"
-                android:textSize="10sp"
-                android:textColor="@color/widget_temp_high"
-                android:textStyle="bold"
-                android:gravity="center" />
-            
-            <TextView
-                android:id="@+id/forecast_day5_temp_low"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="1dp"
-                android:text="13℃"
-                android:textSize="10sp"
-                android:textColor="@color/widget_temp_low"
-                android:gravity="center" />
-            </LinearLayout>
+                android:text="5°"
+                android:textSize="12sp"
+                android:textColor="@color/widget_text_secondary"
+                android:textStyle="bold" />
         </LinearLayout>
 
     </LinearLayout>
 
-</LinearLayout>
+    <!-- 5日天气预报（底部区域） -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_vertical">
 
+        <!-- 第1天 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="6dp"
+            android:layout_marginBottom="4dp">
+
+            <!-- 星期 -->
+            <TextView
+                android:id="@+id/forecast_day1_weekday"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="周六"
+                android:textSize="12sp"
+                android:textColor="@color/widget_text_primary"
+                android:textStyle="bold" />
+
+            <!-- 天气图标 -->
+            <ImageView
+                android:id="@+id/forecast_day1_weather"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_marginStart="8dp"
+                android:src="@drawable/q"
+                android:scaleType="fitCenter"
+                android:contentDescription="天气" />
+
+                   <!-- 温度范围 -->
+                   <LinearLayout
+                       android:layout_width="0dp"
+                       android:layout_weight="1"
+                       android:layout_height="wrap_content"
+                       android:layout_marginStart="8dp"
+                       android:orientation="horizontal"
+                       android:gravity="center_vertical">
+
+                       <!-- 最低温度 -->
+                       <TextView
+                           android:id="@+id/forecast_day1_temp_low"
+                           android:layout_width="wrap_content"
+                           android:layout_height="wrap_content"
+                           android:text="6°"
+                           android:textSize="12sp"
+                           android:textColor="@color/widget_text_secondary"
+                           android:textStyle="bold" />
+
+                       <!-- 温度标尺容器 -->
+                       <RelativeLayout
+                           android:layout_width="0dp"
+                           android:layout_weight="1"
+                           android:layout_height="wrap_content"
+                           android:layout_marginHorizontal="8dp">
+
+                           <!-- 高温进度条（背景层） -->
+                           <ProgressBar
+                               android:id="@+id/forecast_day1_high_progress"
+                               style="?android:attr/progressBarStyleHorizontal"
+                               android:layout_width="match_parent"
+                               android:layout_height="12dp"
+                               android:max="100"
+                               android:progress="0"
+                               android:progressDrawable="@drawable/temp_high_progress" />
+
+                           <!-- 低温进度条（前景层，显示在高温条前面） -->
+                           <ProgressBar
+                               android:id="@+id/forecast_day1_low_progress"
+                               style="?android:attr/progressBarStyleHorizontal"
+                               android:layout_width="match_parent"
+                               android:layout_height="12dp"
+                               android:layout_alignTop="@id/forecast_day1_high_progress"
+                               android:layout_alignBottom="@id/forecast_day1_high_progress"
+                               android:max="100"
+                               android:progress="0"
+                               android:progressDrawable="@drawable/temp_low_progress" />
+                       </RelativeLayout>
+
+                       <!-- 最高温度 -->
+                       <TextView
+                           android:id="@+id/forecast_day1_temp_high"
+                           android:layout_width="wrap_content"
+                           android:layout_height="wrap_content"
+                           android:text="15°"
+                           android:textSize="12sp"
+                           android:textColor="@color/widget_text_secondary"
+                           android:textStyle="bold" />
+                   </LinearLayout>
+        </LinearLayout>
+
+        <!-- 第2天 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="6dp"
+            android:layout_marginBottom="4dp">
+
+            <!-- 星期 -->
+            <TextView
+                android:id="@+id/forecast_day2_weekday"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="周日"
+                android:textSize="12sp"
+                android:textColor="@color/widget_text_primary"
+                android:textStyle="bold" />
+
+            <!-- 天气图标 -->
+            <ImageView
+                android:id="@+id/forecast_day2_weather"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_marginStart="4dp"
+                android:src="@drawable/q"
+                android:scaleType="fitCenter"
+                android:contentDescription="天气" />
+
+                   <!-- 温度范围 -->
+                   <LinearLayout
+                       android:layout_width="0dp"
+                       android:layout_weight="1"
+                       android:layout_height="wrap_content"
+                       android:layout_marginStart="8dp"
+                       android:orientation="horizontal"
+                       android:gravity="center_vertical">
+
+                       <!-- 最低温度 -->
+                       <TextView
+                           android:id="@+id/forecast_day2_temp_low"
+                           android:layout_width="wrap_content"
+                           android:layout_height="wrap_content"
+                           android:text="4°"
+                           android:textSize="12sp"
+                           android:textColor="@color/widget_text_secondary"
+                           android:textStyle="bold" />
+
+                       <!-- 温度标尺容器 -->
+                       <RelativeLayout
+                           android:layout_width="0dp"
+                           android:layout_weight="1"
+                           android:layout_height="wrap_content"
+                           android:layout_marginHorizontal="8dp">
+
+                           <!-- 高温进度条（背景层） -->
+                           <ProgressBar
+                               android:id="@+id/forecast_day2_high_progress"
+                               style="?android:attr/progressBarStyleHorizontal"
+                               android:layout_width="match_parent"
+                               android:layout_height="12dp"
+                               android:max="100"
+                               android:progress="0"
+                               android:progressDrawable="@drawable/temp_high_progress" />
+
+                           <!-- 低温进度条（前景层，显示在高温条前面） -->
+                           <ProgressBar
+                               android:id="@+id/forecast_day2_low_progress"
+                               style="?android:attr/progressBarStyleHorizontal"
+                               android:layout_width="match_parent"
+                               android:layout_height="12dp"
+                               android:layout_alignTop="@id/forecast_day2_high_progress"
+                               android:layout_alignBottom="@id/forecast_day2_high_progress"
+                               android:max="100"
+                               android:progress="0"
+                               android:progressDrawable="@drawable/temp_low_progress" />
+                       </RelativeLayout>
+
+                       <!-- 最高温度 -->
+                       <TextView
+                           android:id="@+id/forecast_day2_temp_high"
+                           android:layout_width="wrap_content"
+                           android:layout_height="wrap_content"
+                           android:text="13°"
+                           android:textSize="12sp"
+                           android:textColor="@color/widget_text_secondary"
+                           android:textStyle="bold" />
+                   </LinearLayout>
+        </LinearLayout>
+
+        <!-- 第3天 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="6dp"
+            android:layout_marginBottom="4dp">
+
+            <!-- 星期 -->
+            <TextView
+                android:id="@+id/forecast_day3_weekday"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="周一"
+                android:textSize="12sp"
+                android:textColor="@color/widget_text_primary"
+                android:textStyle="bold" />
+
+            <!-- 天气图标 -->
+            <ImageView
+                android:id="@+id/forecast_day3_weather"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_marginStart="4dp"
+                android:src="@drawable/q"
+                android:scaleType="fitCenter"
+                android:contentDescription="天气" />
+
+                   <!-- 温度范围 -->
+                   <LinearLayout
+                       android:layout_width="0dp"
+                       android:layout_weight="1"
+                       android:layout_height="wrap_content"
+                       android:layout_marginStart="8dp"
+                       android:orientation="horizontal"
+                       android:gravity="center_vertical">
+
+                       <!-- 最低温度 -->
+                       <TextView
+                           android:id="@+id/forecast_day3_temp_low"
+                           android:layout_width="wrap_content"
+                           android:layout_height="wrap_content"
+                           android:text="2°"
+                           android:textSize="12sp"
+                           android:textColor="@color/widget_text_secondary"
+                           android:textStyle="bold" />
+
+                       <!-- 温度标尺容器 -->
+                       <RelativeLayout
+                           android:layout_width="0dp"
+                           android:layout_weight="1"
+                           android:layout_height="wrap_content"
+                           android:layout_marginHorizontal="8dp">
+
+                           <!-- 高温进度条（背景层） -->
+                           <ProgressBar
+                               android:id="@+id/forecast_day3_high_progress"
+                               style="?android:attr/progressBarStyleHorizontal"
+                               android:layout_width="match_parent"
+                               android:layout_height="12dp"
+                               android:max="100"
+                               android:progress="0"
+                               android:progressDrawable="@drawable/temp_high_progress" />
+
+                           <!-- 低温进度条（前景层，显示在高温条前面） -->
+                           <ProgressBar
+                               android:id="@+id/forecast_day3_low_progress"
+                               style="?android:attr/progressBarStyleHorizontal"
+                               android:layout_width="match_parent"
+                               android:layout_height="12dp"
+                               android:layout_alignTop="@id/forecast_day3_high_progress"
+                               android:layout_alignBottom="@id/forecast_day3_high_progress"
+                               android:max="100"
+                               android:progress="0"
+                               android:progressDrawable="@drawable/temp_low_progress" />
+                       </RelativeLayout>
+
+                       <!-- 最高温度 -->
+                       <TextView
+                           android:id="@+id/forecast_day3_temp_high"
+                           android:layout_width="wrap_content"
+                           android:layout_height="wrap_content"
+                           android:text="13°"
+                           android:textSize="12sp"
+                           android:textColor="@color/widget_text_secondary"
+                           android:textStyle="bold" />
+                   </LinearLayout>
+        </LinearLayout>
+
+        <!-- 第4天 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="6dp"
+            android:layout_marginBottom="4dp">
+
+            <!-- 星期 -->
+            <TextView
+                android:id="@+id/forecast_day4_weekday"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="周二"
+                android:textSize="12sp"
+                android:textColor="@color/widget_text_primary"
+                android:textStyle="bold" />
+
+            <!-- 天气图标 -->
+            <ImageView
+                android:id="@+id/forecast_day4_weather"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_marginStart="4dp"
+                android:src="@drawable/q"
+                android:scaleType="fitCenter"
+                android:contentDescription="天气" />
+
+            <!-- 温度范围 -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <!-- 最低温度 -->
+                <TextView
+                    android:id="@+id/forecast_day4_temp_low"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="3°"
+                    android:textSize="12sp"
+                    android:textColor="@color/widget_text_secondary"
+                    android:textStyle="bold" />
+
+                       <!-- 温度标尺容器 -->
+                       <RelativeLayout
+                           android:layout_width="0dp"
+                           android:layout_weight="1"
+                           android:layout_height="wrap_content"
+                           android:layout_marginHorizontal="8dp">
+
+                           <!-- 高温进度条（背景层） -->
+                           <ProgressBar
+                               android:id="@+id/forecast_day4_high_progress"
+                               style="?android:attr/progressBarStyleHorizontal"
+                               android:layout_width="match_parent"
+                               android:layout_height="12dp"
+                               android:max="100"
+                               android:progress="0"
+                               android:progressDrawable="@drawable/temp_high_progress" />
+
+                           <!-- 低温进度条（前景层，显示在高温条前面） -->
+                           <ProgressBar
+                               android:id="@+id/forecast_day4_low_progress"
+                               style="?android:attr/progressBarStyleHorizontal"
+                               android:layout_width="match_parent"
+                               android:layout_height="12dp"
+                               android:layout_alignTop="@id/forecast_day4_high_progress"
+                               android:layout_alignBottom="@id/forecast_day4_high_progress"
+                               android:max="100"
+                               android:progress="0"
+                               android:progressDrawable="@drawable/temp_low_progress" />
+                       </RelativeLayout>
+
+                <!-- 最高温度 -->
+                <TextView
+                    android:id="@+id/forecast_day4_temp_high"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="11°"
+                    android:textSize="12sp"
+                    android:textColor="@color/widget_text_secondary"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- 第5天 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="4dp">
+
+            <!-- 星期 -->
+            <TextView
+                android:id="@+id/forecast_day5_weekday"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="周三"
+                android:textSize="12sp"
+                android:textColor="@color/widget_text_primary"
+                android:textStyle="bold" />
+
+            <!-- 天气图标 -->
+            <ImageView
+                android:id="@+id/forecast_day5_weather"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_marginStart="4dp"
+                android:src="@drawable/dy"
+                android:scaleType="fitCenter"
+                android:contentDescription="天气" />
+
+                   <!-- 温度范围 -->
+                   <LinearLayout
+                       android:layout_width="0dp"
+                       android:layout_weight="1"
+                       android:layout_height="wrap_content"
+                       android:layout_marginStart="8dp"
+                       android:orientation="horizontal"
+                       android:gravity="center_vertical">
+
+                       <!-- 最低温度 -->
+                       <TextView
+                           android:id="@+id/forecast_day5_temp_low"
+                           android:layout_width="wrap_content"
+                           android:layout_height="wrap_content"
+                           android:text="6°"
+                           android:textSize="12sp"
+                           android:textColor="@color/widget_text_secondary"
+                           android:textStyle="bold" />
+
+                       <!-- 温度标尺容器 -->
+                       <RelativeLayout
+                           android:layout_width="0dp"
+                           android:layout_weight="1"
+                           android:layout_height="wrap_content"
+                           android:layout_marginHorizontal="8dp">
+
+                           <!-- 高温进度条（背景层） -->
+                           <ProgressBar
+                               android:id="@+id/forecast_day5_high_progress"
+                               style="?android:attr/progressBarStyleHorizontal"
+                               android:layout_width="match_parent"
+                               android:layout_height="12dp"
+                               android:max="100"
+                               android:progress="0"
+                               android:progressDrawable="@drawable/temp_high_progress" />
+
+                           <!-- 低温进度条（前景层，显示在高温条前面） -->
+                           <ProgressBar
+                               android:id="@+id/forecast_day5_low_progress"
+                               style="?android:attr/progressBarStyleHorizontal"
+                               android:layout_width="match_parent"
+                               android:layout_height="12dp"
+                               android:layout_alignTop="@id/forecast_day5_high_progress"
+                               android:layout_alignBottom="@id/forecast_day5_high_progress"
+                               android:max="100"
+                               android:progress="0"
+                               android:progressDrawable="@drawable/temp_low_progress" />
+                       </RelativeLayout>
+
+                       <!-- 最高温度 -->
+                       <TextView
+                           android:id="@+id/forecast_day5_temp_high"
+                           android:layout_width="wrap_content"
+                           android:layout_height="wrap_content"
+                           android:text="16°"
+                           android:textSize="12sp"
+                           android:textColor="@color/widget_text_secondary"
+                           android:textStyle="bold" />
+                   </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>

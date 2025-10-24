@@ -46,16 +46,8 @@ class NotificationService {
       const AndroidInitializationSettings initializationSettingsAndroid =
           AndroidInitializationSettings('@mipmap/ic_launcher');
 
-      // iOS/macOS 初始化设置
+      // iOS 初始化设置
       const DarwinInitializationSettings initializationSettingsIOS =
-          DarwinInitializationSettings(
-            requestAlertPermission: true,
-            requestBadgePermission: true,
-            requestSoundPermission: true,
-          );
-
-      // macOS 初始化设置
-      const DarwinInitializationSettings initializationSettingsMacOS =
           DarwinInitializationSettings(
             requestAlertPermission: true,
             requestBadgePermission: true,
@@ -66,7 +58,6 @@ class NotificationService {
           InitializationSettings(
             android: initializationSettingsAndroid,
             iOS: initializationSettingsIOS,
-            macOS: initializationSettingsMacOS,
           );
 
       await _notifications.initialize(
@@ -114,13 +105,6 @@ class NotificationService {
             >()
             ?.requestPermissions(alert: true, badge: true, sound: true);
         return result ?? false;
-      } else if (Platform.isMacOS) {
-        final bool? result = await _notifications
-            .resolvePlatformSpecificImplementation<
-              MacOSFlutterLocalNotificationsPlugin
-            >()
-            ?.requestPermissions(alert: true, badge: true, sound: true);
-        return result ?? false;
       }
       return false;
     } catch (e) {
@@ -153,13 +137,6 @@ class NotificationService {
         final result = await _notifications
             .resolvePlatformSpecificImplementation<
               IOSFlutterLocalNotificationsPlugin
-            >()
-            ?.checkPermissions();
-        return result?.isEnabled ?? false;
-      } else if (Platform.isMacOS) {
-        final result = await _notifications
-            .resolvePlatformSpecificImplementation<
-              MacOSFlutterLocalNotificationsPlugin
             >()
             ?.checkPermissions();
         return result?.isEnabled ?? false;

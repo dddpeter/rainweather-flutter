@@ -33,6 +33,8 @@ class WeatherWidgetProvider : AppWidgetProvider() {
             appWidgetManager: AppWidgetManager,
             appWidgetId: Int
         ) {
+            android.util.Log.d("WeatherWidget", "Updating widget: $appWidgetId")
+            
             val views = RemoteViews(context.packageName, R.layout.weather_widget)
 
             try {
@@ -91,10 +93,12 @@ class WeatherWidgetProvider : AppWidgetProvider() {
                 views.setOnClickPendingIntent(R.id.widget_container, pendingIntent)
 
             } catch (e: Exception) {
+                android.util.Log.e("WeatherWidget", "Error updating widget", e)
                 e.printStackTrace()
             }
 
             appWidgetManager.updateAppWidget(appWidgetId, views)
+            android.util.Log.d("WeatherWidget", "Widget update completed")
         }
 
         private fun updateHourlyForecast(views: RemoteViews, jsonStr: String, isDaytime: Boolean) {

@@ -185,6 +185,14 @@
         android:textColor="@color/widget_text_tertiary"
         android:textStyle="bold" />
 
+    <!-- 弹性空间1：顶部区域和24小时预报之间的弹性空间 -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text=""
+        android:background="@android:color/transparent" />
+
     <!-- 24小时天气预报（中间区域） -->
     <LinearLayout
         android:layout_width="match_parent"
@@ -490,6 +498,14 @@
         </LinearLayout>
 
     </LinearLayout>
+
+    <!-- 弹性空间2：24小时预报和5日预报之间的弹性空间 -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text=""
+        android:background="@android:color/transparent" />
 
     <!-- 5日天气预报（底部区域） -->
     <LinearLayout
@@ -864,7 +880,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:padding="4dp">
+            android:padding="6dp">
 
             <!-- 星期 -->
             <TextView

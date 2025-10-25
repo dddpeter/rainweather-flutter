@@ -39,10 +39,17 @@ class TodayScreen extends StatefulWidget {
 }
 
 class _TodayScreenState extends State<TodayScreen>
-    with WidgetsBindingObserver, LocationChangeListener, PageActivationMixin {
+    with
+        WidgetsBindingObserver,
+        LocationChangeListener,
+        PageActivationMixin,
+        AutomaticKeepAliveClientMixin {
   bool _isVisible = false;
   final WeatherAlertService _alertService = WeatherAlertService.instance;
   bool _isRefreshing = false; // 防止重复刷新
+
+  @override
+  bool get wantKeepAlive => true; // 保持页面状态
 
   // 定时刷新相关
   Timer? _refreshTimer;
@@ -414,6 +421,7 @@ class _TodayScreenState extends State<TodayScreen>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // 必须调用以支持AutomaticKeepAlive
     // 使用Selector精确监听需要的状态，避免不必要的重建
     return Selector<ThemeProvider, ThemeProvider>(
       selector: (context, themeProvider) => themeProvider,
@@ -542,7 +550,7 @@ class _TodayScreenState extends State<TodayScreen>
                               backgroundColor: AppColors.accentBlue,
                               foregroundColor: AppColors.textPrimary,
                             ),
-                            child: Text('重试'),
+                            child: const Text('重试'),
                           ),
                           const SizedBox(height: 16),
                           TextButton(

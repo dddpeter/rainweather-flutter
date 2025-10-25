@@ -29,8 +29,11 @@ class CityWeatherTabsScreen extends StatefulWidget {
 }
 
 class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   late TabController _tabController;
+
+  @override
+  bool get wantKeepAlive => true; // 保持页面状态
 
   @override
   void initState() {
@@ -67,6 +70,7 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // 必须调用以支持AutomaticKeepAlive
     // 使用Consumer监听主题变化，确保整个页面在主题切换时重建
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, _) {

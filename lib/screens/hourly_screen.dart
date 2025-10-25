@@ -22,9 +22,12 @@ class HourlyScreen extends StatefulWidget {
 }
 
 class _HourlyScreenState extends State<HourlyScreen>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, AutomaticKeepAliveClientMixin {
   Key _chartKey = UniqueKey();
   Key _listKey = UniqueKey();
+
+  @override
+  bool get wantKeepAlive => true; // 保持页面状态
 
   @override
   void initState() {
@@ -70,6 +73,7 @@ class _HourlyScreenState extends State<HourlyScreen>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // 必须调用以支持AutomaticKeepAlive
     // 使用Consumer监听主题变化，确保整个页面在主题切换时重建
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, _) {

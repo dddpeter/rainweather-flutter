@@ -756,6 +756,80 @@ if (forecast15d != null && forecast15d.isNotEmpty) {
 4. **null安全**: 所有字段都可能为null，使用时需要安全访问（`?.`）
 5. **气象预警**: 只有当地气象部门发布时才有数据，平时可能为空数组
 
+## 重要数据模型定义
+
+### LocationModel（定位模型）
+
+**文件位置**: `lib/models/location_model.dart`
+
+**完整定义**:
+```dart
+@JsonSerializable()
+class LocationModel {
+  final String address;        // 完整地址
+  final String country;        // 国家
+  final String province;       // 省份
+  final String city;           // 城市
+  final String district;       // 区县
+  final String street;         // 街道
+  final String adcode;         // 行政区划代码
+  final String town;           // 乡镇
+  final double lat;            // 纬度
+  final double lng;            // 经度
+  bool isProxyDetected;        // 是否检测到代理/VPN
+
+  LocationModel({
+    required this.address,
+    required this.country,
+    required this.province,
+    required this.city,
+    required this.district,
+    required this.street,
+    required this.adcode,
+    required this.town,
+    required this.lat,
+    required this.lng,
+    this.isProxyDetected = false,
+  });
+}
+```
+
+**关键字段说明**:
+- `district`: 最重要的字段，用于城市匹配和显示
+- `city`: 城市名称，用于天气API查询
+- `province`: 省份，用于更精确的定位
+- `lat/lng`: 经纬度坐标，用于精确定位
+- `adcode`: 行政区划代码，用于城市数据匹配
+- `isProxyDetected`: 代理检测标志，影响定位准确性
+
+**常用访问方式**:
+```dart
+// 获取显示名称（优先级：district > city > province）
+String getDisplayName() {
+  if (district.isNotEmpty) return district;
+  if (city.isNotEmpty) return city;
+  return province;
+}
+
+// 获取城市ID（用于天气API）
+String getCityId() => adcode;
+
+// 检查定位是否有效
+bool isValid() => lat != 0 && lng != 0 && district.isNotEmpty;
+```
+
+**使用场景**:
+- 当前定位城市显示
+- 天气数据查询
+- 城市列表匹配
+- 定位服务回调
+
+**注意事项**:
+- 所有字符串字段都可能为空，使用时需要检查
+- `lat/lng` 为 0 表示定位失败
+- `isProxyDetected` 为 true 时定位可能不准确
+- `toString()` 方法返回简化格式：`LocationModel(district: xxx, city: xxx, province: xxx)`
+
 ## 重要提醒
 
 ❗ 开发时请注意区分这三个概念，不要混淆：

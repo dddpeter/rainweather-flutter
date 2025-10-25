@@ -1,24 +1,26 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import '../models/weather_model.dart';
 import '../models/location_model.dart';
+import '../models/commute_advice_model.dart';
 import '../models/city_model.dart';
 import '../models/sun_moon_index_model.dart';
 import '../services/weather_service.dart';
 import '../services/location_service.dart';
-import '../services/database_service.dart';
 import '../services/weather_alert_service.dart';
+import '../services/ai_service.dart';
+import '../services/commute_advice_service.dart';
+import '../services/notification_service.dart';
+import '../services/database_service.dart';
+import '../services/smart_cache_service.dart';
+import '../services/weather_widget_service.dart';
 import '../services/city_service.dart';
 import '../services/city_data_service.dart';
 import '../services/sun_moon_index_service.dart';
-import '../services/weather_widget_service.dart';
-import '../services/commute_advice_service.dart';
-import '../services/ai_service.dart';
-import '../services/smart_cache_service.dart';
-import '../services/notification_service.dart';
-import '../models/commute_advice_model.dart';
 import '../constants/app_constants.dart';
+import '../utils/logger.dart';
+import '../utils/error_handler.dart';
 import '../utils/app_state_manager.dart';
 import '../utils/city_name_matcher.dart';
 import '../services/location_change_notifier.dart';
@@ -59,7 +61,7 @@ class WeatherProvider extends ChangeNotifier {
   bool _hasPerformedInitialLocation = false; // 是否已经进行过首次定位
 
   // 主要城市天气数据
-  Map<String, WeatherModel> _mainCitiesWeather = {};
+  final Map<String, WeatherModel> _mainCitiesWeather = {};
   bool _isLoadingCitiesWeather = false;
   bool _hasPerformedInitialMainCitiesRefresh = false; // 是否已经进行过首次主要城市刷新
   DateTime? _lastMainCitiesRefreshTime; // 上次刷新主要城市的时间
@@ -705,11 +707,22 @@ class WeatherProvider extends ChangeNotifier {
 
           // 分析天气提醒（智能提醒，仅当前定位城市）
           try {
-            print('🏙️ WeatherProvider: 分析当前定位城市的天气提醒');
+            Logger.d('分析当前定位城市的天气提醒', tag: 'WeatherProvider');
             await _alertService.analyzeWeather(weather, location);
-            print('🏙️ WeatherProvider: 已生成当前定位城市的天气提醒');
-          } catch (e) {
-            print('🏙️ WeatherProvider: 分析天气提醒失败 - $e');
+            Logger.s('已生成当前定位城市的天气提醒', tag: 'WeatherProvider');
+          } catch (e, stackTrace) {
+            Logger.e(
+              '分析天气提醒失败',
+              tag: 'WeatherProvider',
+              error: e,
+              stackTrace: stackTrace,
+            );
+            ErrorHandler.handleError(
+              e,
+              stackTrace: stackTrace,
+              context: 'WeatherProvider.AnalyzeWeather',
+              type: AppErrorType.dataParsing,
+            );
           }
 
           // 清空错误
@@ -718,30 +731,43 @@ class WeatherProvider extends ChangeNotifier {
           // 获取失败
           if (hasCachedData) {
             // 有缓存数据，不显示错误，保持显示
-            print('⚠️ 刷新失败，但有缓存数据，保持显示');
+            Logger.w('刷新失败，但有缓存数据，保持显示', tag: 'WeatherProvider');
             _error = null;
           } else {
             // 无缓存数据，显示错误
             _error = 'Failed to fetch weather data';
+            Logger.e('获取天气数据失败', tag: 'WeatherProvider', error: _error);
           }
         }
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       if (e is LocationException) {
         if (hasCachedData) {
-          print('⚠️ 定位异常，但有缓存数据，不显示错误');
+          Logger.w('定位异常，但有缓存数据，不显示错误', tag: 'WeatherProvider');
           _error = null;
         } else {
           _error = e.message;
-          print('Location error: ${e.message}');
+          Logger.e('定位错误', tag: 'WeatherProvider', error: e.message);
+          ErrorHandler.handleError(
+            e,
+            stackTrace: stackTrace,
+            context: 'WeatherProvider.LocationException',
+            type: AppErrorType.location,
+          );
         }
       } else {
         if (hasCachedData) {
-          print('⚠️ 刷新异常，但有缓存数据，不显示错误');
+          Logger.w('刷新异常，但有缓存数据，不显示错误', tag: 'WeatherProvider');
           _error = null;
         } else {
           _error = 'Error: $e';
-          print('Weather refresh error: $e');
+          Logger.e('天气刷新错误', tag: 'WeatherProvider', error: e);
+          ErrorHandler.handleError(
+            e,
+            stackTrace: stackTrace,
+            context: 'WeatherProvider.Refresh',
+            type: AppErrorType.network,
+          );
         }
       }
     } finally {
@@ -2286,8 +2312,19 @@ class WeatherProvider extends ChangeNotifier {
       // 重新生成通勤建议
       print('🚀 重新生成通勤建议...\n');
       await checkAndGenerateCommuteAdvices();
-    } catch (e) {
-      print('❌ 清理并重新生成建议失败: $e');
+    } catch (e, stackTrace) {
+      Logger.e(
+        '清理并重新生成建议失败',
+        tag: 'WeatherProvider',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      ErrorHandler.handleError(
+        e,
+        stackTrace: stackTrace,
+        context: 'WeatherProvider.CleanAndRegenerateCommuteAdvices',
+        type: AppErrorType.unknown,
+      );
       // 失败时至少加载现有建议
       await loadCommuteAdvices();
     }
@@ -2450,7 +2487,7 @@ class WeatherProvider extends ChangeNotifier {
 
       if (aiResponse != null && aiResponse.isNotEmpty) {
         _weatherSummary = _aiService.parseAlertText(aiResponse);
-        print('✅ AI摘要生成成功: $_weatherSummary');
+        Logger.s('AI摘要生成成功: $_weatherSummary', tag: 'WeatherProvider');
 
         // 立即通知UI更新
         _isGeneratingSummary = false;
@@ -2458,9 +2495,9 @@ class WeatherProvider extends ChangeNotifier {
 
         // 保存到缓存（6小时有效期）
         await _databaseService.putAISummary(cacheKey, _weatherSummary!);
-        print('💾 AI摘要已缓存');
+        Logger.d('AI摘要已缓存', tag: 'WeatherProvider');
       } else {
-        print('❌ AI摘要生成失败，使用默认文案');
+        Logger.w('AI摘要生成失败，使用默认文案', tag: 'WeatherProvider');
         _weatherSummary = _generateDefaultWeatherSummary(
           current,
           upcomingWeather,
@@ -2470,16 +2507,32 @@ class WeatherProvider extends ChangeNotifier {
         _isGeneratingSummary = false;
         notifyListeners();
       }
-    } catch (e) {
-      print('❌ 生成智能摘要异常: $e');
+    } catch (e, stackTrace) {
+      Logger.e(
+        '生成智能摘要异常',
+        tag: 'WeatherProvider',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      ErrorHandler.handleError(
+        e,
+        stackTrace: stackTrace,
+        context: 'WeatherProvider.GenerateSummary',
+        type: AppErrorType.dataParsing,
+      );
       // 失败时使用默认文案
       try {
         _weatherSummary = _generateDefaultWeatherSummary(
           current,
           upcomingWeather,
         );
-      } catch (e2) {
-        print('❌ 生成默认摘要也失败: $e2');
+      } catch (e2, stackTrace2) {
+        Logger.e(
+          '生成默认摘要也失败',
+          tag: 'WeatherProvider',
+          error: e2,
+          stackTrace: stackTrace2,
+        );
         _weatherSummary = '天气数据加载中，请稍候...';
       }
     } finally {
@@ -2611,7 +2664,7 @@ class WeatherProvider extends ChangeNotifier {
 
       if (aiResponse != null && aiResponse.isNotEmpty) {
         _forecast15dSummary = _aiService.parseAlertText(aiResponse);
-        print('✅ 15日天气总结生成成功: $_forecast15dSummary');
+        Logger.s('15日天气总结生成成功: $_forecast15dSummary', tag: 'WeatherProvider');
 
         // 立即通知UI更新
         _isGenerating15dSummary = false;
@@ -2619,22 +2672,38 @@ class WeatherProvider extends ChangeNotifier {
 
         // 保存到缓存（6小时有效期）
         await _databaseService.putAI15dSummary(cacheKey, _forecast15dSummary!);
-        print('💾 15日天气总结已缓存');
+        Logger.d('15日天气总结已缓存', tag: 'WeatherProvider');
       } else {
-        print('❌ 15日天气总结生成失败，使用默认文案');
+        Logger.w('15日天气总结生成失败，使用默认文案', tag: 'WeatherProvider');
         _forecast15dSummary = _getDefault15dSummary();
 
         // 立即通知UI更新
         _isGenerating15dSummary = false;
         notifyListeners();
       }
-    } catch (e) {
-      print('❌ 生成15日天气总结异常: $e');
+    } catch (e, stackTrace) {
+      Logger.e(
+        '生成15日天气总结异常',
+        tag: 'WeatherProvider',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      ErrorHandler.handleError(
+        e,
+        stackTrace: stackTrace,
+        context: 'WeatherProvider.Generate15dSummary',
+        type: AppErrorType.dataParsing,
+      );
       // 失败时使用简单的默认文案
       try {
         _forecast15dSummary = _getDefault15dSummary();
-      } catch (e2) {
-        print('❌ 生成默认15日总结也失败: $e2');
+      } catch (e2, stackTrace2) {
+        Logger.e(
+          '生成默认15日总结也失败',
+          tag: 'WeatherProvider',
+          error: e2,
+          stackTrace: stackTrace2,
+        );
         _forecast15dSummary = '未来15天天气预报数据加载中，请稍候...';
       }
     } finally {
@@ -2876,8 +2945,19 @@ class WeatherProvider extends ChangeNotifier {
       }
 
       if (notifyUI) notifyListeners();
-    } catch (e) {
-      print('❌ 加载通勤建议失败: $e');
+    } catch (e, stackTrace) {
+      Logger.e(
+        '加载通勤建议失败',
+        tag: 'WeatherProvider',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      ErrorHandler.handleError(
+        e,
+        stackTrace: stackTrace,
+        context: 'WeatherProvider.LoadCommuteAdvices',
+        type: AppErrorType.cache,
+      );
     }
   }
 
@@ -2891,8 +2971,19 @@ class WeatherProvider extends ChangeNotifier {
         _commuteAdvices[index] = _commuteAdvices[index].copyWith(isRead: true);
         notifyListeners();
       }
-    } catch (e) {
-      print('❌ 标记通勤建议失败: $e');
+    } catch (e, stackTrace) {
+      Logger.e(
+        '标记通勤建议失败',
+        tag: 'WeatherProvider',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      ErrorHandler.handleError(
+        e,
+        stackTrace: stackTrace,
+        context: 'WeatherProvider.MarkCommuteAdviceAsRead',
+        type: AppErrorType.cache,
+      );
     }
   }
 
@@ -3001,13 +3092,24 @@ class WeatherProvider extends ChangeNotifier {
         final weatherKey = '$cityName:${AppConstants.weatherAllKey}';
         await _databaseService.putWeatherData(weatherKey, weatherData);
 
-        print('✅ 后台刷新完成: $cityName');
+        Logger.s('后台刷新完成: $cityName', tag: 'WeatherProvider');
         notifyListeners();
       } else {
-        print('❌ 后台刷新失败: $cityName - 无法获取数据');
+        Logger.e('后台刷新失败: $cityName - 无法获取数据', tag: 'WeatherProvider');
       }
-    } catch (e) {
-      print('❌ 后台刷新异常: $cityName - $e');
+    } catch (e, stackTrace) {
+      Logger.e(
+        '后台刷新异常: $cityName',
+        tag: 'WeatherProvider',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      ErrorHandler.handleError(
+        e,
+        stackTrace: stackTrace,
+        context: 'WeatherProvider.BackgroundRefresh',
+        type: AppErrorType.network,
+      );
     }
   }
 
@@ -3024,14 +3126,25 @@ class WeatherProvider extends ChangeNotifier {
         final weatherData = WeatherModel.fromJson(
           Map<String, dynamic>.from(jsonDecode(cachedJson) as Map),
         );
-        print('💾 智能缓存命中: $cityName');
+        Logger.d('智能缓存命中: $cityName', tag: 'WeatherProvider');
         return weatherData;
       }
 
-      print('🔄 智能缓存未命中: $cityName');
+      Logger.d('智能缓存未命中: $cityName', tag: 'WeatherProvider');
       return null;
-    } catch (e) {
-      print('❌ 智能缓存读取失败: $cityName, 错误: $e');
+    } catch (e, stackTrace) {
+      Logger.e(
+        '智能缓存读取失败: $cityName',
+        tag: 'WeatherProvider',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      ErrorHandler.handleError(
+        e,
+        stackTrace: stackTrace,
+        context: 'WeatherProvider.SmartCacheRead',
+        type: AppErrorType.cache,
+      );
       return null;
     }
   }
@@ -3048,9 +3161,20 @@ class WeatherProvider extends ChangeNotifier {
         data: weather.toJson(),
         type: CacheDataType.currentWeather,
       );
-      print('💾 天气数据已存入智能缓存: $cityName');
-    } catch (e) {
-      print('❌ 智能缓存存储失败: $cityName, 错误: $e');
+      Logger.d('天气数据已存入智能缓存: $cityName', tag: 'WeatherProvider');
+    } catch (e, stackTrace) {
+      Logger.e(
+        '智能缓存存储失败: $cityName',
+        tag: 'WeatherProvider',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      ErrorHandler.handleError(
+        e,
+        stackTrace: stackTrace,
+        context: 'WeatherProvider.SmartCacheWrite',
+        type: AppErrorType.cache,
+      );
     }
   }
 

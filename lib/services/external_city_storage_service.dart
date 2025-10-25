@@ -4,6 +4,7 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../models/city_model.dart';
+import '../utils/logger.dart';
 
 /// 外部存储的用户城市数据库服务
 /// 用于持久化保存用户自定义的主要城市列表
@@ -36,13 +37,16 @@ class ExternalCityStorageService {
           if (!status.isGranted) {
             final result = await Permission.storage.request();
             if (!result.isGranted) {
-              print('⚠️ 外部存储权限未授予，将尝试继续（Android 10+ Documents目录不需要权限）');
+              Logger.w(
+                '外部存储权限未授予，将尝试继续（Android 10+ Documents目录不需要权限）',
+                tag: 'ExternalCityStorageService',
+              );
             } else {
-              print('✅ 外部存储权限已授予');
+              Logger.s('外部存储权限已授予', tag: 'ExternalCityStorageService');
             }
           }
         } catch (e) {
-          print('⚠️ 权限检查失败，将尝试继续: $e');
+          Logger.w('权限检查失败，将尝试继续', tag: 'ExternalCityStorageService', error: e);
         }
       }
 
@@ -86,12 +90,12 @@ class ExternalCityStorageService {
       final dbDir = Directory(join(externalDir.path, 'RainWeather'));
       if (!await dbDir.exists()) {
         await dbDir.create(recursive: true);
-        print('📁 创建外部存储目录: ${dbDir.path}');
+        Logger.d('创建外部存储目录: ${dbDir.path}', tag: 'ExternalCityStorageService');
       }
 
       // 数据库文件路径
       final dbPath = join(dbDir.path, 'user_cities.db');
-      print('📁 外部存储数据库路径: $dbPath');
+      Logger.d('外部存储数据库路径: $dbPath', tag: 'ExternalCityStorageService');
 
       // 检查数据库文件是否已存在
       final dbFile = File(dbPath);

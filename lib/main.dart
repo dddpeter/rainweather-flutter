@@ -32,6 +32,9 @@ import 'services/weather_widget_service.dart';
 import 'widgets/custom_bottom_navigation_v2.dart';
 import 'utils/app_state_manager.dart';
 import 'utils/app_recovery_manager.dart';
+import 'utils/global_exception_handler.dart';
+import 'utils/logger.dart';
+import 'utils/error_handler.dart';
 
 // 全局路由观察者
 final PageActivationObserver _pageActivationObserver = PageActivationObserver();
@@ -96,13 +99,23 @@ class _RouteObserver extends RouteObserver<PageRoute<dynamic>> {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // 初始化全局异常处理器
+  GlobalExceptionHandler().initialize();
+  Logger.separator(title: 'RainWeather 启动');
+
   // 🚀 预加载智能缓存到内存
   try {
-    print('🚀 预加载智能缓存...');
+    Logger.d('预加载智能缓存...');
     await SmartCacheService().preloadCommonData();
-    print('✅ 智能缓存预加载完成');
-  } catch (e) {
-    print('❌ 智能缓存预加载失败: $e');
+    Logger.s('智能缓存预加载完成');
+  } catch (e, stackTrace) {
+    Logger.e('智能缓存预加载失败', error: e, stackTrace: stackTrace);
+    ErrorHandler.handleError(
+      e,
+      stackTrace: stackTrace,
+      context: 'Main.SmartCachePreload',
+      type: AppErrorType.cache,
+    );
   }
 
   // 🧹 启动后台缓存清理任务
@@ -110,7 +123,7 @@ void main() async {
 
   // 初始化通知服务并请求权限
   try {
-    print('🔔 初始化通知服务');
+    Logger.d('初始化通知服务');
     final notificationService = NotificationService.instance;
     await notificationService.initialize();
 
@@ -119,54 +132,84 @@ void main() async {
 
     // 请求通知权限
     final permissionGranted = await notificationService.requestPermissions();
-    print('🔔 通知权限请求结果: $permissionGranted');
+    Logger.i('通知权限请求结果: $permissionGranted');
 
     if (!permissionGranted) {
-      print('⚠️ 通知权限未授予，部分功能可能无法使用');
+      Logger.w('通知权限未授予，部分功能可能无法使用');
     }
-  } catch (e) {
-    print('❌ 通知服务初始化失败: $e');
+  } catch (e, stackTrace) {
+    Logger.e('通知服务初始化失败', error: e, stackTrace: stackTrace);
+    ErrorHandler.handleError(
+      e,
+      stackTrace: stackTrace,
+      context: 'Main.NotificationService',
+      type: AppErrorType.permission,
+    );
   }
 
   // 初始化定位服务
   // 全局设置腾讯定位服务
   try {
-    print('🔧 全局设置腾讯定位服务');
+    Logger.d('全局设置腾讯定位服务');
     final tencentLocationService = TencentLocationService.getInstance();
     await tencentLocationService.setGlobalPrivacyAgreement();
-    print('✅ 腾讯定位服务设置成功');
-  } catch (e) {
-    print('❌ 腾讯定位服务设置失败: $e');
+    Logger.s('腾讯定位服务设置成功');
+  } catch (e, stackTrace) {
+    Logger.e('腾讯定位服务设置失败', error: e, stackTrace: stackTrace);
+    ErrorHandler.handleError(
+      e,
+      stackTrace: stackTrace,
+      context: 'Main.TencentLocationService',
+      type: AppErrorType.location,
+    );
   }
 
   // 全局设置百度定位隐私政策同意
   try {
-    print('🔧 全局设置百度定位隐私政策同意');
+    Logger.d('全局设置百度定位隐私政策同意');
     final baiduLocationService = BaiduLocationService.getInstance();
     await baiduLocationService.setGlobalPrivacyAgreement();
-    print('✅ 百度定位隐私政策同意设置成功');
-  } catch (e) {
-    print('❌ 百度定位隐私政策同意设置失败: $e');
+    Logger.s('百度定位隐私政策同意设置成功');
+  } catch (e, stackTrace) {
+    Logger.e('百度定位隐私政策同意设置失败', error: e, stackTrace: stackTrace);
+    ErrorHandler.handleError(
+      e,
+      stackTrace: stackTrace,
+      context: 'Main.BaiduLocationService',
+      type: AppErrorType.location,
+    );
   }
 
   // 全局设置高德地图API Key
   try {
-    print('🔧 全局设置高德地图API Key');
+    Logger.d('全局设置高德地图API Key');
     final amapLocationService = AMapLocationService.getInstance();
     await amapLocationService.setGlobalAPIKey();
-    print('✅ 高德地图API Key设置成功');
-  } catch (e) {
-    print('❌ 高德地图API Key设置失败: $e');
+    Logger.s('高德地图API Key设置成功');
+  } catch (e, stackTrace) {
+    Logger.e('高德地图API Key设置失败', error: e, stackTrace: stackTrace);
+    ErrorHandler.handleError(
+      e,
+      stackTrace: stackTrace,
+      context: 'Main.AmapLocationService',
+      type: AppErrorType.location,
+    );
   }
 
   // 请求定位权限（参照demo）
   try {
-    print('🔧 请求定位权限');
+    Logger.d('请求定位权限');
     final locationService = LocationService.getInstance();
     await locationService.requestLocationPermission();
-    print('✅ 定位权限请求完成');
-  } catch (e) {
-    print('❌ 定位权限请求失败: $e');
+    Logger.s('定位权限请求完成');
+  } catch (e, stackTrace) {
+    Logger.e('定位权限请求失败', error: e, stackTrace: stackTrace);
+    ErrorHandler.handleError(
+      e,
+      stackTrace: stackTrace,
+      context: 'Main.LocationPermission',
+      type: AppErrorType.permission,
+    );
   }
 
   runApp(const RainWeatherApp());

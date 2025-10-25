@@ -4,6 +4,7 @@ import '../providers/weather_provider.dart';
 import '../providers/theme_provider.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_constants.dart';
+import '../models/commute_advice_model.dart';
 
 /// 通勤建议组件
 class CommuteAdviceWidget extends StatefulWidget {
@@ -165,7 +166,7 @@ class _CommuteAdviceWidgetState extends State<CommuteAdviceWidget> {
   }
 
   /// 构建单个建议项（AI智能助手风格，简洁文字展示）
-  Widget _buildAdviceItem(advice, bool isCollapsed) {
+  Widget _buildAdviceItem(CommuteAdviceModel advice, bool isCollapsed) {
     final levelColor = advice.getLevelColor();
     final levelName = advice.getLevelName();
     const aiColor = Color(0xFFFFB300); // 琥珀色
@@ -196,12 +197,12 @@ class _CommuteAdviceWidgetState extends State<CommuteAdviceWidget> {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: aiColor.withOpacity(0.3), width: 1),
           boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,

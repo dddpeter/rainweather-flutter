@@ -18,7 +18,7 @@ class WeatherAlertSettingsScreen extends StatefulWidget {
 class _WeatherAlertSettingsScreenState
     extends State<WeatherAlertSettingsScreen> {
   late WeatherAlertSettings _settings;
-  bool _isLoading = false;
+  static const bool _isLoading = false;
   Timer? _debounceTimer;
 
   @override
@@ -523,19 +523,25 @@ class _WeatherAlertSettingsScreenState
                                   .requestPermissions();
                               if (granted) {
                                 setState(() {});
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: const Text('通知权限已授予'),
-                                    backgroundColor: AppColors.accentGreen,
-                                  ),
-                                );
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: const Text('通知权限已授予'),
+                                      backgroundColor: AppColors.accentGreen,
+                                    ),
+                                  );
+                                }
                               } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: const Text('通知权限被拒绝，请在系统设置中手动开启'),
-                                    backgroundColor: AppColors.warning,
-                                  ),
-                                );
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: const Text(
+                                        '通知权限被拒绝，请在系统设置中手动开启',
+                                      ),
+                                      backgroundColor: AppColors.warning,
+                                    ),
+                                  );
+                                }
                               }
                             },
                             child: const Text('请求权限'),

@@ -303,7 +303,7 @@ class _LaoHuangLiScreenState extends State<LaoHuangLiScreen> {
                     if (!isLast) const SizedBox(height: 16),
                   ],
                 );
-              }).toList(),
+              }),
             ],
           ],
         ),

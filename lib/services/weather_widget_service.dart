@@ -6,6 +6,7 @@ import 'package:lunar/lunar.dart';
 import '../models/weather_model.dart';
 import '../models/location_model.dart';
 import '../widgets/weather_widget_config.dart';
+import '../utils/logger.dart';
 
 /// 天气小组件服务
 class WeatherWidgetService {
@@ -102,10 +103,10 @@ class WeatherWidgetService {
         iOSName: WeatherWidgetConfig.widgetName,
       );
 
-      print('📱 WeatherWidgetService: 小组件数据已更新');
-      print('📱 数据: ${jsonEncode(widgetData)}');
+      Logger.s('小组件数据已更新', tag: 'WeatherWidgetService');
+      Logger.d('数据: ${jsonEncode(widgetData)}', tag: 'WeatherWidgetService');
     } catch (e) {
-      print('❌ WeatherWidgetService: 更新小组件失败 - $e');
+      Logger.e('更新小组件失败', tag: 'WeatherWidgetService', error: e);
     }
   }
 
@@ -265,9 +266,12 @@ class WeatherWidgetService {
     final scaleMax = globalMaxTemp + offset + 3;
 
     // 调试输出全局范围
-    print('🌡️ 全局温度范围: ${globalMinTemp}° 到 ${globalMaxTemp}°');
-    print('🌡️ 五天最大温差: ${maxTempDiff}°');
-    print('🌡️ 映射偏移: $offset, 标尺最大值: $scaleMax');
+    Logger.d(
+      '全局温度范围: ${globalMinTemp}° 到 ${globalMaxTemp}°',
+      tag: 'WeatherWidgetService',
+    );
+    Logger.d('五天最大温差: ${maxTempDiff}°', tag: 'WeatherWidgetService');
+    Logger.d('映射偏移: $offset, 标尺最大值: $scaleMax', tag: 'WeatherWidgetService');
 
     for (int i = 0; i < forecasts.length; i++) {
       final forecast = forecasts[i];
@@ -302,11 +306,13 @@ class WeatherWidgetService {
           : lowProgress;
 
       // 调试输出
-      print(
-        '🌡️ 第${i + 1}天温度: ${tempLow}°-${tempHigh}°, 映射: ${mappedLow}-${mappedHigh}, 进度: ${finalLowProgress}%-${highProgress}%',
+      Logger.d(
+        '第${i + 1}天温度: ${tempLow}°-${tempHigh}°, 映射: ${mappedLow}-${mappedHigh}, 进度: ${finalLowProgress}%-${highProgress}%',
+        tag: 'WeatherWidgetService',
       );
-      print(
-        '🌡️ 第${i + 1}天详细计算: mappedLow=$mappedLow, scaleMax=$scaleMax, 低温比例=${mappedLow / scaleMax}',
+      Logger.d(
+        '第${i + 1}天详细计算: mappedLow=$mappedLow, scaleMax=$scaleMax, 低温比例=${mappedLow / scaleMax}',
+        tag: 'WeatherWidgetService',
       );
 
       // 计算温差（用于显示）
@@ -347,9 +353,9 @@ class WeatherWidgetService {
       // 清除5日预报数据
       await prefs.remove('forecast_5d');
 
-      print('📱 WeatherWidgetService: 小组件数据已清除');
+      Logger.s('小组件数据已清除', tag: 'WeatherWidgetService');
     } catch (e) {
-      print('❌ WeatherWidgetService: 清除小组件失败 - $e');
+      Logger.e('清除小组件失败', tag: 'WeatherWidgetService', error: e);
     }
   }
 

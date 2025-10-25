@@ -1072,6 +1072,6 @@ class WeatherPosterWidget extends StatelessWidget {
       parts.add('气温冰点以下，外出需穿厚实羽绒服，暴露部位注意防冻伤');
     }
 
-    return parts.join('。') + '。';
+    return '${parts.join('。')}。';
   }
 }

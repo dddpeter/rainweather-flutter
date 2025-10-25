@@ -5,6 +5,7 @@ import '../models/weather_model.dart';
 import '../models/location_model.dart';
 import 'notification_service.dart';
 import 'ai_service.dart';
+import '../utils/logger.dart';
 
 /// 天气提醒服务
 class WeatherAlertService {
@@ -78,7 +79,7 @@ class WeatherAlertService {
         _settings = WeatherAlertSettings.fromJson(settingsMap);
       }
     } catch (e) {
-      print('加载天气提醒设置失败: $e');
+      Logger.e('加载天气提醒设置失败', tag: 'WeatherAlertService', error: e);
     }
   }
 
@@ -90,7 +91,7 @@ class WeatherAlertService {
       await prefs.setString(_settingsKey, settingsJson);
       _settings = settings;
     } catch (e) {
-      print('保存天气提醒设置失败: $e');
+      Logger.e('保存天气提醒设置失败', tag: 'WeatherAlertService', error: e);
     }
   }
 
@@ -109,7 +110,7 @@ class WeatherAlertService {
             .toList();
       }
     } catch (e) {
-      print('加载天气提醒列表失败: $e');
+      Logger.e('加载天气提醒列表失败', tag: 'WeatherAlertService', error: e);
     }
   }
 
@@ -122,7 +123,7 @@ class WeatherAlertService {
       );
       await prefs.setString(_alertsKey, alertsJson);
     } catch (e) {
-      print('保存天气提醒列表失败: $e');
+      Logger.e('保存天气提醒列表失败', tag: 'WeatherAlertService', error: e);
     }
   }
 
@@ -139,7 +140,7 @@ class WeatherAlertService {
     final cityName = _getCityName(location);
     final now = DateTime.now();
 
-    print('\n🔍 开始分析天气生成提醒 - 城市: $cityName');
+    Logger.d('开始分析天气生成提醒 - 城市: $cityName', tag: 'WeatherAlertService');
 
     // 分析当前天气
     final currentWeatherAlerts = await _analyzeCurrentWeather(
@@ -148,7 +149,10 @@ class WeatherAlertService {
       now,
     );
     newAlerts.addAll(currentWeatherAlerts);
-    print('✅ 当前天气提醒: ${currentWeatherAlerts.length}条');
+    Logger.d(
+      '当前天气提醒: ${currentWeatherAlerts.length}条',
+      tag: 'WeatherAlertService',
+    );
 
     // 分析24小时预报
     final hourlyAlerts = await _analyzeHourlyForecast(
@@ -157,7 +161,7 @@ class WeatherAlertService {
       now,
     );
     newAlerts.addAll(hourlyAlerts);
-    print('✅ 24小时预报提醒: ${hourlyAlerts.length}条');
+    Logger.d('24小时预报提醒: ${hourlyAlerts.length}条', tag: 'WeatherAlertService');
 
     // 分析15天预报
     final dailyAlerts = await _analyzeDailyForecast(
@@ -166,7 +170,7 @@ class WeatherAlertService {
       now,
     );
     newAlerts.addAll(dailyAlerts);
-    print('✅ 15天预报提醒: ${dailyAlerts.length}条');
+    Logger.d('15天预报提醒: ${dailyAlerts.length}条', tag: 'WeatherAlertService');
 
     // 分析空气质量
     final airQualityAlerts = _analyzeAirQuality(
@@ -624,14 +628,14 @@ class WeatherAlertService {
       if (aiResponse != null && aiResponse.isNotEmpty) {
         final enhancedContent = _aiService.parseAlertText(aiResponse);
         if (enhancedContent != null && enhancedContent.isNotEmpty) {
-          print('✅ AI增强提醒内容成功: $enhancedContent');
+          Logger.s('AI增强提醒内容成功: $enhancedContent', tag: 'WeatherAlertService');
           return enhancedContent;
         }
       }
 
       return null;
     } catch (e) {
-      print('⚠️ AI增强提醒失败，使用默认内容: $e');
+      Logger.w('AI增强提醒失败，使用默认内容', tag: 'WeatherAlertService', error: e);
       return null;
     }
   }
@@ -857,12 +861,14 @@ class WeatherAlertService {
 
       if (!exists) {
         filtered.add(newAlert);
-        print(
-          '✅ WeatherAlertService: 添加新提醒 - ${newAlert.title} (${newAlert.id})',
+        Logger.d(
+          '添加新提醒 - ${newAlert.title} (${newAlert.id})',
+          tag: 'WeatherAlertService',
         );
       } else {
-        print(
-          '⏭️ WeatherAlertService: 跳过重复提醒 - ${newAlert.title} (${newAlert.id})',
+        Logger.d(
+          '跳过重复提醒 - ${newAlert.title} (${newAlert.id})',
+          tag: 'WeatherAlertService',
         );
       }
     }

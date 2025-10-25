@@ -1,4 +1,5 @@
 import '../models/location_model.dart';
+import '../utils/logger.dart';
 
 /// 定位变化通知器
 /// 使用观察者模式，当定位成功时通知所有订阅者
@@ -15,14 +16,19 @@ class LocationChangeNotifier {
   void addListener(LocationChangeListener listener) {
     if (!_listeners.contains(listener)) {
       _listeners.add(listener);
-      print(
-        '📍 LocationChangeNotifier: 添加监听器 ${listener.runtimeType}，当前监听器数量: ${_listeners.length}',
+      Logger.d(
+        '添加监听器 ${listener.runtimeType}，当前监听器数量: ${_listeners.length}',
+        tag: 'LocationChangeNotifier',
       );
-      print(
-        '📍 LocationChangeNotifier: 当前所有监听器: ${_listeners.map((l) => l.runtimeType).toList()}',
+      Logger.d(
+        '当前所有监听器: ${_listeners.map((l) => l.runtimeType).toList()}',
+        tag: 'LocationChangeNotifier',
       );
     } else {
-      print('📍 LocationChangeNotifier: 监听器 ${listener.runtimeType} 已存在，跳过添加');
+      Logger.d(
+        '监听器 ${listener.runtimeType} 已存在，跳过添加',
+        tag: 'LocationChangeNotifier',
+      );
     }
   }
 

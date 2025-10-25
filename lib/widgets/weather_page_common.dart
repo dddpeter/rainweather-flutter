@@ -21,7 +21,7 @@ class WeatherPageCommon {
     required VoidCallback? onRefresh,
     bool showMenu = true,
   }) {
-    return Container(
+    return SizedBox(
       width: double.infinity,
       child: SafeArea(
         child: Padding(

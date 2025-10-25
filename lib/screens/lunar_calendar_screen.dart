@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
 import '../constants/app_colors.dart';
 import '../services/lunar_service.dart';
+import '../models/lunar_model.dart';
 import 'lao_huang_li_screen.dart';
 
 /// 农历日历页面
@@ -612,7 +613,7 @@ class _LunarCalendarScreenState extends State<LunarCalendarScreen> {
   }
 
   /// 获取农历日期显示（初一显示月份）
-  String _getLunarDayDisplay(lunarInfo) {
+  String _getLunarDayDisplay(LunarInfo lunarInfo) {
     if (lunarInfo.lunarDay == '初一') {
       // lunarMonth 可能是 "正"、"腊" 等，需要加上"月"字
       final month = lunarInfo.lunarMonth;

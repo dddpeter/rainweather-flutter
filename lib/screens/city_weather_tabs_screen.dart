@@ -505,7 +505,7 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
                       final index = entry.key + 1; // 保持原始索引
                       final day = entry.value;
                       return _buildForecastCard(day, weatherProvider, index);
-                    }).toList(),
+                    }),
                   ],
                 ),
               ),

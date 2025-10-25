@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../utils/logger.dart';
+import '../utils/error_handler.dart';
 
 /// 智谱AI服务 - 用于智能通勤建议生成
 class AIService {
@@ -15,16 +17,12 @@ class AIService {
 
   /// 调用智谱AI生成智能建议
   Future<String?> generateSmartAdvice(String prompt) async {
-    print('\n========================================');
-    print('🤖 AI服务：开始调用智谱AI');
-    print('========================================');
-    print('📡 API地址: $_apiUrl');
-    print('🔑 API密钥: ${_apiKey.substring(0, 10)}...');
-    print('🤖 使用模型: $_model');
-    print('----------------------------------------');
-    print('📝 Prompt内容:');
-    print(prompt);
-    print('----------------------------------------\n');
+    Logger.separator(title: 'AI服务：开始调用智谱AI');
+    Logger.d('API地址: $_apiUrl', tag: 'AIService');
+    Logger.d('API密钥: ${_apiKey.substring(0, 10)}...', tag: 'AIService');
+    Logger.d('使用模型: $_model', tag: 'AIService');
+    Logger.d('Prompt内容:', tag: 'AIService');
+    Logger.d(prompt, tag: 'AIService');
 
     try {
       final requestBody = {
@@ -34,8 +32,8 @@ class AIService {
         ],
       };
 
-      print('📤 发送请求...');
-      print('请求体: ${jsonEncode(requestBody)}');
+      Logger.d('发送请求...', tag: 'AIService');
+      Logger.d('请求体: ${jsonEncode(requestBody)}', tag: 'AIService');
 
       final response = await http
           .post(
@@ -49,65 +47,60 @@ class AIService {
           .timeout(
             const Duration(seconds: 15),
             onTimeout: () {
-              print('⏰ AI请求超时（15秒）');
+              Logger.w('AI请求超时（15秒）', tag: 'AIService');
               throw Exception('AI请求超时');
             },
           );
 
-      print('📥 收到响应');
-      print('状态码: ${response.statusCode}');
-      print('响应体长度: ${response.body.length} 字节');
+      Logger.d('收到响应', tag: 'AIService');
+      Logger.d('状态码: ${response.statusCode}', tag: 'AIService');
+      Logger.d('响应体长度: ${response.body.length} 字节', tag: 'AIService');
 
       if (response.statusCode == 200) {
-        print('✅ HTTP请求成功');
+        Logger.s('HTTP请求成功', tag: 'AIService');
 
         final jsonData = jsonDecode(utf8.decode(response.bodyBytes));
-        print('📊 解析JSON成功');
-        print('完整响应: ${jsonEncode(jsonData)}');
+        Logger.d('解析JSON成功', tag: 'AIService');
+        Logger.d('完整响应: ${jsonEncode(jsonData)}', tag: 'AIService');
 
         final choices = jsonData['choices'] as List?;
-        print('Choices数量: ${choices?.length ?? 0}');
+        Logger.d('Choices数量: ${choices?.length ?? 0}', tag: 'AIService');
 
         if (choices != null && choices.isNotEmpty) {
           final message = choices[0]['message'] as Map<String, dynamic>?;
           final content = message?['content'] as String?;
 
           if (content != null && content.isNotEmpty) {
-            print('\n========================================');
-            print('✅ AI响应成功');
-            print('========================================');
-            print('💬 完整内容:');
-            print(content);
-            print('========================================\n');
+            Logger.separator(title: 'AI响应成功');
+            Logger.d('完整内容:', tag: 'AIService');
+            Logger.d(content, tag: 'AIService');
+            Logger.separator();
             return content;
           } else {
-            print('⚠️ content为空');
+            Logger.w('content为空', tag: 'AIService');
           }
         } else {
-          print('⚠️ choices为空或不存在');
+          Logger.w('choices为空或不存在', tag: 'AIService');
         }
 
-        print('⚠️ AI响应格式异常');
+        Logger.w('AI响应格式异常', tag: 'AIService');
         return null;
       } else {
-        print('\n========================================');
-        print('❌ AI请求失败');
-        print('========================================');
-        print('状态码: ${response.statusCode}');
-        print('响应头: ${response.headers}');
-        print('响应体: ${response.body}');
-        print('========================================\n');
+        Logger.separator(title: 'AI请求失败');
+        Logger.e('状态码: ${response.statusCode}', tag: 'AIService');
+        Logger.e('响应头: ${response.headers}', tag: 'AIService');
+        Logger.e('响应体: ${response.body}', tag: 'AIService');
+        Logger.separator();
         return null;
       }
     } catch (e, stackTrace) {
-      print('\n========================================');
-      print('❌ AI服务异常');
-      print('========================================');
-      print('错误类型: ${e.runtimeType}');
-      print('错误信息: $e');
-      print('堆栈跟踪:');
-      print(stackTrace);
-      print('========================================\n');
+      Logger.e('AI服务异常', tag: 'AIService', error: e, stackTrace: stackTrace);
+      ErrorHandler.handleError(
+        e,
+        stackTrace: stackTrace,
+        context: 'AIService.GenerateSmartAdvice',
+        type: AppErrorType.network,
+      );
       return null;
     }
   }

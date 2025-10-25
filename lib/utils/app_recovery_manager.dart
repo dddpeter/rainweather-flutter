@@ -3,6 +3,8 @@ import '../utils/persistent_app_state.dart';
 import '../utils/app_health_check.dart';
 import '../utils/smart_refresh_scheduler.dart';
 import '../utils/app_state_manager.dart';
+import '../utils/logger.dart';
+import '../utils/error_handler.dart';
 
 /// 恢复策略类型
 enum RecoveryStrategy {
@@ -25,7 +27,7 @@ class AppRecoveryManager {
 
   /// 处理应用恢复
   Future<void> handleResume(WeatherProvider weatherProvider) async {
-    print('\n🔄 ========== 应用恢复管理器 ==========');
+    Logger.separator(title: '应用恢复管理器');
 
     try {
       // 1. 获取后台时长
@@ -37,7 +39,10 @@ class AppRecoveryManager {
 
       // 3. 确定恢复策略
       final strategy = _determineStrategy(backgroundDuration, wasKilled);
-      print('📋 恢复策略: ${_getStrategyName(strategy)}');
+      Logger.d(
+        '恢复策略: ${_getStrategyName(strategy)}',
+        tag: 'AppRecoveryManager',
+      );
 
       // 4. 执行恢复策略
       await _executeStrategy(strategy, backgroundDuration, weatherProvider);
@@ -45,9 +50,21 @@ class AppRecoveryManager {
       // 5. 保存状态
       await persistentState.saveState();
 
-      print('✅ ========== 应用恢复完成 ==========\n');
-    } catch (e) {
-      print('❌ 应用恢复失败: $e');
+      Logger.s('应用恢复完成', tag: 'AppRecoveryManager');
+      Logger.separator();
+    } catch (e, stackTrace) {
+      Logger.e(
+        '应用恢复失败',
+        tag: 'AppRecoveryManager',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      ErrorHandler.handleError(
+        e,
+        stackTrace: stackTrace,
+        context: 'AppRecoveryManager.HandleResume',
+        type: AppErrorType.unknown,
+      );
       // 即使失败也尝试快速检查
       await _quickCheck(weatherProvider);
     }
@@ -60,31 +77,40 @@ class AppRecoveryManager {
   ) {
     // 如果被系统杀死，直接完全重启
     if (wasKilled) {
-      print('⚠️ 检测到应用被系统杀死，需要完全重启');
+      Logger.w('检测到应用被系统杀死，需要完全重启', tag: 'AppRecoveryManager');
       return RecoveryStrategy.fullRestart;
     }
 
     // 如果没有后台时长记录，快速检查
     if (backgroundDuration == null) {
-      print('ℹ️ 无后台时长记录，执行快速检查');
+      Logger.i('无后台时长记录，执行快速检查', tag: 'AppRecoveryManager');
       return RecoveryStrategy.quickCheck;
     }
 
     final minutes = backgroundDuration.inMinutes;
-    print('⏱️ 后台时长: $minutes 分钟');
+    Logger.d('后台时长: $minutes 分钟', tag: 'AppRecoveryManager');
 
     // 根据后台时长决定策略
     if (minutes >= _fullRestartThreshold) {
-      print('🔴 超过 $_fullRestartThreshold 分钟，需要完全重启');
+      Logger.w(
+        '超过 $_fullRestartThreshold 分钟，需要完全重启',
+        tag: 'AppRecoveryManager',
+      );
       return RecoveryStrategy.fullRestart;
     } else if (minutes >= _heavyRefreshThreshold) {
-      print('🟡 超过 $_heavyRefreshThreshold 分钟，需要重度刷新');
+      Logger.w(
+        '超过 $_heavyRefreshThreshold 分钟，需要重度刷新',
+        tag: 'AppRecoveryManager',
+      );
       return RecoveryStrategy.heavyRefresh;
     } else if (minutes >= _lightRefreshThreshold) {
-      print('🟢 超过 $_lightRefreshThreshold 分钟，需要轻度刷新');
+      Logger.i(
+        '超过 $_lightRefreshThreshold 分钟，需要轻度刷新',
+        tag: 'AppRecoveryManager',
+      );
       return RecoveryStrategy.lightRefresh;
     } else {
-      print('🔵 后台时间较短，快速检查即可');
+      Logger.d('后台时间较短，快速检查即可', tag: 'AppRecoveryManager');
       return RecoveryStrategy.quickCheck;
     }
   }
@@ -113,37 +139,48 @@ class AppRecoveryManager {
 
   /// 完全重启
   Future<void> _fullRestart(WeatherProvider weatherProvider) async {
-    print('\n🔴 执行完全重启策略');
+    Logger.w('执行完全重启策略', tag: 'AppRecoveryManager');
 
     try {
       // 1. 健康检查
-      print('📋 步骤 1/5: 健康检查');
+      Logger.d('步骤 1/5: 健康检查', tag: 'AppRecoveryManager');
       final healthCheck = AppHealthCheck();
       final report = await healthCheck.performCheck(verbose: true);
 
       // 2. 修复问题
       if (!report.isHealthy) {
-        print('📋 步骤 2/5: 修复检测到的问题');
+        Logger.d('步骤 2/5: 修复检测到的问题', tag: 'AppRecoveryManager');
         await healthCheck.fixIssues(report);
       } else {
-        print('📋 步骤 2/5: 系统健康，无需修复');
+        Logger.d('步骤 2/5: 系统健康，无需修复', tag: 'AppRecoveryManager');
       }
 
       // 3. 重置应用状态
-      print('📋 步骤 3/5: 重置应用状态');
+      Logger.d('步骤 3/5: 重置应用状态', tag: 'AppRecoveryManager');
       AppStateManager().reset();
 
       // 4. 重新初始化
-      print('📋 步骤 4/5: 重新初始化应用');
+      Logger.d('步骤 4/5: 重新初始化应用', tag: 'AppRecoveryManager');
       await weatherProvider.initializeWeather();
 
       // 5. 标记完成
-      print('📋 步骤 5/5: 标记应用启动完成');
+      Logger.d('步骤 5/5: 标记应用启动完成', tag: 'AppRecoveryManager');
       AppStateManager().markAppFullyStarted();
 
-      print('✅ 完全重启完成');
-    } catch (e) {
-      print('❌ 完全重启失败: $e');
+      Logger.s('完全重启完成', tag: 'AppRecoveryManager');
+    } catch (e, stackTrace) {
+      Logger.e(
+        '完全重启失败',
+        tag: 'AppRecoveryManager',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      ErrorHandler.handleError(
+        e,
+        stackTrace: stackTrace,
+        context: 'AppRecoveryManager.FullRestart',
+        type: AppErrorType.unknown,
+      );
       // 降级到重度刷新
       await _heavyRefresh(null, weatherProvider);
     }
@@ -154,29 +191,29 @@ class AppRecoveryManager {
     Duration? backgroundDuration,
     WeatherProvider weatherProvider,
   ) async {
-    print('\n🟡 执行重度刷新策略');
+    Logger.w('执行重度刷新策略', tag: 'AppRecoveryManager');
 
     try {
       // 1. 快速健康检查
-      print('📋 步骤 1/4: 快速健康检查');
+      Logger.d('步骤 1/4: 快速健康检查', tag: 'AppRecoveryManager');
       final healthCheck = AppHealthCheck();
       final isHealthy = await healthCheck.quickCheck();
 
       if (!isHealthy) {
-        print('⚠️ 快速检查发现问题，执行完整检查');
+        Logger.w('快速检查发现问题，执行完整检查', tag: 'AppRecoveryManager');
         final report = await healthCheck.performCheck();
         await healthCheck.fixIssues(report);
       }
 
       // 2. 检查定位服务
-      print('📋 步骤 2/4: 检查定位服务');
+      Logger.d('步骤 2/4: 检查定位服务', tag: 'AppRecoveryManager');
       final scheduler = SmartRefreshScheduler();
       if (await scheduler.needsLocationUpdate()) {
-        print('📍 需要更新定位');
+        Logger.d('需要更新定位', tag: 'AppRecoveryManager');
       }
 
       // 3. 智能刷新所有数据
-      print('📋 步骤 3/4: 智能刷新数据');
+      Logger.d('步骤 3/4: 智能刷新数据', tag: 'AppRecoveryManager');
       if (backgroundDuration != null) {
         await scheduler.executeSmartRefresh(
           backgroundDuration,
@@ -187,13 +224,24 @@ class AppRecoveryManager {
       }
 
       // 4. 保存更新时间
-      print('📋 步骤 4/4: 保存更新时间');
+      Logger.d('步骤 4/4: 保存更新时间', tag: 'AppRecoveryManager');
       final persistentState = await PersistentAppState.getInstance();
       await persistentState.saveWeatherUpdateTime();
 
-      print('✅ 重度刷新完成');
-    } catch (e) {
-      print('❌ 重度刷新失败: $e');
+      Logger.s('重度刷新完成', tag: 'AppRecoveryManager');
+    } catch (e, stackTrace) {
+      Logger.e(
+        '重度刷新失败',
+        tag: 'AppRecoveryManager',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      ErrorHandler.handleError(
+        e,
+        stackTrace: stackTrace,
+        context: 'AppRecoveryManager.HeavyRefresh',
+        type: AppErrorType.unknown,
+      );
       // 降级到轻度刷新
       await _lightRefresh(weatherProvider);
     }
@@ -201,28 +249,39 @@ class AppRecoveryManager {
 
   /// 轻度刷新
   Future<void> _lightRefresh(WeatherProvider weatherProvider) async {
-    print('\n🟢 执行轻度刷新策略');
+    Logger.i('执行轻度刷新策略', tag: 'AppRecoveryManager');
 
     try {
       // 1. 快速健康检查
-      print('📋 步骤 1/2: 快速健康检查');
+      Logger.d('步骤 1/2: 快速健康检查', tag: 'AppRecoveryManager');
       final healthCheck = AppHealthCheck();
       await healthCheck.quickCheck();
 
       // 2. 刷新关键数据
-      print('📋 步骤 2/2: 刷新关键数据');
+      Logger.d('步骤 2/2: 刷新关键数据', tag: 'AppRecoveryManager');
       final scheduler = SmartRefreshScheduler();
       await scheduler.lightRefresh(weatherProvider);
 
-      print('✅ 轻度刷新完成');
-    } catch (e) {
-      print('❌ 轻度刷新失败: $e');
+      Logger.s('轻度刷新完成', tag: 'AppRecoveryManager');
+    } catch (e, stackTrace) {
+      Logger.e(
+        '轻度刷新失败',
+        tag: 'AppRecoveryManager',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      ErrorHandler.handleError(
+        e,
+        stackTrace: stackTrace,
+        context: 'AppRecoveryManager.LightRefresh',
+        type: AppErrorType.unknown,
+      );
     }
   }
 
   /// 快速检查
   Future<void> _quickCheck(WeatherProvider weatherProvider) async {
-    print('\n🔵 执行快速检查策略');
+    Logger.d('执行快速检查策略', tag: 'AppRecoveryManager');
 
     try {
       // 仅验证连接和基本状态
@@ -230,13 +289,24 @@ class AppRecoveryManager {
       final isHealthy = await healthCheck.quickCheck();
 
       if (!isHealthy) {
-        print('⚠️ 快速检查发现问题，升级到轻度刷新');
+        Logger.w('快速检查发现问题，升级到轻度刷新', tag: 'AppRecoveryManager');
         await _lightRefresh(weatherProvider);
       } else {
-        print('✅ 快速检查完成，系统正常');
+        Logger.s('快速检查完成，系统正常', tag: 'AppRecoveryManager');
       }
-    } catch (e) {
-      print('❌ 快速检查失败: $e');
+    } catch (e, stackTrace) {
+      Logger.e(
+        '快速检查失败',
+        tag: 'AppRecoveryManager',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      ErrorHandler.handleError(
+        e,
+        stackTrace: stackTrace,
+        context: 'AppRecoveryManager.QuickCheck',
+        type: AppErrorType.unknown,
+      );
     }
   }
 
@@ -256,7 +326,7 @@ class AppRecoveryManager {
 
   /// 处理应用进入后台
   Future<void> handlePause() async {
-    print('\n📱 应用进入后台，保存状态');
+    Logger.d('应用进入后台，保存状态', tag: 'AppRecoveryManager');
 
     try {
       final persistentState = await PersistentAppState.getInstance();
@@ -267,22 +337,44 @@ class AppRecoveryManager {
         wasProperlyShutdown: false, // 标记为未正常关闭
       );
 
-      print('✅ 状态已保存');
-    } catch (e) {
-      print('❌ 保存状态失败: $e');
+      Logger.s('状态已保存', tag: 'AppRecoveryManager');
+    } catch (e, stackTrace) {
+      Logger.e(
+        '保存状态失败',
+        tag: 'AppRecoveryManager',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      ErrorHandler.handleError(
+        e,
+        stackTrace: stackTrace,
+        context: 'AppRecoveryManager.HandlePause',
+        type: AppErrorType.unknown,
+      );
     }
   }
 
   /// 处理应用正常关闭
   Future<void> handleShutdown() async {
-    print('\n📱 应用正常关闭，保存状态');
+    Logger.d('应用正常关闭，保存状态', tag: 'AppRecoveryManager');
 
     try {
       final persistentState = await PersistentAppState.getInstance();
       await persistentState.markProperShutdown();
-      print('✅ 正常关闭标记已保存');
-    } catch (e) {
-      print('❌ 保存关闭标记失败: $e');
+      Logger.s('正常关闭标记已保存', tag: 'AppRecoveryManager');
+    } catch (e, stackTrace) {
+      Logger.e(
+        '保存关闭标记失败',
+        tag: 'AppRecoveryManager',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      ErrorHandler.handleError(
+        e,
+        stackTrace: stackTrace,
+        context: 'AppRecoveryManager.HandleShutdown',
+        type: AppErrorType.unknown,
+      );
     }
   }
 }

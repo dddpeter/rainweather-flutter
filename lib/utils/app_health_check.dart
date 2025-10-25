@@ -33,25 +33,29 @@ class HealthReport {
   @override
   String toString() {
     final status = <String>[];
-    if (database)
+    if (database) {
       status.add('✅ 数据库');
-    else
+    } else {
       status.add('❌ 数据库: $databaseError');
+    }
 
-    if (network)
+    if (network) {
       status.add('✅ 网络');
-    else
+    } else {
       status.add('❌ 网络: $networkError');
+    }
 
-    if (location)
+    if (location) {
       status.add('✅ 定位');
-    else
+    } else {
       status.add('❌ 定位: $locationError');
+    }
 
-    if (permissions)
+    if (permissions) {
       status.add('✅ 权限');
-    else
+    } else {
       status.add('❌ 权限: $permissionsError');
+    }
 
     return status.join('\n');
   }

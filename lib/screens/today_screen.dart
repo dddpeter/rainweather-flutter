@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -27,6 +26,9 @@ import '../widgets/lunar_info_widget.dart';
 import '../widgets/weather_details_widget.dart';
 import '../widgets/air_quality_card.dart';
 import '../utils/weather_icon_helper.dart';
+import '../utils/error_handler.dart';
+import '../utils/logger.dart';
+import '../widgets/error_dialog.dart';
 import 'hourly_screen.dart';
 
 class TodayScreen extends StatefulWidget {
@@ -55,9 +57,9 @@ class _TodayScreenState extends State<TodayScreen>
     _alertService.initialize();
 
     // 添加定位变化监听器
-    print('📍 TodayScreen: 开始注册定位变化监听器');
+    Logger.d('开始注册定位变化监听器', tag: 'TodayScreen');
     LocationChangeNotifier().addListener(this);
-    print('📍 TodayScreen: 定位变化监听器注册完成');
+    Logger.d('定位变化监听器注册完成', tag: 'TodayScreen');
     // 调试：打印当前监听器状态
     LocationChangeNotifier().debugPrintStatus();
 
@@ -76,7 +78,7 @@ class _TodayScreenState extends State<TodayScreen>
   /// 页面被激活时调用（类似Vue的activated）
   @override
   void onPageActivated() {
-    print('📱 TodayScreen: 页面被激活，开始刷新天气提醒');
+    Logger.d('页面被激活，开始刷新天气提醒', tag: 'TodayScreen');
     _isVisible = true;
 
     // 延迟执行，确保页面完全激活
@@ -88,7 +90,7 @@ class _TodayScreenState extends State<TodayScreen>
   /// 页面被停用时调用（类似Vue的deactivated）
   @override
   void onPageDeactivated() {
-    print('📱 TodayScreen: 页面被停用');
+    Logger.d('页面被停用', tag: 'TodayScreen');
     _isVisible = false;
   }
 
@@ -96,14 +98,14 @@ class _TodayScreenState extends State<TodayScreen>
   /// 注意：页面激活时不分析新提醒，只刷新UI显示已有提醒
   Future<void> _refreshWeatherAlertsOnActivation() async {
     try {
-      print('📱 TodayScreen: 页面激活，刷新UI显示提醒');
+      Logger.d('页面激活，刷新UI显示提醒', tag: 'TodayScreen');
 
       // 只刷新UI，不重新分析提醒（避免重复通知）
       if (mounted) {
         setState(() {});
       }
     } catch (e) {
-      print('📱 TodayScreen: 页面激活刷新失败: $e');
+      Logger.e('页面激活刷新失败', tag: 'TodayScreen', error: e);
     }
   }
 
@@ -113,13 +115,13 @@ class _TodayScreenState extends State<TodayScreen>
   }) async {
     // 防止重复刷新
     if (_isRefreshing) {
-      print('🔄 TodayScreen: 正在刷新中，跳过重复请求');
+      Logger.d('正在刷新中，跳过重复请求', tag: 'TodayScreen');
       return;
     }
 
     try {
       _isRefreshing = true;
-      print('🔄 TodayScreen: 开始定位和刷新天气数据');
+      Logger.d('开始定位和刷新天气数据', tag: 'TodayScreen');
 
       final weatherProvider = context.read<WeatherProvider>();
 
@@ -130,24 +132,27 @@ class _TodayScreenState extends State<TodayScreen>
       if (!skipAlertAnalysis &&
           weatherProvider.currentWeather != null &&
           weatherProvider.currentLocation != null) {
-        print('🔄 TodayScreen: 开始刷新天气提醒');
+        Logger.d('开始刷新天气提醒', tag: 'TodayScreen');
         final newAlerts = await _alertService.analyzeWeather(
           weatherProvider.currentWeather!,
           weatherProvider.currentLocation!,
         );
-        print('✅ TodayScreen: 天气提醒刷新完成，新增提醒数量: ${newAlerts.length}');
+        Logger.s('天气提醒刷新完成，新增提醒数量: ${newAlerts.length}', tag: 'TodayScreen');
         for (int i = 0; i < newAlerts.length; i++) {
           final alert = newAlerts[i];
-          print('✅ 新增提醒 $i: ${alert.title} - ${alert.cityName}');
+          Logger.d(
+            '新增提醒 $i: ${alert.title} - ${alert.cityName}',
+            tag: 'TodayScreen',
+          );
         }
         if (mounted) {
           setState(() {}); // 刷新UI显示提醒
         }
       }
 
-      print('✅ TodayScreen: 当前定位和天气数据刷新完成');
+      Logger.s('当前定位和天气数据刷新完成', tag: 'TodayScreen');
     } catch (e) {
-      print('❌ TodayScreen: 刷新当前定位和天气数据失败: $e');
+      Logger.e('刷新当前定位和天气数据失败', tag: 'TodayScreen', error: e);
     } finally {
       _isRefreshing = false;
     }
@@ -158,18 +163,18 @@ class _TodayScreenState extends State<TodayScreen>
     _stopPeriodicRefresh(); // 先停止现有的定时器
 
     _refreshTimer = Timer.periodic(_refreshInterval, (timer) {
-      print('⏰ TodayScreen: 定时刷新触发');
+      Logger.d('定时刷新触发', tag: 'TodayScreen');
       _performPeriodicRefresh();
     });
 
-    print('⏰ TodayScreen: 定时刷新已启动，间隔 ${_refreshInterval.inMinutes} 分钟');
+    Logger.i('定时刷新已启动，间隔 ${_refreshInterval.inMinutes} 分钟', tag: 'TodayScreen');
   }
 
   /// 停止定时刷新
   void _stopPeriodicRefresh() {
     _refreshTimer?.cancel();
     _refreshTimer = null;
-    print('⏰ TodayScreen: 定时刷新已停止');
+    Logger.d('定时刷新已停止', tag: 'TodayScreen');
   }
 
   /// 执行定时刷新
@@ -334,7 +339,7 @@ class _TodayScreenState extends State<TodayScreen>
   Future<void> _refreshWeatherData() async {
     // 防止重复刷新
     if (_isRefreshing) {
-      print('🔄 TodayScreen: 正在刷新中，跳过重复请求');
+      Logger.d('正在刷新中，跳过重复请求', tag: 'TodayScreen');
       return;
     }
 
@@ -538,6 +543,20 @@ class _TodayScreenState extends State<TodayScreen>
                               foregroundColor: AppColors.textPrimary,
                             ),
                             child: Text('重试'),
+                          ),
+                          const SizedBox(height: 16),
+                          TextButton(
+                            onPressed: () => _showErrorDialog(
+                              context,
+                              weatherProvider.error!,
+                            ),
+                            child: Text(
+                              '查看详细错误信息',
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 14,
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -1381,5 +1400,33 @@ class _TodayScreenState extends State<TodayScreen>
       print('❌ 获取节气信息失败: $e');
       return const SizedBox.shrink();
     }
+  }
+
+  /// 显示错误对话框
+  void _showErrorDialog(BuildContext context, String error) {
+    // 根据错误类型确定错误类型
+    AppErrorType errorType = AppErrorType.unknown;
+    if (error.toLowerCase().contains('network') ||
+        error.toLowerCase().contains('connection') ||
+        error.toLowerCase().contains('timeout')) {
+      errorType = AppErrorType.network;
+    } else if (error.toLowerCase().contains('location') ||
+        error.toLowerCase().contains('gps')) {
+      errorType = AppErrorType.location;
+    } else if (error.toLowerCase().contains('permission')) {
+      errorType = AppErrorType.permission;
+    }
+
+    ErrorDialog.show(
+      context: context,
+      title: '加载失败',
+      message: error,
+      errorType: errorType,
+      onRetry: () {
+        Navigator.of(context).pop();
+        _handleRefreshWithFeedback(context, context.read<WeatherProvider>());
+      },
+      retryText: '重试',
+    );
   }
 }

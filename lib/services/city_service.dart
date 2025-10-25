@@ -7,7 +7,7 @@ import '../constants/app_constants.dart';
 
 class CityService {
   static CityService? _instance;
-  DatabaseService _databaseService;
+  final DatabaseService _databaseService;
 
   CityService._(this._databaseService);
 

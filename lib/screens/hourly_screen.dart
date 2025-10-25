@@ -10,6 +10,9 @@ import '../widgets/hourly_chart.dart';
 import '../widgets/hourly_list.dart';
 import '../constants/app_constants.dart';
 import '../constants/app_colors.dart';
+import '../utils/error_handler.dart';
+import '../utils/logger.dart';
+import '../widgets/error_dialog.dart';
 
 class HourlyScreen extends StatefulWidget {
   const HourlyScreen({super.key});
@@ -128,6 +131,20 @@ class _HourlyScreenState extends State<HourlyScreen>
                                 foregroundColor: AppColors.textPrimary,
                               ),
                               child: const Text('重试'),
+                            ),
+                            const SizedBox(height: 16),
+                            TextButton(
+                              onPressed: () => _showErrorDialog(
+                                context,
+                                weatherProvider.error!,
+                              ),
+                              child: Text(
+                                '查看详细错误信息',
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 14,
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -270,7 +287,35 @@ class _HourlyScreenState extends State<HourlyScreen>
       await weatherProvider.forceRefreshWithLocation();
     } catch (e) {
       // 静默处理错误，不显示Toast
-      print('刷新失败: ${e.toString()}');
+      Logger.e('刷新失败', tag: 'HourlyScreen', error: e);
     }
+  }
+
+  /// 显示错误对话框
+  void _showErrorDialog(BuildContext context, String error) {
+    // 根据错误类型确定错误类型
+    AppErrorType errorType = AppErrorType.unknown;
+    if (error.toLowerCase().contains('network') ||
+        error.toLowerCase().contains('connection') ||
+        error.toLowerCase().contains('timeout')) {
+      errorType = AppErrorType.network;
+    } else if (error.toLowerCase().contains('location') ||
+        error.toLowerCase().contains('gps')) {
+      errorType = AppErrorType.location;
+    } else if (error.toLowerCase().contains('permission')) {
+      errorType = AppErrorType.permission;
+    }
+
+    ErrorDialog.show(
+      context: context,
+      title: '加载失败',
+      message: error,
+      errorType: errorType,
+      onRetry: () {
+        Navigator.of(context).pop();
+        _handleRefreshWithFeedback(context, context.read<WeatherProvider>());
+      },
+      retryText: '重试',
+    );
   }
 }

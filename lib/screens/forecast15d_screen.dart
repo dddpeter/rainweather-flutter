@@ -279,8 +279,9 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
                               (context, index) {
                                 // 跳过第一个对象（昨天），从索引1开始
                                 final actualIndex = index + 1;
-                                if (actualIndex >= forecast15d.length)
+                                if (actualIndex >= forecast15d.length) {
                                   return null;
+                                }
 
                                 final day = forecast15d[actualIndex];
                                 return _buildForecastCard(

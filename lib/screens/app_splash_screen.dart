@@ -91,10 +91,12 @@ class _AppSplashScreenState extends State<AppSplashScreen>
         // 标记应用完全启动（即使初始化失败）
         await AppStateManager().markAppFullyStarted();
 
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const MainScreen()),
-          (Route<dynamic> route) => false,
-        );
+        if (mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const MainScreen()),
+            (Route<dynamic> route) => false,
+          );
+        }
       }
     }
   }

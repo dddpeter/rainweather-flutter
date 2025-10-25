@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import '../models/weather_model.dart';
 import '../models/location_model.dart';
 import '../constants/app_constants.dart';
+import '../utils/logger.dart';
+import '../utils/error_handler.dart';
 import 'city_data_service.dart';
 
 class WeatherService {
@@ -44,8 +46,19 @@ class WeatherService {
         }
       }
       return null;
-    } catch (e) {
-      print('Weather API error: $e');
+    } catch (e, stackTrace) {
+      Logger.e(
+        'Weather API error',
+        tag: 'WeatherService',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      ErrorHandler.handleError(
+        e,
+        stackTrace: stackTrace,
+        context: 'WeatherService.GetWeatherData',
+        type: AppErrorType.network,
+      );
       return null;
     }
   }
@@ -55,18 +68,19 @@ class WeatherService {
     LocationModel location,
   ) async {
     String cityId = _getCityIdFromLocation(location);
-    print('Weather data - Location: ${location.district}, CityID: $cityId');
+    Logger.d(
+      '获取天气数据 - 位置: ${location.district}, 城市ID: $cityId',
+      tag: 'WeatherService',
+    );
 
     if (cityId.isNotEmpty) {
       final result = await getWeatherData(cityId);
       if (result == null) {
-        print('Weather data - Failed to fetch data for cityId: $cityId');
+        Logger.e('获取城市ID的天气数据失败: $cityId', tag: 'WeatherService');
       }
       return result;
     } else {
-      print(
-        'Weather data - Failed to find cityId for location: ${location.district}',
-      );
+      Logger.w('无法找到位置对应的城市ID: ${location.district}', tag: 'WeatherService');
     }
     return null;
   }
@@ -102,8 +116,19 @@ class WeatherService {
         return weatherData!.forecast15d!.take(7).toList();
       }
       return null;
-    } catch (e) {
-      print('7-day forecast error: $e');
+    } catch (e, stackTrace) {
+      Logger.e(
+        '7日天气预报错误',
+        tag: 'WeatherService',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      ErrorHandler.handleError(
+        e,
+        stackTrace: stackTrace,
+        context: 'WeatherService.Get7DayForecast',
+        type: AppErrorType.network,
+      );
       return null;
     }
   }
@@ -113,8 +138,19 @@ class WeatherService {
     try {
       final weatherData = await getWeatherData(cityId);
       return weatherData?.forecast24h;
-    } catch (e) {
-      print('24-hour forecast error: $e');
+    } catch (e, stackTrace) {
+      Logger.e(
+        '24小时天气预报错误',
+        tag: 'WeatherService',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      ErrorHandler.handleError(
+        e,
+        stackTrace: stackTrace,
+        context: 'WeatherService.Get24HourForecast',
+        type: AppErrorType.network,
+      );
       return null;
     }
   }

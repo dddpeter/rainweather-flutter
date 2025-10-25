@@ -2,6 +2,9 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../utils/logger.dart';
 import '../utils/error_handler.dart';
+import 'request_deduplicator.dart';
+import 'request_cache_service.dart';
+import 'network_config_service.dart';
 
 /// 智谱AI服务 - 用于智能通勤建议生成
 class AIService {
@@ -9,100 +12,143 @@ class AIService {
   factory AIService() => _instance;
   AIService._internal();
 
+  final RequestDeduplicator _deduplicator = RequestDeduplicator();
+  final RequestCacheService _cacheService = RequestCacheService();
+  final NetworkConfigService _networkConfig = NetworkConfigService();
+
   static const String _apiKey =
       '22af66926af540978a59d67bf6806fe0.vyrFy5UXn9meHyND';
   static const String _apiUrl =
       'https://open.bigmodel.cn/api/paas/v4/chat/completions';
   static const String _model = 'glm-4-flash';
 
-  /// 调用智谱AI生成智能建议
+  /// 调用智谱AI生成智能建议（带去重和缓存）
   Future<String?> generateSmartAdvice(String prompt) async {
-    Logger.separator(title: 'AI服务：开始调用智谱AI');
-    Logger.d('API地址: $_apiUrl', tag: 'AIService');
-    Logger.d('API密钥: ${_apiKey.substring(0, 10)}...', tag: 'AIService');
-    Logger.d('使用模型: $_model', tag: 'AIService');
-    Logger.d('Prompt内容:', tag: 'AIService');
-    Logger.d(prompt, tag: 'AIService');
+    final requestKey = RequestKeyGenerator.aiRequest(prompt);
 
-    try {
-      final requestBody = {
-        'model': _model,
-        'messages': [
-          {'role': 'user', 'content': prompt},
-        ],
-      };
+    return await _deduplicator.execute<String?>(requestKey, () async {
+      // 先尝试从缓存获取
+      final cachedData = await _cacheService.get<String>(
+        requestKey,
+        (json) => json['content'] as String,
+      );
 
-      Logger.d('发送请求...', tag: 'AIService');
-      Logger.d('请求体: ${jsonEncode(requestBody)}', tag: 'AIService');
+      if (cachedData != null) {
+        Logger.d('使用AI缓存数据', tag: 'AIService');
+        return cachedData;
+      }
 
-      final response = await http
-          .post(
-            Uri.parse(_apiUrl),
-            headers: {
-              'Authorization': _apiKey,
-              'Content-Type': 'application/json',
-            },
-            body: jsonEncode(requestBody),
-          )
-          .timeout(
-            const Duration(seconds: 15),
-            onTimeout: () {
-              Logger.w('AI请求超时（15秒）', tag: 'AIService');
-              throw Exception('AI请求超时');
-            },
-          );
+      Logger.separator(title: 'AI服务：开始调用智谱AI');
+      Logger.d('API地址: $_apiUrl', tag: 'AIService');
+      Logger.d('API密钥: ${_apiKey.substring(0, 10)}...', tag: 'AIService');
+      Logger.d('使用模型: $_model', tag: 'AIService');
+      Logger.d('Prompt内容:', tag: 'AIService');
+      Logger.d(prompt, tag: 'AIService');
 
-      Logger.d('收到响应', tag: 'AIService');
-      Logger.d('状态码: ${response.statusCode}', tag: 'AIService');
-      Logger.d('响应体长度: ${response.body.length} 字节', tag: 'AIService');
+      try {
+        // 根据网络质量调整配置
+        final networkQuality = await _networkConfig.getNetworkQuality();
+        final baseConfig = _networkConfig.getConfig(RequestType.ai);
+        final adjustedConfig = _networkConfig.adjustConfigForNetworkQuality(
+          baseConfig,
+          networkQuality,
+        );
 
-      if (response.statusCode == 200) {
-        Logger.s('HTTP请求成功', tag: 'AIService');
+        Logger.d('网络质量: $networkQuality', tag: 'AIService');
+        Logger.d('调整后配置: $adjustedConfig', tag: 'AIService');
 
-        final jsonData = jsonDecode(utf8.decode(response.bodyBytes));
-        Logger.d('解析JSON成功', tag: 'AIService');
-        Logger.d('完整响应: ${jsonEncode(jsonData)}', tag: 'AIService');
+        final requestBody = {
+          'model': _model,
+          'messages': [
+            {'role': 'user', 'content': prompt},
+          ],
+        };
 
-        final choices = jsonData['choices'] as List?;
-        Logger.d('Choices数量: ${choices?.length ?? 0}', tag: 'AIService');
+        Logger.d('发送请求...', tag: 'AIService');
+        Logger.d('请求体: ${jsonEncode(requestBody)}', tag: 'AIService');
 
-        if (choices != null && choices.isNotEmpty) {
-          final message = choices[0]['message'] as Map<String, dynamic>?;
-          final content = message?['content'] as String?;
+        final response = await http
+            .post(
+              Uri.parse(_apiUrl),
+              headers: {
+                'Authorization': _apiKey,
+                'Content-Type': 'application/json',
+              },
+              body: jsonEncode(requestBody),
+            )
+            .timeout(
+              adjustedConfig.receiveTimeout,
+              onTimeout: () {
+                Logger.w(
+                  'AI请求超时（${adjustedConfig.receiveTimeout.inSeconds}秒）',
+                  tag: 'AIService',
+                );
+                throw Exception('AI请求超时');
+              },
+            );
 
-          if (content != null && content.isNotEmpty) {
-            Logger.separator(title: 'AI响应成功');
-            Logger.d('完整内容:', tag: 'AIService');
-            Logger.d(content, tag: 'AIService');
-            Logger.separator();
-            return content;
+        Logger.d('收到响应', tag: 'AIService');
+        Logger.d('状态码: ${response.statusCode}', tag: 'AIService');
+        Logger.d('响应体长度: ${response.body.length} 字节', tag: 'AIService');
+
+        if (response.statusCode == 200) {
+          Logger.s('HTTP请求成功', tag: 'AIService');
+
+          final jsonData = jsonDecode(utf8.decode(response.bodyBytes));
+          Logger.d('解析JSON成功', tag: 'AIService');
+          Logger.d('完整响应: ${jsonEncode(jsonData)}', tag: 'AIService');
+
+          final choices = jsonData['choices'] as List?;
+          Logger.d('Choices数量: ${choices?.length ?? 0}', tag: 'AIService');
+
+          if (choices != null && choices.isNotEmpty) {
+            final message = choices[0]['message'] as Map<String, dynamic>?;
+            final content = message?['content'] as String?;
+
+            if (content != null && content.isNotEmpty) {
+              Logger.separator(title: 'AI响应成功');
+              Logger.d('完整内容:', tag: 'AIService');
+              Logger.d(content, tag: 'AIService');
+              Logger.separator();
+
+              // 缓存AI响应
+              await _cacheService.set(
+                requestKey,
+                content,
+                CacheConfig.aiRequest,
+                toJson: (data) => {'content': data},
+              );
+
+              Logger.d('AI响应已缓存', tag: 'AIService');
+              return content;
+            } else {
+              Logger.w('content为空', tag: 'AIService');
+            }
           } else {
-            Logger.w('content为空', tag: 'AIService');
+            Logger.w('choices为空或不存在', tag: 'AIService');
           }
-        } else {
-          Logger.w('choices为空或不存在', tag: 'AIService');
-        }
 
-        Logger.w('AI响应格式异常', tag: 'AIService');
-        return null;
-      } else {
-        Logger.separator(title: 'AI请求失败');
-        Logger.e('状态码: ${response.statusCode}', tag: 'AIService');
-        Logger.e('响应头: ${response.headers}', tag: 'AIService');
-        Logger.e('响应体: ${response.body}', tag: 'AIService');
-        Logger.separator();
+          Logger.w('AI响应格式异常', tag: 'AIService');
+          return null;
+        } else {
+          Logger.separator(title: 'AI请求失败');
+          Logger.e('状态码: ${response.statusCode}', tag: 'AIService');
+          Logger.e('响应头: ${response.headers}', tag: 'AIService');
+          Logger.e('响应体: ${response.body}', tag: 'AIService');
+          Logger.separator();
+          return null;
+        }
+      } catch (e, stackTrace) {
+        Logger.e('AI服务异常', tag: 'AIService', error: e, stackTrace: stackTrace);
+        ErrorHandler.handleError(
+          e,
+          stackTrace: stackTrace,
+          context: 'AIService.GenerateSmartAdvice',
+          type: AppErrorType.network,
+        );
         return null;
       }
-    } catch (e, stackTrace) {
-      Logger.e('AI服务异常', tag: 'AIService', error: e, stackTrace: stackTrace);
-      ErrorHandler.handleError(
-        e,
-        stackTrace: stackTrace,
-        context: 'AIService.GenerateSmartAdvice',
-        type: AppErrorType.network,
-      );
-      return null;
-    }
+    });
   }
 
   /// 构建通勤建议的Prompt
@@ -545,4 +591,24 @@ $hourlyInfo
 
 请严格按照上述格式输出，直接输出内容，不要其他说明。''';
   }
+
+  /// 清理AI请求缓存
+  Future<void> clearAICache() async {
+    await _cacheService.clearAll();
+    Logger.d('AI请求缓存已清理', tag: 'AIService');
+  }
+
+  /// 获取缓存统计信息
+  Future<Map<String, dynamic>> getCacheStats() async {
+    return await _cacheService.getCacheStats();
+  }
+
+  /// 取消所有正在进行的AI请求
+  void cancelAllRequests() {
+    _deduplicator.cancelAll();
+    Logger.d('所有AI请求已取消', tag: 'AIService');
+  }
+
+  /// 获取正在进行的请求数量
+  int get pendingRequestCount => _deduplicator.pendingRequestCount;
 }

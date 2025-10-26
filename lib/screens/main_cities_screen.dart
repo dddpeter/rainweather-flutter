@@ -109,48 +109,26 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
                                         tapTargetSize:
                                             MaterialTapTargetSize.shrinkWrap,
                                       ),
-                                      child: Text(
-                                        '添加城市',
-                                        style: TextStyle(
-                                          color: AppColors.titleBarIconColor,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ),
-                                    // 刷新图标 - 只刷新列表数据，不进行定位
-                                    IconButton(
-                                      onPressed:
-                                          weatherProvider.isLoading ||
-                                              weatherProvider
-                                                  .isLocationRefreshing
-                                          ? null
-                                          : () async {
-                                              // 只刷新主要城市天气，不重新定位
-                                              await weatherProvider
-                                                  .refreshMainCitiesWeather();
-                                            },
-                                      icon:
-                                          weatherProvider.isLoading ||
-                                              weatherProvider
-                                                  .isLocationRefreshing
-                                          ? SizedBox(
-                                              width: 20,
-                                              height: 20,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                                valueColor:
-                                                    AlwaysStoppedAnimation<
-                                                      Color
-                                                    >(AppColors.textPrimary),
-                                              ),
-                                            )
-                                          : Icon(
-                                              Icons.refresh,
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.add_location_alt_rounded,
+                                            size: 18,
+                                            color: AppColors.titleBarIconColor,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            '添加城市',
+                                            style: TextStyle(
                                               color:
                                                   AppColors.titleBarIconColor,
-                                              size: AppColors.titleBarIconSize,
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
                                             ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ],
                                 );

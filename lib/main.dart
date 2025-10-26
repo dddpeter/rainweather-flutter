@@ -1,41 +1,26 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'providers/weather_provider.dart';
 import 'providers/theme_provider.dart';
-// import 'providers/weather_provider_refactored.dart';
 import 'screens/today_screen.dart';
 import 'screens/hourly_screen.dart';
 import 'screens/forecast15d_screen.dart';
-import 'screens/main_cities_screen.dart';
 import 'screens/app_splash_screen.dart';
-import 'widgets/floating_action_island.dart';
+import 'screens/main_cities_screen.dart';
 import 'widgets/app_drawer.dart';
-import 'widgets/weather_alert_widget.dart';
-import 'screens/outfit_advisor_screen.dart';
-import 'screens/health_advisor_screen.dart';
-import 'screens/extreme_weather_alert_screen.dart';
-// import 'screens/radar_screen.dart'; // 已移除雷达图功能
-import 'services/weather_alert_service.dart';
-import 'services/weather_share_service.dart';
-import 'constants/app_colors.dart';
-import 'constants/theme_extensions.dart';
-import 'services/location_service.dart';
-import 'services/notification_service.dart';
-import 'services/smart_cache_service.dart';
-import 'services/baidu_location_service.dart';
-import 'services/amap_location_service.dart';
-import 'services/tencent_location_service.dart';
+import 'widgets/custom_bottom_navigation_v2.dart';
+import 'widgets/main_app_bar.dart';
 import 'services/page_activation_observer.dart';
 import 'services/weather_widget_service.dart';
-import 'widgets/custom_bottom_navigation_v2.dart';
-import 'utils/app_state_manager.dart';
+import 'services/app_route_observer.dart';
+import 'services/app_initialization_service.dart';
 import 'utils/app_recovery_manager.dart';
 import 'utils/global_exception_handler.dart';
 import 'utils/logger.dart';
-import 'utils/error_handler.dart';
+import 'constants/app_colors.dart';
+import 'constants/theme_extensions.dart';
 
 // 全局路由观察者
 final PageActivationObserver _pageActivationObserver = PageActivationObserver();
@@ -46,57 +31,6 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 // 应用在后台的时间戳
 DateTime? _appInBackgroundSince;
 
-/// 启动后台缓存清理任务
-void _startBackgroundCacheCleaner() {
-  print('🧹 启动后台缓存清理任务（每30分钟）');
-
-  // 每30分钟清理一次过期缓存
-  Timer.periodic(const Duration(minutes: 30), (timer) async {
-    try {
-      await SmartCacheService().clearExpiredCache();
-    } catch (e) {
-      print('❌ 后台缓存清理失败: $e');
-    }
-  });
-}
-
-/// 路由观察者，用于监听页面切换
-class _RouteObserver extends RouteObserver<PageRoute<dynamic>> {
-  final PageActivationObserver _pageActivationObserver;
-
-  _RouteObserver(this._pageActivationObserver);
-
-  @override
-  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
-    super.didPush(route, previousRoute);
-    _handleRouteChange(route);
-  }
-
-  @override
-  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
-    super.didPop(route, previousRoute);
-    if (previousRoute != null) {
-      _handleRouteChange(previousRoute);
-    }
-  }
-
-  @override
-  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
-    super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
-    if (newRoute != null) {
-      _handleRouteChange(newRoute);
-    }
-  }
-
-  void _handleRouteChange(Route<dynamic> route) {
-    final routeName = route.settings.name ?? route.runtimeType.toString();
-    print('🔄 RouteObserver: 路由变化 - $routeName');
-
-    // 通知页面激活
-    _pageActivationObserver.notifyPageActivated(routeName);
-  }
-}
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -105,135 +39,10 @@ void main() async {
   Logger.separator(title: 'RainWeather 启动');
 
   // 🚀 关键初始化：优先显示启动画面
-  _initializeCriticalServices();
+  AppInitializationService().initializeCriticalServices();
 
   // 📱 立即启动应用，让用户看到启动画面
   runApp(const RainWeatherApp());
-}
-
-/// 异步初始化关键服务（不阻塞应用启动）
-void _initializeCriticalServices() async {
-  // 使用Future.microtask确保在下一帧执行，不阻塞UI
-  Future.microtask(() async {
-    // 预加载智能缓存到内存
-    try {
-      Logger.d('预加载智能缓存...');
-      await SmartCacheService().preloadCommonData();
-      Logger.s('智能缓存预加载完成');
-    } catch (e, stackTrace) {
-      Logger.e('智能缓存预加载失败', error: e, stackTrace: stackTrace);
-      ErrorHandler.handleError(
-        e,
-        stackTrace: stackTrace,
-        context: 'Main.SmartCachePreload',
-        type: AppErrorType.cache,
-      );
-    }
-
-    // 启动后台缓存清理任务
-    _startBackgroundCacheCleaner();
-
-    // 初始化通知服务并请求权限
-    _initializeNotificationService();
-
-    // 初始化定位服务
-    _initializeLocationServices();
-  });
-}
-
-/// 初始化通知服务
-void _initializeNotificationService() async {
-  try {
-    Logger.d('初始化通知服务');
-    final notificationService = NotificationService.instance;
-    await notificationService.initialize();
-
-    // 创建通知渠道（Android）
-    await notificationService.createNotificationChannels();
-
-    // 请求通知权限
-    final permissionGranted = await notificationService.requestPermissions();
-    Logger.i('通知权限请求结果: $permissionGranted');
-
-    if (!permissionGranted) {
-      Logger.w('通知权限未授予，部分功能可能无法使用');
-    }
-  } catch (e, stackTrace) {
-    Logger.e('通知服务初始化失败', error: e, stackTrace: stackTrace);
-    ErrorHandler.handleError(
-      e,
-      stackTrace: stackTrace,
-      context: 'Main.NotificationService',
-      type: AppErrorType.permission,
-    );
-  }
-}
-
-/// 初始化定位服务
-void _initializeLocationServices() async {
-  // 全局设置腾讯定位服务
-  try {
-    Logger.d('全局设置腾讯定位服务');
-    final tencentLocationService = TencentLocationService.getInstance();
-    await tencentLocationService.setGlobalPrivacyAgreement();
-    Logger.s('腾讯定位服务设置成功');
-  } catch (e, stackTrace) {
-    Logger.e('腾讯定位服务设置失败', error: e, stackTrace: stackTrace);
-    ErrorHandler.handleError(
-      e,
-      stackTrace: stackTrace,
-      context: 'Main.TencentLocationService',
-      type: AppErrorType.location,
-    );
-  }
-
-  // 全局设置百度定位隐私政策同意
-  try {
-    Logger.d('全局设置百度定位隐私政策同意');
-    final baiduLocationService = BaiduLocationService.getInstance();
-    await baiduLocationService.setGlobalPrivacyAgreement();
-    Logger.s('百度定位隐私政策同意设置成功');
-  } catch (e, stackTrace) {
-    Logger.e('百度定位隐私政策同意设置失败', error: e, stackTrace: stackTrace);
-    ErrorHandler.handleError(
-      e,
-      stackTrace: stackTrace,
-      context: 'Main.BaiduLocationService',
-      type: AppErrorType.location,
-    );
-  }
-
-  // 全局设置高德地图API Key
-  try {
-    Logger.d('全局设置高德地图API Key');
-    final amapLocationService = AMapLocationService.getInstance();
-    await amapLocationService.setGlobalAPIKey();
-    Logger.s('高德地图API Key设置成功');
-  } catch (e, stackTrace) {
-    Logger.e('高德地图API Key设置失败', error: e, stackTrace: stackTrace);
-    ErrorHandler.handleError(
-      e,
-      stackTrace: stackTrace,
-      context: 'Main.AmapLocationService',
-      type: AppErrorType.location,
-    );
-  }
-
-  // 请求定位权限（参照demo）
-  try {
-    Logger.d('请求定位权限');
-    final locationService = LocationService.getInstance();
-    await locationService.requestLocationPermission();
-    Logger.s('定位权限请求完成');
-  } catch (e, stackTrace) {
-    Logger.e('定位权限请求失败', error: e, stackTrace: stackTrace);
-    ErrorHandler.handleError(
-      e,
-      stackTrace: stackTrace,
-      context: 'Main.LocationPermission',
-      type: AppErrorType.permission,
-    );
-  }
 }
 
 class RainWeatherApp extends StatefulWidget {
@@ -296,8 +105,8 @@ class _RainWeatherAppState extends State<RainWeatherApp>
   }
 
   void _restartApp() {
-    // 重置应用状态管理器
-    AppStateManager().reset();
+    // 重置应用状态管理器（通过 AppRecoveryManager）
+    AppRecoveryManager().handleShutdown();
 
     // 重新初始化应用状态
     // 使用pushAndRemoveUntil确保完全重启应用
@@ -355,7 +164,9 @@ class _RainWeatherAppState extends State<RainWeatherApp>
                   theme: _buildLightTheme(themeProvider),
                   darkTheme: _buildDarkTheme(themeProvider),
                   themeMode: _getThemeMode(themeProvider.themeMode),
-                  navigatorObservers: [_RouteObserver(_pageActivationObserver)],
+                  navigatorObservers: [
+                    AppRouteObserver(_pageActivationObserver),
+                  ],
                   home: const AppSplashScreen(), // 保留启动页面确保正确初始化
                 );
               },
@@ -572,6 +383,10 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
 
         return Scaffold(
           drawer: const AppDrawer(),
+          appBar: MainAppBar(
+            currentIndex: _currentIndex,
+            onTabChange: (index) => setState(() => _currentIndex = index),
+          ),
           body: IndexedStack(index: _currentIndex, children: _screens),
           resizeToAvoidBottomInset: false,
           bottomNavigationBar: CustomBottomNavigationV2(
@@ -640,189 +455,6 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
               BottomNavigationItem(icon: Icons.location_city, label: '主要城市'),
             ],
           ),
-          floatingActionButton: _buildFloatingActionIsland(),
-        );
-      },
-    );
-  }
-
-  /// 构建浮动操作岛（根据当前页面显示不同操作）
-  Widget _buildFloatingActionIsland() {
-    return Consumer2<WeatherProvider, ThemeProvider>(
-      builder: (context, weatherProvider, themeProvider, child) {
-        print('🏝️ MainScreen: 当前tab索引 = $_currentIndex');
-
-        // 根据当前页面显示不同的操作
-        List<IslandAction> actions = [];
-
-        // 所有页面都有刷新、设置、主题切换
-        actions.addAll([
-          IslandAction(
-            icon: Icons.refresh_rounded,
-            label: _currentIndex == 0 ? '刷新天气' : '刷新',
-            onTap: () async {
-              await weatherProvider.forceRefreshWithLocation();
-            },
-            backgroundColor: AppColors.primaryBlue,
-          ),
-          IslandAction(
-            icon: Icons.settings_rounded,
-            label: '设置',
-            onTap: () {
-              Scaffold.of(context).openDrawer();
-            },
-            backgroundColor: AppColors.primaryBlue,
-          ),
-          IslandAction(
-            icon: themeProvider.isLightTheme
-                ? Icons.dark_mode_rounded
-                : Icons.light_mode_rounded,
-            label: themeProvider.isLightTheme ? '暗色' : '亮色',
-            onTap: () {
-              // 切换主题：亮色→暗色，暗色→亮色
-              themeProvider.setThemeMode(
-                themeProvider.isLightTheme
-                    ? AppThemeMode.dark
-                    : AppThemeMode.light,
-              );
-            },
-            backgroundColor: AppColors.primaryBlue,
-          ),
-        ]);
-
-        // 今日天气页面专属功能
-        if (_currentIndex == 0) {
-          actions.addAll([
-            // AI智能助手
-            IslandAction(
-              icon: Icons.auto_awesome,
-              label: 'AI助手',
-              onTap: () {
-                weatherProvider.generateWeatherSummary(forceRefresh: true);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text('正在重新生成AI摘要...'),
-                    duration: const Duration(seconds: 2),
-                    backgroundColor: AppColors.primaryBlue,
-                  ),
-                );
-              },
-              backgroundColor: const Color(0xFFFFB300),
-            ),
-            // 综合提醒
-            IslandAction(
-              icon: Icons.notifications_active,
-              label: '综合提醒',
-              onTap: () {
-                final alertService = WeatherAlertService.instance;
-                final currentLocation = weatherProvider.currentLocation;
-                final district =
-                    currentLocation?.district ?? currentLocation?.city ?? '未知';
-
-                final smartAlerts = alertService.getAlertsForCity(
-                  district,
-                  currentLocation,
-                );
-                final commuteAdvices = weatherProvider.commuteAdvices;
-
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => WeatherAlertDetailScreen(
-                      alerts: smartAlerts,
-                      commuteAdvices: commuteAdvices,
-                    ),
-                  ),
-                );
-              },
-              backgroundColor: AppColors.error,
-            ),
-            // 分享天气
-            IslandAction(
-              icon: Icons.share,
-              label: '分享天气',
-              onTap: () async {
-                final weather = weatherProvider.currentWeather;
-                final location = weatherProvider.currentLocation;
-                final themeProvider = context.read<ThemeProvider>();
-                final sunMoonIndexData = weatherProvider.sunMoonIndexData;
-
-                if (weather == null || location == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('天气数据加载中，请稍后再试'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                  return;
-                }
-
-                // 生成并保存天气海报（传入紫外线数据）
-                await WeatherShareService.instance.generateAndSavePoster(
-                  context: context,
-                  weather: weather,
-                  location: location,
-                  themeProvider: themeProvider,
-                  sunMoonIndexData: sunMoonIndexData,
-                );
-              },
-              backgroundColor: AppColors.accentGreen,
-            ),
-            // 智能穿搭顾问
-            IslandAction(
-              icon: Icons.checkroom_rounded,
-              label: '穿搭顾问',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const OutfitAdvisorScreen(),
-                  ),
-                );
-              },
-              backgroundColor: const Color(0xFF9C27B0),
-            ),
-            // 健康管家
-            IslandAction(
-              icon: Icons.favorite_rounded,
-              label: '健康管家',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const HealthAdvisorScreen(),
-                  ),
-                );
-              },
-              backgroundColor: const Color(0xFFE91E63),
-            ),
-            // 异常天气预警
-            IslandAction(
-              icon: Icons.warning_rounded,
-              label: '异常预警',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ExtremeWeatherAlertScreen(),
-                  ),
-                );
-              },
-              backgroundColor: const Color(0xFFFF5722),
-            ),
-            // 天气雷达图功能已移除
-          ]);
-        }
-
-        print('🏝️ MainScreen: 浮动岛功能总数 = ${actions.length}');
-        for (var i = 0; i < actions.length; i++) {
-          print('  ${i + 1}. ${actions[i].label}');
-        }
-
-        return FloatingActionIsland(
-          mainIcon: Icons.menu_rounded,
-          mainTooltip: '快捷操作',
-          actions: actions,
         );
       },
     );

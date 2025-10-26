@@ -739,28 +739,41 @@ class _TodayScreenState extends State<TodayScreen>
       ),
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 16.0),
+          padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 16.0),
           child: Column(
             children: [
               // City name and menu
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // 左侧：主题切换按钮
-                  _buildThemeToggleButton(context, weatherProvider),
+                  // 占位空间，保持居中
+                  const SizedBox(width: 40),
                   Expanded(
                     child: Center(
                       child: Column(
                         children: [
-                          Text(
-                            _getDisplayCity(location),
-                            style: TextStyle(
-                              color: context.read<ThemeProvider>().getColor(
-                                'headerTextPrimary',
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.location_on_rounded,
+                                color: context.read<ThemeProvider>().getColor(
+                                  'headerTextPrimary',
+                                ),
+                                size: 20,
                               ),
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                            ),
+                              const SizedBox(width: 6),
+                              Text(
+                                _getDisplayCity(location),
+                                style: TextStyle(
+                                  color: context.read<ThemeProvider>().getColor(
+                                    'headerTextPrimary',
+                                  ),
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
                           // 数据状态指示器
                           if (weatherProvider.isUsingCachedData ||
@@ -892,54 +905,100 @@ class _TodayScreenState extends State<TodayScreen>
                   _buildAlertButton(weatherProvider),
                 ],
               ),
-              const SizedBox(height: 40),
-
+              const SizedBox(height: 24), // 减小间距
               // Weather animation, weather text and temperature
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // 左侧天气动画区域 - 45%宽度，右对齐
+                  // 左侧天气动画区域 - 主要视觉焦点
                   Flexible(
-                    flex: 45,
+                    flex: 50,
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.center, // 居中显示
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         WeatherAnimationWidget(
                           weatherType: current?.weather ?? '晴',
-                          size: 100,
+                          size: 120, // 进一步增大动画尺寸
                           isPlaying: true,
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 24),
-                  // 右侧温度和天气汉字区域 - 55%宽度，左对齐
+                  const SizedBox(width: 16),
+                  // 右侧温度和天气汉字区域 - 紧凑布局
                   Flexible(
-                    flex: 55,
+                    flex: 50,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          '${current?.temperature ?? '--'}℃',
-                          style: TextStyle(
-                            color: context.read<ThemeProvider>().getColor(
-                              'headerTextPrimary',
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic,
+                          children: [
+                            Text(
+                              '${current?.temperature ?? '--'}',
+                              style: TextStyle(
+                                color: context.read<ThemeProvider>().getColor(
+                                  'headerTextPrimary',
+                                ),
+                                fontSize: 56, // 增大温度字体
+                                fontWeight: FontWeight.bold,
+                                height: 1.0, // 紧凑行高
+                              ),
                             ),
-                            fontSize: 48,
-                            fontWeight: FontWeight.bold,
-                          ),
+                            Text(
+                              '℃',
+                              style: TextStyle(
+                                color: context.read<ThemeProvider>().getColor(
+                                  'headerTextPrimary',
+                                ),
+                                fontSize: 40,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 8),
+                        // 体感温度
+                        if (current?.feelstemperature != null &&
+                            current?.feelstemperature != current?.temperature)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.thermostat_rounded,
+                                  color: context.read<ThemeProvider>().getColor(
+                                    'headerTextSecondary',
+                                  ),
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '体感 ${current?.feelstemperature}℃',
+                                  style: TextStyle(
+                                    color: context
+                                        .read<ThemeProvider>()
+                                        .getColor('headerTextSecondary'),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        const SizedBox(height: 6), // 减小间距
                         Text(
                           current?.weather ?? '晴',
                           style: TextStyle(
                             color: context.read<ThemeProvider>().getColor(
                               'headerTextSecondary',
                             ),
-                            fontSize: 24, // 从28减小到24
+                            fontSize: 20, // 减小天气文字
                             fontWeight: FontWeight.w600,
-                            letterSpacing: 1.0,
+                            letterSpacing: 0.5,
                           ),
                         ),
                       ],
@@ -1352,50 +1411,8 @@ class _TodayScreenState extends State<TodayScreen>
     );
   }
 
-  /// 构建主题切换按钮
-  Widget _buildThemeToggleButton(
-    BuildContext context,
-    WeatherProvider weatherProvider,
-  ) {
-    final themeProvider = context.watch<ThemeProvider>();
-    final isLightTheme = themeProvider.isLightTheme;
-
-    return SizedBox(
-      width: 40,
-      height: 40,
-      child: FadeTransition(
-        opacity: AlwaysStoppedAnimation(1.0),
-        child: IconButton(
-          icon: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            transitionBuilder: (Widget child, Animation<double> animation) {
-              return FadeTransition(opacity: animation, child: child);
-            },
-            child: Icon(
-              isLightTheme ? Icons.dark_mode : Icons.light_mode,
-              key: ValueKey(isLightTheme),
-              color: context.read<ThemeProvider>().getColor(
-                'headerTextPrimary',
-              ),
-              size: 24,
-            ),
-          ),
-          onPressed: () {
-            // iOS触觉反馈
-            if (Platform.isIOS) {
-              HapticFeedback.mediumImpact();
-            }
-            // 切换亮色/暗色模式
-            themeProvider.setThemeMode(
-              isLightTheme ? AppThemeMode.dark : AppThemeMode.light,
-            );
-          },
-          padding: EdgeInsets.zero,
-          tooltip: isLightTheme ? '切换到暗色模式' : '切换到亮色模式',
-        ),
-      ),
-    );
-  }
+  // 构建主题切换按钮 - 已移除
+  // 现在使用顶部AppBar的主题切换按钮
 
   Widget _buildAlertButton(WeatherProvider weatherProvider) {
     // 获取天气提醒（智能提醒，仅当前定位城市）

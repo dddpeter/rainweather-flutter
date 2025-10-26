@@ -167,15 +167,15 @@ class _FloatingActionIslandState extends State<FloatingActionIsland>
         builder: (context, child) {
           // 透明度计算：
           // 展开时：1.0（完全不透明）
-          // 收起且滚动时：0.2（淡化但可见）
-          // 收起且静止时：0.6（易于识别，对老人友好）
+          // 收起且滚动时：0.0（完全隐藏，不遮挡视线）
+          // 收起且静止时：0.3（隐约可见，不遮挡内容）
           double opacity;
           if (_isExpanded) {
             opacity = 1.0;
           } else if (_isScrolling) {
-            opacity = 0.2; // 滚动时淡化但保持可见
+            opacity = 0.0; // 滚动时完全隐藏，避免遮挡
           } else {
-            opacity = 0.6; // 静止时清晰可见，对老人友好
+            opacity = 0.3; // 静止时更淡，减少遮挡
           }
 
           return AnimatedOpacity(

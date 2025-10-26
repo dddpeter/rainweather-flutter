@@ -285,15 +285,28 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
                   ),
                   Expanded(
                     child: Center(
-                      child: Text(
-                        widget.cityName,
-                        style: TextStyle(
-                          color: context.read<ThemeProvider>().getColor(
-                            'headerTextPrimary',
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.location_on_rounded,
+                            color: context.read<ThemeProvider>().getColor(
+                              'headerTextPrimary',
+                            ),
+                            size: 20,
                           ),
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
+                          const SizedBox(width: 6),
+                          Text(
+                            widget.cityName,
+                            style: TextStyle(
+                              color: context.read<ThemeProvider>().getColor(
+                                'headerTextPrimary',
+                              ),
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -301,54 +314,100 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
                   _buildAlertIcon(context, weatherProvider),
                 ],
               ),
-              const SizedBox(height: 32),
-
+              const SizedBox(height: 24), // 减小间距
               // Weather animation, weather text and temperature
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // 左侧天气动画区域 - 45%宽度，右对齐
+                  // 左侧天气动画区域 - 主要视觉焦点
                   Flexible(
-                    flex: 45,
+                    flex: 50,
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.center, // 居中显示
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         WeatherAnimationWidget(
                           weatherType: current?.weather ?? '晴',
-                          size: 100,
+                          size: 120, // 进一步增大动画尺寸
                           isPlaying: true,
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 24),
-                  // 右侧温度和天气汉字区域 - 55%宽度，左对齐
+                  const SizedBox(width: 16),
+                  // 右侧温度和天气汉字区域 - 紧凑布局
                   Flexible(
-                    flex: 55,
+                    flex: 50,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          '${current?.temperature ?? '--'}℃',
-                          style: TextStyle(
-                            color: context.read<ThemeProvider>().getColor(
-                              'headerTextPrimary',
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic,
+                          children: [
+                            Text(
+                              '${current?.temperature ?? '--'}',
+                              style: TextStyle(
+                                color: context.read<ThemeProvider>().getColor(
+                                  'headerTextPrimary',
+                                ),
+                                fontSize: 56, // 增大温度字体
+                                fontWeight: FontWeight.bold,
+                                height: 1.0, // 紧凑行高
+                              ),
                             ),
-                            fontSize: 48,
-                            fontWeight: FontWeight.bold,
-                          ),
+                            Text(
+                              '℃',
+                              style: TextStyle(
+                                color: context.read<ThemeProvider>().getColor(
+                                  'headerTextPrimary',
+                                ),
+                                fontSize: 40,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 8),
+                        // 体感温度
+                        if (current?.feelstemperature != null &&
+                            current?.feelstemperature != current?.temperature)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.thermostat_rounded,
+                                  color: context.read<ThemeProvider>().getColor(
+                                    'headerTextSecondary',
+                                  ),
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '体感 ${current?.feelstemperature}℃',
+                                  style: TextStyle(
+                                    color: context
+                                        .read<ThemeProvider>()
+                                        .getColor('headerTextSecondary'),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        const SizedBox(height: 6), // 减小间距
                         Text(
                           current?.weather ?? '晴',
                           style: TextStyle(
                             color: context.read<ThemeProvider>().getColor(
                               'headerTextSecondary',
                             ),
-                            fontSize: 24,
+                            fontSize: 20, // 减小天气文字
                             fontWeight: FontWeight.w600,
-                            letterSpacing: 1.0,
+                            letterSpacing: 0.5,
                           ),
                         ),
                       ],

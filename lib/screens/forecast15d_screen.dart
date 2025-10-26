@@ -178,43 +178,13 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Row(
-                                    children: [
-                                      Text(
-                                        '15日预报',
-                                        style: TextStyle(
-                                          color: AppColors.textPrimary,
-                                          fontSize: 24,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      const Spacer(),
-                                      IconButton(
-                                        onPressed: weatherProvider.isLoading
-                                            ? null
-                                            : () => weatherProvider
-                                                  .refresh15DayForecast(),
-                                        icon: weatherProvider.isLoading
-                                            ? SizedBox(
-                                                width: 20,
-                                                height: 20,
-                                                child: CircularProgressIndicator(
-                                                  strokeWidth: 2,
-                                                  valueColor:
-                                                      AlwaysStoppedAnimation<
-                                                        Color
-                                                      >(AppColors.textPrimary),
-                                                ),
-                                              )
-                                            : Icon(
-                                                Icons.refresh,
-                                                color:
-                                                    AppColors.titleBarIconColor,
-                                                size:
-                                                    AppColors.titleBarIconSize,
-                                              ),
-                                      ),
-                                    ],
+                                  Text(
+                                    '15日预报',
+                                    style: TextStyle(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                   const SizedBox(height: 8),
                                   Text(

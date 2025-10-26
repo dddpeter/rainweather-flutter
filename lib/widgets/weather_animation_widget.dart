@@ -12,12 +12,14 @@ class WeatherAnimationWidget extends StatefulWidget {
   final String weatherType;
   final double size;
   final bool isPlaying;
+  final bool? forceNightMode; // 强制夜间模式（测试用）
 
   const WeatherAnimationWidget({
     super.key,
     required this.weatherType,
     this.size = 200.0,
     this.isPlaying = true,
+    this.forceNightMode,
   });
 
   @override
@@ -125,6 +127,11 @@ class _WeatherAnimationWidgetState extends State<WeatherAnimationWidget>
 
   /// 判断当前是否为夜晚（18:00-6:00）
   bool get _isNighttime {
+    // 如果强制指定了夜间模式，则使用强制值
+    if (widget.forceNightMode != null) {
+      return widget.forceNightMode!;
+    }
+    // 否则根据时间判断
     final hour = DateTime.now().hour;
     return hour >= 18 || hour < 6;
   }

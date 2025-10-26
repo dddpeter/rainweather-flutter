@@ -438,6 +438,7 @@ class _TodayScreenState extends State<TodayScreen>
             WeatherModel? currentLocationWeather,
             bool isShowingCityWeather,
             int currentTabIndex,
+            bool isOffline,
           })
         >(
           selector: (context, weatherProvider) => (
@@ -447,6 +448,7 @@ class _TodayScreenState extends State<TodayScreen>
             currentLocationWeather: weatherProvider.currentLocationWeather,
             isShowingCityWeather: weatherProvider.isShowingCityWeather,
             currentTabIndex: weatherProvider.currentTabIndex,
+            isOffline: weatherProvider.isOffline,
           ),
           builder: (context, data, child) {
             return Container(

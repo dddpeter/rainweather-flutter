@@ -114,12 +114,19 @@
   - ✅ 实现离线模式，显示缓存数据
   - ✅ 添加网络状态检测和提示（NetworkStatusService）
   - ✅ 实现数据同步机制，网络恢复后自动更新
+  - ✅ 优化UI显示：改为简洁的状态提示
+  - ✅ 修复状态监听问题：确保UI实时更新
   - ✅ 修改`weather_provider.dart`和`today_screen.dart`
 - **已完成文件**：
-  - `lib/utils/network_status_service.dart` - 网络状态服务
-  - `lib/widgets/offline_banner.dart` - 离线提示横幅
-  - `lib/providers/weather_provider.dart` - 添加离线模式支持
-  - `lib/screens/today_screen.dart` - 显示离线横幅
+  - `lib/utils/network_status_service.dart` - 网络状态服务（每30秒检测一次）
+  - `lib/widgets/offline_banner.dart` - 离线提示横幅（已移除，改用状态提示）
+  - `lib/providers/weather_provider.dart` - 添加离线模式支持和网络监听
+  - `lib/screens/today_screen.dart` - 显示离线状态和修复监听问题
+- **实现细节**：
+  - NetworkStatusService：使用`InternetAddress.lookup`检测网络，每30秒自动检查
+  - WeatherProvider：监听网络状态变化，自动使用缓存数据，网络恢复后自动刷新
+  - TodayScreen：在定位地区下方显示"离线模式"状态（橙色图标+文字）
+  - 状态监听：在Selector中添加`isOffline`，确保网络状态变化时UI自动更新
 
 ### 5.3 无障碍支持
 - **问题**：可能缺乏无障碍支持

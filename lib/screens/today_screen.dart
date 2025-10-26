@@ -23,9 +23,7 @@ import '../services/location_change_notifier.dart';
 import '../services/page_activation_observer.dart';
 import '../services/lunar_service.dart';
 import '../widgets/lunar_info_widget.dart';
-import '../widgets/weather_details_widget.dart';
 import '../widgets/air_quality_card.dart';
-import '../utils/weather_icon_helper.dart';
 import '../utils/error_handler.dart';
 import '../utils/logger.dart';
 import '../widgets/error_dialog.dart';
@@ -639,15 +637,6 @@ class _TodayScreenState extends State<TodayScreen>
                               // 24小时天气
                               _buildHourlyWeather(weatherProvider),
                               AppColors.cardSpacingWidget,
-                              // 使用缓存数据时，显示上午/下午分时段信息
-                              if (weatherProvider.isUsingCachedData)
-                                _buildTimePeriodDetails(weatherProvider),
-                              // 详细信息卡片（非缓存时显示）
-                              if (!weatherProvider.isUsingCachedData)
-                                WeatherDetailsWidget(
-                                  weather: data.currentWeather,
-                                ),
-                              AppColors.cardSpacingWidget,
                               // 生活指数
                               LifeIndexWidget(weatherProvider: weatherProvider),
                               AppColors.cardSpacingWidget,
@@ -976,8 +965,12 @@ class _TodayScreenState extends State<TodayScreen>
                 ],
               ),
 
+              // 简化的详细信息
+              const SizedBox(height: 32),
+              _buildSimplifiedDetails(weather),
+
               // 农历日期和节气 - Material Design 3
-              const SizedBox(height: 60),
+              const SizedBox(height: 32),
               _buildLunarAndSolarTerm(weather),
             ],
           ),
@@ -1029,152 +1022,110 @@ class _TodayScreenState extends State<TodayScreen>
     }
   }
 
-  /// 构建上午/下午分时段信息（使用缓存数据时）
-  Widget _buildTimePeriodDetails(WeatherProvider weatherProvider) {
-    // 从15天预报中获取今天的数据
-    final forecast15d = weatherProvider.forecast15d;
-    if (forecast15d == null || forecast15d.isEmpty) {
+  /// 构建简化的详细信息（头部区域）
+  Widget _buildSimplifiedDetails(dynamic weather) {
+    if (weather?.current?.current == null) {
       return const SizedBox.shrink();
     }
 
-    // 找到今天的预报数据（通常是第一个或第二个）
-    DailyWeather? todayForecast;
-    try {
-      // 尝试从预报数据中找到今天
-      for (var day in forecast15d) {
-        if (day.forecasttime != null) {
-          final forecastDate = DateTime.parse(day.forecasttime!);
-          final now = DateTime.now();
-          if (forecastDate.year == now.year &&
-              forecastDate.month == now.month &&
-              forecastDate.day == now.day) {
-            todayForecast = day;
-            break;
-          }
-        }
-      }
-      // 如果没找到，使用第一个
-      todayForecast ??= forecast15d.first;
-    } catch (e) {
-      todayForecast = forecast15d.first;
+    final current = weather.current.current;
+
+    String _formatNumber(dynamic value) {
+      if (value == null) return '--';
+      if (value is String) return value;
+      return value.toString();
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppConstants.screenHorizontalPadding,
-      ),
-      child: Row(
-        children: [
-          // 上午
-          Expanded(
-            child: _buildPeriodCard(
-              '上午',
-              todayForecast.weather_pm ?? '--',
-              todayForecast.temperature_pm ?? '--',
-              todayForecast.winddir_pm ?? '--',
-              todayForecast.windpower_pm ?? '--',
-              AppColors.warning,
-            ),
+    return Row(
+      children: [
+        // 湿度
+        Expanded(
+          child: _buildSimpleInfoChip(
+            Icons.water_drop,
+            '湿度',
+            '${_formatNumber(current.humidity)}%',
           ),
-          const SizedBox(width: 12),
-          // 下午
-          Expanded(
-            child: _buildPeriodCard(
-              '下午',
-              todayForecast.weather_am ?? '--',
-              todayForecast.temperature_am ?? '--',
-              todayForecast.winddir_am ?? '--',
-              todayForecast.windpower_am ?? '--',
-              const Color(0xFF64DD17), // 绿色（避免使用蓝色系）
-            ),
+        ),
+        const SizedBox(width: 8),
+        // 风力
+        Expanded(
+          child: _buildSimpleInfoChip(
+            Icons.air,
+            '风力',
+            '${current.winddir ?? '--'} ${current.windpower ?? ''}',
           ),
-        ],
-      ),
+        ),
+        const SizedBox(width: 8),
+        // 气压
+        Expanded(
+          child: _buildSimpleInfoChip(
+            Icons.compress,
+            '气压',
+            '${_formatNumber(current.airpressure)}hpa',
+          ),
+        ),
+        const SizedBox(width: 8),
+        // 能见度
+        Expanded(
+          child: _buildSimpleInfoChip(
+            Icons.visibility,
+            '能见度',
+            '${_formatNumber(current.visibility)}km',
+          ),
+        ),
+      ],
     );
   }
 
-  /// 构建时段卡片
-  Widget _buildPeriodCard(
-    String period,
-    String weather,
-    String temperature,
-    String windDir,
-    String windPower,
-    Color accentColor,
-  ) {
-    // 判断是白天还是夜间（根据时段）
-    // 注意：上午使用pm数据（夜间），下午使用am数据（白天）
-    final isNight = WeatherIconHelper.isNightByPeriod(period);
-
-    return Card(
-      elevation: AppColors.cardElevation,
-      shadowColor: AppColors.cardShadowColor,
-      color: AppColors.materialCardColor,
-      shape: AppColors.cardShape,
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          children: [
-            // 时段标题（符合 MD3 规范）
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: accentColor.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(4),
+  /// 构建简单的信息标签
+  Widget _buildSimpleInfoChip(IconData icon, String label, String value) {
+    final themeProvider = context.read<ThemeProvider>();
+    return Container(
+      height: 60, // 固定高度，确保所有标签高度一致
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // 第一行：图标 + 标题
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                color: themeProvider.getColor('headerTextSecondary'),
+                size: 14,
               ),
-              child: Text(
-                period,
+              const SizedBox(width: 4),
+              Text(
+                label,
                 style: TextStyle(
-                  color: accentColor,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+                  color: themeProvider.getColor('headerTextSecondary'),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          // 第二行：数值
+          Text(
+            value,
+            style: TextStyle(
+              color: themeProvider.getColor('headerTextSecondary'),
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
             ),
-            const SizedBox(height: 8), // 标题和图标的间隙
-            // 天气PNG图标（48px）
-            WeatherIconHelper.buildWeatherIcon(weather, isNight, 48),
-            const SizedBox(height: 4), // 图标和天气描述的距离（更近）
-            // 天气描述（再缩小）
-            Text(
-              weather,
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 2), // 天气和温度的距离（更近）
-            // 温度（再缩小）
-            Text(
-              '$temperature℃',
-              style: TextStyle(
-                color: accentColor,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            // 风向风力
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.air, color: AppColors.textSecondary, size: 14),
-                const SizedBox(width: 4),
-                Flexible(
-                  child: Text(
-                    '$windDir $windPower',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 11,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
     );
   }

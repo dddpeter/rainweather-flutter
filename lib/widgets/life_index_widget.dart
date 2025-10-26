@@ -417,7 +417,14 @@ class LifeIndexWidget extends StatelessWidget {
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
-              child: const Text('确定'),
+              child: Text(
+                '确定',
+                style: TextStyle(
+                  color: AppColors.primaryBlue,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           ],
         );

@@ -418,6 +418,10 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
                 ],
               ),
 
+              // 简化的详细信息
+              const SizedBox(height: 32),
+              _buildSimplifiedDetails(weather),
+
               // 农历日期
               if (weather?.current?.nongLi != null) ...[
                 const SizedBox(height: 60),
@@ -1401,5 +1405,113 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
     }
 
     return validAlerts;
+  }
+
+  /// 构建简化的详细信息（头部区域）
+  Widget _buildSimplifiedDetails(dynamic weather) {
+    if (weather?.current?.current == null) {
+      return const SizedBox.shrink();
+    }
+
+    final current = weather.current.current;
+
+    String _formatNumber(dynamic value) {
+      if (value == null) return '--';
+      if (value is String) return value;
+      return value.toString();
+    }
+
+    return Row(
+      children: [
+        // 湿度
+        Expanded(
+          child: _buildSimpleInfoChip(
+            Icons.water_drop,
+            '湿度',
+            '${_formatNumber(current.humidity)}%',
+          ),
+        ),
+        const SizedBox(width: 8),
+        // 风力
+        Expanded(
+          child: _buildSimpleInfoChip(
+            Icons.air,
+            '风力',
+            '${current.winddir ?? '--'} ${current.windpower ?? ''}',
+          ),
+        ),
+        const SizedBox(width: 8),
+        // 气压
+        Expanded(
+          child: _buildSimpleInfoChip(
+            Icons.compress,
+            '气压',
+            '${_formatNumber(current.airpressure)}hpa',
+          ),
+        ),
+        const SizedBox(width: 8),
+        // 能见度
+        Expanded(
+          child: _buildSimpleInfoChip(
+            Icons.visibility,
+            '能见度',
+            '${_formatNumber(current.visibility)}km',
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 构建简单的信息标签
+  Widget _buildSimpleInfoChip(IconData icon, String label, String value) {
+    final themeProvider = context.read<ThemeProvider>();
+    return Container(
+      height: 60, // 固定高度，确保所有标签高度一致
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // 第一行：图标 + 标题
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                color: themeProvider.getColor('headerTextSecondary'),
+                size: 14,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  color: themeProvider.getColor('headerTextSecondary'),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          // 第二行：数值
+          Text(
+            value,
+            style: TextStyle(
+              color: themeProvider.getColor('headerTextSecondary'),
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
   }
 }

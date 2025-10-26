@@ -846,6 +846,9 @@ class WeatherProvider extends ChangeNotifier {
 
         // 刷新成功后，检查并生成通勤提醒
         await checkAndGenerateCommuteAdvices();
+
+        // 通知UI更新
+        notifyListeners();
       } else if (_error != null) {
         WeatherProviderLogger.info(
           '📍 WeatherProvider: refreshWeatherData 跳过通知 - 位置: ${_currentLocation?.district}, 错误: $_error',

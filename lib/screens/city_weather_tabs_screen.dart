@@ -242,7 +242,7 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
         image: const DecorationImage(
           image: AssetImage('assets/images/backgroud.png'),
           fit: BoxFit.cover,
-          opacity: 0.3, // 临时提高透明度用于测试图片加载
+          opacity: 0.25, // 优化：降低透明度，提升文字对比度和可读性
         ),
         boxShadow: [
           BoxShadow(

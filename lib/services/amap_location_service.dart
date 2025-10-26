@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:fl_amap/fl_amap.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../models/location_model.dart';
+import 'location_provider_interface.dart';
 
 enum AMapLocationPermissionResult { granted, denied, deniedForever, error }
 
@@ -14,7 +15,7 @@ class AMapLocationException implements Exception {
   String toString() => 'AMapLocationException: $message';
 }
 
-class AMapLocationService {
+class AMapLocationService implements LocationProviderInterface {
   static AMapLocationService? _instance;
   final FlAMapLocation _location = FlAMapLocation();
   LocationModel? _cachedLocation;
@@ -294,7 +295,8 @@ class AMapLocationService {
   }
 
   /// 释放资源
-  void dispose() {
+  @override
+  Future<void> dispose() async {
     try {
       print('🔧 AMapLocationService: 释放资源');
       _location.dispose();
@@ -304,4 +306,12 @@ class AMapLocationService {
       print('❌ 释放资源失败: $e');
     }
   }
+
+  /// 服务名称
+  @override
+  String get serviceName => '高德地图定位';
+
+  /// 是否可用
+  @override
+  bool get isAvailable => _isInitialized;
 }

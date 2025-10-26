@@ -5,6 +5,7 @@ import 'package:flutter_tencent_lbs_plugin/flutter_tencent_lbs_plugin.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:http/http.dart' as http;
 import '../models/location_model.dart';
+import 'location_provider_interface.dart';
 
 enum TencentLocationPermissionResult { granted, denied, deniedForever, error }
 
@@ -16,7 +17,7 @@ class TencentLocationException implements Exception {
   String toString() => 'TencentLocationException: $message';
 }
 
-class TencentLocationService {
+class TencentLocationService implements LocationProviderInterface {
   static TencentLocationService? _instance;
   final FlutterTencentLBSPlugin _location = FlutterTencentLBSPlugin();
   LocationModel? _cachedLocation;
@@ -438,7 +439,8 @@ class TencentLocationService {
   }
 
   /// 释放资源
-  void dispose() {
+  @override
+  Future<void> dispose() async {
     try {
       print('🔧 TencentLocationService: 释放资源');
       stopLocationChange();
@@ -448,4 +450,12 @@ class TencentLocationService {
       print('❌ 释放资源失败: $e');
     }
   }
+
+  /// 服务名称
+  @override
+  String get serviceName => '腾讯定位';
+
+  /// 是否可用
+  @override
+  bool get isAvailable => _isInitialized;
 }

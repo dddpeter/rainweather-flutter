@@ -109,126 +109,131 @@ class _LunarCalendarScreenState extends State<LunarCalendarScreen> {
       builder: (context, themeProvider, child) {
         AppColors.setThemeProvider(themeProvider);
 
-        return Scaffold(
-          backgroundColor: AppColors.backgroundPrimary,
-          appBar: AppBar(
-            backgroundColor: AppColors.backgroundPrimary,
-            foregroundColor: AppColors.textPrimary,
-            elevation: 0,
-            title: Text(
-              '黄历节日',
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            centerTitle: true,
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            actions: [
-              // 今天按钮 - 简洁版本
-              IconButton(
-                icon: Text(
-                  '今',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                tooltip: '今天',
-                onPressed: () {
-                  setState(() {
-                    _selectedMonth = DateTime.now();
-                  });
-                },
-              ),
-            ],
+        return Container(
+          decoration: BoxDecoration(
+            gradient: AppColors.screenBackgroundGradient,
           ),
-          body: SingleChildScrollView(
-            child: Column(
-              children: [
-                const SizedBox(height: 8),
-
-                // 日历主体（带背景和圆角）
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.materialCardColor,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.cardShadowColor,
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            appBar: AppBar(
+              backgroundColor: Colors.transparent,
+              foregroundColor: AppColors.textPrimary,
+              elevation: 0,
+              title: Text(
+                '黄历节日',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              centerTitle: true,
+              leading: IconButton(
+                icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+              actions: [
+                // 今天按钮 - 简洁版本
+                IconButton(
+                  icon: Text(
+                    '今',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
                     ),
-                    child: Column(
-                      children: [
-                        // 月份选择器
-                        _buildMonthSelector(),
+                  ),
+                  tooltip: '今天',
+                  onPressed: () {
+                    setState(() {
+                      _selectedMonth = DateTime.now();
+                    });
+                  },
+                ),
+              ],
+            ),
+            body: SingleChildScrollView(
+              child: Column(
+                children: [
+                  const SizedBox(height: 8),
 
-                        // 星期标题
-                        _buildWeekdayHeader(),
-
-                        // 日历网格
-                        _buildCalendarGrid(),
-
-                        // 底部说明 - 放在日历容器内
-                        Container(
-                          margin: const EdgeInsets.only(top: 8), // 从日历底部开始的间距
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 10,
-                          ), // 从12减到10
-                          decoration: BoxDecoration(
-                            borderRadius: const BorderRadius.only(
-                              bottomLeft: Radius.circular(12),
-                              bottomRight: Radius.circular(12),
-                            ),
-                            border: Border(
-                              top: BorderSide(
-                                color: AppColors.borderColor.withOpacity(0.2),
-                                width: 1,
-                              ),
-                            ),
+                  // 日历主体（带背景和圆角）
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.materialCardColor,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.cardShadowColor,
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.circle,
-                                color: AppColors.warning,
-                                size: 8,
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          // 月份选择器
+                          _buildMonthSelector(),
+
+                          // 星期标题
+                          _buildWeekdayHeader(),
+
+                          // 日历网格
+                          _buildCalendarGrid(),
+
+                          // 底部说明 - 放在日历容器内
+                          Container(
+                            margin: const EdgeInsets.only(top: 8), // 从日历底部开始的间距
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 10,
+                            ), // 从12减到10
+                            decoration: BoxDecoration(
+                              borderRadius: const BorderRadius.only(
+                                bottomLeft: Radius.circular(12),
+                                bottomRight: Radius.circular(12),
                               ),
-                              const SizedBox(width: 8),
-                              Text(
-                                '橙色标记为黄道吉日',
-                                style: TextStyle(
-                                  color: AppColors.textPrimary,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                              border: Border(
+                                top: BorderSide(
+                                  color: AppColors.borderColor.withOpacity(0.2),
+                                  width: 1,
                                 ),
                               ),
-                            ],
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.circle,
+                                  color: AppColors.warning,
+                                  size: 8,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '橙色标记为黄道吉日',
+                                  style: TextStyle(
+                                    color: AppColors.textPrimary,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
 
-                const SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
-                // AI黄历解读卡片（放在日历下方）
-                _buildLunarInterpretationCard(themeProvider),
+                  // AI黄历解读卡片（放在日历下方）
+                  _buildLunarInterpretationCard(themeProvider),
 
-                const SizedBox(height: 16),
-              ],
+                  const SizedBox(height: 16),
+                ],
+              ),
             ),
           ),
         );

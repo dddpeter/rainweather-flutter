@@ -102,62 +102,70 @@ class _LaoHuangLiScreenState extends State<LaoHuangLiScreen> {
       builder: (context, themeProvider, child) {
         AppColors.setThemeProvider(themeProvider);
 
-        return Scaffold(
-          backgroundColor: AppColors.backgroundPrimary,
-          appBar: AppBar(
-            backgroundColor: AppColors.backgroundPrimary,
-            foregroundColor: AppColors.textPrimary,
-            elevation: 0,
-            title: Text(
-              '黄历详情',
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            centerTitle: true,
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            actions: [
-              IconButton(
-                icon: Icon(Icons.calendar_today, color: AppColors.textPrimary),
-                onPressed: _selectDate,
-              ),
-            ],
+        return Container(
+          decoration: BoxDecoration(
+            gradient: AppColors.screenBackgroundGradient,
           ),
-          body: _lunarInfo == null
-              ? Center(
-                  child: CircularProgressIndicator(
-                    color: AppColors.primaryBlue,
-                  ),
-                )
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // 顶部：日期和农历信息合并
-                      _buildCompactHeader(),
-                      const SizedBox(height: 12),
-
-                      // 节气节日（如果有）
-                      if (_lunarInfo!.hasSpecialDay()) ...[
-                        _buildSpecialDayCard(),
-                        const SizedBox(height: 12),
-                      ],
-
-                      // 宜忌和吉神方位合并卡片
-                      _buildMergedCard(),
-                      const SizedBox(height: 12),
-
-                      // 彭祖百忌
-                      _buildPengZuCard(),
-                    ],
-                  ),
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            appBar: AppBar(
+              backgroundColor: Colors.transparent,
+              foregroundColor: AppColors.textPrimary,
+              elevation: 0,
+              title: Text(
+                '黄历详情',
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
                 ),
+              ),
+              centerTitle: true,
+              leading: IconButton(
+                icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+              actions: [
+                IconButton(
+                  icon: Icon(
+                    Icons.calendar_today,
+                    color: AppColors.textPrimary,
+                  ),
+                  onPressed: _selectDate,
+                ),
+              ],
+            ),
+            body: _lunarInfo == null
+                ? Center(
+                    child: CircularProgressIndicator(
+                      color: AppColors.primaryBlue,
+                    ),
+                  )
+                : SingleChildScrollView(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // 顶部：日期和农历信息合并
+                        _buildCompactHeader(),
+                        const SizedBox(height: 12),
+
+                        // 节气节日（如果有）
+                        if (_lunarInfo!.hasSpecialDay()) ...[
+                          _buildSpecialDayCard(),
+                          const SizedBox(height: 12),
+                        ],
+
+                        // 宜忌和吉神方位合并卡片
+                        _buildMergedCard(),
+                        const SizedBox(height: 12),
+
+                        // 彭祖百忌
+                        _buildPengZuCard(),
+                      ],
+                    ),
+                  ),
+          ),
         );
       },
     );

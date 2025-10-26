@@ -64,19 +64,26 @@ class CustomBottomNavigationV2 extends StatelessWidget {
                                 ),
                                 decoration: isSelected
                                     ? BoxDecoration(
-                                        color: AppColors.primaryBlue
-                                            .withOpacity(
-                                              themeProvider.isLightTheme
-                                                  ? 0.12
-                                                  : 0.24,
-                                            ),
+                                        color:
+                                            (themeProvider.isLightTheme
+                                                    ? AppColors.primaryBlue
+                                                    : AppColors
+                                                          .accentBlue) // 暗色模式使用更亮的强调色
+                                                .withOpacity(
+                                                  themeProvider.isLightTheme
+                                                      ? 0.12
+                                                      : 0.24,
+                                                ),
                                         borderRadius: BorderRadius.circular(16),
                                       )
                                     : null,
                                 child: Icon(
                                   item.icon,
                                   color: isSelected
-                                      ? AppColors.primaryBlue
+                                      ? (themeProvider.isLightTheme
+                                            ? AppColors.primaryBlue
+                                            : AppColors
+                                                  .accentBlue) // 暗色模式使用更亮的强调色
                                       : AppColors.textTertiary,
                                   size: 24, // Material Design 3 标准图标大小
                                 ),
@@ -86,7 +93,10 @@ class CustomBottomNavigationV2 extends StatelessWidget {
                                 item.label,
                                 style: TextStyle(
                                   color: isSelected
-                                      ? AppColors.primaryBlue
+                                      ? (themeProvider.isLightTheme
+                                            ? AppColors.primaryBlue
+                                            : AppColors
+                                                  .accentBlue) // 暗色模式使用更亮的强调色
                                       : AppColors.textTertiary,
                                   fontSize: 12, // Material Design 3 标准字号
                                   fontWeight: isSelected

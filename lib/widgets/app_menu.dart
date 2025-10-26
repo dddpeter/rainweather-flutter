@@ -320,8 +320,10 @@ class AppMenu extends StatelessWidget {
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
                   style: TextButton.styleFrom(
-                    // M3: 按钮样式
-                    foregroundColor: AppColors.primaryBlue,
+                    // M3: 按钮样式 - 暗色模式下使用更亮的强调色
+                    foregroundColor: themeProvider.isLightTheme
+                        ? AppColors.primaryBlue
+                        : AppColors.accentBlue,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
                       vertical: 10,
@@ -352,19 +354,23 @@ class AppMenu extends StatelessWidget {
         // 确保AppColors始终使用最新的主题状态
         AppColors.setThemeProvider(themeProvider);
 
+        // 暗色模式下使用更亮的强调色
+        final activeColor = themeProvider.isLightTheme
+            ? AppColors.primaryBlue
+            : AppColors.accentBlue;
+
         // Material Design 3: 选项卡片样式
         return Container(
           margin: const EdgeInsets.symmetric(vertical: 2),
           decoration: BoxDecoration(
             color: isSelected
-                ? AppColors.primaryBlue.withOpacity(0.15)
+                ? activeColor.withOpacity(
+                    themeProvider.isLightTheme ? 0.15 : 0.24,
+                  )
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(8), // M3: 更大的圆角
             border: isSelected
-                ? Border.all(
-                    color: AppColors.primaryBlue,
-                    width: 2,
-                  ) // M3: 更粗的边框
+                ? Border.all(color: activeColor, width: 2) // M3: 更粗的边框
                 : Border.all(
                     color: AppColors.borderColor.withOpacity(0.3),
                     width: 1,
@@ -377,17 +383,13 @@ class AppMenu extends StatelessWidget {
             ),
             leading: Icon(
               icon,
-              color: isSelected
-                  ? AppColors.primaryBlue
-                  : AppColors.textSecondary,
+              color: isSelected ? activeColor : AppColors.textSecondary,
               size: 24, // M3: 稍大的图标
             ),
             title: Text(
               title,
               style: TextStyle(
-                color: isSelected
-                    ? AppColors.primaryBlue
-                    : AppColors.textPrimary,
+                color: isSelected ? activeColor : AppColors.textPrimary,
                 fontWeight: isSelected
                     ? FontWeight.w600
                     : FontWeight.w400, // M3: 适中的字重
@@ -397,7 +399,7 @@ class AppMenu extends StatelessWidget {
             trailing: isSelected
                 ? Icon(
                     Icons.check_circle,
-                    color: AppColors.primaryBlue,
+                    color: activeColor,
                     size: 24, // M3: 稍大的图标
                   )
                 : const SizedBox(width: 24), // 占位以保持对齐
@@ -417,119 +419,130 @@ class AppMenu extends StatelessWidget {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        // Material Design 3: 弹窗样式
-        return AlertDialog(
-          backgroundColor: AppColors.backgroundSecondary,
-          surfaceTintColor: Colors.transparent,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          elevation: 3,
-          icon: Icon(
-            Icons.info_outline_rounded,
-            color: AppColors.primaryBlue,
-            size: 32,
-          ),
-          title: Text(
-            '关于应用',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 24,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                AppVersion.appName,
+        return Consumer<ThemeProvider>(
+          builder: (context, themeProvider, child) {
+            // Material Design 3: 弹窗样式
+            return AlertDialog(
+              backgroundColor: AppColors.backgroundSecondary,
+              surfaceTintColor: Colors.transparent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              elevation: 3,
+              icon: Icon(
+                Icons.info_outline_rounded,
+                color: themeProvider.isLightTheme
+                    ? AppColors.primaryBlue
+                    : AppColors.accentBlue, // 暗色模式使用更亮的强调色
+                size: 32,
+              ),
+              title: Text(
+                '关于应用',
                 style: TextStyle(
                   color: AppColors.textPrimary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-              const SizedBox(height: 12),
-              Text(
-                '版本: ${AppVersion.version} (构建 ${AppVersion.buildNumber})',
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 14,
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                AppVersion.description,
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 14,
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 16),
-              // 版本更新说明
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryBlue.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '🎉 v${AppVersion.version} 更新内容',
-                      style: TextStyle(
-                        color: AppColors.primaryBlue,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
+              contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppVersion.appName,
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '• AI内容打字机效果展示\n'
-                      '• 缓存内容直接显示，快速响应\n'
-                      '• AI提示词专业化和实用化\n'
-                      '• 黄历节日AI解读功能\n'
-                      '• 黄历详情页面重构\n'
-                      '• 24小时天气卡片布局优化\n'
-                      '• 代码结构优化和重构\n'
-                      '• 修复文本装饰问题',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 12,
-                        height: 1.6,
-                      ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    '版本: ${AppVersion.version} (构建 ${AppVersion.buildNumber})',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 14,
+                      height: 1.5,
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    AppVersion.description,
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 14,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // 版本更新说明
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryBlue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '🎉 v${AppVersion.version} 更新内容',
+                          style: TextStyle(
+                            color: AppColors.primaryBlue,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '• AI内容打字机效果展示\n'
+                          '• 缓存内容直接显示，快速响应\n'
+                          '• AI提示词专业化和实用化\n'
+                          '• 黄历节日AI解读功能\n'
+                          '• 黄历详情页面重构\n'
+                          '• 24小时天气卡片布局优化\n'
+                          '• 代码结构优化和重构\n'
+                          '• 修复文本装饰问题',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                            height: 1.6,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    AppVersion.copyright,
+                    style: TextStyle(
+                      color: AppColors.textTertiary,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              Text(
-                AppVersion.copyright,
-                style: TextStyle(color: AppColors.textTertiary, fontSize: 12),
-              ),
-            ],
-          ),
-          actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-          actions: [
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primaryBlue,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 10,
+              actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+              actions: [
+                FilledButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primaryBlue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 10,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text('确定'),
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text('确定'),
-            ),
-          ],
+              ],
+            );
+          },
         );
       },
     );

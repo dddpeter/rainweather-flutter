@@ -99,13 +99,11 @@ class AppDrawer extends StatelessWidget {
       color: AppColors.backgroundSecondary,
     );
 
-    // 根据亮暗模式使用不同的文字颜色
+    // 使用主题色作为文字颜色（暗色模式下使用更亮的accent色）
     final textColor = themeProvider.isLightTheme
         ? AppColors.primaryBlue
-        : const Color(0xFF8edafc); // 暗色模式使用更亮的浅蓝色
-    final subtextColor = themeProvider.isLightTheme
-        ? AppColors.textSecondary
-        : const Color(0xFF8edafc).withOpacity(0.8); // 暗色模式半透明浅蓝色
+        : AppColors.accentBlue; // 暗色模式使用更亮的强调色
+    final subtextColor = AppColors.textTertiary; // 使用三级文字色（更淡）
 
     return DrawerHeader(
       decoration: headerDecoration,
@@ -181,8 +179,11 @@ class AppDrawer extends StatelessWidget {
 
   /// 构建测试功能二级菜单
   Widget _buildTestFunctionsMenu(BuildContext context) {
-    // 统一使用主题色
-    final iconColor = AppColors.primaryBlue;
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    // 暗色模式下使用更亮的强调色
+    final iconColor = themeProvider.isLightTheme
+        ? AppColors.primaryBlue
+        : AppColors.accentBlue;
 
     return ExpansionTile(
       leading: Container(
@@ -265,8 +266,11 @@ class AppDrawer extends StatelessWidget {
     required String title,
     required VoidCallback onTap,
   }) {
-    // 统一使用主题色
-    final iconColor = AppColors.primaryBlue;
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    // 暗色模式下使用更亮的强调色
+    final iconColor = themeProvider.isLightTheme
+        ? AppColors.primaryBlue
+        : AppColors.accentBlue;
 
     return ListTile(
       contentPadding: const EdgeInsets.only(left: 72, right: 16),
@@ -296,8 +300,11 @@ class AppDrawer extends StatelessWidget {
     String? subtitle,
     required VoidCallback onTap,
   }) {
-    // 统一使用主题色
-    final iconColor = AppColors.primaryBlue;
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    // 暗色模式下使用更亮的强调色
+    final iconColor = themeProvider.isLightTheme
+        ? AppColors.primaryBlue
+        : AppColors.accentBlue;
 
     return ListTile(
       leading: Container(
@@ -456,6 +463,10 @@ class AppDrawer extends StatelessWidget {
                             themeProvider.themeScheme ==
                             AppThemeScheme.values[index];
 
+                        final activeColor = themeProvider.isLightTheme
+                            ? AppColors.primaryBlue
+                            : AppColors.accentBlue;
+
                         return GestureDetector(
                           onTap: () {
                             themeProvider.setThemeScheme(
@@ -467,32 +478,76 @@ class AppDrawer extends StatelessWidget {
                             width: 70,
                             height: 70,
                             decoration: BoxDecoration(
-                              color: scheme.previewColor,
                               borderRadius: BorderRadius.circular(12),
-                              border: isSelected
-                                  ? Border.all(
-                                      color: AppColors.primaryBlue,
-                                      width: 3,
-                                    )
+                              // 选中时添加明显的边框和阴影
+                              border: Border.all(
+                                color: isSelected
+                                    ? activeColor
+                                    : Colors.transparent,
+                                width: isSelected ? 3 : 0,
+                              ),
+                              boxShadow: isSelected
+                                  ? [
+                                      BoxShadow(
+                                        color: activeColor.withOpacity(0.3),
+                                        blurRadius: 8,
+                                        spreadRadius: 2,
+                                      ),
+                                    ]
                                   : null,
                             ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                            child: Stack(
                               children: [
-                                Icon(
-                                  scheme.icon,
-                                  color: Colors.white,
-                                  size: 24,
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  scheme.name.replaceAll('主题', ''),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
+                                // 颜色预览
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: scheme.previewColor,
+                                    borderRadius: BorderRadius.circular(9),
+                                  ),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        scheme.icon,
+                                        color: Colors.white,
+                                        size: 24,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        scheme.name.replaceAll('主题', ''),
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
+                                // 选中标记
+                                if (isSelected)
+                                  Positioned(
+                                    top: 4,
+                                    right: 4,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: BoxDecoration(
+                                        color: activeColor,
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: activeColor.withOpacity(0.5),
+                                            blurRadius: 4,
+                                          ),
+                                        ],
+                                      ),
+                                      child: const Icon(
+                                        Icons.check,
+                                        color: Colors.white,
+                                        size: 14,
+                                      ),
+                                    ),
+                                  ),
                               ],
                             ),
                           ),
@@ -541,7 +596,9 @@ class AppDrawer extends StatelessWidget {
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
                   style: TextButton.styleFrom(
-                    foregroundColor: AppColors.primaryBlue,
+                    foregroundColor: themeProvider.isLightTheme
+                        ? AppColors.primaryBlue
+                        : AppColors.accentBlue, // 暗色模式使用更亮的强调色
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
                       vertical: 10,
@@ -571,15 +628,22 @@ class AppDrawer extends StatelessWidget {
       builder: (context, themeProvider, child) {
         AppColors.setThemeProvider(themeProvider);
 
+        // 暗色模式下使用更亮的强调色
+        final activeColor = themeProvider.isLightTheme
+            ? AppColors.primaryBlue
+            : AppColors.accentBlue;
+
         return Container(
           margin: const EdgeInsets.symmetric(vertical: 2),
           decoration: BoxDecoration(
             color: isSelected
-                ? AppColors.primaryBlue.withOpacity(0.15)
+                ? activeColor.withOpacity(
+                    themeProvider.isLightTheme ? 0.15 : 0.24,
+                  )
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
             border: isSelected
-                ? Border.all(color: AppColors.primaryBlue, width: 2)
+                ? Border.all(color: activeColor, width: 2)
                 : Border.all(
                     color: AppColors.borderColor.withOpacity(0.3),
                     width: 1,
@@ -592,27 +656,19 @@ class AppDrawer extends StatelessWidget {
             ),
             leading: Icon(
               icon,
-              color: isSelected
-                  ? AppColors.primaryBlue
-                  : AppColors.textSecondary,
+              color: isSelected ? activeColor : AppColors.textSecondary,
               size: 24,
             ),
             title: Text(
               title,
               style: TextStyle(
-                color: isSelected
-                    ? AppColors.primaryBlue
-                    : AppColors.textPrimary,
+                color: isSelected ? activeColor : AppColors.textPrimary,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                 fontSize: 16,
               ),
             ),
             trailing: isSelected
-                ? Icon(
-                    Icons.check_circle,
-                    color: AppColors.primaryBlue,
-                    size: 24,
-                  )
+                ? Icon(Icons.check_circle, color: activeColor, size: 24)
                 : const SizedBox(width: 24),
             onTap: () {
               themeProvider.setThemeMode(mode);

@@ -15,6 +15,7 @@ class ThemeProvider extends ChangeNotifier {
 
   ThemeProvider() {
     // 初始化默认主题状态
+    _themeScheme = AppThemeScheme.blue; // 确保初始化为有效值
     _updateTheme();
     _loadThemeFromPrefs();
     // 监听系统主题变化
@@ -36,20 +37,37 @@ class ThemeProvider extends ChangeNotifier {
 
   /// 获取当前主题的亮色配色
   Map<String, Color> get lightColors {
-    return AppThemes.getScheme(_themeScheme).lightColors;
+    try {
+      return AppThemes.getScheme(_themeScheme).lightColors;
+    } catch (e) {
+      // 如果获取失败，返回蓝色主题的亮色配置
+      return AppThemes.blue.lightColors;
+    }
   }
 
   /// 获取当前主题的暗色配色
   Map<String, Color> get darkColors {
-    return AppThemes.getScheme(_themeScheme).darkColors;
+    try {
+      return AppThemes.getScheme(_themeScheme).darkColors;
+    } catch (e) {
+      // 如果获取失败，返回蓝色主题的暗色配置
+      return AppThemes.blue.darkColors;
+    }
   }
 
   /// 获取颜色（从当前主题方案获取）
   Color getColor(String colorName) {
     try {
-      return _isLightTheme ? lightColors[colorName]! : darkColors[colorName]!;
+      final colorMap = _isLightTheme ? lightColors : darkColors;
+      final color = colorMap[colorName];
+      if (color != null) {
+        return color;
+      }
+      // 如果找不到颜色，返回默认蓝色
+      return const Color(0xFF4A90E2);
     } catch (e) {
-      return darkColors[colorName] ?? const Color(0xFF4A90E2);
+      // 如果出现任何异常，返回默认蓝色
+      return const Color(0xFF4A90E2);
     }
   }
 
@@ -94,11 +112,19 @@ class ThemeProvider extends ChangeNotifier {
 
     // 加载主题模式
     final themeIndex = prefs.getInt('theme_mode') ?? 2; // 默认跟随系统
-    _themeMode = AppThemeMode.values[themeIndex];
+    if (themeIndex >= 0 && themeIndex < AppThemeMode.values.length) {
+      _themeMode = AppThemeMode.values[themeIndex];
+    }
 
-    // 加载主题方案
+    // 加载主题方案（添加边界检查）
     final schemeIndex = prefs.getInt('theme_scheme') ?? 0; // 默认蓝色主题
-    _themeScheme = AppThemeScheme.values[schemeIndex];
+    if (schemeIndex >= 0 && schemeIndex < AppThemeScheme.values.length) {
+      _themeScheme = AppThemeScheme.values[schemeIndex];
+    } else {
+      // 如果索引超出范围，重置为默认值
+      _themeScheme = AppThemeScheme.blue;
+      await prefs.setInt('theme_scheme', 0);
+    }
 
     _updateTheme();
     notifyListeners();

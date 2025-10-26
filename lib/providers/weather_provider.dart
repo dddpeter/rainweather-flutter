@@ -269,10 +269,11 @@ class WeatherProvider extends ChangeNotifier {
       // 后台刷新成功后会用最新数据重新生成
       // ✨ 先尝试从缓存加载AI摘要
       await _loadCachedAISummary();
-      // 如果缓存中没有，再异步生成
-      if (_weatherSummary == null) {
-        generateWeatherSummary();
-      }
+      // 如果缓存中没有，再异步生成（避免重复生成）
+      // 注释掉，让 AISmartAssistantWidget 来触发生成，避免重复调用
+      // if (_weatherSummary == null) {
+      //   generateWeatherSummary();
+      // }
 
       // ✨ 加载15日AI总结缓存
       await _loadCached15dSummary();
@@ -360,8 +361,10 @@ class WeatherProvider extends ChangeNotifier {
             notifyListeners(); // 一次性通知UI
 
             // 后台刷新成功后，预生成所有AI内容（使用最新数据）
-            // 今日AI智能摘要
-            generateWeatherSummary();
+            // 今日AI智能摘要（只在没有内容时生成）
+            if (_weatherSummary == null || _weatherSummary!.isEmpty) {
+              generateWeatherSummary();
+            }
 
             // 15日天气AI总结
             if (_forecast15d != null && _forecast15d!.isNotEmpty) {
@@ -588,8 +591,10 @@ class WeatherProvider extends ChangeNotifier {
       // App重启：清理当前时段的旧建议，重新生成
       _cleanAndRegenerateCommuteAdvices();
 
-      // 生成AI智能天气摘要
-      generateWeatherSummary();
+      // 生成AI智能天气摘要（只在没有内容时生成）
+      if (_weatherSummary == null || _weatherSummary!.isEmpty) {
+        generateWeatherSummary();
+      }
 
       // 标记初始化完成
       appStateManager.markInitializationCompleted();
@@ -2545,6 +2550,14 @@ class WeatherProvider extends ChangeNotifier {
 
     if (_isGeneratingSummary) {
       WeatherProviderLogger.info('⏳ 智能摘要生成中，跳过重复请求');
+      return;
+    }
+
+    // 如果已经有内容且不是强制刷新，则跳过
+    if (_weatherSummary != null &&
+        _weatherSummary!.isNotEmpty &&
+        !forceRefresh) {
+      WeatherProviderLogger.info('已有AI摘要内容，跳过生成');
       return;
     }
 

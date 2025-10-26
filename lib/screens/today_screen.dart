@@ -588,6 +588,12 @@ class _TodayScreenState extends State<TodayScreen>
 
                       await weatherProvider.refreshWeatherData();
 
+                      // 手动刷新时强制重新生成AI摘要
+                      print('🔄 TodayScreen: 手动刷新，触发AI摘要生成');
+                      weatherProvider.generateWeatherSummary(
+                        forceRefresh: true,
+                      );
+
                       // iOS触觉反馈 - 刷新完成
                       if (Platform.isIOS) {
                         HapticFeedback.lightImpact();

@@ -20,22 +20,35 @@ class AISmartAssistantWidget extends StatefulWidget {
 }
 
 class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
-  bool _hasInitialized = false;
+  String? _lastWeatherDataKey; // 记录上次的天气数据key
 
   @override
   Widget build(BuildContext context) {
-    // 简化逻辑：只在首次进入时触发一次刷新，后续使用缓存
-    if (!_hasInitialized) {
-      _hasInitialized = true;
-      // 首次进入时触发AI摘要生成（如果还没有的话）
+    // 监听天气数据变化，只在数据真正改变时才触发AI生成
+    final weatherProvider = context.read<WeatherProvider>();
+    final currentWeather = weatherProvider.currentWeather;
+
+    // 构建唯一key：天气+温度+时间
+    final currentDataKey = currentWeather != null
+        ? '${currentWeather.current?.current?.weather ?? ''}_'
+              '${currentWeather.current?.current?.temperature ?? ''}_'
+              '${currentWeather.current?.current?.reporttime ?? ''}'
+        : null;
+
+    // 只在天气数据真正改变时才触发AI生成
+    if (currentDataKey != null && currentDataKey != _lastWeatherDataKey) {
+      _lastWeatherDataKey = currentDataKey;
+
+      // 延时触发，避免和build冲突
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        final weatherProvider = context.read<WeatherProvider>();
-        if (weatherProvider.weatherSummary == null ||
-            weatherProvider.weatherSummary!.isEmpty) {
-          print('🚀 AISmartAssistantWidget: 首次进入，触发AI摘要生成');
-          weatherProvider.generateWeatherSummary();
-        } else {
-          print('🚀 AISmartAssistantWidget: 首次进入，已有AI摘要，使用缓存');
+        if (mounted) {
+          final wp = context.read<WeatherProvider>();
+          if (wp.weatherSummary == null || wp.weatherSummary!.isEmpty) {
+            print('🚀 AISmartAssistantWidget: 天气数据变化，触发AI摘要生成');
+            wp.generateWeatherSummary();
+          } else {
+            print('🚀 AISmartAssistantWidget: 已有缓存，跳过生成');
+          }
         }
       });
     }

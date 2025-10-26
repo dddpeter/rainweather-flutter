@@ -63,9 +63,9 @@ class WeatherAnimationColors {
   /// 太阳颜色
   static Color get sunColor {
     if (isLightTheme) {
-      return const Color(0xFFFFD54F); // 亮色主题：使用暗色主题的黄色太阳
+      return const Color(0xFFFFA726); // 亮色主题：偏橘红的黄色太阳
     } else {
-      return const Color(0xFFFFD54F); // 暗色主题：黄色太阳
+      return const Color(0xFFFFA726); // 暗色主题：偏橘红的黄色太阳
     }
   }
 
@@ -116,6 +116,15 @@ class WeatherAnimationColors {
       return AppColors.textPrimary; // 亮色主题：深色粒子
     } else {
       return AppColors.textSecondary; // 暗色主题：浅色粒子
+    }
+  }
+
+  /// 灰尘粒子颜色（黑灰色）
+  static Color get dustColor {
+    if (isLightTheme) {
+      return const Color(0xFF616161); // 亮色主题：中灰色灰尘粒子
+    } else {
+      return const Color(0xFF9E9E9E); // 暗色主题：浅灰色灰尘粒子
     }
   }
 

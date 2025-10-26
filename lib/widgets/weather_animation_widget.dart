@@ -775,40 +775,57 @@ class SunnyPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width * 0.25; // 缩小圆形
+    final radius = size.width * 0.25;
 
-    // 绘制太阳 - 使用主题感知的颜色
-    final sunPaint = Paint()
-      ..color = WeatherAnimationColors.sunColor
-      ..style = PaintingStyle.fill;
-
-    canvas.drawCircle(center, radius, sunPaint);
-
-    // 绘制太阳光芒
-    final rayPaint = Paint()
-      ..color = WeatherAnimationColors.withOpacity(
-        WeatherAnimationColors.sunRayColor,
-        0.6,
-      )
-      ..strokeWidth = 3.0
-      ..style = PaintingStyle.stroke;
-
-    for (int i = 0; i < 12; i++) {
-      final angle = (i * 30.0 + animationValue * 360.0) * math.pi / 180.0;
-      final startRadius = radius + 10;
-      final endRadius = radius + 20; // 光长度为原来的2/3 (30 * 2/3 = 20)
-
-      final startX = center.dx + math.cos(angle) * startRadius;
-      final startY = center.dy + math.sin(angle) * startRadius;
-      final endX = center.dx + math.cos(angle) * endRadius;
-      final endY = center.dy + math.sin(angle) * endRadius;
-
-      canvas.drawLine(Offset(startX, startY), Offset(endX, endY), rayPaint);
-    }
+    // 使用辅助函数绘制带光芒的太阳
+    _drawSunWithRays(canvas, center, radius, animationValue);
   }
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+/// 辅助函数：绘制带光芒的太阳
+void _drawSunWithRays(
+  Canvas canvas,
+  Offset sunCenter,
+  double sunRadius,
+  double animationValue,
+) {
+  // 绘制太阳主体
+  final sunPaint = Paint()
+    ..color = WeatherAnimationColors.sunColor
+    ..style = PaintingStyle.fill;
+
+  canvas.drawCircle(sunCenter, sunRadius, sunPaint);
+
+  // 计算旋转过程中的动态变化（0到1循环）
+  final rotationPhase = (animationValue % 1.0);
+  final dynamicFactor = 1.0 + rotationPhase * 0.1; // 增加10%
+
+  // 绘制太阳光芒
+  final rayPaint = Paint()
+    ..color = WeatherAnimationColors.withOpacity(
+      WeatherAnimationColors.sunRayColor,
+      0.6,
+    )
+    ..strokeWidth =
+        3.0 *
+        dynamicFactor // 动态变化粗细
+    ..style = PaintingStyle.stroke;
+
+  for (int i = 0; i < 12; i++) {
+    final angle = (i * 30.0 + animationValue * 360.0) * math.pi / 180.0;
+    final startRadius = sunRadius + 10;
+    final endRadius = sunRadius + 20 * dynamicFactor; // 动态变化长度
+
+    final startX = sunCenter.dx + math.cos(angle) * startRadius;
+    final startY = sunCenter.dy + math.sin(angle) * startRadius;
+    final endX = sunCenter.dx + math.cos(angle) * endRadius;
+    final endY = sunCenter.dy + math.sin(angle) * endRadius;
+
+    canvas.drawLine(Offset(startX, startY), Offset(endX, endY), rayPaint);
+  }
 }
 
 // 多云绘制器
@@ -822,13 +839,12 @@ class CloudyPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
 
-    // 先绘制太阳（在云的后面）
-    final sunPaint = Paint()
-      ..color = AppColors.sunrise.withOpacity(0.8)
-      ..style = PaintingStyle.fill;
+    // 先绘制太阳（带光芒，在云的后面）
+    final sunCenter = Offset(center.dx, center.dy - 10);
+    final sunRadius = size.width * 0.25;
 
-    final sunCenter = Offset(center.dx, center.dy - 10); // 太阳在云上方
-    canvas.drawCircle(sunCenter, 25, sunPaint);
+    // 使用辅助函数绘制带光芒的太阳
+    _drawSunWithRays(canvas, sunCenter, sunRadius, animationValue);
 
     // 再绘制云朵 - 四朵天蓝色云
     final cloudPaint = Paint()
@@ -907,13 +923,12 @@ class PartlyCloudyPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
 
-    // 先绘制太阳（在云的后面）
-    final sunPaint = Paint()
-      ..color = AppColors.sunrise.withOpacity(0.8)
-      ..style = PaintingStyle.fill;
+    // 先绘制太阳（带光芒，在云的后面）
+    final sunCenter = Offset(center.dx, center.dy - 20);
+    final sunRadius = size.width * 0.25;
 
-    final sunCenter = Offset(center.dx, center.dy - 20); // 太阳在云上方
-    canvas.drawCircle(sunCenter, 25, sunPaint);
+    // 使用辅助函数绘制带光芒的太阳
+    _drawSunWithRays(canvas, sunCenter, sunRadius, animationValue);
 
     // 再绘制云朵 - 两朵天蓝色云一大一小
     final cloudPaint = Paint()
@@ -978,13 +993,12 @@ class FewCloudsPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
 
-    // 先绘制太阳（在云的后面）
-    final sunPaint = Paint()
-      ..color = AppColors.sunrise.withOpacity(0.8)
-      ..style = PaintingStyle.fill;
+    // 先绘制太阳（带光芒，在云的后面）
+    final sunCenter = Offset(center.dx, center.dy - 15);
+    final sunRadius = size.width * 0.25;
 
-    final sunCenter = Offset(center.dx, center.dy - 15); // 太阳在云上方
-    canvas.drawCircle(sunCenter, 25, sunPaint);
+    // 使用辅助函数绘制带光芒的太阳
+    _drawSunWithRays(canvas, sunCenter, sunRadius, animationValue);
 
     // 再绘制云朵 - 一朵天蓝色云
     final cloudPaint = Paint()
@@ -2132,10 +2146,10 @@ class HazePainter extends CustomPainter {
       );
     }
 
-    // 绘制主题色粒子点
+    // 绘制黄色粒子点
     final particlePaint = Paint()
       ..color = WeatherAnimationColors.withOpacity(
-        WeatherAnimationColors.rainColor,
+        const Color(0xFFFFB300), // 金黄色粒子
         0.6,
       )
       ..style = PaintingStyle.fill;

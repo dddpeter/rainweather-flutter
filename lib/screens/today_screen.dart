@@ -56,6 +56,10 @@ class _TodayScreenState extends State<TodayScreen>
   static const Duration _refreshInterval = Duration(minutes: 30); // 30分钟刷新一次
   bool _isAppInBackground = false; // 应用是否在后台
 
+  // 滚动控制相关
+  final ScrollController _scrollController = ScrollController();
+  bool _showBackToTop = false; // 是否显示回到顶部按钮
+
   @override
   void initState() {
     super.initState();
@@ -80,6 +84,17 @@ class _TodayScreenState extends State<TodayScreen>
 
     // 启动定时刷新
     _startPeriodicRefresh();
+
+    // 添加滚动监听
+    _scrollController.addListener(() {
+      // 当滚动超过300px时显示回到顶部按钮
+      final shouldShow = _scrollController.offset > 300;
+      if (shouldShow != _showBackToTop) {
+        setState(() {
+          _showBackToTop = shouldShow;
+        });
+      }
+    });
   }
 
   /// 页面被激活时调用（类似Vue的activated）
@@ -233,6 +248,9 @@ class _TodayScreenState extends State<TodayScreen>
   void dispose() {
     // 停止定时刷新
     _stopPeriodicRefresh();
+
+    // 销毁ScrollController
+    _scrollController.dispose();
 
     WidgetsBinding.instance.removeObserver(this);
     // 移除定位变化监听器
@@ -611,50 +629,78 @@ class _TodayScreenState extends State<TodayScreen>
                     },
                     color: AppColors.primaryBlue,
                     backgroundColor: AppColors.backgroundSecondary,
-                    child: SingleChildScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      child: Column(
-                        children: [
-                          _buildTopWeatherSection(weatherProvider),
-                          AppColors.cardSpacingWidget,
-                          // AI智能助手卡片（整合天气摘要和通勤提醒）
-                          AISmartAssistantWidget(
-                            key: const ValueKey('today_ai_smart_assistant'),
+                    child: Stack(
+                      children: [
+                        SingleChildScrollView(
+                          controller: _scrollController,
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: Column(
+                            children: [
+                              _buildTopWeatherSection(weatherProvider),
+                              AppColors.cardSpacingWidget,
+                              // AI智能助手卡片（整合天气摘要和通勤提醒）
+                              AISmartAssistantWidget(
+                                key: const ValueKey('today_ai_smart_assistant'),
+                              ),
+                              AppColors.cardSpacingWidget,
+                              // 空气质量卡片
+                              AirQualityCard(weather: data.currentWeather),
+                              AppColors.cardSpacingWidget,
+                              // 24小时天气
+                              _buildHourlyWeather(weatherProvider),
+                              AppColors.cardSpacingWidget,
+                              // 使用缓存数据时，显示上午/下午分时段信息
+                              if (weatherProvider.isUsingCachedData)
+                                _buildTimePeriodDetails(weatherProvider),
+                              // 详细信息卡片（非缓存时显示）
+                              if (!weatherProvider.isUsingCachedData)
+                                WeatherDetailsWidget(
+                                  weather: data.currentWeather,
+                                ),
+                              AppColors.cardSpacingWidget,
+                              // 生活指数
+                              LifeIndexWidget(weatherProvider: weatherProvider),
+                              AppColors.cardSpacingWidget,
+                              const SunMoonWidget(),
+                              AppColors.cardSpacingWidget,
+                              _buildTemperatureChart(weatherProvider),
+                              AppColors.cardSpacingWidget,
+                              // 农历信息
+                              _buildLunarInfo(),
+                              AppColors.cardSpacingWidget,
+                              // 宜忌信息
+                              _buildYiJiInfo(),
+                              AppColors.cardSpacingWidget,
+                              // 即将到来的节气
+                              _buildUpcomingSolarTerms(),
+                              const SizedBox(
+                                height: 80,
+                              ), // Space for bottom buttons
+                            ],
                           ),
-                          AppColors.cardSpacingWidget,
-                          // 空气质量卡片
-                          AirQualityCard(weather: data.currentWeather),
-                          AppColors.cardSpacingWidget,
-                          // 24小时天气
-                          _buildHourlyWeather(weatherProvider),
-                          AppColors.cardSpacingWidget,
-                          // 使用缓存数据时，显示上午/下午分时段信息
-                          if (weatherProvider.isUsingCachedData)
-                            _buildTimePeriodDetails(weatherProvider),
-                          // 详细信息卡片（非缓存时显示）
-                          if (!weatherProvider.isUsingCachedData)
-                            WeatherDetailsWidget(weather: data.currentWeather),
-                          AppColors.cardSpacingWidget,
-                          // 生活指数
-                          LifeIndexWidget(weatherProvider: weatherProvider),
-                          AppColors.cardSpacingWidget,
-                          const SunMoonWidget(),
-                          AppColors.cardSpacingWidget,
-                          _buildTemperatureChart(weatherProvider),
-                          AppColors.cardSpacingWidget,
-                          // 农历信息
-                          _buildLunarInfo(),
-                          AppColors.cardSpacingWidget,
-                          // 宜忌信息
-                          _buildYiJiInfo(),
-                          AppColors.cardSpacingWidget,
-                          // 即将到来的节气
-                          _buildUpcomingSolarTerms(),
-                          const SizedBox(
-                            height: 80,
-                          ), // Space for bottom buttons
-                        ],
-                      ),
+                        ),
+                        // 回到顶部按钮
+                        if (_showBackToTop)
+                          Positioned(
+                            right: 16,
+                            bottom: 80,
+                            child: FloatingActionButton(
+                              onPressed: () {
+                                _scrollController.animateTo(
+                                  0,
+                                  duration: const Duration(milliseconds: 300),
+                                  curve: Curves.easeOut,
+                                );
+                              },
+                              backgroundColor: AppColors.primaryBlue,
+                              mini: true,
+                              child: const Icon(
+                                Icons.arrow_upward,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   );
                 },
@@ -680,7 +726,7 @@ class _TodayScreenState extends State<TodayScreen>
         image: const DecorationImage(
           image: AssetImage('assets/images/backgroud.png'),
           fit: BoxFit.cover,
-          opacity: 0.4, // 临时提高透明度用于测试图片加载
+          opacity: 0.25, // 优化：降低透明度，提升文字对比度和可读性
         ),
         boxShadow: [
           BoxShadow(
@@ -1317,24 +1363,36 @@ class _TodayScreenState extends State<TodayScreen>
     return SizedBox(
       width: 40,
       height: 40,
-      child: IconButton(
-        icon: Icon(
-          isLightTheme ? Icons.dark_mode : Icons.light_mode,
-          color: context.read<ThemeProvider>().getColor('headerTextPrimary'),
-          size: 24,
+      child: FadeTransition(
+        opacity: AlwaysStoppedAnimation(1.0),
+        child: IconButton(
+          icon: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            transitionBuilder: (Widget child, Animation<double> animation) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+            child: Icon(
+              isLightTheme ? Icons.dark_mode : Icons.light_mode,
+              key: ValueKey(isLightTheme),
+              color: context.read<ThemeProvider>().getColor(
+                'headerTextPrimary',
+              ),
+              size: 24,
+            ),
+          ),
+          onPressed: () {
+            // iOS触觉反馈
+            if (Platform.isIOS) {
+              HapticFeedback.mediumImpact();
+            }
+            // 切换亮色/暗色模式
+            themeProvider.setThemeMode(
+              isLightTheme ? AppThemeMode.dark : AppThemeMode.light,
+            );
+          },
+          padding: EdgeInsets.zero,
+          tooltip: isLightTheme ? '切换到暗色模式' : '切换到亮色模式',
         ),
-        onPressed: () {
-          // iOS触觉反馈
-          if (Platform.isIOS) {
-            HapticFeedback.mediumImpact();
-          }
-          // 切换亮色/暗色模式
-          themeProvider.setThemeMode(
-            isLightTheme ? AppThemeMode.dark : AppThemeMode.light,
-          );
-        },
-        padding: EdgeInsets.zero,
-        tooltip: isLightTheme ? '切换到暗色模式' : '切换到亮色模式',
       ),
     );
   }

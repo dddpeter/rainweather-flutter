@@ -65,70 +65,79 @@ class WeatherShareService {
       builder: (dialogContext) => Dialog(
         backgroundColor: Colors.transparent,
         insetPadding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // 海报预览
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: WeatherPosterWidget(
-                weather: weather,
-                location: location,
-                themeProvider: themeProvider,
-                sunMoonIndexData: sunMoonIndexData,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.98,
+            maxWidth: 375,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 海报预览（可滚动）
+              Flexible(
+                child: SingleChildScrollView(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: WeatherPosterWidget(
+                      weather: weather,
+                      location: location,
+                      themeProvider: themeProvider,
+                      sunMoonIndexData: sunMoonIndexData,
+                    ),
+                  ),
+                ),
               ),
-            ),
 
-            const SizedBox(height: 20),
-
-            // 操作按钮
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // 取消按钮
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () => Navigator.of(dialogContext).pop(false),
-                      icon: const Icon(Icons.close, size: 20),
-                      label: const Text('取消'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white.withOpacity(0.9),
-                        foregroundColor: const Color(0xFF012d78),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+              const SizedBox(height: 12), // 减小按钮区域间距
+              // 操作按钮
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // 取消按钮
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => Navigator.of(dialogContext).pop(false),
+                        icon: const Icon(Icons.close, size: 20),
+                        label: const Text('取消'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white.withOpacity(0.9),
+                          foregroundColor: const Color(0xFF012d78),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       ),
                     ),
-                  ),
 
-                  const SizedBox(width: 12),
+                    const SizedBox(width: 12),
 
-                  // 保存按钮
-                  Expanded(
-                    flex: 2,
-                    child: ElevatedButton.icon(
-                      onPressed: () async {
-                        Navigator.of(dialogContext).pop(true);
-                      },
-                      icon: const Icon(Icons.save_alt, size: 20),
-                      label: const Text('保存到相册'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4CAF50),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                    // 保存按钮
+                    Expanded(
+                      flex: 2,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          Navigator.of(dialogContext).pop(true);
+                        },
+                        icon: const Icon(Icons.save_alt, size: 20),
+                        label: const Text('保存到相册'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF4CAF50),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

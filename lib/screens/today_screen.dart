@@ -58,7 +58,6 @@ class _TodayScreenState extends State<TodayScreen>
 
   // 滚动控制相关
   final ScrollController _scrollController = ScrollController();
-  bool _showBackToTop = false; // 是否显示回到顶部按钮
 
   @override
   void initState() {
@@ -84,17 +83,6 @@ class _TodayScreenState extends State<TodayScreen>
 
     // 启动定时刷新
     _startPeriodicRefresh();
-
-    // 添加滚动监听
-    _scrollController.addListener(() {
-      // 当滚动超过300px时显示回到顶部按钮
-      final shouldShow = _scrollController.offset > 300;
-      if (shouldShow != _showBackToTop) {
-        setState(() {
-          _showBackToTop = shouldShow;
-        });
-      }
-    });
   }
 
   /// 页面被激活时调用（类似Vue的activated）
@@ -679,27 +667,6 @@ class _TodayScreenState extends State<TodayScreen>
                             ],
                           ),
                         ),
-                        // 回到顶部按钮
-                        if (_showBackToTop)
-                          Positioned(
-                            right: 16,
-                            bottom: 80,
-                            child: FloatingActionButton(
-                              onPressed: () {
-                                _scrollController.animateTo(
-                                  0,
-                                  duration: const Duration(milliseconds: 300),
-                                  curve: Curves.easeOut,
-                                );
-                              },
-                              backgroundColor: AppColors.primaryBlue,
-                              mini: true,
-                              child: const Icon(
-                                Icons.arrow_upward,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
                       ],
                     ),
                   );

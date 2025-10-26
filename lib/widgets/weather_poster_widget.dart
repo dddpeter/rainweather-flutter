@@ -61,15 +61,6 @@ class WeatherPosterWidget extends StatelessWidget {
     // 获取紫外线强度
     String uvLevel = _getUVLevel(sunMoonIndexData, weatherType);
 
-    // 生成生活建议
-    final lifeAdvices = _generateLifeAdvices(
-      weatherType: weatherType,
-      tempHigh: tempHigh,
-      tempLow: tempLow,
-      humidity: humidity,
-      aqi: aqi,
-    );
-
     // 当前日期
     final now = DateTime.now();
     final dateStr = '${now.month}月${now.day}日';
@@ -162,13 +153,13 @@ class WeatherPosterWidget extends StatelessWidget {
             padding: const EdgeInsets.only(
               left: 20,
               right: 20,
-              top: 12,
-              bottom: 6,
+              top: 16,
+              bottom: 12,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
 
                 // 城市名称和日期
                 Row(
@@ -407,76 +398,7 @@ class WeatherPosterWidget extends StatelessWidget {
                   ],
                 ),
 
-                const Spacer(), // 使用弹性间距
-                // 生活建议标签（独立区域）
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: lifeAdvices
-                      .map(
-                        (advice) => Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                (advice['color'] as Color).withOpacity(0.8),
-                                (const ui.Color.fromARGB(
-                                  255,
-                                  244,
-                                  119,
-                                  23,
-                                )).withOpacity(0.5),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0),
-                              width: 1.5,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.3),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                advice['icon'],
-                                color: Colors.white,
-                                size: 12,
-                              ),
-                              const SizedBox(width: 5),
-                              Text(
-                                advice['text'],
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  shadows: [
-                                    Shadow(
-                                      color: Colors.black45,
-                                      blurRadius: 2,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                      .toList(),
-                ),
-
-                const SizedBox(height: 8),
+                const Spacer(flex: 1), // 弹性间距，让内容均匀分布
                 // AI智能助手卡片（琥珀金渐变毛玻璃）
                 ClipRRect(
                   borderRadius: BorderRadius.circular(16),
@@ -565,11 +487,11 @@ class WeatherPosterWidget extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
 
+                const SizedBox(height: 8), // 详细信息卡片前固定间距
                 // 底部详细信息卡片（MD3风格 - 渐变背景）
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
@@ -651,8 +573,7 @@ class WeatherPosterWidget extends StatelessWidget {
                   ),
                 ),
 
-                const SizedBox(height: 16),
-
+                const Spacer(flex: 1), // 弹性间距，让品牌标识均匀分布
                 // 底部品牌标识（无背景，更小）
                 Center(
                   child: Row(
@@ -674,123 +595,12 @@ class WeatherPosterWidget extends StatelessWidget {
                     ],
                   ),
                 ),
-
-                const SizedBox(height: 1),
               ],
             ),
           ),
         ],
       ),
     );
-  }
-
-  /// 生成生活建议
-  List<Map<String, dynamic>> _generateLifeAdvices({
-    required String weatherType,
-    required int tempHigh,
-    required int tempLow,
-    required String humidity,
-    String? aqi,
-  }) {
-    final List<Map<String, dynamic>> advices = [];
-
-    // 1. 穿衣建议（根据温度）- MD3鲜艳配色
-    final avgTemp = (tempHigh + tempLow) / 2;
-    if (avgTemp >= 28) {
-      advices.add({
-        'icon': Icons.checkroom,
-        'text': '短袖短裤',
-        'color': const Color(0xFFE53935), // MD3: 鲜艳红色
-      });
-    } else if (avgTemp >= 23) {
-      advices.add({
-        'icon': Icons.checkroom,
-        'text': '薄外套',
-        'color': const Color(0xFFFF6F00), // MD3: 鲜艳橙色
-      });
-    } else if (avgTemp >= 18) {
-      advices.add({
-        'icon': Icons.checkroom,
-        'text': '长袖外套',
-        'color': const Color(0xFF43A047), // MD3: 鲜艳绿色
-      });
-    } else if (avgTemp >= 12) {
-      advices.add({
-        'icon': Icons.checkroom,
-        'text': '夹克风衣',
-        'color': const ui.Color.fromARGB(255, 1, 46, 52), // MD3: 鲜艳蓝色
-      });
-    } else if (avgTemp >= 5) {
-      advices.add({
-        'icon': Icons.checkroom,
-        'text': '厚外套',
-        'color': const Color(0xFF5E35B1), // MD3: 鲜艳紫色
-      });
-    } else {
-      advices.add({
-        'icon': Icons.checkroom,
-        'text': '羽绒服',
-        'color': const Color(0xFF6A1B9A), // MD3: 深紫色
-      });
-    }
-
-    // 2. 带伞提醒（根据天气）
-    if (weatherType.contains('雨') || weatherType.contains('雪')) {
-      advices.add({
-        'icon': Icons.umbrella,
-        'text': '记得带伞',
-        'color': const Color(0xFF0288D1), // MD3: 鲜艳蓝色
-      });
-    }
-
-    // 3. 防晒提醒（晴天且温度高）
-    if ((weatherType.contains('晴') || weatherType == '少云') && avgTemp >= 25) {
-      advices.add({
-        'icon': Icons.wb_sunny,
-        'text': '注意防晒',
-        'color': const Color(0xFFFFA000), // MD3: 鲜艳金色
-      });
-    }
-
-    // 4. 空气质量提醒
-    if (aqi != null) {
-      final aqiValue = int.tryParse(aqi) ?? 0;
-      if (aqiValue > 100) {
-        advices.add({
-          'icon': Icons.masks,
-          'text': '建议戴口罩',
-          'color': const Color(0xFF8E24AA), // MD3: 鲜艳紫色
-        });
-      }
-    }
-
-    // 5. 温差提醒
-    final tempDiff = (tempHigh - tempLow).abs();
-    if (tempDiff >= 10) {
-      advices.add({
-        'icon': Icons.layers,
-        'text': '温差大注意增减衣物',
-        'color': const Color(0xFFF4511E), // MD3: 鲜艳橙红
-      });
-    }
-
-    // 6. 湿度提醒
-    final humidityValue = int.tryParse(humidity) ?? 0;
-    if (humidityValue >= 80) {
-      advices.add({
-        'icon': Icons.water_drop,
-        'text': '湿度大',
-        'color': const Color(0xFF00ACC1), // MD3: 鲜艳青色
-      });
-    } else if (humidityValue <= 30) {
-      advices.add({
-        'icon': Icons.opacity,
-        'text': '注意补水',
-        'color': const Color(0xFF00ACC1), // MD3: 鲜艳青色
-      });
-    }
-
-    return advices;
   }
 
   /// 获取紫外线强度等级
@@ -832,16 +642,16 @@ class WeatherPosterWidget extends StatelessWidget {
     Color iconColor,
   ) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
+      padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         children: [
           // MD3: 彩色图标背景（增强对比度）
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(5),
             decoration: BoxDecoration(
               color: iconColor.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: iconColor.withOpacity(0.6), width: 1.5),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: iconColor.withOpacity(0.6), width: 1),
             ),
             child: Icon(icon, color: iconColor, size: 22),
           ),
@@ -894,7 +704,7 @@ class WeatherPosterWidget extends StatelessWidget {
   /// 构建分割线（MD3风格）
   Widget _buildDivider() {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 1),
       child: Divider(color: Colors.grey[300], height: 1),
     );
   }

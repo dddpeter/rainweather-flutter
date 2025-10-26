@@ -320,18 +320,18 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
               // Weather animation, weather text and temperature
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start, // 顶部对齐
                 children: [
                   // 左侧天气动画区域 - 主要视觉焦点
                   Flexible(
                     flex: 50,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center, // 居中显示
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.start, // 顶部对齐
                       children: [
                         WeatherAnimationWidget(
                           weatherType: current?.weather ?? '晴',
-                          size: 120, // 进一步增大动画尺寸
+                          size: 100, // 适中的动画尺寸
                           isPlaying: true,
                         ),
                       ],

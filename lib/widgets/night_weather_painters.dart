@@ -91,21 +91,28 @@ void _drawNightStars(
     (3.2, 1.2, 0xFFB3E5FC), // 中星星 亮蓝
     (2.2, 1.0, 0xFFFFF4B3), // 小星星 淡金
     (3.8, 1.4, 0xFFCFD8DC), // 中星星 淡青
+    (3.0, 1.2, 0xFFFFB3BA), // 中星星 淡红
+    (4.0, 1.4, 0xFFFFAB91), // 大星星 浅粉红
   ];
 
   final starData = <({Offset pos, double size, int color})>[];
   final existingPositions = <Offset>[]; // 记录已有星星位置，用于检查重叠
 
-  // 生成8颗星星，固定分布在月亮周围
-  for (int i = 0; i < 8; i++) {
-    // 基于索引生成固定角度（不均匀分布，更自然）
-    final angle = (i * 0.785) + (i * 0.1); // 每个星星大约45度间隔，但有些微偏移
-    // 固定距离变化，范围更大
-    final distance = baseDistance * (0.85 + (i % 4) * 0.2); // 4种不同距离循环
+  // 生成10颗星星，更多更自然
+  for (int i = 0; i < 10; i++) {
+    // 使用更自然的分布：角度不均匀，距离更随机
+    final angle = (i * 0.63) + (i % 3) * 0.15; // 不均匀角度分布
+    // 距离变化更大，更分散
+    final distanceVariation = 0.7 + (i % 5) * 0.12 + ((i % 3) * 0.08);
+    final distance = baseDistance * distanceVariation;
 
-    // 计算位置（考虑椭圆，高度方向缩放）
-    final x = center.dx + distance * math.cos(angle);
-    final y = center.dy + distance * math.sin(angle) * 0.9;
+    // 添加随机偏移，让分布更自然
+    final randomOffset = (i % 7) * 0.05; // 基于索引的伪随机偏移
+    final x =
+        center.dx + (distance + randomOffset * size.width) * math.cos(angle);
+    final y =
+        center.dy +
+        (distance + randomOffset * size.height) * math.sin(angle) * 0.85;
     final pos = Offset(x, y);
 
     // 检查是否与已有星星距离太近
@@ -132,37 +139,43 @@ void _drawNightStars(
   }
 
   for (final star in starData) {
-    // 基础闪烁效果
+    // 基础闪烁效果 - 更缓慢自然
     final baseOpacity =
         (math.sin(
-                  animationValue * 2 * math.pi +
-                      (star.pos.dx + star.pos.dy) * 0.01,
+                  animationValue * 1.5 * math.pi +
+                      (star.pos.dx + star.pos.dy) * 0.008,
                 ) +
                 1) /
             2 *
-            0.3 +
-        0.4;
+            0.25 +
+        0.5; // 提高基础亮度
 
-    // 随机突然亮闪效果（某些星星会突然变得很亮）
+    // 随机突然亮闪效果 - 更自然
     // 基于星星位置创建一个固定的"种子"，然后基于时间生成随机亮闪
     final starSeed = (star.pos.dx + star.pos.dy).abs();
-    final flashPhase = (animationValue * 0.5 + starSeed * 0.001) % 1.0;
+    final flashPhase = (animationValue * 0.3 + starSeed * 0.0008) % 1.0;
 
     // 偶尔（低概率）产生极亮的闪光
     double flashIntensity = 0.0;
-    if (flashPhase < 0.02) {
-      // 2%的时间会产生闪光
-      // 闪光强度从0到1再到0
-      final flashProgress = flashPhase / 0.02;
+    if (flashPhase < 0.015) {
+      // 降低闪光频率，更罕见
+      // 1.5%的时间会产生闪光
+      // 闪光强度从0到1再到0 - 使用平滑曲线
+      final flashProgress = flashPhase / 0.015;
       if (flashProgress < 0.5) {
-        flashIntensity = flashProgress * 2; // 0 to 1
+        flashIntensity = math.pow(flashProgress * 2, 1.5).toDouble(); // 渐入
       } else {
-        flashIntensity = (1 - flashProgress) * 2; // 1 to 0
+        flashIntensity = math
+            .pow((1 - flashProgress) * 2, 1.5)
+            .toDouble(); // 渐出
       }
     }
 
-    // 组合基础闪烁和闪光
-    final finalOpacity = math.min(1.0, baseOpacity + flashIntensity * 0.6);
+    // 组合基础闪烁和闪光 - 调整权重让闪光更明显
+    final finalOpacity = math.min(
+      1.0,
+      baseOpacity * 0.8 + flashIntensity * 0.4,
+    );
 
     final starPaint = Paint()
       ..color = Color(star.color).withOpacity(finalOpacity)

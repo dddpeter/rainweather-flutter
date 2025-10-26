@@ -29,14 +29,29 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
     final themeProvider = context.watch<ThemeProvider>();
 
     return AppBar(
-      elevation: 0,
+      elevation: 4, // 添加阴影
       backgroundColor: Colors.transparent,
-      flexibleSpace: Container(color: AppColors.backgroundSecondary),
+      flexibleSpace: Container(
+        decoration: BoxDecoration(
+          // 半透明背景
+          color: themeProvider.isLightTheme
+              ? AppColors.backgroundSecondary.withOpacity(0.85)
+              : AppColors.backgroundSecondary.withOpacity(0.9),
+          // 模糊效果
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 20,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+      ),
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(0.5),
         child: Container(
           height: 0.5,
-          color: themeProvider.getColor('border').withOpacity(0.3),
+          color: themeProvider.getColor('border').withOpacity(0.2),
         ),
       ),
       toolbarHeight: 56,

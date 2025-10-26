@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../constants/app_version.dart';
 import '../providers/weather_provider.dart';
 import '../utils/app_state_manager.dart';
+import '../utils/weather_provider_logger.dart';
 import '../main.dart';
 
 /// 应用启动页面 - 支持根据应用主题切换颜色
@@ -51,8 +52,8 @@ class _AppSplashScreenState extends State<AppSplashScreen>
 
   Future<void> _initializeApp() async {
     try {
-      // 等待动画开始（缩短到200ms）
-      await Future.delayed(const Duration(milliseconds: 200));
+      // 等待动画开始（仅150ms，减少延迟）
+      await Future.delayed(const Duration(milliseconds: 150));
 
       if (!mounted) return;
 
@@ -62,13 +63,18 @@ class _AppSplashScreenState extends State<AppSplashScreen>
         listen: false,
       );
 
-      print('🚀 启动流程: 使用快速启动模式');
-      await weatherProvider.quickStart();
+      WeatherProviderLogger.info('启动流程: 使用快速启动模式');
+
+      // 不等待quickStart完成，立即启动界面
+      // quickStart会在后台执行，界面可以立即显示
+      weatherProvider.quickStart().catchError((e) {
+        WeatherProviderLogger.error('快速启动失败: $e');
+      });
 
       if (!mounted) return;
 
-      // 等待动画完成（缩短到400ms）
-      await Future.delayed(const Duration(milliseconds: 400));
+      // 最小等待时间（仅200ms），让用户感知到启动动画
+      await Future.delayed(const Duration(milliseconds: 200));
 
       if (mounted) {
         // 标记应用完全启动
@@ -82,10 +88,10 @@ class _AppSplashScreenState extends State<AppSplashScreen>
           );
         }
 
-        print('✅ 启动完成，界面已显示（后台继续刷新数据）');
+        WeatherProviderLogger.success('启动完成，界面已显示（后台继续刷新数据）');
       }
     } catch (e) {
-      print('❌ 启动初始化失败: $e');
+      WeatherProviderLogger.error('启动初始化失败: $e');
       // 即使失败也跳转到主界面
       if (mounted) {
         // 标记应用完全启动（即使初始化失败）

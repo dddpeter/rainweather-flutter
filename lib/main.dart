@@ -104,25 +104,45 @@ void main() async {
   GlobalExceptionHandler().initialize();
   Logger.separator(title: 'RainWeather 启动');
 
-  // 🚀 预加载智能缓存到内存
-  try {
-    Logger.d('预加载智能缓存...');
-    await SmartCacheService().preloadCommonData();
-    Logger.s('智能缓存预加载完成');
-  } catch (e, stackTrace) {
-    Logger.e('智能缓存预加载失败', error: e, stackTrace: stackTrace);
-    ErrorHandler.handleError(
-      e,
-      stackTrace: stackTrace,
-      context: 'Main.SmartCachePreload',
-      type: AppErrorType.cache,
-    );
-  }
+  // 🚀 关键初始化：优先显示启动画面
+  _initializeCriticalServices();
 
-  // 🧹 启动后台缓存清理任务
-  _startBackgroundCacheCleaner();
+  // 📱 立即启动应用，让用户看到启动画面
+  runApp(const RainWeatherApp());
+}
 
-  // 初始化通知服务并请求权限
+/// 异步初始化关键服务（不阻塞应用启动）
+void _initializeCriticalServices() async {
+  // 使用Future.microtask确保在下一帧执行，不阻塞UI
+  Future.microtask(() async {
+    // 预加载智能缓存到内存
+    try {
+      Logger.d('预加载智能缓存...');
+      await SmartCacheService().preloadCommonData();
+      Logger.s('智能缓存预加载完成');
+    } catch (e, stackTrace) {
+      Logger.e('智能缓存预加载失败', error: e, stackTrace: stackTrace);
+      ErrorHandler.handleError(
+        e,
+        stackTrace: stackTrace,
+        context: 'Main.SmartCachePreload',
+        type: AppErrorType.cache,
+      );
+    }
+
+    // 启动后台缓存清理任务
+    _startBackgroundCacheCleaner();
+
+    // 初始化通知服务并请求权限
+    _initializeNotificationService();
+
+    // 初始化定位服务
+    _initializeLocationServices();
+  });
+}
+
+/// 初始化通知服务
+void _initializeNotificationService() async {
   try {
     Logger.d('初始化通知服务');
     final notificationService = NotificationService.instance;
@@ -147,8 +167,10 @@ void main() async {
       type: AppErrorType.permission,
     );
   }
+}
 
-  // 初始化定位服务
+/// 初始化定位服务
+void _initializeLocationServices() async {
   // 全局设置腾讯定位服务
   try {
     Logger.d('全局设置腾讯定位服务');
@@ -212,8 +234,6 @@ void main() async {
       type: AppErrorType.permission,
     );
   }
-
-  runApp(const RainWeatherApp());
 }
 
 class RainWeatherApp extends StatefulWidget {

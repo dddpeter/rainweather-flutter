@@ -29,6 +29,7 @@ import '../utils/weather_icon_helper.dart';
 import '../utils/error_handler.dart';
 import '../utils/logger.dart';
 import '../widgets/error_dialog.dart';
+import '../widgets/offline_banner.dart';
 import 'hourly_screen.dart';
 
 class TodayScreen extends StatefulWidget {
@@ -613,6 +614,14 @@ class _TodayScreenState extends State<TodayScreen>
                       physics: const AlwaysScrollableScrollPhysics(),
                       child: Column(
                         children: [
+                          // 离线提示横幅
+                          if (weatherProvider.isOffline)
+                            OfflineBanner(
+                              onRetry: () {
+                                weatherProvider.refreshWeatherData();
+                              },
+                              message: '当前处于离线模式，显示缓存数据',
+                            ),
                           _buildTopWeatherSection(weatherProvider),
                           AppColors.cardSpacingWidget,
                           // AI智能助手卡片（整合天气摘要和通勤提醒）

@@ -108,13 +108,18 @@
   - 添加启动画面优化，提高感知性能
   - 修改`app_splash_screen.dart`和`main.dart`
 
-### 5.2 离线支持
+### 5.2 离线支持 ✅
 - **问题**：网络不可用时功能受限
 - **解决方案**：
-  - 实现离线模式，显示缓存数据
-  - 添加网络状态检测和提示
-  - 实现数据同步机制，网络恢复后自动更新
-  - 修改`weather_provider.dart`和`today_screen.dart`
+  - ✅ 实现离线模式，显示缓存数据
+  - ✅ 添加网络状态检测和提示（NetworkStatusService）
+  - ✅ 实现数据同步机制，网络恢复后自动更新
+  - ✅ 修改`weather_provider.dart`和`today_screen.dart`
+- **已完成文件**：
+  - `lib/utils/network_status_service.dart` - 网络状态服务
+  - `lib/widgets/offline_banner.dart` - 离线提示横幅
+  - `lib/providers/weather_provider.dart` - 添加离线模式支持
+  - `lib/screens/today_screen.dart` - 显示离线横幅
 
 ### 5.3 无障碍支持
 - **问题**：可能缺乏无障碍支持

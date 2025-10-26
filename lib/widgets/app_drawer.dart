@@ -31,6 +31,13 @@ class AppDrawer extends StatelessWidget {
 
               // 基础功能组
               _buildSectionTitle('基础功能'),
+
+              // 主题配色快速切换
+              _buildThemeQuickSwitch(context, themeProvider),
+
+              const Divider(height: 16, indent: 16, endIndent: 16),
+
+              // 主题设置
               _buildMenuItem(
                 context,
                 icon: themeProvider.isLightTheme
@@ -157,6 +164,84 @@ class AppDrawer extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
         ],
+      ),
+    );
+  }
+
+  /// 构建主题配色快速切换
+  Widget _buildThemeQuickSwitch(
+    BuildContext context,
+    ThemeProvider themeProvider,
+  ) {
+    final activeColor = themeProvider.isLightTheme
+        ? AppColors.primaryBlue
+        : AppColors.accentBlue;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      height: 90,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        children: AppThemes.allSchemes.asMap().entries.map((entry) {
+          final index = entry.key;
+          final scheme = entry.value;
+          final isSelected =
+              themeProvider.themeScheme == AppThemeScheme.values[index];
+
+          return Container(
+            width: 70,
+            margin: const EdgeInsets.only(right: 12),
+            child: GestureDetector(
+              onTap: () {
+                themeProvider.setThemeScheme(AppThemeScheme.values[index]);
+                AppColors.setThemeProvider(themeProvider);
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300), // 过渡动画
+                curve: Curves.easeInOut,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isSelected ? activeColor : Colors.transparent,
+                    width: isSelected ? 3 : 0,
+                  ),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: activeColor.withOpacity(0.3),
+                            blurRadius: 8,
+                            spreadRadius: 2,
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: scheme.previewColor,
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(scheme.icon, color: Colors.white, size: 24),
+                      const SizedBox(height: 4),
+                      Text(
+                        scheme.name.replaceAll('主题', ''),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
       ),
     );
   }
@@ -496,59 +581,30 @@ class AppDrawer extends StatelessWidget {
                                     ]
                                   : null,
                             ),
-                            child: Stack(
-                              children: [
-                                // 颜色预览
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color: scheme.previewColor,
-                                    borderRadius: BorderRadius.circular(9),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: scheme.previewColor,
+                                borderRadius: BorderRadius.circular(9),
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    scheme.icon,
+                                    color: Colors.white,
+                                    size: 24,
                                   ),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        scheme.icon,
-                                        color: Colors.white,
-                                        size: 24,
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        scheme.name.replaceAll('主题', ''),
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                // 选中标记
-                                if (isSelected)
-                                  Positioned(
-                                    top: 4,
-                                    right: 4,
-                                    child: Container(
-                                      padding: const EdgeInsets.all(4),
-                                      decoration: BoxDecoration(
-                                        color: activeColor,
-                                        shape: BoxShape.circle,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: activeColor.withOpacity(0.5),
-                                            blurRadius: 4,
-                                          ),
-                                        ],
-                                      ),
-                                      child: const Icon(
-                                        Icons.check,
-                                        color: Colors.white,
-                                        size: 14,
-                                      ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    scheme.name.replaceAll('主题', ''),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         );

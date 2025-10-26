@@ -8,6 +8,10 @@ enum AppThemeScheme {
   teal, // 青绿色主题
   purple, // 紫色主题
   rose, // 玫瑰金主题
+  neonPurple, // 霓虹紫主题
+  forest, // 森林绿主题
+  deepSpace, // 深空黑主题
+  sunset, // 夕阳红主题
 }
 
 /// 主题配色配置
@@ -823,6 +827,522 @@ class AppThemes {
     ),
   );
 
+  /// 霓虹紫主题
+  static const ThemeColorScheme neonPurple = ThemeColorScheme(
+    name: '霓虹紫',
+    icon: Icons.brightness_2,
+    previewColor: Color(0xFF9C27B0),
+    lightColors: {
+      'primary': Color(0xFF6A1B9A), // 深紫色
+      'primaryDark': Color(0xFF4A148C),
+      'accent': Color(0xFFAB47BC), // 霓虹紫
+      'background': Color.fromARGB(255, 250, 245, 255),
+      'headerBackground': Color(0xFF6A1B9A),
+      'headerBackgroundSecondary': Color(0xFF4A148C),
+      'headerTextPrimary': Color(0xFFFFFFFF),
+      'headerTextSecondary': Color(0xFFE1BEE7),
+      'headerIconColor': Color(0xFFFFFFFF),
+      'surface': Color(0xFFFFFFFF),
+      'textPrimary': Color(0xFF4A148C),
+      'textSecondary': Color(0xFF6A1B9A),
+      'textTertiary': Color(0xFF7B1FA2),
+      'border': Color(0xFFE1BEE7),
+      'divider': Color(0xFFCE93D8),
+      'cardBackground': Color(0xFFFFFFFF),
+      'cardBackgroundTransparent': Color(0x40FFFFFF),
+      'buttonBackground': Color(0xFF6A1B9A),
+      'buttonText': Color(0xFFFFFFFF),
+      'bottomNavBackground': Color(0xFFFFFFFF),
+      'bottomNavSelected': Color(0xFF6A1B9A),
+      'bottomNavUnselected': Color(0xFF9E9E9E),
+      'indicatorColor': Color(0xFF6A1B9A),
+      'shadowColor': Color(0x00000000),
+      'iconColor': Color(0xFF6A1B9A),
+      'titleColor': Color(0xFF4A148C),
+      'subtitleColor': Color(0xFF7B1FA2),
+      'currentTag': Color(0xFFFFFFFF),
+      'currentTagCardBackground': Color(0x40FFFFFF),
+      'cardBorder': Color(0xFFE1BEE7),
+      'buttonShadow': Color(0x306A1B9A),
+      'bottomNavSelectedBg': Colors.transparent,
+      'bottomNavSelectedText': Color(0xFF6A1B9A),
+      'tagBackground': Color(0xFFAB47BC),
+      'tagTextOnPrimary': Color(0xFFFFFFFF),
+      'tagBorder': Color(0xFFAB47BC),
+      'error': Color(0xFFD32F2F),
+      'success': Color(0xFF2E7D32),
+      'warning': Color(0xFFE65100),
+      'highTemp': Color(0xFFD32F2F),
+      'lowTemp': Color(0xFF1976D2),
+      'sunrise': Color(0xFFFFB74D),
+      'sunset': Color(0xFFE91E63),
+      'moon': Color(0xFFAB47BC),
+      'sunIcon': Color(0xFFFFB300),
+    },
+    darkColors: {
+      'primary': Color(0xFFAB47BC), // 霓虹紫
+      'primaryDark': Color(0xFF8E24AA),
+      'accent': Color(0xFFE1BEE7), // 浅紫色
+      'background': Color(0xFF2C1B47), // 深紫色背景
+      'headerBackground': Color(0xFF4A148C),
+      'headerBackgroundSecondary': Color(0xFF6A1B9A),
+      'headerTextPrimary': Color(0xFFFFFFFF),
+      'headerTextSecondary': Color(0xFFE1BEE7),
+      'headerIconColor': Color(0xFFFFFFFF),
+      'surface': Color(0xFF4A148C),
+      'textPrimary': Color(0xFFFFFFFF),
+      'textSecondary': Color(0xFFE1BEE7),
+      'textTertiary': Color(0xFFCE93D8),
+      'border': Color(0xFF6A1B9A),
+      'divider': Color(0xFF7B1FA2),
+      'cardBackground': Color(0xFF2C1B47),
+      'cardBackgroundTransparent': Color(0x40FFFFFF),
+      'buttonBackground': Color(0xFFAB47BC),
+      'buttonText': Color(0xFF2C1B47),
+      'bottomNavBackground': Color(0xFF4A148C),
+      'bottomNavSelected': Color(0xFFAB47BC),
+      'bottomNavUnselected': Color(0xFFCE93D8),
+      'indicatorColor': Color(0xFFAB47BC),
+      'shadowColor': Color(0x00000000),
+      'iconColor': Color(0xFFAB47BC),
+      'titleColor': Color(0xFFFFFFFF),
+      'subtitleColor': Color(0xFFE1BEE7),
+      'currentTag': Color(0xFFFFFFFF),
+      'currentTagCardBackground': Color(0x40FFFFFF),
+      'cardBorder': Color(0xFF6A1B9A),
+      'buttonShadow': Color(0x30AB47BC),
+      'bottomNavSelectedBg': Colors.transparent,
+      'bottomNavSelectedText': Color(0xFFAB47BC),
+      'tagBackground': Color(0xFFAB47BC),
+      'tagTextOnPrimary': Color(0xFF2C1B47),
+      'tagBorder': Color(0xFFAB47BC),
+      'error': Color(0xFFFF6B6B),
+      'success': Color(0xFF4CAF50),
+      'warning': Color(0xFFFFB74D),
+      'highTemp': Color(0xFFFF5722),
+      'lowTemp': Color(0xFF64B5F6),
+      'sunrise': Color(0xFFFFCC80),
+      'sunset': Color(0xFFFF6B6B),
+      'moon': Color(0xFFAB47BC),
+      'sunIcon': Color(0xFFFFB300),
+    },
+    primaryGradientLight: LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [
+        Color(0xFFAB47BC), // 霓虹紫
+        Color(0xFFE1BEE7), // 浅紫色
+      ],
+    ),
+    primaryGradientDark: LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [
+        Color(0xFF6A1B9A), // 深紫色
+        Color(0xFF4A148C), // 更深紫色
+      ],
+    ),
+    headerGradientLight: LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Color(0xFF6A1B9A), Color(0xFF4A148C)],
+      stops: [0.0, 1.0],
+    ),
+    headerGradientDark: LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Color(0xFF6A1B9A), Color(0xFF7B1FA2)],
+      stops: [0.0, 1.0],
+    ),
+  );
+
+  /// 森林绿主题
+  static const ThemeColorScheme forest = ThemeColorScheme(
+    name: '森林绿',
+    icon: Icons.nature,
+    previewColor: Color(0xFF2E7D32),
+    lightColors: {
+      'primary': Color(0xFF2E7D32), // 森林绿
+      'primaryDark': Color(0xFF1B5E20),
+      'accent': Color(0xFF66BB6A), // 薄荷绿
+      'background': Color.fromARGB(255, 232, 245, 233),
+      'headerBackground': Color(0xFF2E7D32),
+      'headerBackgroundSecondary': Color(0xFF1B5E20),
+      'headerTextPrimary': Color(0xFFFFFFFF),
+      'headerTextSecondary': Color(0xFFC8E6C9),
+      'headerIconColor': Color(0xFFFFFFFF),
+      'surface': Color(0xFFFFFFFF),
+      'textPrimary': Color(0xFF1B5E20),
+      'textSecondary': Color(0xFF2E7D32),
+      'textTertiary': Color(0xFF388E3C),
+      'border': Color(0xFFC8E6C9),
+      'divider': Color(0xFFA5D6A7),
+      'cardBackground': Color(0xFFFFFFFF),
+      'cardBackgroundTransparent': Color(0x40FFFFFF),
+      'buttonBackground': Color(0xFF2E7D32),
+      'buttonText': Color(0xFFFFFFFF),
+      'bottomNavBackground': Color(0xFFFFFFFF),
+      'bottomNavSelected': Color(0xFF2E7D32),
+      'bottomNavUnselected': Color(0xFF9E9E9E),
+      'indicatorColor': Color(0xFF2E7D32),
+      'shadowColor': Color(0x00000000),
+      'iconColor': Color(0xFF2E7D32),
+      'titleColor': Color(0xFF1B5E20),
+      'subtitleColor': Color(0xFF388E3C),
+      'currentTag': Color(0xFFFFFFFF),
+      'currentTagCardBackground': Color(0x40FFFFFF),
+      'cardBorder': Color(0xFFC8E6C9),
+      'buttonShadow': Color(0x302E7D32),
+      'bottomNavSelectedBg': Colors.transparent,
+      'bottomNavSelectedText': Color(0xFF2E7D32),
+      'tagBackground': Color(0xFF66BB6A),
+      'tagTextOnPrimary': Color(0xFFFFFFFF),
+      'tagBorder': Color(0xFF66BB6A),
+      'error': Color(0xFFD32F2F),
+      'success': Color(0xFF2E7D32),
+      'warning': Color(0xFFE65100),
+      'highTemp': Color(0xFFD32F2F),
+      'lowTemp': Color(0xFF1976D2),
+      'sunrise': Color(0xFFFFB74D),
+      'sunset': Color(0xFFE91E63),
+      'moon': Color(0xFFB39DDB),
+      'sunIcon': Color(0xFFFFB300),
+    },
+    darkColors: {
+      'primary': Color(0xFF66BB6A), // 薄荷绿
+      'primaryDark': Color(0xFF81C784),
+      'accent': Color(0xFFA5D6A7), // 浅绿色
+      'background': Color(0xFF1B5E20), // 深绿色背景
+      'headerBackground': Color(0xFF2E7D32),
+      'headerBackgroundSecondary': Color(0xFF1B5E20),
+      'headerTextPrimary': Color(0xFFFFFFFF),
+      'headerTextSecondary': Color(0xFFC8E6C9),
+      'headerIconColor': Color(0xFFFFFFFF),
+      'surface': Color(0xFF2E7D32),
+      'textPrimary': Color(0xFFFFFFFF),
+      'textSecondary': Color(0xFFC8E6C9),
+      'textTertiary': Color(0xFFA5D6A7),
+      'border': Color(0xFF4CAF50),
+      'divider': Color(0xFF2E7D32),
+      'cardBackground': Color(0xFF1B5E20),
+      'cardBackgroundTransparent': Color(0x40FFFFFF),
+      'buttonBackground': Color(0xFF66BB6A),
+      'buttonText': Color(0xFF1B5E20),
+      'bottomNavBackground': Color(0xFF2E7D32),
+      'bottomNavSelected': Color(0xFF66BB6A),
+      'bottomNavUnselected': Color(0xFF81C784),
+      'indicatorColor': Color(0xFF66BB6A),
+      'shadowColor': Color(0x00000000),
+      'iconColor': Color(0xFF66BB6A),
+      'titleColor': Color(0xFFFFFFFF),
+      'subtitleColor': Color(0xFFC8E6C9),
+      'currentTag': Color(0xFFFFFFFF),
+      'currentTagCardBackground': Color(0x40FFFFFF),
+      'cardBorder': Color(0xFF4CAF50),
+      'buttonShadow': Color(0x3066BB6A),
+      'bottomNavSelectedBg': Colors.transparent,
+      'bottomNavSelectedText': Color(0xFF66BB6A),
+      'tagBackground': Color(0xFF66BB6A),
+      'tagTextOnPrimary': Color(0xFF1B5E20),
+      'tagBorder': Color(0xFF66BB6A),
+      'error': Color(0xFFFF6B6B),
+      'success': Color(0xFF4CAF50),
+      'warning': Color(0xFFFFB74D),
+      'highTemp': Color(0xFFFF5722),
+      'lowTemp': Color(0xFF64B5F6),
+      'sunrise': Color(0xFFFFCC80),
+      'sunset': Color(0xFFFF6B6B),
+      'moon': Color(0xFFB39DDB),
+      'sunIcon': Color(0xFFFFB300),
+    },
+    primaryGradientLight: LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [
+        Color(0xFF4CAF50), // 明亮绿
+        Color(0xFFC8E6C9), // 浅绿色
+      ],
+    ),
+    primaryGradientDark: LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [
+        Color(0xFF2E7D32), // 森林绿
+        Color(0xFF1B5E20), // 深森林绿
+      ],
+    ),
+    headerGradientLight: LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Color(0xFF2E7D32), Color(0xFF1B5E20)],
+      stops: [0.0, 1.0],
+    ),
+    headerGradientDark: LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Color(0xFF2E7D32), Color(0xFF388E3C)],
+      stops: [0.0, 1.0],
+    ),
+  );
+
+  /// 深空黑主题
+  static const ThemeColorScheme deepSpace = ThemeColorScheme(
+    name: '深空黑',
+    icon: Icons.auto_awesome,
+    previewColor: Color(0xFF424242),
+    lightColors: {
+      'primary': Color(0xFF212121), // 深灰色
+      'primaryDark': Color(0xFF000000),
+      'accent': Color(0xFF757575), // 中灰色
+      'background': Color.fromARGB(255, 245, 245, 245),
+      'headerBackground': Color(0xFF212121),
+      'headerBackgroundSecondary': Color(0xFF000000),
+      'headerTextPrimary': Color(0xFFFFFFFF),
+      'headerTextSecondary': Color(0xFFE0E0E0),
+      'headerIconColor': Color(0xFFFFFFFF),
+      'surface': Color(0xFFFFFFFF),
+      'textPrimary': Color(0xFF000000),
+      'textSecondary': Color(0xFF212121),
+      'textTertiary': Color(0xFF424242),
+      'border': Color(0xFFE0E0E0),
+      'divider': Color(0xFFBDBDBD),
+      'cardBackground': Color(0xFFFFFFFF),
+      'cardBackgroundTransparent': Color(0x40FFFFFF),
+      'buttonBackground': Color(0xFF212121),
+      'buttonText': Color(0xFFFFFFFF),
+      'bottomNavBackground': Color(0xFFFFFFFF),
+      'bottomNavSelected': Color(0xFF212121),
+      'bottomNavUnselected': Color(0xFF9E9E9E),
+      'indicatorColor': Color(0xFF212121),
+      'shadowColor': Color(0x00000000),
+      'iconColor': Color(0xFF212121),
+      'titleColor': Color(0xFF000000),
+      'subtitleColor': Color(0xFF424242),
+      'currentTag': Color(0xFFFFFFFF),
+      'currentTagCardBackground': Color(0x40FFFFFF),
+      'cardBorder': Color(0xFFE0E0E0),
+      'buttonShadow': Color(0x30212121),
+      'bottomNavSelectedBg': Colors.transparent,
+      'bottomNavSelectedText': Color(0xFF212121),
+      'tagBackground': Color(0xFF757575),
+      'tagTextOnPrimary': Color(0xFFFFFFFF),
+      'tagBorder': Color(0xFF757575),
+      'error': Color(0xFFD32F2F),
+      'success': Color(0xFF2E7D32),
+      'warning': Color(0xFFE65100),
+      'highTemp': Color(0xFFD32F2F),
+      'lowTemp': Color(0xFF1976D2),
+      'sunrise': Color(0xFFFFB74D),
+      'sunset': Color(0xFFE91E63),
+      'moon': Color(0xFFB39DDB),
+      'sunIcon': Color(0xFFFFB300),
+    },
+    darkColors: {
+      'primary': Color(0xFFE0E0E0), // 银白色
+      'primaryDark': Color(0xFFBDBDBD),
+      'accent': Color(0xFFFFFFFF), // 纯白色
+      'background': Color(0xFF000000), // 纯黑背景
+      'headerBackground': Color(0xFF212121),
+      'headerBackgroundSecondary': Color(0xFF000000),
+      'headerTextPrimary': Color(0xFFFFFFFF),
+      'headerTextSecondary': Color(0xFFE0E0E0),
+      'headerIconColor': Color(0xFFFFFFFF),
+      'surface': Color(0xFF212121),
+      'textPrimary': Color(0xFFFFFFFF),
+      'textSecondary': Color(0xFFE0E0E0),
+      'textTertiary': Color(0xFFBDBDBD),
+      'border': Color(0xFF424242),
+      'divider': Color(0xFF757575),
+      'cardBackground': Color(0xFF000000),
+      'cardBackgroundTransparent': Color(0x40FFFFFF),
+      'buttonBackground': Color(0xFFE0E0E0),
+      'buttonText': Color(0xFF000000),
+      'bottomNavBackground': Color(0xFF212121),
+      'bottomNavSelected': Color(0xFFE0E0E0),
+      'bottomNavUnselected': Color(0xFFBDBDBD),
+      'indicatorColor': Color(0xFFE0E0E0),
+      'shadowColor': Color(0x00000000),
+      'iconColor': Color(0xFFE0E0E0),
+      'titleColor': Color(0xFFFFFFFF),
+      'subtitleColor': Color(0xFFE0E0E0),
+      'currentTag': Color(0xFFFFFFFF),
+      'currentTagCardBackground': Color(0x40FFFFFF),
+      'cardBorder': Color(0xFF424242),
+      'buttonShadow': Color(0x30E0E0E0),
+      'bottomNavSelectedBg': Colors.transparent,
+      'bottomNavSelectedText': Color(0xFFE0E0E0),
+      'tagBackground': Color(0xFFE0E0E0),
+      'tagTextOnPrimary': Color(0xFF000000),
+      'tagBorder': Color(0xFFE0E0E0),
+      'error': Color(0xFFFF6B6B),
+      'success': Color(0xFF4CAF50),
+      'warning': Color(0xFFFFB74D),
+      'highTemp': Color(0xFFFF5722),
+      'lowTemp': Color(0xFF64B5F6),
+      'sunrise': Color(0xFFFFCC80),
+      'sunset': Color(0xFFFF6B6B),
+      'moon': Color(0xFFFFFFFF),
+      'sunIcon': Color(0xFFFFFFFF),
+    },
+    primaryGradientLight: LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [
+        Color(0xFF424242), // 中灰色
+        Color(0xFFBDBDBD), // 浅灰色
+      ],
+    ),
+    primaryGradientDark: LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [
+        Color(0xFF212121), // 深灰色
+        Color(0xFF000000), // 纯黑色
+      ],
+    ),
+    headerGradientLight: LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Color(0xFF212121), Color(0xFF000000)],
+      stops: [0.0, 1.0],
+    ),
+    headerGradientDark: LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Color(0xFF212121), Color(0xFF424242)],
+      stops: [0.0, 1.0],
+    ),
+  );
+
+  /// 夕阳红主题
+  static const ThemeColorScheme sunset = ThemeColorScheme(
+    name: '夕阳红',
+    icon: Icons.wb_twilight,
+    previewColor: Color(0xFFFF6F00),
+    lightColors: {
+      'primary': Color(0xFFFF6F00), // 夕阳橙
+      'primaryDark': Color(0xFFE65100),
+      'accent': Color(0xFFFFA726), // 金色
+      'background': Color.fromARGB(255, 255, 248, 225),
+      'headerBackground': Color(0xFFFF6F00),
+      'headerBackgroundSecondary': Color(0xFFE65100),
+      'headerTextPrimary': Color(0xFFFFFFFF),
+      'headerTextSecondary': Color(0xFFFFE0B2),
+      'headerIconColor': Color(0xFFFFFFFF),
+      'surface': Color(0xFFFFFFFF),
+      'textPrimary': Color(0xFFE65100),
+      'textSecondary': Color(0xFFFF6F00),
+      'textTertiary': Color(0xFFFF8F00),
+      'border': Color(0xFFFFE0B2),
+      'divider': Color(0xFFFFCC80),
+      'cardBackground': Color(0xFFFFFFFF),
+      'cardBackgroundTransparent': Color(0x40FFFFFF),
+      'buttonBackground': Color(0xFFFF6F00),
+      'buttonText': Color(0xFFFFFFFF),
+      'bottomNavBackground': Color(0xFFFFFFFF),
+      'bottomNavSelected': Color(0xFFFF6F00),
+      'bottomNavUnselected': Color(0xFF9E9E9E),
+      'indicatorColor': Color(0xFFFF6F00),
+      'shadowColor': Color(0x00000000),
+      'iconColor': Color(0xFFFF6F00),
+      'titleColor': Color(0xFFE65100),
+      'subtitleColor': Color(0xFFFF8F00),
+      'currentTag': Color(0xFFFFFFFF),
+      'currentTagCardBackground': Color(0x40FFFFFF),
+      'cardBorder': Color(0xFFFFE0B2),
+      'buttonShadow': Color(0x30FF6F00),
+      'bottomNavSelectedBg': Colors.transparent,
+      'bottomNavSelectedText': Color(0xFFFF6F00),
+      'tagBackground': Color(0xFFFFA726),
+      'tagTextOnPrimary': Color(0xFFFFFFFF),
+      'tagBorder': Color(0xFFFFA726),
+      'error': Color(0xFFD32F2F),
+      'success': Color(0xFF2E7D32),
+      'warning': Color(0xFFFF6F00),
+      'highTemp': Color(0xFFD32F2F),
+      'lowTemp': Color(0xFF1976D2),
+      'sunrise': Color(0xFFFFA726),
+      'sunset': Color(0xFFFF6F00),
+      'moon': Color(0xFFB39DDB),
+      'sunIcon': Color(0xFFFFA726),
+    },
+    darkColors: {
+      'primary': Color(0xFFFFA726), // 金色
+      'primaryDark': Color(0xFFFFCC80),
+      'accent': Color(0xFFFFE0B2), // 淡金色
+      'background': Color(0xFF3E2723), // 深棕色背景
+      'headerBackground': Color(0xFF5D4037),
+      'headerBackgroundSecondary': Color(0xFF3E2723),
+      'headerTextPrimary': Color(0xFFFFFFFF),
+      'headerTextSecondary': Color(0xFFFFE0B2),
+      'headerIconColor': Color(0xFFFFFFFF),
+      'surface': Color(0xFF5D4037),
+      'textPrimary': Color(0xFFFFFFFF),
+      'textSecondary': Color(0xFFFFE0B2),
+      'textTertiary': Color(0xFFFFCC80),
+      'border': Color(0xFF6D4C41),
+      'divider': Color(0xFF8D6E63),
+      'cardBackground': Color(0xFF3E2723),
+      'cardBackgroundTransparent': Color(0x40FFFFFF),
+      'buttonBackground': Color(0xFFFFA726),
+      'buttonText': Color(0xFF3E2723),
+      'bottomNavBackground': Color(0xFF5D4037),
+      'bottomNavSelected': Color(0xFFFFA726),
+      'bottomNavUnselected': Color(0xFFFFCC80),
+      'indicatorColor': Color(0xFFFFA726),
+      'shadowColor': Color(0x00000000),
+      'iconColor': Color(0xFFFFA726),
+      'titleColor': Color(0xFFFFFFFF),
+      'subtitleColor': Color(0xFFFFE0B2),
+      'currentTag': Color(0xFFFFFFFF),
+      'currentTagCardBackground': Color(0x40FFFFFF),
+      'cardBorder': Color(0xFF6D4C41),
+      'buttonShadow': Color(0x30FFA726),
+      'bottomNavSelectedBg': Colors.transparent,
+      'bottomNavSelectedText': Color(0xFFFFA726),
+      'tagBackground': Color(0xFFFFA726),
+      'tagTextOnPrimary': Color(0xFF3E2723),
+      'tagBorder': Color(0xFFFFA726),
+      'error': Color(0xFFFF6B6B),
+      'success': Color(0xFF4CAF50),
+      'warning': Color(0xFFFFB74D),
+      'highTemp': Color(0xFFFF5722),
+      'lowTemp': Color(0xFF64B5F6),
+      'sunrise': Color(0xFFFFCC80),
+      'sunset': Color(0xFFFF6B6B),
+      'moon': Color(0xFFB39DDB),
+      'sunIcon': Color(0xFFFFB300),
+    },
+    primaryGradientLight: LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [
+        Color(0xFFFFA726), // 金色
+        Color(0xFFFFE0B2), // 淡金色
+      ],
+    ),
+    primaryGradientDark: LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [
+        Color(0xFFFF6F00), // 夕阳橙
+        Color(0xFFE65100), // 深橙
+      ],
+    ),
+    headerGradientLight: LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Color(0xFFFF6F00), Color(0xFFE65100)],
+      stops: [0.0, 1.0],
+    ),
+    headerGradientDark: LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [Color(0xFFFF6F00), Color(0xFF5D4037)],
+      stops: [0.0, 1.0],
+    ),
+  );
+
   /// 获取主题方案
   static ThemeColorScheme getScheme(AppThemeScheme scheme) {
     switch (scheme) {
@@ -838,6 +1358,14 @@ class AppThemes {
         return purple;
       case AppThemeScheme.rose:
         return rose;
+      case AppThemeScheme.neonPurple:
+        return neonPurple;
+      case AppThemeScheme.forest:
+        return forest;
+      case AppThemeScheme.deepSpace:
+        return deepSpace;
+      case AppThemeScheme.sunset:
+        return sunset;
     }
   }
 
@@ -849,5 +1377,9 @@ class AppThemes {
     teal,
     purple,
     rose,
+    neonPurple,
+    forest,
+    deepSpace,
+    sunset,
   ];
 }

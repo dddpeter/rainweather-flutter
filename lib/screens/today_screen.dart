@@ -29,7 +29,6 @@ import '../utils/weather_icon_helper.dart';
 import '../utils/error_handler.dart';
 import '../utils/logger.dart';
 import '../widgets/error_dialog.dart';
-import '../widgets/offline_banner.dart';
 import 'hourly_screen.dart';
 
 class TodayScreen extends StatefulWidget {
@@ -614,14 +613,6 @@ class _TodayScreenState extends State<TodayScreen>
                       physics: const AlwaysScrollableScrollPhysics(),
                       child: Column(
                         children: [
-                          // 离线提示横幅
-                          if (weatherProvider.isOffline)
-                            OfflineBanner(
-                              onRetry: () {
-                                weatherProvider.refreshWeatherData();
-                              },
-                              message: '当前处于离线模式，显示缓存数据',
-                            ),
                           _buildTopWeatherSection(weatherProvider),
                           AppColors.cardSpacingWidget,
                           // AI智能助手卡片（整合天气摘要和通勤提醒）
@@ -725,12 +716,32 @@ class _TodayScreenState extends State<TodayScreen>
                           ),
                           // 数据状态指示器
                           if (weatherProvider.isUsingCachedData ||
-                              weatherProvider.isBackgroundRefreshing)
+                              weatherProvider.isBackgroundRefreshing ||
+                              weatherProvider.isOffline)
                             Padding(
                               padding: const EdgeInsets.only(top: 4),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
+                                  // 离线提示
+                                  if (weatherProvider.isOffline) ...[
+                                    Icon(
+                                      Icons.wifi_off,
+                                      size: 10,
+                                      color: Colors.orange.shade400,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '离线模式',
+                                      style: TextStyle(
+                                        color: Colors.orange.shade400,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                  ],
+                                  // 刷新指示器
                                   if (weatherProvider
                                       .isBackgroundRefreshing) ...[
                                     SizedBox(
@@ -750,6 +761,7 @@ class _TodayScreenState extends State<TodayScreen>
                                     ),
                                     const SizedBox(width: 6),
                                   ],
+                                  // 缓存数据图标
                                   if (weatherProvider.isUsingCachedData)
                                     Icon(
                                       Icons.history,
@@ -759,6 +771,7 @@ class _TodayScreenState extends State<TodayScreen>
                                           .getColor('headerTextSecondary'),
                                     ),
                                   const SizedBox(width: 4),
+                                  // 缓存时间文本
                                   FutureBuilder<String>(
                                     future: _getCacheAgeText(weatherProvider),
                                     builder: (context, snapshot) {

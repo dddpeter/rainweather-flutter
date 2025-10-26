@@ -20,7 +20,6 @@ class AISmartAssistantWidget extends StatefulWidget {
 }
 
 class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
-  bool _isExpanded = false;
   bool _hasInitialized = false;
 
   @override
@@ -83,96 +82,79 @@ class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 标题行（可点击展开/收起）
-                  InkWell(
-                    onTap: () {
-                      setState(() {
-                        _isExpanded = !_isExpanded;
-                      });
-                    },
-                    borderRadius: BorderRadius.circular(8),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Row(
-                        children: [
-                          // 图标（使用主题蓝色）
-                          Icon(
-                            Icons.auto_awesome,
-                            color: AppColors.accentBlue,
-                            size: AppConstants.sectionTitleIconSize,
+                  // 标题行
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      children: [
+                        // 图标（使用主题蓝色）
+                        Icon(
+                          Icons.auto_awesome,
+                          color: AppColors.accentBlue,
+                          size: AppConstants.sectionTitleIconSize,
+                        ),
+                        const SizedBox(width: 8),
+                        // 标题
+                        Text(
+                          'AI智能助手',
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: AppConstants.sectionTitleFontSize,
+                            fontWeight: FontWeight.bold,
                           ),
-                          const SizedBox(width: 8),
-                          // 标题
-                          Text(
-                            'AI智能助手',
+                        ),
+                        const SizedBox(width: 8),
+                        // 功能数量标签
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.textSecondary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            hasCommuteAdvices ? '2项' : '1项',
                             style: TextStyle(
-                              color: AppColors.textPrimary,
-                              fontSize: AppConstants.sectionTitleFontSize,
-                              fontWeight: FontWeight.bold,
+                              color: AppColors.textSecondary,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          // 功能数量标签
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.textSecondary.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              hasCommuteAdvices ? '2项' : '1项',
-                              style: TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
+                        ),
+                        const Spacer(),
+                        // AI标签
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: aiColor.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.auto_awesome,
+                                color: aiColor,
+                                size: 10,
                               ),
-                            ),
-                          ),
-                          const Spacer(),
-                          // AI标签
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: aiColor.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.auto_awesome,
+                              const SizedBox(width: 2),
+                              Text(
+                                'AI',
+                                style: TextStyle(
                                   color: aiColor,
-                                  size: 10,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                                const SizedBox(width: 2),
-                                Text(
-                                  'AI',
-                                  style: TextStyle(
-                                    color: aiColor,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 8),
-                          // 展开/收起图标
-                          Icon(
-                            _isExpanded
-                                ? Icons.keyboard_arrow_down
-                                : Icons.keyboard_arrow_right,
-                            color: AppColors.textSecondary,
-                            size: 20,
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
 
@@ -192,10 +174,7 @@ class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
                       selector: (context, weatherProvider) =>
                           weatherProvider.commuteAdvices,
                       builder: (context, commuteAdvices, child) {
-                        return _buildCommuteAdvicesSection(
-                          commuteAdvices,
-                          _isExpanded,
-                        );
+                        return _buildCommuteAdvicesSection(commuteAdvices);
                       },
                     ),
                   ],
@@ -317,7 +296,7 @@ class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
   }
 
   /// 构建通勤提醒部分
-  Widget _buildCommuteAdvicesSection(List<dynamic> advices, bool isExpanded) {
+  Widget _buildCommuteAdvicesSection(List<dynamic> advices) {
     final sortedAdvices = List.from(advices);
     sortedAdvices.sort((a, b) => a.priority.compareTo(b.priority));
 

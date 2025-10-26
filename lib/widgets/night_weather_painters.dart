@@ -12,44 +12,29 @@ class MoonPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width * 0.22;
+    final radius = size.width * 0.2;
 
     // 绘制月亮主体（新月形状）
     final moonPaint = Paint()
-      ..color = const Color(0xFFFFFFFF).withOpacity(0.95)
+      ..color =
+          const Color(0xFFFFF9E3) // 月亮的淡黄色
       ..style = PaintingStyle.fill;
 
-    final path = Path();
-    // 绘制新月形状（右侧的月牙）
-    path.addArc(
-      Rect.fromCircle(center: center, radius: radius),
-      -math.pi / 3,
-      -math.pi * 0.7,
-    );
-    path.addArc(
-      Rect.fromCircle(
-        center: Offset(center.dx + radius * 0.3, center.dy),
-        radius: radius,
-      ),
-      -math.pi / 3 + math.pi,
-      math.pi * 0.7,
-    );
-    path.close();
+    // 先绘制完整的月亮（圆形）
+    canvas.drawCircle(center, radius, moonPaint);
 
-    canvas.drawPath(path, moonPaint);
-
-    // 绘制月亮内部的暗色区域（月影）
+    // 绘制阴影以形成新月
     final shadowPaint = Paint()
-      ..color = const Color(0xFFFFFFFF).withOpacity(0.15)
+      ..color = const Color(0xFF1A1A2E)
+          .withOpacity(0.9) // 深色阴影
       ..style = PaintingStyle.fill;
 
-    canvas.drawOval(
-      Rect.fromCircle(
-        center: Offset(center.dx + radius * 0.15, center.dy),
-        radius: radius * 0.8,
-      ),
-      shadowPaint,
+    // 绘制一个偏移的圆形来创建新月效果
+    final shadowCenter = Offset(
+      center.dx + radius * 0.45,
+      center.dy - radius * 0.2,
     );
+    canvas.drawCircle(shadowCenter, radius * 0.92, shadowPaint);
 
     // 绘制星星（带闪烁效果）
     final starPositions = [
@@ -81,19 +66,57 @@ class MoonPainter extends CustomPainter {
   }
 
   void _drawStar(Canvas canvas, Offset center, double radius, Paint paint) {
-    final path = Path();
-    for (int i = 0; i < 5; i++) {
-      final angle = i * math.pi * 2 / 5 - math.pi / 2;
-      final x = center.dx + math.cos(angle) * radius;
-      final y = center.dy + math.sin(angle) * radius;
-      if (i == 0) {
-        path.moveTo(x, y);
-      } else {
-        path.lineTo(x, y);
-      }
-    }
-    path.close();
-    canvas.drawPath(path, paint);
+    // 绘制星星核心（小圆圈）
+    canvas.drawCircle(center, radius * 0.4, paint);
+
+    // 绘制4条尖锐的光芒线
+    final rayLength = radius * 2;
+    final rayPaint = Paint()
+      ..color = paint.color
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    // 上下左右4个方向的光芒
+    canvas.drawLine(center, Offset(center.dx, center.dy - rayLength), rayPaint);
+    canvas.drawLine(center, Offset(center.dx, center.dy + rayLength), rayPaint);
+    canvas.drawLine(center, Offset(center.dx - rayLength, center.dy), rayPaint);
+    canvas.drawLine(center, Offset(center.dx + rayLength, center.dy), rayPaint);
+
+    // 绘制斜向4条光芒（更短）
+    final diagonalRayLength = radius * 1.5;
+    canvas.drawLine(
+      center,
+      Offset(
+        center.dx - diagonalRayLength * 0.707,
+        center.dy - diagonalRayLength * 0.707,
+      ),
+      rayPaint,
+    );
+    canvas.drawLine(
+      center,
+      Offset(
+        center.dx + diagonalRayLength * 0.707,
+        center.dy - diagonalRayLength * 0.707,
+      ),
+      rayPaint,
+    );
+    canvas.drawLine(
+      center,
+      Offset(
+        center.dx - diagonalRayLength * 0.707,
+        center.dy + diagonalRayLength * 0.707,
+      ),
+      rayPaint,
+    );
+    canvas.drawLine(
+      center,
+      Offset(
+        center.dx + diagonalRayLength * 0.707,
+        center.dy + diagonalRayLength * 0.707,
+      ),
+      rayPaint,
+    );
   }
 
   @override
@@ -110,30 +133,28 @@ class CloudyNightPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width * 0.18;
+    final radius = size.width * 0.17;
 
     // 先绘制月亮（在云后面）
     final moonPaint = Paint()
-      ..color = const Color(0xFFFFFFFF).withOpacity(0.9)
+      ..color =
+          const Color(0xFFFFF9E3) // 月亮的淡黄色
       ..style = PaintingStyle.fill;
 
-    final path = Path();
-    path.addArc(
-      Rect.fromCircle(center: center, radius: radius),
-      -math.pi / 3,
-      -math.pi * 0.7,
-    );
-    path.addArc(
-      Rect.fromCircle(
-        center: Offset(center.dx + radius * 0.3, center.dy),
-        radius: radius,
-      ),
-      -math.pi / 3 + math.pi,
-      math.pi * 0.7,
-    );
-    path.close();
+    // 先绘制完整的月亮（圆形）
+    canvas.drawCircle(center, radius, moonPaint);
 
-    canvas.drawPath(path, moonPaint);
+    // 绘制阴影以形成新月
+    final shadowPaint = Paint()
+      ..color = const Color(0xFF1A1A2E).withOpacity(0.9)
+      ..style = PaintingStyle.fill;
+
+    // 绘制一个偏移的圆形来创建新月效果
+    final shadowCenter = Offset(
+      center.dx + radius * 0.45,
+      center.dy - radius * 0.2,
+    );
+    canvas.drawCircle(shadowCenter, radius * 0.92, shadowPaint);
 
     // 绘制云朵（灰色）
     final cloudPaint = Paint()
@@ -200,30 +221,24 @@ class PartlyCloudyNightPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width * 0.2;
+    final radius = size.width * 0.19;
 
     // 绘制月亮
     final moonPaint = Paint()
-      ..color = const Color(0xFFFFFFFF).withOpacity(0.95)
+      ..color = const Color(0xFFFFF9E3) // 月亮的淡黄色
       ..style = PaintingStyle.fill;
 
-    final path = Path();
-    path.addArc(
-      Rect.fromCircle(center: center, radius: radius),
-      -math.pi / 3,
-      -math.pi * 0.7,
-    );
-    path.addArc(
-      Rect.fromCircle(
-        center: Offset(center.dx + radius * 0.3, center.dy),
-        radius: radius,
-      ),
-      -math.pi / 3 + math.pi,
-      math.pi * 0.7,
-    );
-    path.close();
+    // 先绘制完整的月亮（圆形）
+    canvas.drawCircle(center, radius, moonPaint);
 
-    canvas.drawPath(path, moonPaint);
+    // 绘制阴影以形成新月
+    final shadowPaint = Paint()
+      ..color = const Color(0xFF1A1A2E).withOpacity(0.9)
+      ..style = PaintingStyle.fill;
+
+    // 绘制一个偏移的圆形来创建新月效果
+    final shadowCenter = Offset(center.dx + radius * 0.45, center.dy - radius * 0.2);
+    canvas.drawCircle(shadowCenter, radius * 0.92, shadowPaint);
 
     // 绘制少量云朵
     final cloudPaint = Paint()
@@ -278,30 +293,24 @@ class FewCloudsNightPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width * 0.22;
+    final radius = size.width * 0.21;
 
     // 绘制月亮
     final moonPaint = Paint()
-      ..color = const Color(0xFFFFFFFF).withOpacity(0.95)
+      ..color = const Color(0xFFFFF9E3) // 月亮的淡黄色
       ..style = PaintingStyle.fill;
 
-    final path = Path();
-    path.addArc(
-      Rect.fromCircle(center: center, radius: radius),
-      -math.pi / 3,
-      -math.pi * 0.7,
-    );
-    path.addArc(
-      Rect.fromCircle(
-        center: Offset(center.dx + radius * 0.3, center.dy),
-        radius: radius,
-      ),
-      -math.pi / 3 + math.pi,
-      math.pi * 0.7,
-    );
-    path.close();
+    // 先绘制完整的月亮（圆形）
+    canvas.drawCircle(center, radius, moonPaint);
 
-    canvas.drawPath(path, moonPaint);
+    // 绘制阴影以形成新月
+    final shadowPaint = Paint()
+      ..color = const Color(0xFF1A1A2E).withOpacity(0.9)
+      ..style = PaintingStyle.fill;
+
+    // 绘制一个偏移的圆形来创建新月效果
+    final shadowCenter = Offset(center.dx + radius * 0.45, center.dy - radius * 0.2);
+    canvas.drawCircle(shadowCenter, radius * 0.92, shadowPaint);
 
     // 绘制一小朵云
     final cloudPaint = Paint()

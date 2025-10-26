@@ -89,6 +89,7 @@ class HourlyWeatherWidget extends StatelessWidget {
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     itemCount: hourlyForecast!.length,
+                    itemExtent: 72, // 固定item高度（width）
                     itemBuilder: (context, index) {
                       final hour = hourlyForecast![index];
                       return _buildHourlyItem(hour, index);

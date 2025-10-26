@@ -228,7 +228,33 @@ This Flutter app is a complete refactor of the original Android weather app with
 
 ## Changelog
 
-### v1.12.3 (Latest - 2025-01-14)
+### v1.12.6 (Latest - 2025-01-18)
+
+**AI Content Optimization**
+- ✨ **Typewriter Effect**: All AI-generated content supports line-by-line typewriter effect for better user experience
+- 💾 **Cache Optimization**: Cached content displays instantly without typewriter effect for fast response
+- 📝 **Prompt Optimization**: AI prompts for commute advice, health advisor, and extreme weather alerts are more professional and practical
+- 🌙 **Lunar Calendar Interpretation**: New AI interpretation feature for lunar calendar and traditional almanac
+
+**Lunar Calendar Features**
+- 🗓️ **Lunar Detail Page Redesign**: Redesigned lunar calendar detail page with more compact and beautiful layout
+- 🎨 **Direction Layout**: Changed to 2x2 vertical card layout for intuitive display of God of Wealth, God of Joy, God of Fortune directions
+- ⭐ **Constellation & Star**: Display in one row with lucky/unlucky format like "虚(凶)", color-coded
+- 📖 **AI Interpretation**: Added AI interpretation for Peng Zu Bai Ji and Yi Ji, with 10-day caching
+- 📅 **Calendar Optimization**: Reduced font size and spacing, marked auspicious days with orange background
+
+**Layout Optimization**
+- 📱 **24-Hour Weather**: Card spacing reduced from 8px to 2px, width from 72 to 58 for more compact display
+- 🎨 **Life Index**: Removed AI interpretation entry, restored clean design
+- 🔧 **Code Refactoring**: Optimized main.dart structure, extracted AppInitializationService, AppRouteObserver, MainAppBar
+- 🎯 **Unified Standards**: All AI cards use consistent Material Design 3 styling
+
+**Bug Fixes**
+- 🐛 **Text Decoration Fix**: Fixed global theme causing automatic text underlines
+- 🎨 **Theme Configuration**: Set all TextTheme decoration to none in theme
+- 📝 **Text Display**: All text components no longer show unexpected underline decorations
+
+### v1.12.3 (2025-01-14)
 
 **AI Smart Assistant Comprehensive Optimization**
 - ✨ **Startup Optimization**: AI summary loads from cache first, avoiding "generating" flicker

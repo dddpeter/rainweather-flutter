@@ -488,14 +488,14 @@ class AppMenu extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '• Material Design 3 规范完善\n'
-                      '• AI智能助手配色优化（琥珀金色）\n'
-                      '• 通勤提醒与天气提醒设计统一\n'
-                      '• 内部小卡片禁用蓝色系\n'
-                      '• 今日提醒卡片位置前移\n'
-                      '• AI标签智能显示\n'
-                      '• 通勤建议标题动态生成\n'
-                      '• 小卡片点击交互优化',
+                      '• AI内容打字机效果展示\n'
+                      '• 缓存内容直接显示，快速响应\n'
+                      '• AI提示词专业化和实用化\n'
+                      '• 黄历节日AI解读功能\n'
+                      '• 黄历详情页面重构\n'
+                      '• 24小时天气卡片布局优化\n'
+                      '• 代码结构优化和重构\n'
+                      '• 修复文本装饰问题',
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,

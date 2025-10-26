@@ -619,12 +619,14 @@ class AppDrawer extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '• 📊 7日温度趋势图数据点优化\n'
-                      '• 📈 24小时温度趋势图支持滑动\n'
-                      '• 📉 15日温度趋势图支持滑动\n'
-                      '• 🌤️ 智能天气图标显示\n'
-                      '• 🎨 图表视觉效果优化\n'
-                      '• 📱 网格线和布局优化',
+                      '• AI内容打字机效果展示\n'
+                      '• 缓存内容直接显示，快速响应\n'
+                      '• AI提示词专业化和实用化\n'
+                      '• 黄历节日AI解读功能\n'
+                      '• 黄历详情页面重构\n'
+                      '• 24小时天气卡片布局优化\n'
+                      '• 代码结构优化和重构\n'
+                      '• 修复文本装饰问题',
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,

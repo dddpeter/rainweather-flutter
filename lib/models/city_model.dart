@@ -91,6 +91,9 @@ class CityModel {
 
   @override
   int get hashCode {
-    return id.hashCode ^ name.hashCode ^ isMainCity.hashCode ^ sortOrder.hashCode;
+    return id.hashCode ^
+        name.hashCode ^
+        isMainCity.hashCode ^
+        sortOrder.hashCode;
   }
 }

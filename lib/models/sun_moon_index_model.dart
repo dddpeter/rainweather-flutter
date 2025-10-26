@@ -27,10 +27,7 @@ class SunMoonIndexData {
   final SunAndMoon? sunAndMoon;
   final List<LifeIndex>? index;
 
-  SunMoonIndexData({
-    this.sunAndMoon,
-    this.index,
-  });
+  SunMoonIndexData({this.sunAndMoon, this.index});
 
   factory SunMoonIndexData.fromJson(Map<String, dynamic> json) =>
       _$SunMoonIndexDataFromJson(json);
@@ -43,10 +40,7 @@ class SunAndMoon {
   final Moon? moon;
   final Sun? sun;
 
-  SunAndMoon({
-    this.moon,
-    this.sun,
-  });
+  SunAndMoon({this.moon, this.sun});
 
   factory SunAndMoon.fromJson(Map<String, dynamic> json) =>
       _$SunAndMoonFromJson(json);
@@ -59,10 +53,7 @@ class Sun {
   final String? sunrise;
   final String? sunset;
 
-  Sun({
-    this.sunrise,
-    this.sunset,
-  });
+  Sun({this.sunrise, this.sunset});
 
   factory Sun.fromJson(Map<String, dynamic> json) => _$SunFromJson(json);
 
@@ -75,11 +66,7 @@ class Moon {
   final String? moonset;
   final String? moonage;
 
-  Moon({
-    this.moonrise,
-    this.moonset,
-    this.moonage,
-  });
+  Moon({this.moonrise, this.moonset, this.moonage});
 
   factory Moon.fromJson(Map<String, dynamic> json) => _$MoonFromJson(json);
 
@@ -90,18 +77,14 @@ class Moon {
 class LifeIndex {
   @JsonKey(name: 'index_level')
   final String? indexLevel;
-  
+
   @JsonKey(name: 'index_content')
   final String? indexContent;
-  
+
   @JsonKey(name: 'index_type_ch')
   final String? indexTypeCh;
 
-  LifeIndex({
-    this.indexLevel,
-    this.indexContent,
-    this.indexTypeCh,
-  });
+  LifeIndex({this.indexLevel, this.indexContent, this.indexTypeCh});
 
   factory LifeIndex.fromJson(Map<String, dynamic> json) =>
       _$LifeIndexFromJson(json);

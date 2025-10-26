@@ -11,11 +11,7 @@ enum DataType {
 }
 
 /// 刷新优先级
-enum RefreshPriority {
-  high,
-  medium,
-  low,
-}
+enum RefreshPriority { high, medium, low }
 
 /// 刷新任务
 class RefreshTask {
@@ -23,11 +19,7 @@ class RefreshTask {
   final RefreshPriority priority;
   final Future<void> Function() task;
 
-  RefreshTask({
-    required this.type,
-    required this.priority,
-    required this.task,
-  });
+  RefreshTask({required this.type, required this.priority, required this.task});
 }
 
 /// 智能刷新调度器
@@ -50,11 +42,13 @@ class SmartRefreshScheduler {
   bool shouldRefresh(DataType dataType, Duration backgroundDuration) {
     final interval = _refreshIntervals[dataType] ?? 60;
     final shouldRefresh = backgroundDuration.inMinutes >= interval;
-    
+
     if (shouldRefresh) {
-      print('🔄 ${_getDataTypeName(dataType)} 需要刷新 (后台 ${backgroundDuration.inMinutes}min >= ${interval}min)');
+      print(
+        '🔄 ${_getDataTypeName(dataType)} 需要刷新 (后台 ${backgroundDuration.inMinutes}min >= ${interval}min)',
+      );
     }
-    
+
     return shouldRefresh;
   }
 
@@ -70,50 +64,58 @@ class SmartRefreshScheduler {
 
     // 当前天气 - 高优先级
     if (shouldRefresh(DataType.currentWeather, backgroundDuration)) {
-      tasks.add(RefreshTask(
-        type: DataType.currentWeather,
-        priority: RefreshPriority.high,
-        task: () async {
-          print('🔄 刷新当前天气');
-          await weatherProvider.refreshWeatherData();
-        },
-      ));
+      tasks.add(
+        RefreshTask(
+          type: DataType.currentWeather,
+          priority: RefreshPriority.high,
+          task: () async {
+            print('🔄 刷新当前天气');
+            await weatherProvider.refreshWeatherData();
+          },
+        ),
+      );
     }
 
     // 24小时预报 - 中优先级
     if (shouldRefresh(DataType.hourlyForecast, backgroundDuration)) {
-      tasks.add(RefreshTask(
-        type: DataType.hourlyForecast,
-        priority: RefreshPriority.medium,
-        task: () async {
-          print('🔄 刷新24小时预报');
-          await weatherProvider.refresh24HourForecast();
-        },
-      ));
+      tasks.add(
+        RefreshTask(
+          type: DataType.hourlyForecast,
+          priority: RefreshPriority.medium,
+          task: () async {
+            print('🔄 刷新24小时预报');
+            await weatherProvider.refresh24HourForecast();
+          },
+        ),
+      );
     }
 
     // 15日预报 - 中优先级
     if (shouldRefresh(DataType.dailyForecast, backgroundDuration)) {
-      tasks.add(RefreshTask(
-        type: DataType.dailyForecast,
-        priority: RefreshPriority.medium,
-        task: () async {
-          print('🔄 刷新15日预报');
-          await weatherProvider.refresh15DayForecast();
-        },
-      ));
+      tasks.add(
+        RefreshTask(
+          type: DataType.dailyForecast,
+          priority: RefreshPriority.medium,
+          task: () async {
+            print('🔄 刷新15日预报');
+            await weatherProvider.refresh15DayForecast();
+          },
+        ),
+      );
     }
 
     // 城市列表 - 低优先级
     if (shouldRefresh(DataType.cityList, backgroundDuration)) {
-      tasks.add(RefreshTask(
-        type: DataType.cityList,
-        priority: RefreshPriority.low,
-        task: () async {
-          print('🔄 刷新城市列表');
-          await weatherProvider.loadMainCities();
-        },
-      ));
+      tasks.add(
+        RefreshTask(
+          type: DataType.cityList,
+          priority: RefreshPriority.low,
+          task: () async {
+            print('🔄 刷新城市列表');
+            await weatherProvider.loadMainCities();
+          },
+        ),
+      );
     }
 
     // 按优先级执行任务
@@ -134,7 +136,10 @@ class SmartRefreshScheduler {
     }
 
     // 按优先级排序
-    tasks.sort((a, b) => _priorityValue(a.priority).compareTo(_priorityValue(b.priority)));
+    tasks.sort(
+      (a, b) =>
+          _priorityValue(a.priority).compareTo(_priorityValue(b.priority)),
+    );
 
     // 高优先级任务立即执行
     final highPriorityTasks = tasks
@@ -148,8 +153,9 @@ class SmartRefreshScheduler {
     }
 
     // 中优先级任务依次执行
-    final mediumPriorityTasks =
-        tasks.where((t) => t.priority == RefreshPriority.medium).toList();
+    final mediumPriorityTasks = tasks
+        .where((t) => t.priority == RefreshPriority.medium)
+        .toList();
 
     for (final task in mediumPriorityTasks) {
       try {
@@ -160,8 +166,9 @@ class SmartRefreshScheduler {
     }
 
     // 低优先级任务延迟执行
-    final lowPriorityTasks =
-        tasks.where((t) => t.priority == RefreshPriority.low).toList();
+    final lowPriorityTasks = tasks
+        .where((t) => t.priority == RefreshPriority.low)
+        .toList();
 
     if (lowPriorityTasks.isNotEmpty) {
       Future.delayed(const Duration(seconds: 3), () async {
@@ -198,11 +205,11 @@ class SmartRefreshScheduler {
         weatherProvider.refresh15DayForecast(),
         weatherProvider.loadMainCities(),
       ]);
-      
+
       // 保存刷新时间
       final persistentState = await PersistentAppState.getInstance();
       await persistentState.saveWeatherUpdateTime();
-      
+
       print('✅ 完整刷新完成');
     } catch (e) {
       print('❌ 完整刷新失败: $e');
@@ -214,19 +221,20 @@ class SmartRefreshScheduler {
     try {
       final persistentState = await PersistentAppState.getInstance();
       final lastUpdate = await persistentState.getLastLocationUpdate();
-      
+
       if (lastUpdate == null) {
         print('📍 需要首次定位');
         return true;
       }
 
       final timeSinceUpdate = DateTime.now().difference(lastUpdate);
-      final needsUpdate = timeSinceUpdate.inMinutes >= _refreshIntervals[DataType.location]!;
-      
+      final needsUpdate =
+          timeSinceUpdate.inMinutes >= _refreshIntervals[DataType.location]!;
+
       if (needsUpdate) {
         print('📍 需要更新定位 (距上次 ${timeSinceUpdate.inMinutes} 分钟)');
       }
-      
+
       return needsUpdate;
     } catch (e) {
       print('❌ 检查定位更新需求失败: $e');

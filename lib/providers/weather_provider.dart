@@ -53,7 +53,6 @@ class WeatherProvider extends ChangeNotifier {
   late final WeatherCacheManager _cacheManager = WeatherCacheManager(
     databaseService: _databaseService,
     smartCache: _smartCache,
-    locationService: _locationService,
   );
 
   // 网络状态服务

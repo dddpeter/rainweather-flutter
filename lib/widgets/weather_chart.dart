@@ -46,7 +46,7 @@ class WeatherChart extends StatelessWidget {
         ];
 
         return Padding(
-            padding: const EdgeInsets.only(
+          padding: const EdgeInsets.only(
             left: 8.0,
             right: 8.0, // 增加右侧padding，确保最后一组数据完整显示
             top: 8.0,

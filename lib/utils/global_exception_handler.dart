@@ -3,14 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'logger.dart';
 
 /// 错误类型枚举
-enum ErrorType {
-  critical,
-  network,
-  location,
-  database,
-  ui,
-  unknown,
-}
+enum ErrorType { critical, network, location, database, ui, unknown }
 
 /// 错误报告服务接口
 abstract class ErrorReportingService {
@@ -24,7 +17,12 @@ class DefaultErrorReportingService implements ErrorReportingService {
   void reportError(Object error, StackTrace? stackTrace) {
     // 在debug模式下打印错误信息
     if (kDebugMode) {
-      Logger.e('错误报告: ${error.toString()}', tag: 'ErrorReportingService', error: error, stackTrace: stackTrace);
+      Logger.e(
+        '错误报告: ${error.toString()}',
+        tag: 'ErrorReportingService',
+        error: error,
+        stackTrace: stackTrace,
+      );
     }
 
     // 这里可以添加实际的错误报告逻辑
@@ -35,7 +33,12 @@ class DefaultErrorReportingService implements ErrorReportingService {
   void reportFlutterError(FlutterErrorDetails details) {
     // 在debug模式下打印错误信息
     if (kDebugMode) {
-      Logger.e('Flutter错误报告: ${details.exception.toString()}', tag: 'ErrorReportingService', error: details.exception, stackTrace: details.stack);
+      Logger.e(
+        'Flutter错误报告: ${details.exception.toString()}',
+        tag: 'ErrorReportingService',
+        error: details.exception,
+        stackTrace: details.stack,
+      );
     }
 
     // 这里可以添加实际的错误报告逻辑
@@ -152,7 +155,7 @@ class GlobalExceptionHandler {
     // 平台异常通常需要特殊处理
     _showPlatformErrorToast(error);
     _sendPlatformErrorReport(error, stackTrace);
-    
+
     // 返回true表示异常已被处理
     return true;
   }
@@ -222,30 +225,21 @@ class GlobalExceptionHandler {
 
   /// 显示网络错误Toast
   void _showNetworkErrorToast(Object exception) {
-    Logger.w(
-      '网络错误: ${exception.toString()}',
-      tag: 'GlobalExceptionHandler',
-    );
+    Logger.w('网络错误: ${exception.toString()}', tag: 'GlobalExceptionHandler');
 
     // 这里可以添加网络重试逻辑
   }
 
   /// 显示定位错误Toast
   void _showLocationErrorToast(Object exception) {
-    Logger.w(
-      '定位错误: ${exception.toString()}',
-      tag: 'GlobalExceptionHandler',
-    );
+    Logger.w('定位错误: ${exception.toString()}', tag: 'GlobalExceptionHandler');
 
     // 这里可以添加定位重试逻辑
   }
 
   /// 处理数据库错误
   void _handleDatabaseError(Object exception) {
-    Logger.e(
-      '数据库错误: ${exception.toString()}',
-      tag: 'GlobalExceptionHandler',
-    );
+    Logger.e('数据库错误: ${exception.toString()}', tag: 'GlobalExceptionHandler');
 
     // 数据库错误通常不需要显示给用户
     // 但需要记录以便开发者调试
@@ -253,10 +247,7 @@ class GlobalExceptionHandler {
 
   /// 处理UI错误
   void _handleUIError(Object exception) {
-    Logger.w(
-      'UI错误: ${exception.toString()}',
-      tag: 'GlobalExceptionHandler',
-    );
+    Logger.w('UI错误: ${exception.toString()}', tag: 'GlobalExceptionHandler');
 
     // UI错误可能需要特殊处理
     // 例如：重新构建部分UI
@@ -264,18 +255,12 @@ class GlobalExceptionHandler {
 
   /// 显示平台错误Toast
   void _showPlatformErrorToast(Object error) {
-    Logger.w(
-      '平台错误: ${error.toString()}',
-      tag: 'GlobalExceptionHandler',
-    );
+    Logger.w('平台错误: ${error.toString()}', tag: 'GlobalExceptionHandler');
   }
 
   /// 显示通用错误Toast
   void _showGenericErrorToast(Object exception) {
-    Logger.w(
-      '通用错误: ${exception.toString()}',
-      tag: 'GlobalExceptionHandler',
-    );
+    Logger.w('通用错误: ${exception.toString()}', tag: 'GlobalExceptionHandler');
   }
 
   /// 发送Flutter错误报告

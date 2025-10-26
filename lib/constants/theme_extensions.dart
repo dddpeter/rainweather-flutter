@@ -124,8 +124,16 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
       cardBackground: Color.lerp(cardBackground, other.cardBackground, t)!,
       cardBorder: Color.lerp(cardBorder, other.cardBorder, t)!,
       glassBackground: Color.lerp(glassBackground, other.glassBackground, t)!,
-      currentTagBackground: Color.lerp(currentTagBackground, other.currentTagBackground, t)!,
-      currentTagBorder: Color.lerp(currentTagBorder, other.currentTagBorder, t)!,
+      currentTagBackground: Color.lerp(
+        currentTagBackground,
+        other.currentTagBackground,
+        t,
+      )!,
+      currentTagBorder: Color.lerp(
+        currentTagBorder,
+        other.currentTagBorder,
+        t,
+      )!,
       currentTag: Color.lerp(currentTag, other.currentTag, t)!,
       dividerColor: Color.lerp(dividerColor, other.dividerColor, t)!,
       buttonShadow: Color.lerp(buttonShadow, other.buttonShadow, t)!,
@@ -135,9 +143,17 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
       sunset: Color.lerp(sunset, other.sunset, t)!,
       moon: Color.lerp(moon, other.moon, t)!,
       tagBackground: Color.lerp(tagBackground, other.tagBackground, t)!,
-      tagTextOnPrimary: Color.lerp(tagTextOnPrimary, other.tagTextOnPrimary, t)!,
+      tagTextOnPrimary: Color.lerp(
+        tagTextOnPrimary,
+        other.tagTextOnPrimary,
+        t,
+      )!,
       tagBorder: Color.lerp(tagBorder, other.tagBorder, t)!,
-      primaryGradient: LinearGradient.lerp(primaryGradient, other.primaryGradient, t)!,
+      primaryGradient: LinearGradient.lerp(
+        primaryGradient,
+        other.primaryGradient,
+        t,
+      )!,
     );
   }
 
@@ -211,7 +227,7 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
 /// 扩展方法，方便在任何地方获取主题扩展
 extension ThemeExtras on BuildContext {
   AppThemeExtension get appTheme {
-    return Theme.of(this).extension<AppThemeExtension>() ?? AppThemeExtension.dark();
+    return Theme.of(this).extension<AppThemeExtension>() ??
+        AppThemeExtension.dark();
   }
 }
-

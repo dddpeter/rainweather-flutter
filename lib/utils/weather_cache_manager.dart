@@ -2,7 +2,6 @@ import 'dart:convert';
 import '../models/weather_model.dart';
 import '../services/database_service.dart';
 import '../services/smart_cache_service.dart';
-import '../services/location_service.dart';
 import '../constants/app_constants.dart';
 import '../utils/logger.dart';
 import '../utils/error_handler.dart';
@@ -12,15 +11,12 @@ import '../utils/error_handler.dart';
 class WeatherCacheManager {
   final DatabaseService _databaseService;
   final SmartCacheService _smartCache;
-  final LocationService _locationService;
 
   WeatherCacheManager({
     required DatabaseService databaseService,
     required SmartCacheService smartCache,
-    required LocationService locationService,
   }) : _databaseService = databaseService,
-       _smartCache = smartCache,
-       _locationService = locationService;
+       _smartCache = smartCache;
 
   /// 获取天气数据（优先智能缓存，然后是数据库缓存）
   Future<WeatherModel?> getWeather(String cityName) async {

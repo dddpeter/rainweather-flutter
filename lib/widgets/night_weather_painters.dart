@@ -33,6 +33,152 @@ void _drawMoon(Canvas canvas, Offset center, double radius) {
   canvas.drawPath(crescentPath, moonPaint);
 }
 
+/// 辅助方法：绘制单颗星星
+void _drawStar(Canvas canvas, Offset center, double radius, Paint paint) {
+  // 绘制星星核心（小圆圈）
+  canvas.drawCircle(center, radius * 0.4, paint);
+
+  // 绘制4条尖锐的光芒线
+  final rayLength = radius * 2;
+  final rayPaint = Paint()
+    ..color = paint.color
+    ..strokeWidth = 2
+    ..style = PaintingStyle.stroke
+    ..strokeCap = StrokeCap.round;
+
+  // 上下左右4个方向的光芒
+  canvas.drawLine(center, Offset(center.dx, center.dy - rayLength), rayPaint);
+  canvas.drawLine(center, Offset(center.dx, center.dy + rayLength), rayPaint);
+  canvas.drawLine(center, Offset(center.dx - rayLength, center.dy), rayPaint);
+  canvas.drawLine(center, Offset(center.dx + rayLength, center.dy), rayPaint);
+
+  // 绘制斜向4条光芒（更短）
+  final diagonalRayLength = radius * 1.5;
+  canvas.drawLine(
+    center,
+    Offset(
+      center.dx - diagonalRayLength * 0.707,
+      center.dy - diagonalRayLength * 0.707,
+    ),
+    rayPaint,
+  );
+  canvas.drawLine(
+    center,
+    Offset(
+      center.dx + diagonalRayLength * 0.707,
+      center.dy - diagonalRayLength * 0.707,
+    ),
+    rayPaint,
+  );
+  canvas.drawLine(
+    center,
+    Offset(
+      center.dx - diagonalRayLength * 0.707,
+      center.dy + diagonalRayLength * 0.707,
+    ),
+    rayPaint,
+  );
+  canvas.drawLine(
+    center,
+    Offset(
+      center.dx + diagonalRayLength * 0.707,
+      center.dy + diagonalRayLength * 0.707,
+    ),
+    rayPaint,
+  );
+}
+
+/// 辅助方法：绘制星星（统一的星星绘制）
+void _drawNightStars(
+  Canvas canvas,
+  Offset center,
+  Size size,
+  double animationValue, {
+  double minRadius = 0.35,
+  double maxRadius = 0.48,
+}) {
+  // 生成随机大小和颜色的星星数据
+  final starData = [
+    (
+      pos: Offset(
+        center.dx - size.width * minRadius,
+        center.dy - size.height * (minRadius + 0.1),
+      ),
+      size: 2.8 + (math.Random().nextDouble() * 1.4),
+      color: 0xFFFFFFFF,
+    ),
+    (
+      pos: Offset(
+        center.dx + size.width * (minRadius + 0.08),
+        center.dy - size.height * (maxRadius + 0.02),
+      ),
+      size: 2.0 + (math.Random().nextDouble() * 0.8),
+      color: 0xFFFFF9E3,
+    ),
+    (
+      pos: Offset(
+        center.dx - size.width * (maxRadius + 0.03),
+        center.dy + size.height * (minRadius + 0.08),
+      ),
+      size: 3.0 + (math.Random().nextDouble() * 1.2),
+      color: 0xFFE0F2F1,
+    ),
+    (
+      pos: Offset(
+        center.dx + size.width * minRadius,
+        center.dy + size.height * (minRadius + 0.02),
+      ),
+      size: 2.5 + (math.Random().nextDouble() * 0.9),
+      color: 0xFFFFFFFF,
+    ),
+    (
+      pos: Offset(center.dx, center.dy - size.height * maxRadius),
+      size: 3.2 + (math.Random().nextDouble() * 1.0),
+      color: 0xFFFFEB3B,
+    ),
+    (
+      pos: Offset(
+        center.dx - size.width * 0.25,
+        center.dy - size.height * (maxRadius - 0.03),
+      ),
+      size: 1.5 + (math.Random().nextDouble() * 0.7),
+      color: 0xFFE1F5FE,
+    ),
+    (
+      pos: Offset(
+        center.dx + size.width * 0.28,
+        center.dy + size.height * (maxRadius - 0.04),
+      ),
+      size: 2.8 + (math.Random().nextDouble() * 0.8),
+      color: 0xFFFFF9E3,
+    ),
+    (
+      pos: Offset(center.dx - size.width * 0.35, center.dy),
+      size: 2.2 + (math.Random().nextDouble() * 0.6),
+      color: 0xFFFFFFFF,
+    ),
+  ];
+
+  for (final star in starData) {
+    // 闪烁效果
+    final starOpacity =
+        (math.sin(
+                  animationValue * 2 * math.pi +
+                      (star.pos.dx + star.pos.dy) * 0.01,
+                ) +
+                1) /
+            2 *
+            0.3 +
+        0.4;
+
+    final starPaint = Paint()
+      ..color = Color(star.color).withOpacity(starOpacity)
+      ..style = PaintingStyle.fill;
+
+    _drawStar(canvas, star.pos, star.size, starPaint);
+  }
+}
+
 /// 月亮绘制器（晴朗夜空）
 class MoonPainter extends CustomPainter {
   final double animationValue;
@@ -47,44 +193,69 @@ class MoonPainter extends CustomPainter {
     // 绘制月亮（使用统一的绘制方法）
     _drawMoon(canvas, center, radius);
 
-    // 绘制星星（带闪烁效果、随机大小和颜色）
+    // 绘制星星（使用统一的绘制方法，远离月亮）
+    _drawNightStars(canvas, center, size, animationValue);
+
+    // 手动绘制额外的星星，增加随机度（注释掉原代码）
+    /*
     final starData = [
       (
         pos: Offset(
-          center.dx - size.width * 0.3,
-          center.dy - size.height * 0.25,
+          center.dx - size.width * 0.42,
+          center.dy - size.height * 0.38,
         ),
-        size: 3.5,
+        size: 4.2,
         color: 0xFFFFFFFF,
       ),
       (
         pos: Offset(
-          center.dx + size.width * 0.35,
-          center.dy - size.height * 0.35,
+          center.dx + size.width * 0.38,
+          center.dy - size.height * 0.42,
         ),
-        size: 2.5,
+        size: 2.3,
         color: 0xFFFFF9E3,
       ),
       (
         pos: Offset(
-          center.dx - size.width * 0.35,
-          center.dy + size.height * 0.3,
+          center.dx - size.width * 0.45,
+          center.dy + size.height * 0.38,
         ),
-        size: 2.0,
+        size: 3.7,
         color: 0xFFE0F2F1,
       ),
       (
         pos: Offset(
-          center.dx + size.width * 0.3,
-          center.dy + size.height * 0.25,
+          center.dx + size.width * 0.4,
+          center.dy + size.height * 0.32,
         ),
-        size: 3.0,
+        size: 2.8,
         color: 0xFFFFFFFF,
       ),
       (
-        pos: Offset(center.dx, center.dy - size.height * 0.4),
-        size: 4.0,
+        pos: Offset(center.dx, center.dy - size.height * 0.48),
+        size: 3.5,
         color: 0xFFFFEB3B,
+      ),
+      (
+        pos: Offset(
+          center.dx - size.width * 0.25,
+          center.dy - size.height * 0.45,
+        ),
+        size: 1.8,
+        color: 0xFFE1F5FE,
+      ),
+      (
+        pos: Offset(
+          center.dx + size.width * 0.28,
+          center.dy + size.height * 0.44,
+        ),
+        size: 3.2,
+        color: 0xFFFFF9E3,
+      ),
+      (
+        pos: Offset(center.dx - size.width * 0.35, center.dy),
+        size: 2.5,
+        color: 0xFFFFFFFF,
       ),
     ];
 
@@ -106,60 +277,7 @@ class MoonPainter extends CustomPainter {
 
       _drawStar(canvas, star.pos, star.size, starPaint);
     }
-  }
-
-  void _drawStar(Canvas canvas, Offset center, double radius, Paint paint) {
-    // 绘制星星核心（小圆圈）
-    canvas.drawCircle(center, radius * 0.4, paint);
-
-    // 绘制4条尖锐的光芒线
-    final rayLength = radius * 2;
-    final rayPaint = Paint()
-      ..color = paint.color
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    // 上下左右4个方向的光芒
-    canvas.drawLine(center, Offset(center.dx, center.dy - rayLength), rayPaint);
-    canvas.drawLine(center, Offset(center.dx, center.dy + rayLength), rayPaint);
-    canvas.drawLine(center, Offset(center.dx - rayLength, center.dy), rayPaint);
-    canvas.drawLine(center, Offset(center.dx + rayLength, center.dy), rayPaint);
-
-    // 绘制斜向4条光芒（更短）
-    final diagonalRayLength = radius * 1.5;
-    canvas.drawLine(
-      center,
-      Offset(
-        center.dx - diagonalRayLength * 0.707,
-        center.dy - diagonalRayLength * 0.707,
-      ),
-      rayPaint,
-    );
-    canvas.drawLine(
-      center,
-      Offset(
-        center.dx + diagonalRayLength * 0.707,
-        center.dy - diagonalRayLength * 0.707,
-      ),
-      rayPaint,
-    );
-    canvas.drawLine(
-      center,
-      Offset(
-        center.dx - diagonalRayLength * 0.707,
-        center.dy + diagonalRayLength * 0.707,
-      ),
-      rayPaint,
-    );
-    canvas.drawLine(
-      center,
-      Offset(
-        center.dx + diagonalRayLength * 0.707,
-        center.dy + diagonalRayLength * 0.707,
-      ),
-      rayPaint,
-    );
+    */
   }
 
   @override
@@ -206,6 +324,16 @@ class CloudyNightPainter extends CustomPainter {
       center.dy + 12,
     );
     _drawCloud(canvas, rightCloudCenter, 22, cloudPaint);
+
+    // 绘制星星（使用统一的绘制方法，远离月亮）
+    _drawNightStars(
+      canvas,
+      center,
+      size,
+      animationValue,
+      minRadius: 0.38,
+      maxRadius: 0.5,
+    );
   }
 
   void _drawCloud(Canvas canvas, Offset center, double radius, Paint paint) {
@@ -264,6 +392,16 @@ class PartlyCloudyNightPainter extends CustomPainter {
       center.dy + 15,
     );
     _drawCloud(canvas, cloudCenter, 18, cloudPaint);
+
+    // 绘制星星（使用统一的绘制方法，远离月亮）
+    _drawNightStars(
+      canvas,
+      center,
+      size,
+      animationValue,
+      minRadius: 0.38,
+      maxRadius: 0.48,
+    );
   }
 
   void _drawCloud(Canvas canvas, Offset center, double radius, Paint paint) {
@@ -321,6 +459,16 @@ class FewCloudsNightPainter extends CustomPainter {
       center.dy + 20,
     );
     _drawCloud(canvas, cloudCenter, 14, cloudPaint);
+
+    // 绘制星星（使用统一的绘制方法，远离月亮）
+    _drawNightStars(
+      canvas,
+      center,
+      size,
+      animationValue,
+      minRadius: 0.38,
+      maxRadius: 0.48,
+    );
   }
 
   void _drawCloud(Canvas canvas, Offset center, double radius, Paint paint) {

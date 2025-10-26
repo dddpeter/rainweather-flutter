@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
+import '../providers/weather_provider.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_themes.dart';
 import '../constants/app_version.dart';
@@ -31,6 +32,9 @@ class AppDrawer extends StatelessWidget {
 
               // 基础功能组
               _buildSectionTitle('基础功能'),
+
+              // 主题推荐提示
+              _buildThemeRecommendation(context, themeProvider),
 
               // 主题配色快速切换
               _buildThemeQuickSwitch(context, themeProvider),
@@ -162,6 +166,93 @@ class AppDrawer extends StatelessWidget {
             style: TextStyle(color: subtextColor, fontSize: 12),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 构建主题推荐提示
+  Widget _buildThemeRecommendation(
+    BuildContext context,
+    ThemeProvider themeProvider,
+  ) {
+    // 获取天气数据
+    final weatherProvider = context.read<WeatherProvider>();
+    final currentWeather = weatherProvider.currentWeather;
+    String? weatherCode;
+
+    if (currentWeather != null &&
+        currentWeather.current?.current?.weatherPic != null) {
+      weatherCode = currentWeather.current!.current!.weatherPic;
+    }
+
+    // 获取推荐主题
+    final recommendation = themeProvider.getRecommendedTheme(
+      weatherCode: weatherCode,
+    );
+
+    // 如果推荐的是当前主题，不显示提示
+    if (recommendation['isCurrent'] == true) {
+      return const SizedBox.shrink();
+    }
+
+    final recommendedScheme = recommendation['scheme'] as AppThemeScheme;
+    final reason = recommendation['reason'] as String;
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.backgroundSecondary.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: AppColors.primaryBlue.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.auto_awesome_outlined,
+            color: AppColors.primaryBlue,
+            size: 20,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  reason,
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          FilledButton(
+            onPressed: () {
+              themeProvider.setThemeScheme(recommendedScheme);
+              AppColors.setThemeProvider(themeProvider);
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.primaryBlue,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(0, 32),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+              ),
+            ),
+            child: const Text(
+              '应用',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+            ),
           ),
         ],
       ),

@@ -146,4 +146,112 @@ class ThemeProvider extends ChangeNotifier {
         return '跟随系统';
     }
   }
+
+  /// 根据当前时间推荐主题
+  AppThemeScheme _getRecommendedThemeByTime() {
+    final hour = DateTime.now().hour;
+    // 6:00-20:00 白天，20:00-6:00 夜晚
+    if (hour >= 6 && hour < 20) {
+      // 白天推荐亮色主题
+      return AppThemeScheme.blue;
+    } else {
+      // 夜晚推荐暗色主题（深空黑）
+      return AppThemeScheme.deepSpace;
+    }
+  }
+
+  /// 根据天气状况推荐主题
+  AppThemeScheme _getRecommendedThemeByWeather(String weatherCode) {
+    // 天气代码：07小雨 08中雨 09大雨
+    // 00晴 01多云 02阴 26雾
+    final code = weatherCode;
+
+    if (code == '07' ||
+        code == '08' ||
+        code == '09' ||
+        code == '10' ||
+        code == 'd07' ||
+        code == 'n07' ||
+        code == 'd08' ||
+        code == 'n08' ||
+        code == 'd09' ||
+        code == 'n09' ||
+        code == 'd10' ||
+        code == 'n10') {
+      // 雨天推荐青色系（Teal）
+      return AppThemeScheme.teal;
+    } else if (code == '00' || code == 'd00' || code == 'n00') {
+      // 晴天推荐橙色系（Amber）
+      return AppThemeScheme.amber;
+    } else if (code == '26' || code == 'd26' || code == 'n26') {
+      // 雾天推荐灰色系（深空黑）
+      return AppThemeScheme.deepSpace;
+    } else {
+      // 默认推荐当前主题
+      return _themeScheme;
+    }
+  }
+
+  /// 获取推荐主题和理由
+  Map<String, dynamic> getRecommendedTheme({String? weatherCode}) {
+    AppThemeScheme recommendedScheme;
+    String reason;
+
+    if (weatherCode != null && weatherCode.isNotEmpty) {
+      // 优先根据天气推荐
+      recommendedScheme = _getRecommendedThemeByWeather(weatherCode);
+      final weatherName = _getWeatherName(weatherCode);
+      reason =
+          '当前${weatherName}，推荐"${AppThemes.getScheme(recommendedScheme).name}"主题';
+    } else {
+      // 根据时间推荐
+      recommendedScheme = _getRecommendedThemeByTime();
+      final hour = DateTime.now().hour;
+      if (hour >= 6 && hour < 12) {
+        reason = '当前早晨时段，推荐"${AppThemes.getScheme(recommendedScheme).name}"主题';
+      } else if (hour >= 12 && hour < 18) {
+        reason = '当前下午时段，推荐"${AppThemes.getScheme(recommendedScheme).name}"主题';
+      } else {
+        reason = '当前夜晚时段，推荐"${AppThemes.getScheme(recommendedScheme).name}"主题';
+      }
+    }
+
+    final isSameAsCurrent = recommendedScheme == _themeScheme;
+
+    return {
+      'scheme': recommendedScheme,
+      'reason': reason,
+      'isCurrent': isSameAsCurrent,
+    };
+  }
+
+  /// 获取天气名称
+  String _getWeatherName(String weatherCode) {
+    final code = weatherCode.toUpperCase();
+    if (code.contains('07') || code.contains('D07') || code.contains('N07')) {
+      return '小雨';
+    } else if (code.contains('08') ||
+        code.contains('D08') ||
+        code.contains('N08')) {
+      return '中雨';
+    } else if (code.contains('09') ||
+        code.contains('D09') ||
+        code.contains('N09')) {
+      return '大雨';
+    } else if (code.contains('10') ||
+        code.contains('D10') ||
+        code.contains('N10')) {
+      return '暴雨';
+    } else if (code.contains('00') ||
+        code.contains('D00') ||
+        code.contains('N00')) {
+      return '晴天';
+    } else if (code.contains('26') ||
+        code.contains('D26') ||
+        code.contains('N26')) {
+      return '雾';
+    } else {
+      return '多云';
+    }
+  }
 }

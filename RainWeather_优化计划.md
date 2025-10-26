@@ -1,21 +1,23 @@
 # RainWeather Flutter应用优化计划
 
-## 1. 安全性改进
+## 1. 安全性改进 ⏭️ 跳过
 
-### 1.1 API密钥安全
+### 1.1 API密钥安全 ⏭️ 跳过
 - **问题**：智谱AI、腾讯定位、百度定位和高德地图的API密钥直接硬编码在源代码中
 - **解决方案**：
   - 创建`.env`文件存储敏感信息
   - 使用`flutter_dotenv`包读取环境变量
   - 将`.env`添加到`.gitignore`文件
   - 修改`ai_service.dart`、`tencent_location_service.dart`、`baidu_location_service.dart`和`amap_location_service.dart`
+- **状态**：暂不执行此优化
 
-### 1.2 数据加密
+### 1.2 数据加密 ⏭️ 跳过
 - **问题**：敏感数据（如用户位置）可能以明文形式存储
 - **解决方案**：
   - 对SQLite数据库中的敏感字段进行加密
   - 使用`encrypt`包实现数据加密
   - 修改`database_service.dart`中的数据存储逻辑
+- **状态**：暂不执行此优化
 
 ## 2. 性能优化
 

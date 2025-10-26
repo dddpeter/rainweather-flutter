@@ -43,6 +43,7 @@ class _AIContentWidgetState extends State<AIContentWidget> {
   bool _isLoading = true; // 加载状态
   bool _hasError = false; // 错误状态
   bool _isTimeout = false; // 超时状态
+  bool _isFromCache = false; // 是否来自缓存
 
   @override
   void initState() {
@@ -82,6 +83,8 @@ class _AIContentWidgetState extends State<AIContentWidget> {
         setState(() {
           _content = content;
           _isLoading = false;
+          // 初始加载（不是用户触发的刷新）时，如果有内容就认为是缓存
+          _isFromCache = _content != null && _content!.isNotEmpty;
         });
       }
     } catch (e) {
@@ -260,17 +263,29 @@ class _AIContentWidgetState extends State<AIContentWidget> {
           ),
         );
       },
-      child: TypewriterTextWidget(
-        text: _content ?? widget.defaultContent,
-        charDelay: const Duration(milliseconds: 30), // 每个字符延迟30ms（更自然）
-        lineDelay: const Duration(milliseconds: 200), // 每行之间延迟200ms（更好的停顿感）
-        style: TextStyle(
-          color: AppColors.textPrimary,
-          fontSize: 14,
-          height: 1.5,
-          fontWeight: FontWeight.w600, // AI内容加粗
-        ),
-      ),
+      child: _isFromCache
+          ? Text(
+              _content ?? widget.defaultContent,
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 14,
+                height: 1.5,
+                fontWeight: FontWeight.w600, // AI内容加粗
+              ),
+            )
+          : TypewriterTextWidget(
+              text: _content ?? widget.defaultContent,
+              charDelay: const Duration(milliseconds: 30), // 每个字符延迟30ms（更自然）
+              lineDelay: const Duration(
+                milliseconds: 200,
+              ), // 每行之间延迟200ms（更好的停顿感）
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 14,
+                height: 1.5,
+                fontWeight: FontWeight.w600, // AI内容加粗
+              ),
+            ),
     );
   }
 
@@ -307,7 +322,12 @@ class _AIContentWidgetState extends State<AIContentWidget> {
         Row(
           children: [
             TextButton.icon(
-              onPressed: _loadAIContent,
+              onPressed: () {
+                setState(() {
+                  _isFromCache = false; // 重置缓存状态
+                });
+                _loadAIContent();
+              },
               icon: const Icon(Icons.refresh, size: 16),
               label: const Text('重新生成'),
               style: TextButton.styleFrom(

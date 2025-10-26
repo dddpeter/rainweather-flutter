@@ -87,9 +87,9 @@ class HourlyWeatherWidget extends StatelessWidget {
                   height: 90,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
                     itemCount: hourlyForecast!.length,
-                    itemExtent: 72, // 固定item高度（width）
+                    itemExtent: 58, // 更小的固定宽度
                     itemBuilder: (context, index) {
                       final hour = hourlyForecast![index];
                       return _buildHourlyItem(hour, index);
@@ -115,39 +115,48 @@ class HourlyWeatherWidget extends StatelessWidget {
     final isNight = WeatherIconHelper.isNightByHour(hourValue);
 
     return Container(
-      width: 70, // 80 -> 70 (减少宽度)
-      margin: const EdgeInsets.only(right: 2), // 4 -> 2 (1/2)
+      width: 55, // 进一步减少宽度
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center, // 垂直居中
         children: [
-          Text(
-            time,
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              time,
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
           const SizedBox(height: 3), // 8 -> 3 (约1/3)
           WeatherIconHelper.buildWeatherIcon(weatherDesc, isNight, 24),
           const SizedBox(height: 2), // 图标和描述间距
-          Text(
-            weatherDesc,
-            style: TextStyle(
-              color: AppColors.textSecondary, // 使用主题色
-              fontSize: 10, // 小字体
-              fontWeight: FontWeight.normal,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              weatherDesc,
+              style: TextStyle(
+                color: AppColors.textSecondary, // 使用主题色
+                fontSize: 10, // 小字体
+                fontWeight: FontWeight.normal,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis, // 防止文字过长
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis, // 防止文字过长
           ),
           const SizedBox(height: 2), // 描述和温度间距
-          Text(
-            '${temperature.toInt()}℃',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              '${temperature.toInt()}℃',
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],

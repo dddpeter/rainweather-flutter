@@ -27,7 +27,9 @@ class DailyWeatherDetailScreen extends StatelessWidget {
       builder: (context, themeProvider, child) {
         return Scaffold(
           body: Container(
-            decoration: BoxDecoration(gradient: AppColors.primaryGradient),
+            decoration: BoxDecoration(
+              gradient: AppColors.screenBackgroundGradient,
+            ),
             child: RefreshIndicator(
               onRefresh: () async {
                 // 预报数据不需要刷新

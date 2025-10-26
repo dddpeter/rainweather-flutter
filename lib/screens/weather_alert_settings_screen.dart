@@ -42,7 +42,7 @@ class _WeatherAlertSettingsScreenState
         foregroundColor: Colors.white,
       ),
       body: Container(
-        decoration: BoxDecoration(gradient: AppColors.primaryGradient),
+        decoration: BoxDecoration(gradient: AppColors.screenBackgroundGradient),
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : SingleChildScrollView(

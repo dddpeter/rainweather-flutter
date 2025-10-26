@@ -203,7 +203,8 @@ class _RainWeatherAppState extends State<RainWeatherApp>
         900: const Color(0xFF0D47A1),
       }),
       brightness: Brightness.light,
-      scaffoldBackgroundColor: const Color.fromARGB(255, 192, 216, 236), // 浅蓝背景
+      // 固定浅蓝背景，只随亮暗模式切换
+      scaffoldBackgroundColor: const Color.fromARGB(255, 192, 216, 236),
       appBarTheme: const AppBarTheme(
         backgroundColor: Color.fromARGB(255, 192, 216, 236),
         foregroundColor: Color(0xFF001A4D), // 深蓝色文字

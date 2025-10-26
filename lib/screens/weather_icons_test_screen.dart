@@ -78,7 +78,7 @@ class _WeatherIconsTestScreenState extends State<WeatherIconsTestScreen> {
         ],
       ),
       body: Container(
-        decoration: BoxDecoration(gradient: AppColors.primaryGradient),
+        decoration: BoxDecoration(gradient: AppColors.screenBackgroundGradient),
         child: Column(
           children: [
             // 搜索栏

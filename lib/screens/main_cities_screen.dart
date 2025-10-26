@@ -69,7 +69,9 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
 
         return Scaffold(
           body: Container(
-            decoration: BoxDecoration(gradient: AppColors.primaryGradient),
+            decoration: BoxDecoration(
+              gradient: AppColors.screenBackgroundGradient,
+            ),
             child: SafeArea(
               child: Column(
                 children: [

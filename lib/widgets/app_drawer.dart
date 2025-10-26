@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
 import '../constants/app_colors.dart';
+import '../constants/app_themes.dart';
 import '../constants/app_version.dart';
 import '../screens/weather_animation_test_screen.dart';
 import '../screens/weather_layout_test_screen.dart';
@@ -93,19 +94,18 @@ class AppDrawer extends StatelessWidget {
 
   /// 构建抽屉头部
   Widget _buildDrawerHeader(BuildContext context, ThemeProvider themeProvider) {
-    // 使用App背景渐变色
-    final headerDecoration = BoxDecoration(gradient: AppColors.primaryGradient);
+    // 与 AppBar 和底部 tabbar 使用相同的背景颜色
+    final headerDecoration = BoxDecoration(
+      color: AppColors.backgroundSecondary,
+    );
 
-    // 根据主题调整文字颜色
+    // 根据亮暗模式使用不同的文字颜色
     final textColor = themeProvider.isLightTheme
-        ? AppColors
-              .primaryBlue // 亮色模式：深蓝色
-        : Colors.white; // 暗色模式：白色
-
+        ? AppColors.primaryBlue
+        : const Color(0xFF8edafc); // 暗色模式使用更亮的浅蓝色
     final subtextColor = themeProvider.isLightTheme
-        ? AppColors
-              .textSecondary // 亮色模式：次要文字色
-        : Colors.white.withOpacity(0.9); // 暗色模式：半透明白色
+        ? AppColors.textSecondary
+        : const Color(0xFF8edafc).withOpacity(0.8); // 暗色模式半透明浅蓝色
 
     return DrawerHeader(
       decoration: headerDecoration,
@@ -429,33 +429,112 @@ class AppDrawer extends StatelessWidget {
                 ),
               ),
               contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildThemeOption(
-                    context,
-                    '亮色主题',
-                    AppThemeMode.light,
-                    Icons.light_mode,
-                    themeProvider.themeMode == AppThemeMode.light,
-                  ),
-                  const SizedBox(height: 8),
-                  _buildThemeOption(
-                    context,
-                    '暗色主题',
-                    AppThemeMode.dark,
-                    Icons.dark_mode,
-                    themeProvider.themeMode == AppThemeMode.dark,
-                  ),
-                  const SizedBox(height: 8),
-                  _buildThemeOption(
-                    context,
-                    '跟随系统',
-                    AppThemeMode.system,
-                    Icons.settings_brightness,
-                    themeProvider.themeMode == AppThemeMode.system,
-                  ),
-                ],
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 主题方案选择
+                    Text(
+                      '主题配色',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: AppThemes.allSchemes.asMap().entries.map((
+                        entry,
+                      ) {
+                        final index = entry.key;
+                        final scheme = entry.value;
+                        final isSelected =
+                            themeProvider.themeScheme ==
+                            AppThemeScheme.values[index];
+
+                        return GestureDetector(
+                          onTap: () {
+                            themeProvider.setThemeScheme(
+                              AppThemeScheme.values[index],
+                            );
+                            AppColors.setThemeProvider(themeProvider);
+                          },
+                          child: Container(
+                            width: 70,
+                            height: 70,
+                            decoration: BoxDecoration(
+                              color: scheme.previewColor,
+                              borderRadius: BorderRadius.circular(12),
+                              border: isSelected
+                                  ? Border.all(
+                                      color: AppColors.primaryBlue,
+                                      width: 3,
+                                    )
+                                  : null,
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  scheme.icon,
+                                  color: Colors.white,
+                                  size: 24,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  scheme.name.replaceAll('主题', ''),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 24),
+                    // 亮暗模式选择
+                    Text(
+                      '显示模式',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildThemeOption(
+                      context,
+                      '亮色主题',
+                      AppThemeMode.light,
+                      Icons.light_mode,
+                      themeProvider.themeMode == AppThemeMode.light,
+                    ),
+                    const SizedBox(height: 8),
+                    _buildThemeOption(
+                      context,
+                      '暗色主题',
+                      AppThemeMode.dark,
+                      Icons.dark_mode,
+                      themeProvider.themeMode == AppThemeMode.dark,
+                    ),
+                    const SizedBox(height: 8),
+                    _buildThemeOption(
+                      context,
+                      '跟随系统',
+                      AppThemeMode.system,
+                      Icons.settings_brightness,
+                      themeProvider.themeMode == AppThemeMode.system,
+                    ),
+                  ],
+                ),
               ),
               actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
               actions: [

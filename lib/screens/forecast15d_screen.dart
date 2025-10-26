@@ -76,7 +76,9 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
         return Consumer<WeatherProvider>(
           builder: (context, weatherProvider, child) {
             return Container(
-              decoration: BoxDecoration(gradient: AppColors.primaryGradient),
+              decoration: BoxDecoration(
+                gradient: AppColors.screenBackgroundGradient,
+              ),
               child: SafeArea(
                 child: Builder(
                   builder: (context) {

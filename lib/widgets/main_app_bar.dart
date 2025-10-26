@@ -31,16 +31,12 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       elevation: 0,
       backgroundColor: Colors.transparent,
-      flexibleSpace: Container(
-        decoration: BoxDecoration(gradient: AppColors.primaryGradient),
-      ),
+      flexibleSpace: Container(color: AppColors.backgroundSecondary),
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(0.5),
         child: Container(
           height: 0.5,
-          color: themeProvider.isLightTheme
-              ? const Color(0xFFE0E0E0)
-              : const Color(0xFF424242),
+          color: themeProvider.getColor('border').withOpacity(0.3),
         ),
       ),
       toolbarHeight: 56,
@@ -50,8 +46,8 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
           icon: Icon(
             Icons.menu_rounded,
             color: themeProvider.isLightTheme
-                ? const Color(0xFF012d78)
-                : const Color(0xFF8edafc),
+                ? AppColors.primaryBlue
+                : const Color(0xFF8edafc), // 暗色模式使用更亮的浅蓝色
             size: 28,
           ),
           onPressed: () {
@@ -82,8 +78,8 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
         icon: Icon(
           Icons.refresh_rounded,
           color: themeProvider.isLightTheme
-              ? const Color(0xFF012d78)
-              : const Color(0xFF8edafc),
+              ? AppColors.primaryBlue
+              : const Color(0xFF8edafc), // 暗色模式使用更亮的浅蓝色
           size: 24,
         ),
         onPressed: () async {
@@ -112,8 +108,8 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
       icon: Icon(
         themeProvider.isLightTheme ? Icons.dark_mode : Icons.light_mode,
         color: themeProvider.isLightTheme
-            ? const Color(0xFF012d78)
-            : const Color(0xFF8edafc),
+            ? AppColors.primaryBlue
+            : const Color(0xFF8edafc), // 暗色模式使用更亮的浅蓝色
         size: 24,
       ),
       onPressed: () {
@@ -134,8 +130,8 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
       icon: Icon(
         Icons.apps_rounded,
         color: themeProvider.isLightTheme
-            ? const Color(0xFF012d78)
-            : const Color(0xFF8edafc),
+            ? AppColors.primaryBlue
+            : const Color(0xFF8edafc), // 暗色模式使用更亮的浅蓝色
         size: 24,
       ),
       tooltip: '更多功能',

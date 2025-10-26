@@ -458,7 +458,9 @@ class _TodayScreenState extends State<TodayScreen>
           ),
           builder: (context, data, child) {
             return Container(
-              decoration: BoxDecoration(gradient: AppColors.primaryGradient),
+              decoration: BoxDecoration(
+                gradient: AppColors.screenBackgroundGradient,
+              ),
               child: Builder(
                 builder: (context) {
                   print('🔥 TodayScreen build called 🔥');

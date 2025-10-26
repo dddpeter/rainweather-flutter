@@ -62,17 +62,26 @@ class AppColors {
     }
   }
 
-  // ==================== 通用卡片背景色 ====================
-  // 适用于所有大卡片（详细信息、生活指数、空气质量、图表等）
-  // 必须在 Map 之前定义，以便在 Map 中引用
+  // ==================== ⚠️ 固定颜色（不建议删除）====================
+  // 以下颜色为固定颜色，不受主题系统影响，保留原设计语义
+  // 标记：NEVER_DELETE - 固定颜色，不应该主题化
+  //
+  // 1. 卡片背景色 - 与主题背景配合使用的固定颜色
+  // 2. 温度色 - 语义化颜色（高温红色、低温蓝色）
+  // 3. 天气色 - 天气现象的固定表示
+  // 4. 空气质量色 - 国家标准的固定色阶
+  // 5. 小卡片专用色 - UI层次结构固定色
 
   /// 亮色模式卡片背景 - 暖白色（淡粉米白，不透明）
+  // NEVER_DELETE - 卡片背景固定色
   static const Color lightCardBackground = Color(0xFFFDF7F7); // #FDF7F7
 
   /// 暗色模式卡片背景 - 半透明白色
+  // NEVER_DELETE - 卡片背景固定色
   static const Color darkCardBackground = Color(0x30FFFFFF); // 白色 透明度
 
   /// 今日天气和城市天气页面头部大卡片背景 - 固定深蓝色（不区分亮暗模式）
+  // NEVER_DELETE - 页面头部固定背景色
   static const Color weatherHeaderCardBackground = Color(
     0xFF0A1B3D,
   ); // 深蓝色，固定不变
@@ -425,66 +434,69 @@ class AppColors {
     }
   }
 
-  // 天气相关颜色（固定颜色，不随主题变化）
-  /// 晴天颜色
+  // ==================== 天气相关颜色（NEVER_DELETE）====================
+  // 天气现象的语义化颜色，固定不变
+  /// 晴天颜色 - NEVER_DELETE
   static const Color sunnyColor = Color(0xFFFFD54F);
 
-  /// 多云颜色
+  /// 多云颜色 - NEVER_DELETE
   static const Color cloudyColor = Color(0xFFBDBDBD);
 
-  /// 雨天颜色
+  /// 雨天颜色 - NEVER_DELETE
   static const Color rainyColor = Color(0xFF64B5F6);
 
-  /// 雪天颜色
+  /// 雪天颜色 - NEVER_DELETE
   static const Color snowyColor = Color(0xFFE1F5FE);
 
-  /// 雾天颜色
+  /// 雾天颜色 - NEVER_DELETE
   static const Color foggyColor = Color(0xFF9E9E9E);
 
-  // 空气质量颜色（固定颜色，不随主题变化）
-  /// 优
+  // ==================== 空气质量颜色（NEVER_DELETE）====================
+  // 国家标准的空气质量等级颜色，固定不变
+  /// 优 - NEVER_DELETE
   static const Color airExcellent = Color(0xFF4CAF50);
 
-  /// 良
+  /// 良 - NEVER_DELETE
   static const Color airGood = Color(0xFF8BC34A);
 
-  /// 轻度污染
+  /// 轻度污染 - NEVER_DELETE
   static const Color airLight = Color(0xFFFFC107);
 
-  /// 中度污染
+  /// 中度污染 - NEVER_DELETE
   static const Color airModerate = Color(0xFFFF9800);
 
-  /// 重度污染
+  /// 重度污染 - NEVER_DELETE
   static const Color airHeavy = Color(0xFFF44336);
 
-  /// 严重污染
+  /// 严重污染 - NEVER_DELETE
   static const Color airSevere = Color(0xFF9C27B0);
 
-  // ==================== 亮色模式小卡片冷基调专业色 ====================
+  // ==================== 小卡片专用冷基调色（NEVER_DELETE）====================
+  // UI层次结构固定色，与主题配合使用
   // 与 App 背景 #4A90E2 同属蓝绿邻近色环，冷感专业
   // 末尾两位 4D = 30% 不透明度，对比度 ≥ 4.5:1
 
-  /// 清爽冷蓝 - 用于第一列（同色系，亮一级）
+  /// 清爽冷蓝 - 用于第一列（同色系，亮一级） - NEVER_DELETE
   static const Color lightCardCoolBlue = Color(0x4DA6FF4D);
   static const Color lightCardCoolBlueText = Color(0xFFFFFFFF); // 白字
 
-  /// 薄荷青 - 用于第二列（蓝绿过渡，冷感）
+  /// 薄荷青 - 用于第二列（蓝绿过渡，冷感） - NEVER_DELETE
   static const Color lightCardMintCyan = Color(0x2AC4B34D);
   static const Color lightCardMintCyanText = Color(0xFFFFFFFF); // 白字
 
-  /// 科技泳池蓝 - 用于信息类（邻近色，偏青）
+  /// 科技泳池蓝 - 用于信息类（邻近色，偏青） - NEVER_DELETE
   static const Color lightCardTechBlue = Color(0x00C2FF4D);
   static const Color lightCardTechBlueText = Color(0xFFFFFFFF); // 白字
 
-  /// 雾青蓝 - 用于节气（同色系，更淡）
+  /// 雾青蓝 - 用于节气（同色系，更淡） - NEVER_DELETE
   static const Color lightCardMistyBlue = Color(0x5AC8FA4D);
   static const Color lightCardMistyBlueText = Color(0xFFFFFFFF); // 白字
 
-  /// 湖水蓝 - 备用（邻近色，微绿）
+  /// 湖水蓝 - 备用（邻近色，微绿） - NEVER_DELETE
   static const Color lightCardLakeBlue = Color(0x3AA9C94D);
   static const Color lightCardLakeBlueText = Color(0xFFFFFFFF); // 白字
 
-  /// 淡雾蓝 - 备用（同色系，柔化）
+  /// 淡雾蓝 - 备用（同色系，柔化） - NEVER_DELETE
   static const Color lightCardSoftBlue = Color(0x6BB6FF4D);
   static const Color lightCardSoftBlueText = Color(0xFFFFFFFF); // 白字
 

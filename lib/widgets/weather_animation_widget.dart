@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import '../constants/app_colors.dart';
 import 'extreme_weather_painters.dart';
 import 'freezing_rain_painter.dart';
+import 'night_weather_painters.dart';
 import '../utils/weather_animation_colors.dart';
 import '../providers/theme_provider.dart';
 
@@ -122,18 +123,33 @@ class _WeatherAnimationWidgetState extends State<WeatherAnimationWidget>
     );
   }
 
+  /// 判断当前是否为夜晚（18:00-6:00）
+  bool get _isNighttime {
+    final hour = DateTime.now().hour;
+    return hour >= 18 || hour < 6;
+  }
+
   Widget _buildWeatherAnimation() {
+    // 根据天气类型和时间选择动画
     switch (widget.weatherType) {
       case '晴':
-        return _buildSunnyAnimation();
+        return _isNighttime
+            ? _buildClearNightAnimation()
+            : _buildSunnyAnimation();
       case '多云':
-        return _buildCloudyAnimation();
+        return _isNighttime
+            ? _buildCloudyNightAnimation()
+            : _buildCloudyAnimation();
       case '晴间多云':
       case '多云转晴':
       case '晴转多云':
-        return _buildPartlyCloudyAnimation();
+        return _isNighttime
+            ? _buildPartlyCloudyNightAnimation()
+            : _buildPartlyCloudyAnimation();
       case '少云':
-        return _buildFewCloudsAnimation();
+        return _isNighttime
+            ? _buildFewCloudsNightAnimation()
+            : _buildFewCloudsAnimation();
       case '阴':
         return _buildOvercastAnimation();
       case '毛毛雨':
@@ -273,6 +289,69 @@ class _WeatherAnimationWidgetState extends State<WeatherAnimationWidget>
       builder: (context, child) {
         return CustomPaint(
           painter: OvercastPainter(_cloudAnimation.value),
+          size: Size(widget.size, widget.size),
+        );
+      },
+    );
+  }
+
+  // ==================== 夜间动画 ====================
+
+  // 晴朗夜空动画（月亮+星星）
+  Widget _buildClearNightAnimation() {
+    return AnimatedBuilder(
+      animation: _mainAnimation,
+      builder: (context, child) {
+        return CustomPaint(
+          painter: MoonPainter(_mainAnimation.value),
+          size: Size(widget.size, widget.size),
+        );
+      },
+    );
+  }
+
+  // 多云夜空动画（月亮+云）
+  Widget _buildCloudyNightAnimation() {
+    return AnimatedBuilder(
+      animation: Listenable.merge([_mainAnimation, _cloudAnimation]),
+      builder: (context, child) {
+        return CustomPaint(
+          painter: CloudyNightPainter(
+            _mainAnimation.value,
+            _cloudAnimation.value,
+          ),
+          size: Size(widget.size, widget.size),
+        );
+      },
+    );
+  }
+
+  // 少云夜空动画（月亮+少量云）
+  Widget _buildPartlyCloudyNightAnimation() {
+    return AnimatedBuilder(
+      animation: Listenable.merge([_mainAnimation, _cloudAnimation]),
+      builder: (context, child) {
+        return CustomPaint(
+          painter: PartlyCloudyNightPainter(
+            _mainAnimation.value,
+            _cloudAnimation.value,
+          ),
+          size: Size(widget.size, widget.size),
+        );
+      },
+    );
+  }
+
+  // 很少云夜空动画（月亮+一小朵云）
+  Widget _buildFewCloudsNightAnimation() {
+    return AnimatedBuilder(
+      animation: Listenable.merge([_mainAnimation, _cloudAnimation]),
+      builder: (context, child) {
+        return CustomPaint(
+          painter: FewCloudsNightPainter(
+            _mainAnimation.value,
+            _cloudAnimation.value,
+          ),
           size: Size(widget.size, widget.size),
         );
       },

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../models/weather_model.dart';
 import '../models/location_model.dart';
@@ -24,8 +23,19 @@ import '../utils/error_handler.dart';
 import '../utils/app_state_manager.dart';
 import '../utils/city_name_matcher.dart';
 import '../services/location_change_notifier.dart';
+import '../utils/weather_provider_logger.dart';
+import '../utils/weather_cache_manager.dart';
 
+/// WeatherProvider - 天气数据状态管理
+///
+/// 职责：
+/// - 管理当前定位城市的天气数据
+/// - 管理主要城市列表的天气数据
+/// - 管理缓存和后台刷新
+/// - 提供AI智能摘要和通勤建议
+/// - 提供日出日落和生活指数数据
 class WeatherProvider extends ChangeNotifier {
+  // ==================== 依赖服务 ====================
   final WeatherService _weatherService = WeatherService.getInstance();
   final LocationService _locationService = LocationService.getInstance();
   final DatabaseService _databaseService = DatabaseService.getInstance();
@@ -38,6 +48,14 @@ class WeatherProvider extends ChangeNotifier {
   // 获取CityDataService实例
   CityDataService get _cityDataService => CityDataService.getInstance();
 
+  // 缓存管理器（统一管理缓存逻辑）
+  late final WeatherCacheManager _cacheManager = WeatherCacheManager(
+    databaseService: _databaseService,
+    smartCache: _smartCache,
+    locationService: _locationService,
+  );
+
+  // ==================== 核心天气数据 ====================
   WeatherModel? _currentWeather;
   LocationModel? _currentLocation;
   List<HourlyWeather>? _hourlyForecast;
@@ -45,14 +63,17 @@ class WeatherProvider extends ChangeNotifier {
   List<DailyWeather>? _forecast15d;
   bool _isLoading = false;
   String? _error;
+
+  // 缓存和刷新状态
   bool _isUsingCachedData = false; // 标记当前是否使用缓存数据
   bool _isBackgroundRefreshing = false; // 标记后台是否正在刷新
   bool _isLocationRefreshing = false; // 全局定位刷新锁，防止多页面同时刷新
 
-  // 日出日落和生活指数数据
+  // ==================== 日出日落和生活指数 ====================
   SunMoonIndexData? _sunMoonIndexData;
   bool _isLoadingSunMoonIndex = false;
 
+  // ==================== 定位和城市切换 ====================
   // 当前定位的天气数据（用于今日天气页面）
   WeatherModel? _currentLocationWeather;
   LocationModel? _originalLocation;
@@ -60,32 +81,30 @@ class WeatherProvider extends ChangeNotifier {
   int _currentTabIndex = 0; // 当前标签页索引
   bool _hasPerformedInitialLocation = false; // 是否已经进行过首次定位
 
-  // 主要城市天气数据
-  final Map<String, WeatherModel> _mainCitiesWeather = {};
-  bool _isLoadingCitiesWeather = false;
-  bool _hasPerformedInitialMainCitiesRefresh = false; // 是否已经进行过首次主要城市刷新
-  DateTime? _lastMainCitiesRefreshTime; // 上次刷新主要城市的时间
-
-  // 定时刷新
-  Timer? _refreshTimer;
-  static const Duration _refreshInterval = Duration(hours: 1); // 1小时刷新一次，避免过于频繁
-
   // 定位防抖
   DateTime? _lastLocationTime; // 最后一次成功定位的时间
   static const Duration _locationDebounceInterval = Duration(
     minutes: 5,
   ); // 5分钟内不重复定位
 
-  // Dynamic cities list
+  // ==================== 主要城市管理 ====================
+  final Map<String, WeatherModel> _mainCitiesWeather = {};
+  bool _isLoadingCitiesWeather = false;
+  bool _hasPerformedInitialMainCitiesRefresh = false; // 是否已经进行过首次主要城市刷新
+  DateTime? _lastMainCitiesRefreshTime; // 上次刷新主要城市的时间
   List<CityModel> _mainCities = [];
   bool _isLoadingCities = false;
 
-  // 通勤建议相关
+  // ==================== 定时刷新 ====================
+  Timer? _refreshTimer;
+  static const Duration _refreshInterval = Duration(hours: 1); // 1小时刷新一次
+
+  // ==================== 通勤建议 ====================
   List<CommuteAdviceModel> _commuteAdvices = [];
   bool _hasShownCommuteAdviceToday = false; // 今日是否已显示过通勤建议
   Timer? _commuteCleanupTimer; // 通勤建议清理定时器
 
-  // AI智能摘要
+  // ==================== AI智能摘要 ====================
   String? _weatherSummary; // AI生成的天气摘要
   bool _isGeneratingSummary = false;
   String? _forecast15dSummary; // AI生成的15日天气总结
@@ -93,7 +112,7 @@ class WeatherProvider extends ChangeNotifier {
   bool _isGeneratingCommuteAdvice = false; // 通勤建议生成状态
   final AIService _aiService = AIService();
 
-  // Getters
+  // ==================== Getters - 核心天气数据 ====================
   WeatherModel? get currentWeather => _currentWeather;
   LocationModel? get currentLocation => _currentLocation;
   List<HourlyWeather>? get hourlyForecast => _hourlyForecast;
@@ -101,42 +120,46 @@ class WeatherProvider extends ChangeNotifier {
   List<DailyWeather>? get forecast15d => _forecast15d;
   bool get isLoading => _isLoading;
   String? get error => _error;
+
+  // 缓存和刷新状态
   bool get isUsingCachedData => _isUsingCachedData; // 是否使用缓存数据
   bool get isBackgroundRefreshing => _isBackgroundRefreshing; // 后台是否刷新中
   bool get isLocationRefreshing => _isLocationRefreshing; // 全局定位刷新锁状态
-  Map<String, WeatherModel> get mainCitiesWeather => _mainCitiesWeather;
-  bool get isLoadingCitiesWeather => _isLoadingCitiesWeather;
-  bool get hasPerformedInitialMainCitiesRefresh =>
-      _hasPerformedInitialMainCitiesRefresh;
 
-  // 日出日落和生活指数数据getters
+  // 日出日落和生活指数
   SunMoonIndexData? get sunMoonIndexData => _sunMoonIndexData;
   bool get isLoadingSunMoonIndex => _isLoadingSunMoonIndex;
 
-  // Dynamic cities getters
-  List<CityModel> get mainCities => _mainCities;
-  bool get isLoadingCities => _isLoadingCities;
-
-  // 通勤建议getters
-  List<CommuteAdviceModel> get commuteAdvices => _commuteAdvices;
-  bool get hasUnreadCommuteAdvices => _commuteAdvices.any((a) => !a.isRead);
-  bool get hasShownCommuteAdviceToday => _hasShownCommuteAdviceToday;
-
-  // AI摘要相关
-  String? get weatherSummary => _weatherSummary;
-  bool get isGeneratingSummary => _isGeneratingSummary;
-  String? get forecast15dSummary => _forecast15dSummary;
-  bool get isGenerating15dSummary => _isGenerating15dSummary;
-
-  // 当前定位天气数据的getter
+  // 定位和城市切换
   WeatherModel? get currentLocationWeather => _currentLocationWeather;
   LocationModel? get originalLocation => _originalLocation;
   bool get isShowingCityWeather => _isShowingCityWeather;
   int get currentTabIndex => _currentTabIndex;
 
+  // 主要城市
+  Map<String, WeatherModel> get mainCitiesWeather => _mainCitiesWeather;
+  bool get isLoadingCitiesWeather => _isLoadingCitiesWeather;
+  bool get hasPerformedInitialMainCitiesRefresh =>
+      _hasPerformedInitialMainCitiesRefresh;
+  List<CityModel> get mainCities => _mainCities;
+  bool get isLoadingCities => _isLoadingCities;
+
+  // 通勤建议
+  List<CommuteAdviceModel> get commuteAdvices => _commuteAdvices;
+  bool get hasUnreadCommuteAdvices => _commuteAdvices.any((a) => !a.isRead);
+  bool get hasShownCommuteAdviceToday => _hasShownCommuteAdviceToday;
+
+  // AI摘要
+  String? get weatherSummary => _weatherSummary;
+  bool get isGeneratingSummary => _isGeneratingSummary;
+  String? get forecast15dSummary => _forecast15dSummary;
+  bool get isGenerating15dSummary => _isGenerating15dSummary;
+
+  // ==================== 初始化方法 ====================
+
   /// 快速启动：先加载缓存数据，后台刷新
   Future<void> quickStart() async {
-    print('\n🚀 ========== WeatherProvider: 快速启动模式 ==========');
+    WeatherProviderLogger.box('快速启动模式');
 
     try {
       // 1. 从SQLite加载缓存的位置信息
@@ -146,9 +169,9 @@ class WeatherProvider extends ChangeNotifier {
 
       if (cachedLocation == null) {
         // 全新安装，无缓存数据，使用正常初始化流程
-        print('📦 检测到全新安装（无缓存位置）');
-        print('📋 策略: 使用正常初始化流程，同步加载数据');
-        print('⏱️ 预计时间: 5-10秒（需定位和获取数据）');
+        WeatherProviderLogger.info('检测到全新安装（无缓存位置）');
+        WeatherProviderLogger.debug('策略: 使用正常初始化流程，同步加载数据');
+        WeatherProviderLogger.debug('预计时间: 5-10秒（需定位和获取数据）');
 
         // 显示加载状态
         _isLoading = true;
@@ -159,7 +182,7 @@ class WeatherProvider extends ChangeNotifier {
         _isLoading = false;
         notifyListeners();
 
-        print('✅ 全新安装初始化完成\n');
+        WeatherProviderLogger.success('全新安装初始化完成');
         return;
       }
 
@@ -169,7 +192,7 @@ class WeatherProvider extends ChangeNotifier {
       final cachedWeather = await _databaseService.getWeatherData(weatherKey);
 
       if (cachedWeather == null) {
-        print('📦 有位置缓存但无天气数据缓存，执行完整初始化');
+        WeatherProviderLogger.info('有位置缓存但无天气数据缓存，执行完整初始化');
         _isLoading = true;
         notifyListeners();
         await initializeWeather();
@@ -182,9 +205,10 @@ class WeatherProvider extends ChangeNotifier {
       final isCacheExpired = await _isCacheExpired(weatherKey);
       final cacheStatus = isCacheExpired ? '（已过期，将后台更新）' : '（有效）';
 
-      print('📦 使用SQLite缓存数据快速显示 $cacheStatus');
-      print('   位置: ${cachedLocation.district}');
-      print('   温度: ${cachedWeather.current?.current?.temperature ?? '--'}℃');
+      WeatherProviderLogger.info('使用SQLite缓存数据快速显示 $cacheStatus');
+      WeatherProviderLogger.debug(
+        '位置: ${cachedLocation.district}, 温度: ${cachedWeather.current?.current?.temperature ?? '--'}℃',
+      );
 
       // 立即设置缓存数据并通知UI（无论是否过期）
       _currentWeather = cachedWeather;
@@ -204,21 +228,24 @@ class WeatherProvider extends ChangeNotifier {
 
       // 将当前定位天气数据同步到主要城市列表中
       _mainCitiesWeather[cachedLocation.district] = cachedWeather;
-      print('✅ 当前定位城市数据已同步到主要城市列表: ${cachedLocation.district}');
+      WeatherProviderLogger.success(
+        '当前定位城市数据已同步到主要城市列表: ${cachedLocation.district}',
+      );
 
       // 重置加载状态（避免显示"正在更新"）
       _isLoading = false;
       _error = null;
 
       notifyListeners();
-      print('✅ SQLite缓存数据已显示，用户可立即查看');
-      print('   - 24小时预报: ${_hourlyForecast?.length ?? 0}条');
-      print('   - 15日预报: ${_forecast15d?.length ?? 0}天');
+      WeatherProviderLogger.success('SQLite缓存数据已显示，用户可立即查看');
+      WeatherProviderLogger.debug(
+        '24小时预报: ${_hourlyForecast?.length ?? 0}条, 15日预报: ${_forecast15d?.length ?? 0}天',
+      );
 
       if (isCacheExpired) {
-        print('🔄 缓存已过期，后台开始刷新最新数据...\n');
+        WeatherProviderLogger.info('缓存已过期，后台开始刷新最新数据');
       } else {
-        print('🔄 后台开始刷新最新数据...\n');
+        WeatherProviderLogger.info('后台开始刷新最新数据');
       }
 
       // 启动通勤建议清理定时器
@@ -248,7 +275,7 @@ class WeatherProvider extends ChangeNotifier {
       // 3. 后台异步刷新（不阻塞UI）
       _backgroundRefresh();
     } catch (e) {
-      print('❌ WeatherProvider: 快速启动失败: $e');
+      WeatherProviderLogger.error('快速启动失败: $e');
       // 降级到正常初始化
       _isLoading = true;
       notifyListeners();
@@ -264,7 +291,7 @@ class WeatherProvider extends ChangeNotifier {
   Future<void> _backgroundRefresh() async {
     // 检查全局定位刷新锁
     if (_isLocationRefreshing) {
-      print('🔒 后台刷新: 定位刷新正在进行中，跳过后台刷新');
+      WeatherProviderLogger.warning('后台刷新: 定位刷新正在进行中，跳过后台刷新');
       return;
     }
 
@@ -286,7 +313,7 @@ class WeatherProvider extends ChangeNotifier {
         final snapshotIsShowingCityWeather = _isShowingCityWeather;
 
         try {
-          print('🔄 开始后台数据刷新');
+          WeatherProviderLogger.info('开始后台数据刷新');
 
           // 初始化数据库
           await _databaseService.initDatabase();
@@ -299,7 +326,7 @@ class WeatherProvider extends ChangeNotifier {
               .timeout(
                 const Duration(seconds: 20),
                 onTimeout: () {
-                  print('⏰ 后台刷新超时');
+                  WeatherProviderLogger.warning('后台刷新超时');
                   return false;
                 },
               );
@@ -315,10 +342,10 @@ class WeatherProvider extends ChangeNotifier {
             if (_currentLocation != null && _currentLocationWeather != null) {
               _mainCitiesWeather[_currentLocation!.district] =
                   _currentLocationWeather!;
-              print('✅ 后台刷新：当前定位城市数据已同步到主要城市列表');
+              WeatherProviderLogger.success('后台刷新：当前定位城市数据已同步到主要城市列表');
             }
 
-            print('✅ 后台数据刷新完成，已替换为最新数据');
+            WeatherProviderLogger.success('后台数据刷新完成，已替换为最新数据');
             notifyListeners(); // 一次性通知UI
 
             // 后台刷新成功后，预生成所有AI内容（使用最新数据）
@@ -334,13 +361,13 @@ class WeatherProvider extends ChangeNotifier {
             await checkAndGenerateCommuteAdvices();
           } else {
             // 刷新失败，完整恢复所有快照数据
-            print('⚠️ 后台刷新失败，恢复缓存数据');
-            print('   恢复位置: ${snapshotLocation?.district ?? '未知'}');
-            print(
-              '   恢复温度: ${snapshotWeather?.current?.current?.temperature ?? '--'}℃',
+            WeatherProviderLogger.warning('后台刷新失败，恢复缓存数据');
+            WeatherProviderLogger.debug(
+              '恢复位置: ${snapshotLocation?.district ?? '未知'}, 温度: ${snapshotWeather?.current?.current?.temperature ?? '--'}℃',
             );
-            print('   恢复24小时: ${snapshotHourlyForecast?.length ?? 0}条');
-            print('   恢复15日: ${snapshotForecast15d?.length ?? 0}天');
+            WeatherProviderLogger.debug(
+              '恢复24小时: ${snapshotHourlyForecast?.length ?? 0}条, 15日: ${snapshotForecast15d?.length ?? 0}天',
+            );
 
             _currentWeather = snapshotWeather;
             _currentLocation = snapshotLocation;
@@ -359,12 +386,12 @@ class WeatherProvider extends ChangeNotifier {
             notifyListeners(); // 一次性通知UI
           }
         } catch (e) {
-          print('❌ 后台刷新异常: $e');
+          WeatherProviderLogger.error('后台刷新异常: $e');
           _isBackgroundRefreshing = false;
           _isLocationRefreshing = false; // 释放全局锁
 
           // 异常时完整恢复快照数据
-          print('⚠️ 异常恢复，恢复缓存数据');
+          WeatherProviderLogger.warning('异常恢复，恢复缓存数据');
           _currentWeather = snapshotWeather;
           _currentLocation = snapshotLocation;
           _currentLocationWeather = snapshotLocationWeather;
@@ -383,7 +410,7 @@ class WeatherProvider extends ChangeNotifier {
         }
       });
     } catch (e) {
-      print('❌ 后台刷新外层失败: $e');
+      WeatherProviderLogger.error('后台刷新外层失败: $e');
       _isBackgroundRefreshing = false;
       _isLocationRefreshing = false; // 释放全局锁
       notifyListeners();
@@ -400,12 +427,16 @@ class WeatherProvider extends ChangeNotifier {
     final timeSinceLastLocation = DateTime.now().difference(_lastLocationTime!);
     if (timeSinceLastLocation < _locationDebounceInterval) {
       // 距离上次定位时间太短，不需要重新定位
-      print('⏱️ 距离上次定位仅${timeSinceLastLocation.inMinutes}分钟，使用缓存位置');
+      WeatherProviderLogger.debug(
+        '距离上次定位仅${timeSinceLastLocation.inMinutes}分钟，使用缓存位置',
+      );
       return false;
     }
 
     // 超过防抖间隔，可以重新定位
-    print('✅ 距离上次定位已${timeSinceLastLocation.inMinutes}分钟，允许重新定位');
+    WeatherProviderLogger.debug(
+      '距离上次定位已${timeSinceLastLocation.inMinutes}分钟，允许重新定位',
+    );
     return true;
   }
 
@@ -423,7 +454,7 @@ class WeatherProvider extends ChangeNotifier {
         location = await _locationService.getCurrentLocation().timeout(
           const Duration(seconds: 15),
           onTimeout: () {
-            print('⏰ 获取定位超时');
+            WeatherProviderLogger.warning('获取定位超时');
             return null;
           },
         );
@@ -431,12 +462,12 @@ class WeatherProvider extends ChangeNotifier {
         // 定位成功，更新最后定位时间
         if (location != null) {
           _lastLocationTime = DateTime.now();
-          print('✅ 定位成功，更新最后定位时间');
+          WeatherProviderLogger.debug('定位成功，更新最后定位时间');
         }
       } else {
         // 使用缓存的位置
         location = _currentLocation;
-        print('📍 使用缓存位置: ${location?.district}');
+        WeatherProviderLogger.debug('使用缓存位置: ${location?.district}');
       }
 
       if (location != null) {
@@ -462,15 +493,15 @@ class WeatherProvider extends ChangeNotifier {
 
           return true;
         } else {
-          print('⚠️ 获取天气数据失败，不更新位置信息');
+          WeatherProviderLogger.warning('获取天气数据失败，不更新位置信息');
           return false;
         }
       }
 
-      print('⚠️ 未获取到定位信息');
+      WeatherProviderLogger.warning('未获取到定位信息');
       return false;
     } catch (e) {
-      print('❌ 刷新定位和天气失败: $e');
+      WeatherProviderLogger.error('刷新定位和天气失败: $e');
       return false;
     }
   }
@@ -481,7 +512,7 @@ class WeatherProvider extends ChangeNotifier {
 
     // 检查是否可以初始化
     if (!appStateManager.canFetchWeatherData()) {
-      print('🚫 WeatherProvider: 应用状态不允许初始化，跳过');
+      WeatherProviderLogger.warning('应用状态不允许初始化，跳过');
       return;
     }
 
@@ -496,16 +527,16 @@ class WeatherProvider extends ChangeNotifier {
 
       // 异步清理过期缓存数据（不阻塞UI）
       _cleanupExpiredCache().catchError((e) {
-        print('❌ 清理过期缓存失败: $e');
+        WeatherProviderLogger.error('清理过期缓存失败: $e');
       });
 
       // 先使用缓存的位置，不进行实时定位
       LocationModel? cachedLocation = _locationService.getCachedLocation();
       if (cachedLocation != null) {
-        print('🔄 WeatherProvider: 使用缓存的位置 ${cachedLocation.district}');
+        WeatherProviderLogger.info('使用缓存的位置 ${cachedLocation.district}');
         _currentLocation = cachedLocation;
       } else {
-        print('🔄 WeatherProvider: 无缓存位置，使用默认位置');
+        WeatherProviderLogger.info('无缓存位置，使用默认位置');
         // 使用默认位置（北京）
         _currentLocation = LocationModel(
           lat: 39.9042,
@@ -524,7 +555,7 @@ class WeatherProvider extends ChangeNotifier {
 
       // 异步清理默认位置的缓存数据（不阻塞UI）
       clearDefaultLocationCache().catchError((e) {
-        print('❌ 清理默认位置缓存失败: $e');
+        WeatherProviderLogger.error('清理默认位置缓存失败: $e');
       });
 
       // 重新加载主要城市列表，确保当前定位城市被包含
@@ -552,13 +583,15 @@ class WeatherProvider extends ChangeNotifier {
       // 标记初始化完成
       appStateManager.markInitializationCompleted();
     } catch (e) {
-      print('Database initialization failed: $e');
+      WeatherProviderLogger.error('Database initialization failed: $e');
       // Continue without database for testing
 
       // 即使出错也要标记初始化完成
       appStateManager.markInitializationCompleted();
     }
   }
+
+  // ==================== 天气数据刷新方法 ====================
 
   /// Load cached data
   Future<void> loadCachedData() async {
@@ -582,12 +615,14 @@ class WeatherProvider extends ChangeNotifier {
       } else {
         // If no cached location, use Beijing as default
         _currentLocation = _getDefaultLocation();
-        print('No cached location found, using Beijing as default');
+        WeatherProviderLogger.info(
+          'No cached location found, using Beijing as default',
+        );
       }
 
       notifyListeners();
     } catch (e) {
-      print('Error loading cached data: $e');
+      WeatherProviderLogger.info('Error loading cached data: $e');
       // If error loading cached data, use Beijing as default
       _currentLocation = _getDefaultLocation();
       notifyListeners();
@@ -598,7 +633,7 @@ class WeatherProvider extends ChangeNotifier {
   Future<void> refreshWeatherData() async {
     // 检查全局定位刷新锁
     if (_isLocationRefreshing) {
-      print('🔒 refreshWeatherData: 定位刷新正在进行中，跳过');
+      WeatherProviderLogger.debug('refreshWeatherData: 定位刷新正在进行中，跳过');
       return;
     }
 
@@ -606,7 +641,7 @@ class WeatherProvider extends ChangeNotifier {
 
     // 检查是否可以刷新数据
     if (!appStateManager.canFetchWeatherData()) {
-      print('🚫 WeatherProvider: 应用状态不允许刷新天气数据，跳过');
+      WeatherProviderLogger.warning('应用状态不允许刷新天气数据，跳过');
       return;
     }
 
@@ -628,7 +663,9 @@ class WeatherProvider extends ChangeNotifier {
     try {
       // Use current location without re-requesting permission
       LocationModel? location = _currentLocation ?? _getDefaultLocation();
-      print('Refreshing weather for: ${location.district}');
+      WeatherProviderLogger.info(
+        'Refreshing weather for: ${location.district}',
+      );
 
       _currentLocation = location;
 
@@ -642,15 +679,10 @@ class WeatherProvider extends ChangeNotifier {
       await loadMainCities();
 
       // Check if we have valid cached weather data
-      final weatherKey = '${location.district}:${AppConstants.weatherAllKey}';
-
-      // 🚀 优先使用智能缓存（内存+SQLite）
-      WeatherModel? cachedWeather = await _getWeatherFromSmartCache(
+      // 🚀 使用缓存管理器（智能缓存 + 数据库缓存）
+      WeatherModel? cachedWeather = await _cacheManager.getWeather(
         location.district,
       );
-
-      // 如果智能缓存未命中，尝试旧的数据库缓存
-      cachedWeather ??= await _databaseService.getWeatherData(weatherKey);
 
       if (cachedWeather != null) {
         // Use cached data
@@ -667,14 +699,16 @@ class WeatherProvider extends ChangeNotifier {
 
         // 同步当前定位天气数据到主要城市列表
         _mainCitiesWeather[location.district] = cachedWeather;
-        print('Using cached weather data for ${location.district}');
-        print('✅ 当前定位城市数据已同步到主要城市列表');
+        WeatherProviderLogger.debug(
+          'Using cached weather data for ${location.district}',
+        );
+        WeatherProviderLogger.success('当前定位城市数据已同步到主要城市列表');
 
         // 清空错误（有缓存数据就不应该显示错误）
         _error = null;
       } else {
         // Fetch fresh data from API
-        print(
+        WeatherProviderLogger.info(
           'No valid cache found, fetching fresh weather data for ${location.district}',
         );
         WeatherModel? weather = await _weatherService.getWeatherDataForLocation(
@@ -692,18 +726,15 @@ class WeatherProvider extends ChangeNotifier {
           _dailyForecast = weather.forecast15d?.take(7).toList();
           _forecast15d = weather.forecast15d; // 保存15日预报数据
 
-          // Save weather data to cache
-          await _databaseService.putWeatherData(weatherKey, weather);
-
-          // 🚀 同时存储到智能缓存
-          await _putWeatherToSmartCache(location.district, weather);
+          // Save weather data to cache (使用缓存管理器统一保存)
+          await _cacheManager.saveWeather(location.district, weather);
 
           // Cache location in service
           _locationService.setCachedLocation(location);
 
           // 同步当前定位天气数据到主要城市列表
           _mainCitiesWeather[location.district] = weather;
-          print('✅ 当前定位城市数据已同步到主要城市列表');
+          WeatherProviderLogger.success('当前定位城市数据已同步到主要城市列表');
 
           // 分析天气提醒（智能提醒，仅当前定位城市）
           try {
@@ -776,7 +807,9 @@ class WeatherProvider extends ChangeNotifier {
 
       // 如果定位成功且无错误，通知所有监听器
       if (_currentLocation != null && _error == null) {
-        print('📍 WeatherProvider: refreshWeatherData 准备发送定位成功通知');
+        WeatherProviderLogger.debug(
+          'WeatherProvider: refreshWeatherData 准备发送定位成功通知',
+        );
         LocationChangeNotifier().notifyLocationSuccess(_currentLocation!);
 
         // 更新小组件（只更新当前定位的数据，不更新城市数据）
@@ -798,7 +831,7 @@ class WeatherProvider extends ChangeNotifier {
         // 刷新成功后，检查并生成通勤提醒
         await checkAndGenerateCommuteAdvices();
       } else if (_error != null) {
-        print(
+        WeatherProviderLogger.info(
           '📍 WeatherProvider: refreshWeatherData 跳过通知 - 位置: ${_currentLocation?.district}, 错误: $_error',
         );
       }
@@ -847,7 +880,7 @@ class WeatherProvider extends ChangeNotifier {
 
       if (cachedWeather != null) {
         // Use cached data
-        print(
+        WeatherProviderLogger.info(
           '🏙️ BEFORE SETTING CACHED WEATHER FOR $cityName: ${_currentWeather?.current?.current?.temperature}',
         );
         _currentWeather = cachedWeather;
@@ -855,14 +888,18 @@ class WeatherProvider extends ChangeNotifier {
         _dailyForecast = cachedWeather.forecast15d?.take(7).toList();
         _forecast15d = cachedWeather.forecast15d; // 保存15日预报数据
         _isShowingCityWeather = true; // 标记当前显示城市天气数据
-        print(
+        WeatherProviderLogger.info(
           '🏙️ AFTER SETTING CACHED WEATHER FOR $cityName: ${_currentWeather?.current?.current?.temperature}',
         );
-        print('✅ Using cached weather data for $cityName');
-        print('🏙️ _isShowingCityWeather set to: $_isShowingCityWeather');
+        WeatherProviderLogger.success(
+          'Using cached weather data for $cityName',
+        );
+        WeatherProviderLogger.info(
+          '🏙️ _isShowingCityWeather set to: $_isShowingCityWeather',
+        );
       } else {
         // Fetch fresh data from API
-        print(
+        WeatherProviderLogger.info(
           'No valid cache found, fetching fresh weather data for $cityName',
         );
         WeatherModel? weather = await _weatherService.getWeatherDataForLocation(
@@ -870,7 +907,7 @@ class WeatherProvider extends ChangeNotifier {
         );
 
         if (weather != null) {
-          print(
+          WeatherProviderLogger.info(
             'Before setting fresh weather for $cityName: ${_currentWeather?.current?.current?.temperature}',
           );
           _currentWeather = weather;
@@ -878,10 +915,12 @@ class WeatherProvider extends ChangeNotifier {
           _dailyForecast = weather.forecast15d?.take(7).toList();
           _forecast15d = weather.forecast15d; // 保存15日预报数据
           _isShowingCityWeather = true; // 标记当前显示城市天气数据
-          print(
+          WeatherProviderLogger.info(
             'After setting fresh weather for $cityName: ${_currentWeather?.current?.current?.temperature}',
           );
-          print('🏙️ _isShowingCityWeather set to: $_isShowingCityWeather');
+          WeatherProviderLogger.info(
+            '🏙️ _isShowingCityWeather set to: $_isShowingCityWeather',
+          );
 
           // Save to cache
           await _databaseService.putWeatherData(weatherKey, weather);
@@ -910,7 +949,7 @@ class WeatherProvider extends ChangeNotifier {
       }
     } catch (e) {
       _error = 'Error: $e';
-      print('City weather error: $e');
+      WeatherProviderLogger.info('City weather error: $e');
     } finally {
       _setLoading(false);
     }
@@ -935,7 +974,7 @@ class WeatherProvider extends ChangeNotifier {
   /// Set loading state
   void _setLoading(bool loading) {
     _isLoading = loading;
-    print(
+    WeatherProviderLogger.info(
       '_setLoading($loading) called, current weather temp: ${_currentWeather?.current?.current?.temperature}',
     );
     notifyListeners();
@@ -995,7 +1034,9 @@ class WeatherProvider extends ChangeNotifier {
         if (skipCurrentLocation &&
             currentLocationName != null &&
             cityName == currentLocationName) {
-          print('🏙️ WeatherProvider: 跳过当前位置城市 $cityName 的刷新');
+          WeatherProviderLogger.info(
+            '🏙️ WeatherProvider: 跳过当前位置城市 $cityName 的刷新',
+          );
           continue;
         }
 
@@ -1011,7 +1052,7 @@ class WeatherProvider extends ChangeNotifier {
       // 等待所有请求完成
       await Future.wait(futures);
     } catch (e) {
-      print('Error loading main cities weather: $e');
+      WeatherProviderLogger.info('Error loading main cities weather: $e');
     } finally {
       _isLoadingCitiesWeather = false;
       _hasPerformedInitialMainCitiesRefresh = true; // 标记首次刷新已完成
@@ -1042,14 +1083,14 @@ class WeatherProvider extends ChangeNotifier {
           cacheKey.replaceAll(':', '_'),
         );
         if (cacheAge != null && cacheAge.inMinutes > 15) {
-          print('🕒 数据库缓存已过期: ${cacheAge.inMinutes}分钟前');
+          WeatherProviderLogger.warning('数据库缓存已过期: ${cacheAge.inMinutes}分钟前');
           return true;
         }
       }
 
       return false; // 缓存有效
     } catch (e) {
-      print('Error checking cache expiration: $e');
+      WeatherProviderLogger.info('Error checking cache expiration: $e');
       return true; // 出错时强制刷新
     }
   }
@@ -1066,26 +1107,23 @@ class WeatherProvider extends ChangeNotifier {
   }) async {
     try {
       // 检查是否有有效的缓存数据
-      final weatherKey = '$cityName:${AppConstants.weatherAllKey}';
       WeatherModel? cachedWeather;
       bool isCacheExpired = false;
 
       // 如果不强制刷新，尝试使用缓存
       if (!forceRefresh) {
-        // 🚀 优先使用智能缓存
-        cachedWeather = await _getWeatherFromSmartCache(cityName);
-
-        // 如果智能缓存未命中，尝试旧的数据库缓存
-        cachedWeather ??= await _databaseService.getWeatherData(weatherKey);
+        // 🚀 使用缓存管理器（智能缓存 + 数据库缓存）
+        cachedWeather = await _cacheManager.getWeather(cityName);
 
         // 如果启用过期检查，检查缓存是否过期
         if (cachedWeather != null && checkExpiration) {
+          final weatherKey = '$cityName:${AppConstants.weatherAllKey}';
           isCacheExpired = await _isCacheExpired(weatherKey);
           if (isCacheExpired && !showExpiredCache) {
-            print('🕒 $cityName 缓存已过期，不显示过期缓存');
+            WeatherProviderLogger.warning('$cityName 缓存已过期，不显示过期缓存');
             cachedWeather = null; // 清空缓存，强制刷新
           } else if (isCacheExpired) {
-            print('🕒 $cityName 缓存已过期，但先显示过期缓存，后台更新');
+            WeatherProviderLogger.warning('$cityName 缓存已过期，但先显示过期缓存，后台更新');
           }
         }
       }
@@ -1094,7 +1132,7 @@ class WeatherProvider extends ChangeNotifier {
         // 使用缓存数据（包括过期缓存）
         _mainCitiesWeather[cityName] = cachedWeather;
         final cacheStatus = isCacheExpired ? '（已过期）' : '（有效）';
-        print(
+        WeatherProviderLogger.info(
           '✅ Using cached weather data for $cityName in main cities $cacheStatus',
         );
         notifyListeners();
@@ -1105,7 +1143,9 @@ class WeatherProvider extends ChangeNotifier {
         }
       } else {
         // 从API获取新数据
-        print('🌐 Fetching fresh weather data for $cityName in main cities');
+        WeatherProviderLogger.info(
+          'Fetching fresh weather data for $cityName in main cities',
+        );
 
         // 创建城市位置
         LocationModel cityLocation = LocationModel(
@@ -1129,11 +1169,8 @@ class WeatherProvider extends ChangeNotifier {
         if (weather != null) {
           _mainCitiesWeather[cityName] = weather;
 
-          // 保存到缓存
-          await _databaseService.putWeatherData(weatherKey, weather);
-
-          // 🚀 同时存储到智能缓存
-          await _putWeatherToSmartCache(cityName, weather);
+          // 保存到缓存（使用缓存管理器统一保存）
+          await _cacheManager.saveWeather(cityName, weather);
 
           // 只为当前定位城市分析天气提醒（智能提醒）
           // 其他城市只使用气象预警（原始预警数据）
@@ -1142,24 +1179,34 @@ class WeatherProvider extends ChangeNotifier {
 
           if (isCurrentLocation) {
             try {
-              print('🏙️ WeatherProvider: 分析当前定位城市 $cityName 的天气提醒');
+              WeatherProviderLogger.info(
+                '🏙️ WeatherProvider: 分析当前定位城市 $cityName 的天气提醒',
+              );
               await _alertService.analyzeWeather(weather, cityLocation);
-              print('🏙️ WeatherProvider: 已分析 $cityName 的天气提醒');
+              WeatherProviderLogger.info(
+                '🏙️ WeatherProvider: 已分析 $cityName 的天气提醒',
+              );
             } catch (e) {
-              print('🏙️ WeatherProvider: 分析 $cityName 天气提醒失败 - $e');
+              WeatherProviderLogger.info(
+                '🏙️ WeatherProvider: 分析 $cityName 天气提醒失败 - $e',
+              );
             }
           } else {
-            print('🏙️ WeatherProvider: $cityName 是自定义城市，跳过天气提醒分析（只使用气象预警）');
+            WeatherProviderLogger.info(
+              '🏙️ WeatherProvider: $cityName 是自定义城市，跳过天气提醒分析（只使用气象预警）',
+            );
           }
 
           // 通知UI更新
           notifyListeners();
         } else {
-          print('❌ Failed to fetch weather data for $cityName');
+          WeatherProviderLogger.error(
+            'Failed to fetch weather data for $cityName',
+          );
         }
       }
     } catch (e) {
-      print('❌ Error loading weather for $cityName: $e');
+      WeatherProviderLogger.error('Error loading weather for $cityName: $e');
     }
   }
 
@@ -1183,7 +1230,7 @@ class WeatherProvider extends ChangeNotifier {
   /// 刷新主要城市天气数据（不进行定位，只更新列表数据）
   /// [forceRefresh] - 是否强制刷新（默认true，用于下拉刷新）
   Future<void> refreshMainCitiesWeather({bool forceRefresh = true}) async {
-    print('🔄 refreshMainCitiesWeather: 只刷新列表数据，不进行定位');
+    WeatherProviderLogger.info('refreshMainCitiesWeather: 只刷新列表数据，不进行定位');
 
     // 如果是强制刷新，清空缓存
     if (forceRefresh) {
@@ -1205,12 +1252,14 @@ class WeatherProvider extends ChangeNotifier {
         _lastMainCitiesRefreshTime!,
       );
       if (timeSinceLastRefresh < const Duration(minutes: 30)) {
-        print('⏭️ 距离上次刷新仅${timeSinceLastRefresh.inMinutes}分钟，跳过智能刷新');
+        WeatherProviderLogger.info(
+          '⏭️ 距离上次刷新仅${timeSinceLastRefresh.inMinutes}分钟，跳过智能刷新',
+        );
         return;
       }
     }
 
-    print('🔄 智能刷新主要城市数据（距上次刷新超过30分钟）');
+    WeatherProviderLogger.info('智能刷新主要城市数据（距上次刷新超过30分钟）');
     await refreshMainCitiesWeather(forceRefresh: false);
   }
 
@@ -1220,7 +1269,9 @@ class WeatherProvider extends ChangeNotifier {
   Future<bool> refreshFirstCityLocationAndWeather() async {
     // 检查全局定位刷新锁
     if (_isLocationRefreshing) {
-      print('🔒 refreshFirstCityLocationAndWeather: 定位刷新正在进行中，跳过');
+      WeatherProviderLogger.debug(
+        'refreshFirstCityLocationAndWeather: 定位刷新正在进行中，跳过',
+      );
       return false;
     }
 
@@ -1229,7 +1280,7 @@ class WeatherProvider extends ChangeNotifier {
       _isLoading = true;
       notifyListeners();
 
-      print('📍 开始定位并更新第一个卡片（用户主动点击，强制定位）');
+      WeatherProviderLogger.debug('开始定位并更新第一个卡片（用户主动点击，强制定位）');
 
       // 尝试获取当前位置（带超时，用户主动点击不使用防抖）
       LocationModel? newLocation = await _locationService
@@ -1237,20 +1288,20 @@ class WeatherProvider extends ChangeNotifier {
           .timeout(
             const Duration(seconds: 15),
             onTimeout: () {
-              print('⏰ 定位超时');
+              WeatherProviderLogger.warning('定位超时');
               return null;
             },
           );
 
       if (newLocation == null) {
-        print('❌ 定位失败，保持显示原有数据');
+        WeatherProviderLogger.error('定位失败，保持显示原有数据');
         _isLoading = false;
         _isLocationRefreshing = false;
         notifyListeners();
         return false;
       }
 
-      print('✅ 定位成功: ${newLocation.district}');
+      WeatherProviderLogger.success('定位成功: ${newLocation.district}');
 
       // 更新最后定位时间
       _lastLocationTime = DateTime.now();
@@ -1271,7 +1322,7 @@ class WeatherProvider extends ChangeNotifier {
       // 只获取第一个城市（当前定位城市）的天气数据
       final firstCity = _mainCities.isNotEmpty ? _mainCities.first.name : null;
       if (firstCity != null) {
-        print('🔄 刷新第一个卡片: $firstCity');
+        WeatherProviderLogger.info('刷新第一个卡片: $firstCity');
         await _loadSingleCityWeather(
           firstCity,
           forceRefresh: true,
@@ -1298,11 +1349,11 @@ class WeatherProvider extends ChangeNotifier {
       _isLocationRefreshing = false;
       notifyListeners();
 
-      print('✅ 第一个卡片更新完成');
+      WeatherProviderLogger.success('第一个卡片更新完成');
       return true;
     } catch (e) {
-      print('❌ 定位并更新第一个卡片失败: $e');
-      print('❌ 保持显示原有数据');
+      WeatherProviderLogger.error('定位并更新第一个卡片失败: $e');
+      WeatherProviderLogger.error('保持显示原有数据');
 
       _isLoading = false;
       _isLocationRefreshing = false;
@@ -1315,11 +1366,11 @@ class WeatherProvider extends ChangeNotifier {
   Future<void> performInitialMainCitiesRefresh() async {
     // 如果已经进行过首次刷新，则跳过
     if (_hasPerformedInitialMainCitiesRefresh) {
-      print('🏙️ WeatherProvider: 主要城市天气数据已经刷新过，跳过');
+      WeatherProviderLogger.info('🏙️ WeatherProvider: 主要城市天气数据已经刷新过，跳过');
       return;
     }
 
-    print('🏙️ WeatherProvider: 首次进入主要城市列表，开始刷新天气数据...');
+    WeatherProviderLogger.info('🏙️ WeatherProvider: 首次进入主要城市列表，开始刷新天气数据...');
 
     // 确保主要城市列表已加载
     if (_mainCities.isEmpty) {
@@ -1332,11 +1383,13 @@ class WeatherProvider extends ChangeNotifier {
     if (currentLocationName != null && _currentLocationWeather != null) {
       // 将当前定位的天气数据同步到 _mainCitiesWeather 中
       _mainCitiesWeather[currentLocationName] = _currentLocationWeather!;
-      print('✅ 当前定位城市 $currentLocationName 的数据已同步到主要城市列表');
+      WeatherProviderLogger.success(
+        '当前定位城市 $currentLocationName 的数据已同步到主要城市列表',
+      );
     }
 
     // 刷新其他城市天气数据（跳过当前位置城市，只刷新其他城市）
-    print('🏙️ WeatherProvider: 刷新非当前位置的城市天气数据');
+    WeatherProviderLogger.info('🏙️ WeatherProvider: 刷新非当前位置的城市天气数据');
     await _loadMainCitiesWeather(
       forceRefresh: false, // 不强制刷新，使用缓存优先
       skipCurrentLocation: true, // 跳过当前位置城市（已经有数据了）
@@ -1351,10 +1404,12 @@ class WeatherProvider extends ChangeNotifier {
     try {
       final deletedCount = await _databaseService.cleanExpiredData();
       if (deletedCount > 0) {
-        print('Cleaned up $deletedCount expired cache entries');
+        WeatherProviderLogger.info(
+          'Cleaned up $deletedCount expired cache entries',
+        );
       }
     } catch (e) {
-      print('Error cleaning up expired cache: $e');
+      WeatherProviderLogger.info('Error cleaning up expired cache: $e');
     }
   }
 
@@ -1363,24 +1418,26 @@ class WeatherProvider extends ChangeNotifier {
     _stopPeriodicRefresh(); // 先停止现有的定时器
 
     _refreshTimer = Timer.periodic(_refreshInterval, (timer) {
-      print('⏰ WeatherProvider: 定时刷新触发');
+      WeatherProviderLogger.warning('WeatherProvider: 定时刷新触发');
       _performPeriodicRefresh();
     });
 
-    print('⏰ WeatherProvider: 定时刷新已启动，间隔 ${_refreshInterval.inMinutes} 分钟');
+    WeatherProviderLogger.warning(
+      'WeatherProvider: 定时刷新已启动，间隔 ${_refreshInterval.inMinutes} 分钟',
+    );
   }
 
   /// 停止定时刷新
   void _stopPeriodicRefresh() {
     _refreshTimer?.cancel();
     _refreshTimer = null;
-    print('⏰ WeatherProvider: 定时刷新已停止');
+    WeatherProviderLogger.warning('WeatherProvider: 定时刷新已停止');
   }
 
   /// 执行定时刷新
   Future<void> _performPeriodicRefresh() async {
     try {
-      print('⏰ WeatherProvider: 开始执行定时刷新');
+      WeatherProviderLogger.warning('WeatherProvider: 开始执行定时刷新');
 
       // 刷新当前定位天气数据
       await refreshWeatherData();
@@ -1388,9 +1445,9 @@ class WeatherProvider extends ChangeNotifier {
       // 智能刷新主要城市天气数据（根据上次刷新时间判断）
       await smartRefreshMainCitiesWeather();
 
-      print('⏰ WeatherProvider: 定时刷新完成');
+      WeatherProviderLogger.warning('WeatherProvider: 定时刷新完成');
     } catch (e) {
-      print('❌ WeatherProvider: 定时刷新失败: $e');
+      WeatherProviderLogger.error('WeatherProvider: 定时刷新失败: $e');
     }
   }
 
@@ -1409,10 +1466,10 @@ class WeatherProvider extends ChangeNotifier {
       // Load main cities from database
       await loadMainCities();
 
-      print('Cities initialized successfully');
+      WeatherProviderLogger.info('Cities initialized successfully');
     } catch (e) {
       _error = 'Failed to initialize cities: $e';
-      print('Error initializing cities: $e');
+      WeatherProviderLogger.info('Error initializing cities: $e');
     } finally {
       _isLoadingCities = false;
       notifyListeners();
@@ -1426,11 +1483,13 @@ class WeatherProvider extends ChangeNotifier {
       final currentLocationName =
           _currentLocation?.district ?? _originalLocation?.district;
 
-      print('🔍 loadMainCities - currentLocationName: $currentLocationName');
-      print(
+      WeatherProviderLogger.info(
+        '🔍 loadMainCities - currentLocationName: $currentLocationName',
+      );
+      WeatherProviderLogger.info(
         '🔍 loadMainCities - _currentLocation: ${_currentLocation?.district}',
       );
-      print(
+      WeatherProviderLogger.info(
         '🔍 loadMainCities - _originalLocation: ${_originalLocation?.district}',
       );
 
@@ -1439,13 +1498,17 @@ class WeatherProvider extends ChangeNotifier {
         currentLocationName,
       );
 
-      print('🔍 loadMainCities - loaded ${_mainCities.length} cities');
+      WeatherProviderLogger.info(
+        '🔍 loadMainCities - loaded ${_mainCities.length} cities',
+      );
       for (int i = 0; i < _mainCities.length; i++) {
-        print('🔍 loadMainCities - city[$i]: ${_mainCities[i].name}');
+        WeatherProviderLogger.info(
+          '🔍 loadMainCities - city[$i]: ${_mainCities[i].name}',
+        );
       }
       notifyListeners();
     } catch (e) {
-      print('Error loading main cities: $e');
+      WeatherProviderLogger.info('Error loading main cities: $e');
     }
   }
 
@@ -1460,11 +1523,19 @@ class WeatherProvider extends ChangeNotifier {
       currentName = _currentLocation?.city ?? _originalLocation?.city;
     }
 
-    print('🔍 getCurrentLocationCityName: $currentName');
-    print('🔍 _currentLocation?.district: ${_currentLocation?.district}');
-    print('🔍 _originalLocation?.district: ${_originalLocation?.district}');
-    print('🔍 _currentLocation?.city: ${_currentLocation?.city}');
-    print('🔍 _originalLocation?.city: ${_originalLocation?.city}');
+    WeatherProviderLogger.info('🔍 getCurrentLocationCityName: $currentName');
+    WeatherProviderLogger.info(
+      '🔍 _currentLocation?.district: ${_currentLocation?.district}',
+    );
+    WeatherProviderLogger.info(
+      '🔍 _originalLocation?.district: ${_originalLocation?.district}',
+    );
+    WeatherProviderLogger.info(
+      '🔍 _currentLocation?.city: ${_currentLocation?.city}',
+    );
+    WeatherProviderLogger.info(
+      '🔍 _originalLocation?.city: ${_originalLocation?.city}',
+    );
     return currentName;
   }
 
@@ -1479,7 +1550,7 @@ class WeatherProvider extends ChangeNotifier {
       }
       return success;
     } catch (e) {
-      print('Error adding main city: $e');
+      WeatherProviderLogger.info('Error adding main city: $e');
       return false;
     }
   }
@@ -1499,7 +1570,7 @@ class WeatherProvider extends ChangeNotifier {
       }
       return success;
     } catch (e) {
-      print('Error removing main city: $e');
+      WeatherProviderLogger.info('Error removing main city: $e');
       return false;
     }
   }
@@ -1530,7 +1601,7 @@ class WeatherProvider extends ChangeNotifier {
       // Reload cities to reflect new order
       await loadMainCities();
     } catch (e) {
-      print('Error updating cities sort order: $e');
+      WeatherProviderLogger.info('Error updating cities sort order: $e');
     }
   }
 
@@ -1539,7 +1610,7 @@ class WeatherProvider extends ChangeNotifier {
     try {
       return await _cityService.searchCities(query);
     } catch (e) {
-      print('Error searching cities: $e');
+      WeatherProviderLogger.info('Error searching cities: $e');
       return [];
     }
   }
@@ -1549,7 +1620,7 @@ class WeatherProvider extends ChangeNotifier {
     try {
       return await _cityService.getMainCityNames();
     } catch (e) {
-      print('Error getting main city names: $e');
+      WeatherProviderLogger.info('Error getting main city names: $e');
       return AppConstants.mainCities; // Fallback
     }
   }
@@ -1567,9 +1638,11 @@ class WeatherProvider extends ChangeNotifier {
       _dailyForecast = null;
       _sunMoonIndexData = null; // 清除日出日落和生活指数数据
       notifyListeners();
-      print('All cache data cleared including sun/moon index data');
+      WeatherProviderLogger.info(
+        'All cache data cleared including sun/moon index data',
+      );
     } catch (e) {
-      print('Error clearing cache: $e');
+      WeatherProviderLogger.info('Error clearing cache: $e');
     }
   }
 
@@ -1591,12 +1664,12 @@ class WeatherProvider extends ChangeNotifier {
       // _mainCities 和 _currentLocation 保持不变
 
       notifyListeners();
-      print('Weather cache cleared, cities preserved');
+      WeatherProviderLogger.info('Weather cache cleared, cities preserved');
 
       // 清理后自动刷新数据
       await refreshWeatherData();
     } catch (e) {
-      print('Error clearing weather cache: $e');
+      WeatherProviderLogger.info('Error clearing weather cache: $e');
     }
   }
 
@@ -1620,10 +1693,10 @@ class WeatherProvider extends ChangeNotifier {
         await _databaseService.deleteLocationData(
           AppConstants.currentLocationKey,
         );
-        print('Cleared default location cache');
+        WeatherProviderLogger.info('Cleared default location cache');
       }
     } catch (e) {
-      print('Error clearing default location cache: $e');
+      WeatherProviderLogger.info('Error clearing default location cache: $e');
     }
   }
 
@@ -1631,7 +1704,7 @@ class WeatherProvider extends ChangeNotifier {
   Future<void> forceRefreshWithLocation() async {
     // 检查全局定位刷新锁
     if (_isLocationRefreshing) {
-      print('🔒 forceRefreshWithLocation: 定位刷新正在进行中，跳过');
+      WeatherProviderLogger.debug('forceRefreshWithLocation: 定位刷新正在进行中，跳过');
       return;
     }
 
@@ -1642,7 +1715,9 @@ class WeatherProvider extends ChangeNotifier {
     _error = null;
 
     try {
-      print('Force refresh: clearing ALL cache and getting fresh data');
+      WeatherProviderLogger.info(
+        'Force refresh: clearing ALL cache and getting fresh data',
+      );
 
       // Clear current location cache
       await _databaseService.deleteLocationData(
@@ -1654,7 +1729,7 @@ class WeatherProvider extends ChangeNotifier {
         final currentWeatherKey =
             '${_currentLocation!.district}:${AppConstants.weatherAllKey}';
         await _databaseService.deleteWeatherData(currentWeatherKey);
-        print(
+        WeatherProviderLogger.info(
           'Cleared current location weather cache: ${_currentLocation!.district}',
         );
       }
@@ -1663,12 +1738,14 @@ class WeatherProvider extends ChangeNotifier {
       for (var city in _mainCities) {
         final weatherKey = '${city.name}:${AppConstants.weatherAllKey}';
         await _databaseService.deleteWeatherData(weatherKey);
-        print('Cleared weather cache for main city: ${city.name}');
+        WeatherProviderLogger.info(
+          'Cleared weather cache for main city: ${city.name}',
+        );
       }
 
       // 清空内存中的主要城市天气数据
       _mainCitiesWeather.clear();
-      print('Cleared all main cities weather cache');
+      WeatherProviderLogger.info('Cleared all main cities weather cache');
 
       // Force get fresh location
       LocationModel? location = await _locationService.getCurrentLocation();
@@ -1676,9 +1753,11 @@ class WeatherProvider extends ChangeNotifier {
       if (location == null) {
         // If still no location, use default
         location = _getDefaultLocation();
-        print('No location available, using default: ${location.district}');
+        WeatherProviderLogger.info(
+          'No location available, using default: ${location.district}',
+        );
       } else {
-        print('Got fresh location: ${location.district}');
+        WeatherProviderLogger.info('Got fresh location: ${location.district}');
       }
 
       _currentLocation = location;
@@ -1712,12 +1791,12 @@ class WeatherProvider extends ChangeNotifier {
         // Cache location in service
         _locationService.setCachedLocation(location);
 
-        print(
+        WeatherProviderLogger.info(
           'Force refresh completed with fresh data for ${location.district}',
         );
       } else {
         _error = 'Failed to fetch fresh weather data';
-        print('Force refresh failed: $_error');
+        WeatherProviderLogger.info('Force refresh failed: $_error');
       }
 
       // 强制刷新所有主要城市天气（从API重新获取）
@@ -1725,10 +1804,12 @@ class WeatherProvider extends ChangeNotifier {
     } catch (e) {
       if (e is LocationException) {
         _error = e.message;
-        print('Location error during force refresh: ${e.message}');
+        WeatherProviderLogger.info(
+          'Location error during force refresh: ${e.message}',
+        );
       } else {
         _error = 'Force refresh failed: $e';
-        print('Force refresh error: $e');
+        WeatherProviderLogger.info('Force refresh error: $e');
       }
     } finally {
       _setLoading(false);
@@ -1775,37 +1856,43 @@ class WeatherProvider extends ChangeNotifier {
 
   /// 恢复到当前定位的天气数据（用于从城市天气页面返回到今日天气页面）
   void restoreCurrentLocationWeather() {
-    print('🔄 RESTORE CURRENT LOCATION WEATHER CALLED 🔄');
-    print(
+    WeatherProviderLogger.info('RESTORE CURRENT LOCATION WEATHER CALLED 🔄');
+    WeatherProviderLogger.info(
       '💾 _currentLocationWeather != null: ${_currentLocationWeather != null}',
     );
-    print('🏠 _originalLocation != null: ${_originalLocation != null}');
-    print('🔍 _isShowingCityWeather: $_isShowingCityWeather');
+    WeatherProviderLogger.info(
+      '🏠 _originalLocation != null: ${_originalLocation != null}',
+    );
+    WeatherProviderLogger.info(
+      '🔍 _isShowingCityWeather: $_isShowingCityWeather',
+    );
 
     if (_currentLocationWeather != null) {
-      print(
+      WeatherProviderLogger.info(
         '💾 _currentLocationWeather temp: ${_currentLocationWeather!.current?.current?.temperature}',
       );
     }
 
     if (_originalLocation != null) {
-      print('🏠 _originalLocation district: ${_originalLocation!.district}');
+      WeatherProviderLogger.info(
+        '🏠 _originalLocation district: ${_originalLocation!.district}',
+      );
     }
 
     // 只有在真正需要恢复时才执行恢复逻辑
     if (_currentLocationWeather != null &&
         _originalLocation != null &&
         _isShowingCityWeather) {
-      print(
+      WeatherProviderLogger.info(
         'Before restore - _currentWeather temp: ${_currentWeather?.current?.current?.temperature}',
       );
-      print(
+      WeatherProviderLogger.info(
         'Before restore - _currentLocationWeather temp: ${_currentLocationWeather!.current?.current?.temperature}',
       );
-      print(
+      WeatherProviderLogger.info(
         'Before restore - _currentLocation district: ${_currentLocation?.district}',
       );
-      print(
+      WeatherProviderLogger.info(
         'Before restore - _originalLocation district: ${_originalLocation!.district}',
       );
 
@@ -1817,37 +1904,41 @@ class WeatherProvider extends ChangeNotifier {
       _forecast15d = _currentLocationWeather!.forecast15d;
       _isShowingCityWeather = false; // 重置标记，表示现在显示原始定位数据
 
-      print(
+      WeatherProviderLogger.info(
         '🚨 After restore - alerts cleared: ${_currentWeather?.current?.alerts}',
       );
 
-      print(
+      WeatherProviderLogger.info(
         'After restore - _currentWeather temp: ${_currentWeather?.current?.current?.temperature}',
       );
-      print(
+      WeatherProviderLogger.info(
         'After restore - _currentLocation district: ${_currentLocation?.district}',
       );
 
       notifyListeners();
-      print(
+      WeatherProviderLogger.info(
         'Restored to current location weather (alerts already cleared): ${_originalLocation!.district}',
       );
     } else {
-      print(
+      WeatherProviderLogger.info(
         'No restore needed: _currentLocationWeather=${_currentLocationWeather != null}, _originalLocation=${_originalLocation != null}, _isShowingCityWeather=$_isShowingCityWeather',
       );
     }
-    print('=== restoreCurrentLocationWeather finished ===');
+    WeatherProviderLogger.info(
+      '=== restoreCurrentLocationWeather finished ===',
+    );
   }
 
   /// 设置当前标签页索引
   void setCurrentTabIndex(int index) {
-    print('📱 Tab index changed to: $index');
+    WeatherProviderLogger.info('📱 Tab index changed to: $index');
     _currentTabIndex = index;
 
     // 如果切换到今日页面（索引0），且当前显示城市数据，则恢复
     if (index == 0 && _isShowingCityWeather) {
-      print('📱 Switched to today tab, checking if restore needed');
+      WeatherProviderLogger.info(
+        '📱 Switched to today tab, checking if restore needed',
+      );
       WidgetsBinding.instance.addPostFrameCallback((_) {
         restoreCurrentLocationWeather();
       });
@@ -1857,7 +1948,7 @@ class WeatherProvider extends ChangeNotifier {
   /// 为指定位置加载天气数据（返回是否成功）
   Future<bool> _loadWeatherDataForLocation(LocationModel location) async {
     try {
-      print('🔄 WeatherProvider: 为位置 ${location.district} 加载天气数据');
+      WeatherProviderLogger.info('为位置 ${location.district} 加载天气数据');
 
       // 获取天气数据
       final weather = await _weatherService.getWeatherDataForLocation(location);
@@ -1875,14 +1966,14 @@ class WeatherProvider extends ChangeNotifier {
         _dailyForecast = weather.forecast15d?.take(7).toList();
         _forecast15d = weather.forecast15d;
 
-        print('✅ WeatherProvider: 位置 ${location.district} 天气数据加载成功');
+        WeatherProviderLogger.success('位置 ${location.district} 天气数据加载成功');
         return true;
       } else {
-        print('❌ WeatherProvider: 位置 ${location.district} 天气数据加载失败');
+        WeatherProviderLogger.error('位置 ${location.district} 天气数据加载失败');
         return false;
       }
     } catch (e) {
-      print('❌ WeatherProvider: 加载位置天气数据异常: $e');
+      WeatherProviderLogger.error('加载位置天气数据异常: $e');
       return false;
     }
   }
@@ -1891,17 +1982,17 @@ class WeatherProvider extends ChangeNotifier {
   Future<void> performLocationAfterEntering() async {
     // 检查全局定位刷新锁
     if (_isLocationRefreshing) {
-      print('🔒 WeatherProvider: 定位刷新正在进行中，跳过');
+      WeatherProviderLogger.debug('定位刷新正在进行中，跳过');
       return;
     }
 
     // 如果已经进行过首次定位，则不再执行
     if (_hasPerformedInitialLocation) {
-      print('🔄 WeatherProvider: 已经进行过首次定位，跳过');
+      WeatherProviderLogger.debug('已经进行过首次定位，跳过');
       return;
     }
 
-    print('🔄 WeatherProvider: 首次进入今日天气页面，开始定位...');
+    WeatherProviderLogger.info('首次进入今日天气页面，开始定位');
 
     // 设置全局锁
     _isLocationRefreshing = true;
@@ -1909,7 +2000,7 @@ class WeatherProvider extends ChangeNotifier {
     // 检查是否已有缓存数据
     final hasCachedData = _currentWeather != null && _currentLocation != null;
     if (hasCachedData) {
-      print('📦 已有缓存数据，定位失败时将保持缓存显示');
+      WeatherProviderLogger.info('已有缓存数据，定位失败时将保持缓存显示');
     }
 
     try {
@@ -1926,13 +2017,13 @@ class WeatherProvider extends ChangeNotifier {
           .timeout(
             const Duration(seconds: 15),
             onTimeout: () {
-              print('⏰ WeatherProvider: 定位超时');
+              WeatherProviderLogger.warning('定位超时');
               return null;
             },
           );
 
       if (newLocation != null) {
-        print('✅ WeatherProvider: 定位成功 ${newLocation.district}');
+        WeatherProviderLogger.success('定位成功 ${newLocation.district}');
 
         // 更新最后定位时间
         _lastLocationTime = DateTime.now();
@@ -1959,14 +2050,14 @@ class WeatherProvider extends ChangeNotifier {
           _startPeriodicRefresh();
 
           // 通知所有监听器定位成功
-          print('📍 WeatherProvider: 准备发送定位成功通知');
+          WeatherProviderLogger.debug('准备发送定位成功通知');
           LocationChangeNotifier().notifyLocationSuccess(newLocation);
         } else {
           // 天气数据加载失败
-          print('❌ 天气数据加载失败');
+          WeatherProviderLogger.error('天气数据加载失败');
           if (hasCachedData) {
             // 有缓存数据，保持显示缓存，不显示错误
-            print('📦 保持缓存数据显示');
+            WeatherProviderLogger.info('保持缓存数据显示');
             _error = null;
           } else {
             // 无缓存数据，显示错误
@@ -1974,27 +2065,27 @@ class WeatherProvider extends ChangeNotifier {
           }
         }
       } else {
-        print('❌ WeatherProvider: 定位失败');
+        WeatherProviderLogger.error('定位失败');
 
         if (hasCachedData) {
           // 有缓存数据，保持显示缓存，不显示错误
-          print('📦 定位失败，但有缓存数据，保持显示');
+          WeatherProviderLogger.info('定位失败，但有缓存数据，保持显示');
           _error = null;
         } else {
           // 无缓存数据，显示错误
           _error = '定位失败，请检查网络连接和位置权限';
 
           // 通知所有监听器定位失败
-          print('📍 WeatherProvider: 准备发送定位失败通知');
+          WeatherProviderLogger.debug('准备发送定位失败通知');
           LocationChangeNotifier().notifyLocationFailed(_error!);
         }
       }
     } catch (e) {
-      print('❌ WeatherProvider: 定位异常: $e');
+      WeatherProviderLogger.error('定位异常: $e');
 
       if (hasCachedData) {
         // 有缓存数据，不显示错误
-        print('📦 定位异常，但有缓存数据，保持显示');
+        WeatherProviderLogger.info('定位异常，但有缓存数据，保持显示');
         _error = null;
       } else {
         // 无缓存数据，显示错误
@@ -2015,7 +2106,9 @@ class WeatherProvider extends ChangeNotifier {
     _error = null;
 
     try {
-      print('Refreshing 15-day forecast for: ${_currentLocation!.district}');
+      WeatherProviderLogger.info(
+        'Refreshing 15-day forecast for: ${_currentLocation!.district}',
+      );
 
       // 优先使用主天气数据的缓存（包含24小时和15日数据）
       final weatherKey =
@@ -2029,12 +2122,12 @@ class WeatherProvider extends ChangeNotifier {
         _forecast15d = cachedWeather.forecast15d;
         // 同时更新24小时数据，保持一致性
         _hourlyForecast = cachedWeather.forecast24h;
-        print(
+        WeatherProviderLogger.info(
           'Using cached weather data (with 15d+24h) for ${_currentLocation!.district}',
         );
       } else {
         // 如果主缓存不存在，从API获取新数据
-        print(
+        WeatherProviderLogger.info(
           'No valid cache found, fetching fresh weather data for ${_currentLocation!.district}',
         );
         WeatherModel? weather = await _weatherService.getWeatherDataForLocation(
@@ -2048,7 +2141,7 @@ class WeatherProvider extends ChangeNotifier {
           // 保存到主缓存
           await _databaseService.putWeatherData(weatherKey, weather);
 
-          print(
+          WeatherProviderLogger.info(
             'Weather data (with 15d+24h) cached for ${_currentLocation!.district}',
           );
         } else {
@@ -2057,7 +2150,7 @@ class WeatherProvider extends ChangeNotifier {
       }
     } catch (e) {
       _error = 'Error refreshing 15-day forecast: $e';
-      print('15-day forecast refresh error: $e');
+      WeatherProviderLogger.info('15-day forecast refresh error: $e');
     } finally {
       _setLoading(false);
     }
@@ -2076,7 +2169,9 @@ class WeatherProvider extends ChangeNotifier {
     _error = null;
 
     try {
-      print('Refreshing 24-hour forecast for: ${_currentLocation!.district}');
+      WeatherProviderLogger.info(
+        'Refreshing 24-hour forecast for: ${_currentLocation!.district}',
+      );
 
       // 优先使用主天气数据的缓存（包含24小时和15日数据）
       final weatherKey =
@@ -2090,12 +2185,12 @@ class WeatherProvider extends ChangeNotifier {
         _hourlyForecast = cachedWeather.forecast24h;
         // 同时更新15日数据，保持一致性
         _forecast15d = cachedWeather.forecast15d;
-        print(
+        WeatherProviderLogger.info(
           'Using cached weather data (with 24h+15d) for ${_currentLocation!.district}',
         );
       } else {
         // 如果主缓存不存在，从API获取新数据
-        print(
+        WeatherProviderLogger.info(
           'No valid cache found, fetching fresh weather data for ${_currentLocation!.district}',
         );
         WeatherModel? weather = await _weatherService.getWeatherDataForLocation(
@@ -2108,14 +2203,14 @@ class WeatherProvider extends ChangeNotifier {
 
           // 保存到主缓存
           await _databaseService.putWeatherData(weatherKey, weather);
-          print(
+          WeatherProviderLogger.info(
             'Fresh weather data saved to cache for ${_currentLocation!.district}',
           );
         }
       }
     } catch (e) {
       _error = 'Error refreshing 24-hour forecast: $e';
-      print('24-hour forecast refresh error: $e');
+      WeatherProviderLogger.info('24-hour forecast refresh error: $e');
     } finally {
       _setLoading(false);
     }
@@ -2135,7 +2230,9 @@ class WeatherProvider extends ChangeNotifier {
         cityId = AppConstants.defaultCityId;
       }
 
-      print('Loading sun/moon index data for city ID: $cityId');
+      WeatherProviderLogger.info(
+        'Loading sun/moon index data for city ID: $cityId',
+      );
 
       // 检查缓存
       final cacheKey = '${_currentLocation!.district}:sun_moon_index';
@@ -2144,13 +2241,13 @@ class WeatherProvider extends ChangeNotifier {
       if (cachedData != null) {
         // 使用缓存数据
         _sunMoonIndexData = cachedData;
-        print(
+        WeatherProviderLogger.info(
           'Using cached sun/moon index data for ${_currentLocation!.district}',
         );
         notifyListeners(); // 通知UI更新
       } else {
         // 从API获取新数据
-        print(
+        WeatherProviderLogger.info(
           'No valid cache found, fetching fresh sun/moon index data for ${_currentLocation!.district}',
         );
         final response = await SunMoonIndexService.getSunMoonAndIndex(cityId);
@@ -2159,26 +2256,38 @@ class WeatherProvider extends ChangeNotifier {
           _sunMoonIndexData = response.data;
 
           // 调试信息
-          print('Sun/moon index data loaded successfully:');
-          print('  - sunAndMoon: ${response.data!.sunAndMoon}');
-          print('  - index count: ${response.data!.index?.length ?? 0}');
+          WeatherProviderLogger.info(
+            'Sun/moon index data loaded successfully:',
+          );
+          WeatherProviderLogger.info(
+            '  - sunAndMoon: ${response.data!.sunAndMoon}',
+          );
+          WeatherProviderLogger.info(
+            '  - index count: ${response.data!.index?.length ?? 0}',
+          );
           if (response.data!.index != null) {
             for (var item in response.data!.index!) {
-              print('  - ${item.indexTypeCh}: ${item.indexLevel}');
+              WeatherProviderLogger.info(
+                '  - ${item.indexTypeCh}: ${item.indexLevel}',
+              );
             }
           }
 
           // 保存到缓存
           await _databaseService.putSunMoonIndexData(cacheKey, response.data!);
-          print('Sun/moon index data cached for ${_currentLocation!.district}');
+          WeatherProviderLogger.info(
+            'Sun/moon index data cached for ${_currentLocation!.district}',
+          );
           notifyListeners(); // 通知UI更新
         } else {
-          print('Failed to fetch sun/moon index data - response: $response');
+          WeatherProviderLogger.info(
+            'Failed to fetch sun/moon index data - response: $response',
+          );
           notifyListeners(); // 通知UI更新，即使失败也要更新状态
         }
       }
     } catch (e) {
-      print('Error loading sun/moon index data: $e');
+      WeatherProviderLogger.info('Error loading sun/moon index data: $e');
       notifyListeners(); // 通知UI更新，即使出错也要更新状态
     } finally {
       _isLoadingSunMoonIndex = false;
@@ -2197,7 +2306,7 @@ class WeatherProvider extends ChangeNotifier {
           _cityDataService.findCityIdByName(cityName) ??
           AppConstants.defaultCityId;
 
-      print(
+      WeatherProviderLogger.info(
         'Loading sun/moon index data for city: $cityName, city ID: $cityId',
       );
 
@@ -2208,11 +2317,13 @@ class WeatherProvider extends ChangeNotifier {
       if (cachedData != null) {
         // 使用缓存数据
         _sunMoonIndexData = cachedData;
-        print('Using cached sun/moon index data for $cityName');
+        WeatherProviderLogger.info(
+          'Using cached sun/moon index data for $cityName',
+        );
         notifyListeners(); // 通知UI更新
       } else {
         // 从API获取新数据
-        print(
+        WeatherProviderLogger.info(
           'No valid cache found, fetching fresh sun/moon index data for $cityName',
         );
         final response = await SunMoonIndexService.getSunMoonAndIndex(cityId);
@@ -2221,28 +2332,40 @@ class WeatherProvider extends ChangeNotifier {
           _sunMoonIndexData = response.data;
 
           // 调试信息
-          print('Sun/moon index data loaded successfully for $cityName:');
-          print('  - sunAndMoon: ${response.data!.sunAndMoon}');
-          print('  - index count: ${response.data!.index?.length ?? 0}');
+          WeatherProviderLogger.info(
+            'Sun/moon index data loaded successfully for $cityName:',
+          );
+          WeatherProviderLogger.info(
+            '  - sunAndMoon: ${response.data!.sunAndMoon}',
+          );
+          WeatherProviderLogger.info(
+            '  - index count: ${response.data!.index?.length ?? 0}',
+          );
           if (response.data!.index != null) {
             for (var item in response.data!.index!) {
-              print('  - ${item.indexTypeCh}: ${item.indexLevel}');
+              WeatherProviderLogger.info(
+                '  - ${item.indexTypeCh}: ${item.indexLevel}',
+              );
             }
           }
 
           // 保存到缓存
           await _databaseService.putSunMoonIndexData(cacheKey, response.data!);
-          print('Sun/moon index data cached for $cityName');
+          WeatherProviderLogger.info(
+            'Sun/moon index data cached for $cityName',
+          );
           notifyListeners(); // 通知UI更新
         } else {
-          print(
+          WeatherProviderLogger.info(
             'Failed to fetch sun/moon index data for $cityName - response: $response',
           );
           notifyListeners(); // 通知UI更新，即使失败也要更新状态
         }
       }
     } catch (e) {
-      print('Error loading sun/moon index data for $cityName: $e');
+      WeatherProviderLogger.info(
+        'Error loading sun/moon index data for $cityName: $e',
+      );
       notifyListeners(); // 通知UI更新，即使出错也要更新状态
     } finally {
       _isLoadingSunMoonIndex = false;
@@ -2276,41 +2399,41 @@ class WeatherProvider extends ChangeNotifier {
 
   /// App重启时清理并重新生成通勤建议
   Future<void> _cleanAndRegenerateCommuteAdvices() async {
-    print('\n╔════════════════════════════════════════╗');
-    print('║  🔄 App重启：清理并重新生成建议  ║');
-    print('╚════════════════════════════════════════╝');
+    WeatherProviderLogger.info('\n╔════════════════════════════════════════╗');
+    WeatherProviderLogger.info('║  🔄 App重启：清理并重新生成建议  ║');
+    WeatherProviderLogger.info('╚════════════════════════════════════════╝');
 
     try {
       // 检查是否在通勤时段
       if (!CommuteAdviceService.isInCommuteTime()) {
-        print('⏰ 不在通勤时段，只加载历史建议');
+        WeatherProviderLogger.warning('不在通勤时段，只加载历史建议');
         await loadCommuteAdvices();
         return;
       }
 
       final currentTimeSlot = CommuteAdviceService.getCurrentCommuteTimeSlot();
       if (currentTimeSlot == null) {
-        print('⏰ 无法获取当前时段');
+        WeatherProviderLogger.warning('无法获取当前时段');
         await loadCommuteAdvices();
         return;
       }
 
-      print(
+      WeatherProviderLogger.info(
         '⏰ 当前时段: ${currentTimeSlot == CommuteTimeSlot.morning ? '早高峰' : '晚高峰'}',
       );
 
       // 清理当前时段的所有建议
-      print('🗑️ 清理当前时段的旧建议...');
+      WeatherProviderLogger.info('🗑️ 清理当前时段的旧建议...');
       final deletedCount = await _databaseService.cleanEndedTimeSlotAdvices(
         currentTimeSlot.toString().split('.').last,
       );
-      print('✅ 已清理 $deletedCount 条旧建议');
+      WeatherProviderLogger.success('已清理 $deletedCount 条旧建议');
 
       // 重置标记，允许重新生成
       _hasShownCommuteAdviceToday = false;
 
       // 重新生成通勤建议
-      print('🚀 重新生成通勤建议...\n');
+      WeatherProviderLogger.info('🚀 重新生成通勤建议...\n');
       await checkAndGenerateCommuteAdvices();
     } catch (e, stackTrace) {
       Logger.e(
@@ -2334,13 +2457,13 @@ class WeatherProvider extends ChangeNotifier {
   Future<void> _loadCachedAISummary() async {
     try {
       if (_currentWeather == null || _currentLocation == null) {
-        print('⚠️ 无天气数据或位置信息，跳过加载缓存摘要');
+        WeatherProviderLogger.warning('无天气数据或位置信息，跳过加载缓存摘要');
         return;
       }
 
       final current = _currentWeather!.current?.current;
       if (current == null) {
-        print('⚠️ 无当前天气数据，跳过加载缓存摘要');
+        WeatherProviderLogger.warning('无当前天气数据，跳过加载缓存摘要');
         return;
       }
 
@@ -2354,13 +2477,13 @@ class WeatherProvider extends ChangeNotifier {
       final cachedSummary = await _databaseService.getAISummary(cacheKey);
       if (cachedSummary != null && cachedSummary.isNotEmpty) {
         _weatherSummary = cachedSummary;
-        print('✅ 从缓存加载AI摘要: $_weatherSummary');
+        WeatherProviderLogger.success('从缓存加载AI摘要: $_weatherSummary');
         notifyListeners();
       } else {
-        print('📦 缓存中没有AI摘要，需要生成');
+        WeatherProviderLogger.info('缓存中没有AI摘要，需要生成');
       }
     } catch (e) {
-      print('❌ 加载缓存AI摘要失败: $e');
+      WeatherProviderLogger.error('加载缓存AI摘要失败: $e');
     }
   }
 
@@ -2370,7 +2493,7 @@ class WeatherProvider extends ChangeNotifier {
       if (_forecast15d == null ||
           _forecast15d!.isEmpty ||
           _currentLocation == null) {
-        print('⚠️ 无15日预报数据或位置信息，跳过加载缓存15日总结');
+        WeatherProviderLogger.warning('无15日预报数据或位置信息，跳过加载缓存15日总结');
         return;
       }
 
@@ -2387,13 +2510,13 @@ class WeatherProvider extends ChangeNotifier {
       final cachedSummary = await _databaseService.getAI15dSummary(cacheKey);
       if (cachedSummary != null && cachedSummary.isNotEmpty) {
         _forecast15dSummary = cachedSummary;
-        print('✅ 从缓存加载15日AI总结: $_forecast15dSummary');
+        WeatherProviderLogger.success('从缓存加载15日AI总结: $_forecast15dSummary');
         notifyListeners();
       } else {
-        print('📦 缓存中没有15日AI总结，需要生成');
+        WeatherProviderLogger.info('缓存中没有15日AI总结，需要生成');
       }
     } catch (e) {
-      print('❌ 加载缓存15日AI总结失败: $e');
+      WeatherProviderLogger.error('加载缓存15日AI总结失败: $e');
     }
   }
 
@@ -2405,12 +2528,12 @@ class WeatherProvider extends ChangeNotifier {
     String? cityName,
   }) async {
     if (_currentWeather == null) {
-      print('⚠️ 无天气数据，无法生成智能摘要');
+      WeatherProviderLogger.warning('无天气数据，无法生成智能摘要');
       return;
     }
 
     if (_isGeneratingSummary) {
-      print('⏳ 智能摘要生成中，跳过重复请求');
+      WeatherProviderLogger.info('⏳ 智能摘要生成中，跳过重复请求');
       return;
     }
 
@@ -2418,7 +2541,7 @@ class WeatherProvider extends ChangeNotifier {
       _isGeneratingSummary = true;
       notifyListeners();
     } catch (e) {
-      print('❌ 设置生成状态失败: $e');
+      WeatherProviderLogger.error('设置生成状态失败: $e');
       return;
     }
 
@@ -2428,7 +2551,7 @@ class WeatherProvider extends ChangeNotifier {
     final hourly = _currentWeather!.forecast24h;
 
     if (current == null) {
-      print('❌ 无当前天气数据');
+      WeatherProviderLogger.error('无当前天气数据');
       _isGeneratingSummary = false;
       notifyListeners();
       return;
@@ -2461,16 +2584,16 @@ class WeatherProvider extends ChangeNotifier {
         final cachedSummary = await _databaseService.getAISummary(cacheKey);
         if (cachedSummary != null && cachedSummary.isNotEmpty) {
           _weatherSummary = cachedSummary;
-          print('✅ 使用缓存的AI摘要: $_weatherSummary');
+          WeatherProviderLogger.success('使用缓存的AI摘要: $_weatherSummary');
           _isGeneratingSummary = false;
           notifyListeners();
           return;
         }
       } else {
-        print('🔄 强制刷新模式，忽略缓存');
+        WeatherProviderLogger.info('强制刷新模式，忽略缓存');
       }
 
-      print('\n🎨 开始生成AI智能天气摘要...');
+      WeatherProviderLogger.info('\n🎨 开始生成AI智能天气摘要...');
 
       // 构建prompt
       final prompt = _aiService.buildWeatherSummaryPrompt(
@@ -2542,7 +2665,7 @@ class WeatherProvider extends ChangeNotifier {
           _isGeneratingSummary = false;
           notifyListeners();
         } catch (e) {
-          print('❌ 重置生成状态失败: $e');
+          WeatherProviderLogger.error('重置生成状态失败: $e');
         }
       }
     }
@@ -2588,12 +2711,12 @@ class WeatherProvider extends ChangeNotifier {
     String? cityName,
   }) async {
     if (_forecast15d == null || _forecast15d!.isEmpty) {
-      print('⚠️ 无15日预报数据，无法生成总结');
+      WeatherProviderLogger.warning('无15日预报数据，无法生成总结');
       return;
     }
 
     if (_isGenerating15dSummary) {
-      print('⏳ 15日天气总结生成中，跳过重复请求');
+      WeatherProviderLogger.info('⏳ 15日天气总结生成中，跳过重复请求');
       return;
     }
 
@@ -2601,7 +2724,7 @@ class WeatherProvider extends ChangeNotifier {
       _isGenerating15dSummary = true;
       notifyListeners();
     } catch (e) {
-      print('❌ 设置15日生成状态失败: $e');
+      WeatherProviderLogger.error('设置15日生成状态失败: $e');
       return;
     }
 
@@ -2636,16 +2759,16 @@ class WeatherProvider extends ChangeNotifier {
         final cachedSummary = await _databaseService.getAI15dSummary(cacheKey);
         if (cachedSummary != null && cachedSummary.isNotEmpty) {
           _forecast15dSummary = cachedSummary;
-          print('✅ 使用缓存的15日天气总结: $_forecast15dSummary');
+          WeatherProviderLogger.success('使用缓存的15日天气总结: $_forecast15dSummary');
           _isGenerating15dSummary = false;
           notifyListeners();
           return;
         }
       } else {
-        print('🔄 强制刷新模式，忽略15日天气缓存');
+        WeatherProviderLogger.info('强制刷新模式，忽略15日天气缓存');
       }
 
-      print('\n🎨 开始生成AI 15日天气总结...');
+      WeatherProviderLogger.info('\n🎨 开始生成AI 15日天气总结...');
 
       // 构建prompt
       // 使用传入的城市名称，如果没有传入则使用当前定位城市
@@ -2713,7 +2836,7 @@ class WeatherProvider extends ChangeNotifier {
           _isGenerating15dSummary = false;
           notifyListeners();
         } catch (e) {
-          print('❌ 重置15日生成状态失败: $e');
+          WeatherProviderLogger.error('重置15日生成状态失败: $e');
         }
       }
     }
@@ -2738,17 +2861,19 @@ class WeatherProvider extends ChangeNotifier {
     return '未来15天主要天气：${weatherTypes.take(3).join('、')}等，请关注天气变化，合理安排出行。';
   }
 
+  // ==================== 通勤建议方法 ====================
+
   /// 检查并生成通勤建议
   Future<void> checkAndGenerateCommuteAdvices() async {
     // 防止重复生成：如果正在生成中，直接返回
     if (_isGeneratingCommuteAdvice) {
-      print('⏳ 通勤建议正在生成中，跳过重复调用');
+      WeatherProviderLogger.info('⏳ 通勤建议正在生成中，跳过重复调用');
       return;
     }
 
     // 检查是否在通勤时段
     if (!CommuteAdviceService.isInCommuteTime()) {
-      print('⏰ 不在通勤时段，加载历史通勤建议');
+      WeatherProviderLogger.warning('不在通勤时段，加载历史通勤建议');
       // 不在通勤时段时，加载历史建议以便显示
       await loadCommuteAdvices();
       return;
@@ -2757,7 +2882,7 @@ class WeatherProvider extends ChangeNotifier {
     // 检查今日当前时段是否已生成过建议
     final currentTimeSlot = CommuteAdviceService.getCurrentCommuteTimeSlot();
     if (currentTimeSlot == null) {
-      print('⏰ 无法获取当前时段，加载历史建议');
+      WeatherProviderLogger.warning('无法获取当前时段，加载历史建议');
       // 无法获取时段时，至少加载历史建议
       await loadCommuteAdvices();
       return;
@@ -2770,7 +2895,7 @@ class WeatherProvider extends ChangeNotifier {
     );
 
     if (hasCurrentSlotAdvices) {
-      print('✅ 当前时段已有通勤建议，加载到界面');
+      WeatherProviderLogger.success('当前时段已有通勤建议，加载到界面');
       _hasShownCommuteAdviceToday = true;
 
       // 加载已有的建议到内存并通知UI
@@ -2780,7 +2905,7 @@ class WeatherProvider extends ChangeNotifier {
 
     // 检查是否有天气数据
     if (_currentWeather == null) {
-      print('❌ 无天气数据，无法生成通勤建议，加载历史建议');
+      WeatherProviderLogger.error('无天气数据，无法生成通勤建议，加载历史建议');
       // 无天气数据时，至少加载历史建议
       await loadCommuteAdvices();
       return;
@@ -2790,77 +2915,95 @@ class WeatherProvider extends ChangeNotifier {
       // 设置生成状态
       _isGeneratingCommuteAdvice = true;
 
-      print('\n╔════════════════════════════════════════╗');
-      print('║  🚀 WeatherProvider: 通勤建议生成 ║');
-      print('╚════════════════════════════════════════╝');
-      print('📍 当前位置: ${_currentLocation?.district}');
-      print('⏰ 当前时间: ${DateTime.now()}');
-      print('🌡️ 天气数据: ${_currentWeather != null ? '已加载' : '未加载'}');
+      WeatherProviderLogger.info(
+        '\n╔════════════════════════════════════════╗',
+      );
+      WeatherProviderLogger.info('║  🚀 WeatherProvider: 通勤建议生成 ║');
+      WeatherProviderLogger.info('╚════════════════════════════════════════╝');
+      WeatherProviderLogger.debug('当前位置: ${_currentLocation?.district}');
+      WeatherProviderLogger.warning('当前时间: ${DateTime.now()}');
+      WeatherProviderLogger.debug(
+        '天气数据: ${_currentWeather != null ? '已加载' : '未加载'}',
+      );
 
       if (_currentWeather != null) {
-        print('   - 温度: ${_currentWeather!.current?.current?.temperature}℃');
-        print('   - 天气: ${_currentWeather!.current?.current?.weather}');
-        print('   - 风力: ${_currentWeather!.current?.current?.windpower}');
-        print('   - 24h预报: ${_currentWeather!.forecast24h?.length ?? 0}条');
+        WeatherProviderLogger.info(
+          '   - 温度: ${_currentWeather!.current?.current?.temperature}℃',
+        );
+        WeatherProviderLogger.info(
+          '   - 天气: ${_currentWeather!.current?.current?.weather}',
+        );
+        WeatherProviderLogger.info(
+          '   - 风力: ${_currentWeather!.current?.current?.windpower}',
+        );
+        WeatherProviderLogger.info(
+          '   - 24h预报: ${_currentWeather!.forecast24h?.length ?? 0}条',
+        );
       }
-      print('');
+      WeatherProviderLogger.info('');
 
       // 生成通勤建议（使用AI或规则引擎）
       final commuteService = CommuteAdviceService();
       final advices = await commuteService.generateAdvices(_currentWeather!);
 
       if (advices.isEmpty) {
-        print('ℹ️ 当前天气条件无需特别提醒');
+        WeatherProviderLogger.info('ℹ️ 当前天气条件无需特别提醒');
         _hasShownCommuteAdviceToday = true;
         _isGeneratingCommuteAdvice = false;
-        print('');
+        WeatherProviderLogger.info('');
         return;
       }
 
-      print('╔════════════════════════════════════════╗');
-      print('║  📝 生成结果                        ║');
-      print('╚════════════════════════════════════════╝');
-      print('生成建议数: ${advices.length}');
+      WeatherProviderLogger.info('╔════════════════════════════════════════╗');
+      WeatherProviderLogger.info('║  📝 生成结果                        ║');
+      WeatherProviderLogger.info('╚════════════════════════════════════════╝');
+      WeatherProviderLogger.info('生成建议数: ${advices.length}');
       for (int i = 0; i < advices.length; i++) {
         final advice = advices[i];
-        print('');
-        print('建议 ${i + 1}:');
-        print('   标题: ${advice.title}');
-        print('   类型: ${advice.adviceType}');
-        print(
+        WeatherProviderLogger.info('');
+        WeatherProviderLogger.info('建议 ${i + 1}:');
+        WeatherProviderLogger.info('   标题: ${advice.title}');
+        WeatherProviderLogger.info('   类型: ${advice.adviceType}');
+        WeatherProviderLogger.info(
           '   级别: ${advice.getLevelName()} (${advice.level.toString().split('.').last})',
         );
-        print('   图标: ${advice.icon}');
-        print(
+        WeatherProviderLogger.info('   图标: ${advice.icon}');
+        WeatherProviderLogger.info(
           '   内容: ${advice.content.substring(0, advice.content.length > 50 ? 50 : advice.content.length)}...',
         );
       }
 
       // 保存到数据库
-      print('\n💾 保存到数据库...');
+      WeatherProviderLogger.info('\n💾 保存到数据库...');
       await _databaseService.saveCommuteAdvices(advices);
-      print('✅ 数据库保存成功');
+      WeatherProviderLogger.success('数据库保存成功');
 
       // 加载通勤建议
-      print('📂 加载通勤建议...');
+      WeatherProviderLogger.info('📂 加载通勤建议...');
       await loadCommuteAdvices(notifyUI: false);
-      print('✅ 加载完成，当前建议数: ${_commuteAdvices.length}');
+      WeatherProviderLogger.success('加载完成，当前建议数: ${_commuteAdvices.length}');
 
       // 标记今日已显示
       _hasShownCommuteAdviceToday = true;
       _isGeneratingCommuteAdvice = false;
 
-      print('\n╔════════════════════════════════════════╗');
-      print('║  ✅ 通勤建议生成完成              ║');
-      print('╚════════════════════════════════════════╝\n');
+      WeatherProviderLogger.info(
+        '\n╔════════════════════════════════════════╗',
+      );
+      WeatherProviderLogger.info('║  ✅ 通勤建议生成完成              ║');
+      WeatherProviderLogger.info(
+        '╚════════════════════════════════════════╝\n',
+      );
 
       notifyListeners();
     } catch (e, stackTrace) {
-      print('\n╔════════════════════════════════════════╗');
-      print('║  ❌ 通勤建议生成失败              ║');
-      print('╚════════════════════════════════════════╝');
-      print('错误: $e');
-      print('堆栈: $stackTrace\n');
+      WeatherProviderLogger.info(
+        '\n╔════════════════════════════════════════╗',
+      );
+      WeatherProviderLogger.info('║  ❌ 通勤建议生成失败              ║');
+      WeatherProviderLogger.info('╚════════════════════════════════════════╝');
+      WeatherProviderLogger.info('错误: $e');
+      WeatherProviderLogger.info('堆栈: $stackTrace\n');
 
       // 生成失败时，至少加载历史建议
       await loadCommuteAdvices();
@@ -2873,16 +3016,16 @@ class WeatherProvider extends ChangeNotifier {
   /// 加载通勤建议
   Future<void> loadCommuteAdvices({bool notifyUI = true}) async {
     try {
-      print('\n📚 开始加载通勤建议...');
+      WeatherProviderLogger.info('\n📚 开始加载通勤建议...');
 
       // 先清理数据库中的重复数据
       await _databaseService.cleanDuplicateCommuteAdvices();
 
       final advices = await _databaseService.getTodayCommuteAdvices();
-      print('   数据库中今日建议: ${advices.length}条');
+      WeatherProviderLogger.info('   数据库中今日建议: ${advices.length}条');
 
       if (advices.isEmpty) {
-        print('   ℹ️ 数据库中没有今日通勤建议');
+        WeatherProviderLogger.info('   ℹ️ 数据库中没有今日通勤建议');
         _commuteAdvices = [];
         if (notifyUI) notifyListeners();
         return;
@@ -2905,7 +3048,7 @@ class WeatherProvider extends ChangeNotifier {
         }
       }).toList();
 
-      print('   过滤后剩余: ${filteredAdvices.length}条');
+      WeatherProviderLogger.info('   过滤后剩余: ${filteredAdvices.length}条');
 
       // 二次去重：按 adviceType + timeSlot 去重（防止并发导致的重复）
       final uniqueAdvices = <String, CommuteAdviceModel>{};
@@ -2921,11 +3064,11 @@ class WeatherProvider extends ChangeNotifier {
       _commuteAdvices = uniqueAdvices.values.toList();
       _commuteAdvices.sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
-      print('✅ 加载通勤建议: ${_commuteAdvices.length}条（去重后）');
+      WeatherProviderLogger.success('加载通勤建议: ${_commuteAdvices.length}条（去重后）');
       if (_commuteAdvices.isNotEmpty) {
-        print('   建议详情:');
+        WeatherProviderLogger.info('   建议详情:');
         for (var advice in _commuteAdvices) {
-          print(
+          WeatherProviderLogger.info(
             '   - ${advice.timeSlot == CommuteTimeSlot.morning ? "早高峰" : "晚高峰"}: ${advice.title}',
           );
         }
@@ -2937,11 +3080,11 @@ class WeatherProvider extends ChangeNotifier {
         NotificationService.instance.showCommuteIslandNotification(
           _commuteAdvices,
         );
-        print('🏝️ 灵动岛已更新（${_commuteAdvices.length}条建议）');
+        WeatherProviderLogger.info('🏝️ 灵动岛已更新（${_commuteAdvices.length}条建议）');
       } else {
         // 没有建议时隐藏灵动岛
         NotificationService.instance.hideCommuteIslandNotification();
-        print('🏝️ 灵动岛已隐藏');
+        WeatherProviderLogger.info('🏝️ 灵动岛已隐藏');
       }
 
       if (notifyUI) notifyListeners();
@@ -2997,7 +3140,7 @@ class WeatherProvider extends ChangeNotifier {
           .toList();
       notifyListeners();
     } catch (e) {
-      print('❌ 批量标记通勤建议失败: $e');
+      WeatherProviderLogger.error('批量标记通勤建议失败: $e');
     }
   }
 
@@ -3010,7 +3153,7 @@ class WeatherProvider extends ChangeNotifier {
       _checkAndCleanupCommuteAdvices();
     });
 
-    print('⏰ 通勤建议清理定时器已启动');
+    WeatherProviderLogger.warning('通勤建议清理定时器已启动');
   }
 
   /// 停止通勤建议清理定时器
@@ -3047,11 +3190,11 @@ class WeatherProvider extends ChangeNotifier {
           // 重置今日显示标记
           _hasShownCommuteAdviceToday = false;
 
-          print('✅ 通勤时段结束，已清理建议');
+          WeatherProviderLogger.success('通勤时段结束，已清理建议');
         }
       }
     } catch (e) {
-      print('❌ 清理通勤建议失败: $e');
+      WeatherProviderLogger.error('清理通勤建议失败: $e');
     }
   }
 
@@ -3060,7 +3203,7 @@ class WeatherProvider extends ChangeNotifier {
   /// 后台刷新单个城市的天气数据
   Future<void> _refreshSingleCityWeatherInBackground(String cityName) async {
     try {
-      print('🔄 后台刷新城市天气数据: $cityName');
+      WeatherProviderLogger.info('后台刷新城市天气数据: $cityName');
 
       // 创建城市位置
       LocationModel cityLocation = LocationModel(
@@ -3085,12 +3228,8 @@ class WeatherProvider extends ChangeNotifier {
         // 更新内存中的数据
         _mainCitiesWeather[cityName] = weatherData;
 
-        // 存储到智能缓存
-        await _putWeatherToSmartCache(cityName, weatherData);
-
-        // 存储到数据库缓存
-        final weatherKey = '$cityName:${AppConstants.weatherAllKey}';
-        await _databaseService.putWeatherData(weatherKey, weatherData);
+        // 存储到缓存（使用缓存管理器统一保存）
+        await _cacheManager.saveWeather(cityName, weatherData);
 
         Logger.s('后台刷新完成: $cityName', tag: 'WeatherProvider');
         notifyListeners();
@@ -3109,71 +3248,6 @@ class WeatherProvider extends ChangeNotifier {
         stackTrace: stackTrace,
         context: 'WeatherProvider.BackgroundRefresh',
         type: AppErrorType.network,
-      );
-    }
-  }
-
-  /// 使用智能缓存获取天气数据
-  Future<WeatherModel?> _getWeatherFromSmartCache(String cityName) async {
-    try {
-      final cacheKey = '$cityName:weather';
-      final cachedJson = await _smartCache.getData(
-        key: cacheKey,
-        type: CacheDataType.currentWeather,
-      );
-
-      if (cachedJson != null) {
-        final weatherData = WeatherModel.fromJson(
-          Map<String, dynamic>.from(jsonDecode(cachedJson) as Map),
-        );
-        Logger.d('智能缓存命中: $cityName', tag: 'WeatherProvider');
-        return weatherData;
-      }
-
-      Logger.d('智能缓存未命中: $cityName', tag: 'WeatherProvider');
-      return null;
-    } catch (e, stackTrace) {
-      Logger.e(
-        '智能缓存读取失败: $cityName',
-        tag: 'WeatherProvider',
-        error: e,
-        stackTrace: stackTrace,
-      );
-      ErrorHandler.handleError(
-        e,
-        stackTrace: stackTrace,
-        context: 'WeatherProvider.SmartCacheRead',
-        type: AppErrorType.cache,
-      );
-      return null;
-    }
-  }
-
-  /// 将天气数据存储到智能缓存
-  Future<void> _putWeatherToSmartCache(
-    String cityName,
-    WeatherModel weather,
-  ) async {
-    try {
-      final cacheKey = '$cityName:weather';
-      await _smartCache.putData(
-        key: cacheKey,
-        data: weather.toJson(),
-        type: CacheDataType.currentWeather,
-      );
-      Logger.d('天气数据已存入智能缓存: $cityName', tag: 'WeatherProvider');
-    } catch (e, stackTrace) {
-      Logger.e(
-        '智能缓存存储失败: $cityName',
-        tag: 'WeatherProvider',
-        error: e,
-        stackTrace: stackTrace,
-      );
-      ErrorHandler.handleError(
-        e,
-        stackTrace: stackTrace,
-        context: 'WeatherProvider.SmartCacheWrite',
-        type: AppErrorType.cache,
       );
     }
   }

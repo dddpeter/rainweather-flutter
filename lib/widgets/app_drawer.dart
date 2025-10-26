@@ -188,58 +188,15 @@ class AppDrawer extends StatelessWidget {
           final isSelected =
               themeProvider.themeScheme == AppThemeScheme.values[index];
 
-          return Container(
+          return _ThemeCardWithPulse(
             width: 70,
-            margin: const EdgeInsets.only(right: 12),
-            child: GestureDetector(
-              onTap: () {
-                themeProvider.setThemeScheme(AppThemeScheme.values[index]);
-                AppColors.setThemeProvider(themeProvider);
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300), // 过渡动画
-                curve: Curves.easeInOut,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isSelected ? activeColor : Colors.transparent,
-                    width: isSelected ? 3 : 0,
-                  ),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: activeColor.withOpacity(0.3),
-                            blurRadius: 8,
-                            spreadRadius: 2,
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: scheme.previewColor,
-                    borderRadius: BorderRadius.circular(9),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(scheme.icon, color: Colors.white, size: 24),
-                      const SizedBox(height: 4),
-                      Text(
-                        scheme.name.replaceAll('主题', ''),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+            scheme: scheme,
+            isSelected: isSelected,
+            activeColor: activeColor,
+            onTap: () {
+              themeProvider.setThemeScheme(AppThemeScheme.values[index]);
+              AppColors.setThemeProvider(themeProvider);
+            },
           );
         }).toList(),
       ),
@@ -854,6 +811,154 @@ class AppDrawer extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+/// 带脉冲动画的主题卡片
+class _ThemeCardWithPulse extends StatefulWidget {
+  final double width;
+  final ThemeColorScheme scheme;
+  final bool isSelected;
+  final Color activeColor;
+  final VoidCallback onTap;
+
+  const _ThemeCardWithPulse({
+    required this.width,
+    required this.scheme,
+    required this.isSelected,
+    required this.activeColor,
+    required this.onTap,
+  });
+
+  @override
+  State<_ThemeCardWithPulse> createState() => _ThemeCardWithPulseState();
+}
+
+class _ThemeCardWithPulseState extends State<_ThemeCardWithPulse>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _glowAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.05,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+
+    _glowAnimation = Tween<double>(
+      begin: 0.3,
+      end: 0.6,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+
+    // 只在选中时播放动画
+    if (widget.isSelected) {
+      _controller.forward();
+    }
+  }
+
+  @override
+  void didUpdateWidget(_ThemeCardWithPulse oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 当选中状态改变时，控制动画
+    if (widget.isSelected && !oldWidget.isSelected) {
+      _controller.forward();
+    } else if (!widget.isSelected && oldWidget.isSelected) {
+      _controller.reset();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: widget.width,
+      margin: const EdgeInsets.only(right: 12),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            return Transform.scale(
+              scale: widget.isSelected ? _scaleAnimation.value : 1.0,
+              child: child,
+            );
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: widget.isSelected
+                    ? widget.activeColor
+                    : Colors.transparent,
+                width: widget.isSelected ? 3 : 0,
+              ),
+              boxShadow: widget.isSelected
+                  ? [
+                      // 内层阴影（边框高光）
+                      BoxShadow(
+                        color: widget.activeColor.withOpacity(0.5),
+                        blurRadius: 0,
+                        spreadRadius: 1,
+                      ),
+                      // 中层阴影（光晕效果）
+                      BoxShadow(
+                        color: widget.activeColor.withOpacity(
+                          _glowAnimation.value,
+                        ),
+                        blurRadius: 16,
+                        spreadRadius: 3,
+                      ),
+                      // 外层阴影（柔和效果）
+                      BoxShadow(
+                        color: widget.activeColor.withOpacity(0.3),
+                        blurRadius: 12,
+                        spreadRadius: 2,
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                color: widget.scheme.previewColor,
+                borderRadius: BorderRadius.circular(9),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(widget.scheme.icon, color: Colors.white, size: 24),
+                  const SizedBox(height: 4),
+                  Text(
+                    widget.scheme.name.replaceAll('主题', ''),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
 import '../constants/app_colors.dart';
+import '../constants/app_constants.dart';
 import '../services/lunar_service.dart';
+import '../services/ai_service.dart';
 import '../models/lunar_model.dart';
 import 'lao_huang_li_screen.dart';
+import '../widgets/typewriter_text_widget.dart';
 
 /// 农历日历页面
 class LunarCalendarScreen extends StatefulWidget {
@@ -24,11 +27,80 @@ class LunarCalendarScreen extends StatefulWidget {
 class _LunarCalendarScreenState extends State<LunarCalendarScreen> {
   late DateTime _selectedMonth;
   final LunarService _lunarService = LunarService.getInstance();
+  final AIService _aiService = AIService();
+
+  String? _lunarInterpretation;
+  bool _isLoadingInterpretation = false;
+  DateTime? _cachedInterpretationDate; // 缓存的解读日期
+
+  /// 去掉Markdown格式符号，保留纯文本
+  String _cleanMarkdownText(String text) {
+    return text
+        .replaceAll('**', '') // 去掉粗体符号
+        .replaceAll('*', '') // 去掉剩余的星号
+        .replaceAll('###', '') // 去掉H3标题符号
+        .replaceAll('##', '') // 去掉H2标题符号
+        .replaceAll('#', ''); // 去掉H1标题符号
+  }
 
   @override
   void initState() {
     super.initState();
     _selectedMonth = widget.initialDate ?? DateTime.now();
+    _loadLunarInterpretation();
+  }
+
+  Future<void> _loadLunarInterpretation({bool forceRefresh = false}) async {
+    if (_isLoadingInterpretation) return;
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    // 检查缓存：如果是今天且已有缓存，且不强制刷新，则直接返回
+    if (!forceRefresh &&
+        _cachedInterpretationDate != null &&
+        _lunarInterpretation != null &&
+        _cachedInterpretationDate!.year == today.year &&
+        _cachedInterpretationDate!.month == today.month &&
+        _cachedInterpretationDate!.day == today.day) {
+      return;
+    }
+
+    setState(() {
+      _isLoadingInterpretation = true;
+    });
+
+    try {
+      final lunarInfo = _lunarService.getLunarInfo(now);
+
+      final prompt = _aiService.buildLunarYiJiPrompt(
+        goodThings: lunarInfo.goodThings.isEmpty
+            ? '诸事不宜'
+            : lunarInfo.goodThings.join('、'),
+        badThings: lunarInfo.badThings.isEmpty
+            ? '百无禁忌'
+            : lunarInfo.badThings.join('、'),
+        lunarDate: lunarInfo.lunarDate,
+        isHuangDaoDay: lunarInfo.isHuangDaoDay,
+        solarTerm: lunarInfo.solarTerm ?? '无节气',
+      );
+
+      final interpretation = await _aiService.generateSmartAdvice(prompt);
+
+      if (mounted) {
+        setState(() {
+          _lunarInterpretation = interpretation;
+          _cachedInterpretationDate = today; // 保存缓存日期
+          _isLoadingInterpretation = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingInterpretation = false;
+        });
+      }
+    }
   }
 
   @override
@@ -129,16 +201,17 @@ class _LunarCalendarScreenState extends State<LunarCalendarScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(
-                                Icons.star,
+                                Icons.circle,
                                 color: AppColors.warning,
-                                size: 14,
+                                size: 8,
                               ),
-                              const SizedBox(width: 6),
+                              const SizedBox(width: 8),
                               Text(
-                                '带星号的为黄道吉日',
+                                '橙色标记为黄道吉日',
                                 style: TextStyle(
-                                  color: AppColors.textSecondary,
-                                  fontSize: 13,
+                                  color: AppColors.textPrimary,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ],
@@ -150,11 +223,127 @@ class _LunarCalendarScreenState extends State<LunarCalendarScreen> {
                 ),
 
                 const SizedBox(height: 16),
+
+                // AI黄历解读卡片（放在日历下方）
+                _buildLunarInterpretationCard(themeProvider),
+
+                const SizedBox(height: 16),
               ],
             ),
           ),
         );
       },
+    );
+  }
+
+  /// 构建AI黄历解读卡片
+  Widget _buildLunarInterpretationCard(ThemeProvider themeProvider) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Card(
+        elevation: AppColors.cardElevation,
+        shadowColor: AppColors.cardShadowColor,
+        color: AppColors.materialCardColor,
+        surfaceTintColor: Colors.transparent,
+        shape: AppColors.cardShape,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 标题栏
+              Row(
+                children: [
+                  Icon(
+                    Icons.auto_awesome,
+                    color: AppColors.accentBlue,
+                    size: AppConstants.sectionTitleIconSize,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '今日黄历解读',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: AppConstants.sectionTitleFontSize,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const Spacer(),
+                  // AI标签
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color:
+                          (themeProvider.isLightTheme
+                                  ? const Color(0xFF004CFF)
+                                  : const Color(0xFFFFB300))
+                              .withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.auto_awesome,
+                          color: themeProvider.isLightTheme
+                              ? const Color(0xFF004CFF)
+                              : const Color(0xFFFFB300),
+                          size: 10,
+                        ),
+                        const SizedBox(width: 2),
+                        Text(
+                          'AI',
+                          style: TextStyle(
+                            color: themeProvider.isLightTheme
+                                ? const Color(0xFF004CFF)
+                                : const Color(0xFFFFB300),
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // AI解读内容
+              if (_isLoadingInterpretation)
+                Center(
+                  child: Column(
+                    children: [
+                      CircularProgressIndicator(color: AppColors.accentBlue),
+                      const SizedBox(height: 12),
+                      Text(
+                        '正在生成黄历解读...',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else if (_lunarInterpretation != null)
+                TypewriterTextWidget(
+                  text: _cleanMarkdownText(_lunarInterpretation!),
+                  charDelay: const Duration(milliseconds: 30),
+                  lineDelay: const Duration(milliseconds: 200),
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 14,
+                    height: 1.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -308,19 +497,19 @@ class _LunarCalendarScreenState extends State<LunarCalendarScreen> {
 
     return Padding(
       padding: const EdgeInsets.only(
-        left: 12,
-        right: 12,
-        top: 12,
+        left: 4,
+        right: 4,
+        top: 4,
         bottom: 0,
-      ), // 底部无padding
+      ), // 底部无padding，进一步减少padding
       child: GridView.builder(
         shrinkWrap: true, // 根据内容自动调整高度
         physics: const NeverScrollableScrollPhysics(),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 7,
-          childAspectRatio: 0.65, // 单元格更高
+          childAspectRatio: 0.65, // 恢复原来的高单元格设计
           crossAxisSpacing: 6,
-          mainAxisSpacing: 6,
+          mainAxisSpacing: 2, // 进一步减少行间距到2
         ),
         itemCount: previousMonthDays + daysInMonth,
         itemBuilder: (context, index) {
@@ -374,93 +563,146 @@ class _LunarCalendarScreenState extends State<LunarCalendarScreen> {
         );
       },
       borderRadius: BorderRadius.circular(8),
-      child: Container(
-        decoration: BoxDecoration(
-          color: isToday
-              ? AppColors.primaryBlue.withOpacity(0.15)
-              : Colors.transparent, // 节假日也不要背景
-          borderRadius: BorderRadius.circular(8),
-          border: isToday
-              ? Border.all(color: AppColors.primaryBlue, width: 2)
-              : null, // 节假日也不要边框
-        ),
-        padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // 公历日期 - 顶部
-            Text(
-              '${date.day}',
-              style: TextStyle(
-                color: isCurrentMonth
-                    ? (isToday
-                          ? AppColors.primaryBlue
-                          : isWeekend
-                          ? AppColors.error
-                          : AppColors.textPrimary)
-                    : AppColors.textTertiary,
-                fontSize: 16, // 从17缩小到16
-                fontWeight: FontWeight.bold,
-              ),
+      child: Builder(
+        builder: (context) {
+          return Container(
+            decoration: BoxDecoration(
+              color: isToday
+                  ? AppColors.primaryBlue.withOpacity(0.15)
+                  : Colors.transparent, // 节假日也不要背景
+              borderRadius: BorderRadius.circular(8),
+              border: isToday
+                  ? Border.all(color: AppColors.primaryBlue, width: 2)
+                  : null, // 去掉格子线
             ),
-
-            const SizedBox(height: 3),
-
-            // 农历/节气/节日 - 中间
-            if (isCurrentMonth) ...[
-              // 处理节气和节日共存的情况
-              if (lunarInfo.solarTerm != null &&
-                  lunarInfo.solarTerm!.isNotEmpty)
-                Text(
-                  lunarInfo.solarTerm!,
-                  style: TextStyle(
-                    color: AppColors.error,
-                    fontSize: 9, // 从10缩小到9
-                    fontWeight: FontWeight.bold,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // 公历日期 - 顶部
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    '${date.day}',
+                    style: TextStyle(
+                      color: isCurrentMonth
+                          ? (isToday
+                                ? AppColors.primaryBlue
+                                : isWeekend
+                                ? AppColors.error
+                                : AppColors.textPrimary)
+                          : AppColors.textTertiary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                )
-              else if (lunarInfo.festivals.isNotEmpty)
-                Text(
-                  lunarInfo.festivals.length > 1
-                      ? '${lunarInfo.festivals.first}等'
-                      : lunarInfo.festivals.first,
-                  style: TextStyle(
-                    color: AppColors.error,
-                    fontSize: 9, // 从10缩小到9
-                    fontWeight: FontWeight.bold,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                )
-              else
-                Text(
-                  _getLunarDayDisplay(lunarInfo),
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 9, // 从10缩小到9
-                    fontWeight: FontWeight.w500,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
                 ),
-            ] else
-              // 非当前月占位
-              const SizedBox(height: 13),
 
-            // 黄道吉日标识 - 底部
-            if (isCurrentMonth && lunarInfo.isHuangDaoDay) ...[
-              const SizedBox(height: 2),
-              Icon(Icons.star, color: AppColors.warning, size: 10),
-            ] else
-              const SizedBox(height: 12), // 占位保持对齐
-          ],
-        ),
+                const SizedBox(height: 2),
+
+                // 农历/节气/节日 - 中间
+                if (isCurrentMonth) ...[
+                  // 黄道吉日：带边框和颜色的背景
+                  if (lunarInfo.isHuangDaoDay) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 1,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.warning.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: AppColors.warning, width: 1),
+                      ),
+                      child: Builder(
+                        builder: (context) {
+                          String text;
+                          if (lunarInfo.solarTerm != null &&
+                              lunarInfo.solarTerm!.isNotEmpty) {
+                            text = lunarInfo.solarTerm!;
+                          } else if (lunarInfo.festivals.isNotEmpty) {
+                            text = lunarInfo.festivals.length > 1
+                                ? '${lunarInfo.festivals.first}等'
+                                : lunarInfo.festivals.first;
+                          } else {
+                            text = _getLunarDayDisplay(lunarInfo);
+                          }
+
+                          return FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              text,
+                              style: TextStyle(
+                                color: AppColors.warning,
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ]
+                  // 非黄道吉日：普通显示
+                  else if (lunarInfo.solarTerm != null &&
+                      lunarInfo.solarTerm!.isNotEmpty)
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        lunarInfo.solarTerm!,
+                        style: TextStyle(
+                          color: AppColors.error,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                      ),
+                    )
+                  else if (lunarInfo.festivals.isNotEmpty)
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        lunarInfo.festivals.length > 1
+                            ? '${lunarInfo.festivals.first}等'
+                            : lunarInfo.festivals.first,
+                        style: TextStyle(
+                          color: AppColors.error,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                      ),
+                    )
+                  else
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        _getLunarDayDisplay(lunarInfo),
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                ] else
+                  // 非当前月占位
+                  const SizedBox(height: 13),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

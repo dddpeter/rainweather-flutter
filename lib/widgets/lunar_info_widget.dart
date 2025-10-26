@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/lunar_model.dart';
+import '../screens/lunar_calendar_screen.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_constants.dart';
 import '../providers/theme_provider.dart';
@@ -261,6 +262,44 @@ class YiJiWidget extends StatelessWidget {
                       color: AppColors.textPrimary,
                       fontSize: AppConstants.sectionTitleFontSize,
                       fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const Spacer(),
+                  // 黄历节日入口
+                  InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const LunarCalendarScreen(),
+                        ),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.calendar_today,
+                            color: AppColors.accentBlue,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '黄历',
+                            style: TextStyle(
+                              color: AppColors.accentBlue,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],

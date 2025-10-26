@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 import '../providers/weather_provider.dart';
 import '../providers/theme_provider.dart';
 import '../services/ai_service.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_constants.dart';
+import '../widgets/typewriter_text_widget.dart';
 
 /// 健康管家页面
 class HealthAdvisorScreen extends StatefulWidget {
@@ -19,6 +19,16 @@ class _HealthAdvisorScreenState extends State<HealthAdvisorScreen> {
   String _selectedGroup = 'general';
   String? _healthAdvice;
   bool _isLoading = false;
+
+  /// 去掉Markdown格式符号，保留纯文本
+  String _cleanMarkdownText(String text) {
+    return text
+        .replaceAll('**', '') // 去掉粗体符号
+        .replaceAll('*', '') // 去掉剩余的星号
+        .replaceAll('###', '') // 去掉H3标题符号
+        .replaceAll('##', '') // 去掉H2标题符号
+        .replaceAll('#', ''); // 去掉H1标题符号
+  }
 
   final Map<String, Map<String, dynamic>> _userGroups = {
     'general': {
@@ -306,35 +316,17 @@ class _HealthAdvisorScreenState extends State<HealthAdvisorScreen> {
                               ],
                             ),
                             const SizedBox(height: 16),
-                            // 内容
+                            // 内容（打字机效果，去掉Markdown符号）
                             if (_healthAdvice != null)
-                              MarkdownBody(
-                                data: _healthAdvice!,
-                                styleSheet: MarkdownStyleSheet(
-                                  p: TextStyle(
-                                    color: AppColors.textPrimary,
-                                    fontSize: 14,
-                                    height: 1.5,
-                                  ),
-                                  strong: TextStyle(
-                                    color: AppColors.textPrimary,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  h1: TextStyle(
-                                    color: AppColors.textPrimary,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  h2: TextStyle(
-                                    color: AppColors.textPrimary,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  listBullet: TextStyle(
-                                    color: AppColors.textPrimary,
-                                    fontSize: 14,
-                                  ),
+                              TypewriterTextWidget(
+                                text: _cleanMarkdownText(_healthAdvice!),
+                                charDelay: const Duration(milliseconds: 30),
+                                lineDelay: const Duration(milliseconds: 200),
+                                style: TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontSize: 14,
+                                  height: 1.5,
+                                  fontWeight: FontWeight.w600, // AI内容加粗
                                 ),
                               ),
                           ],

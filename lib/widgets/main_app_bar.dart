@@ -8,6 +8,7 @@ import '../services/weather_share_service.dart';
 import '../screens/outfit_advisor_screen.dart';
 import '../screens/health_advisor_screen.dart';
 import '../screens/extreme_weather_alert_screen.dart';
+import '../screens/lunar_calendar_screen.dart';
 
 /// 主应用的顶部导航栏
 class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -140,23 +141,14 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
       tooltip: '更多功能',
       onSelected: (value) => _handleMenuItemSelection(context, value),
       itemBuilder: (context) => [
+        // 第1层：核心高频功能
         const PopupMenuItem<String>(
-          value: 'ai_assistant',
+          value: 'lunar',
           child: Row(
             children: [
-              Icon(Icons.auto_awesome, color: Color(0xFFFFB300), size: 24),
+              Icon(Icons.calendar_today, color: Color(0xFF4CAF50), size: 24),
               SizedBox(width: 12),
-              Text('AI助手'),
-            ],
-          ),
-        ),
-        const PopupMenuItem<String>(
-          value: 'alerts',
-          child: Row(
-            children: [
-              Icon(Icons.notifications_active, color: Colors.red, size: 24),
-              SizedBox(width: 12),
-              Text('综合提醒'),
+              Text('黄历节日'),
             ],
           ),
         ),
@@ -170,6 +162,19 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
             ],
           ),
         ),
+        const PopupMenuItem<String>(
+          value: 'alerts',
+          child: Row(
+            children: [
+              Icon(Icons.notifications_active, color: Colors.red, size: 24),
+              SizedBox(width: 12),
+              Text('综合提醒'),
+            ],
+          ),
+        ),
+
+        const PopupMenuDivider(), // 分隔线
+        // 第2层：AI智能功能（常用）
         const PopupMenuItem<String>(
           value: 'outfit',
           child: Row(
@@ -190,6 +195,9 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
             ],
           ),
         ),
+
+        const PopupMenuDivider(), // 分隔线
+        // 第3层：AI高级功能（紧急场景）
         const PopupMenuItem<String>(
           value: 'extreme',
           child: Row(
@@ -197,6 +205,16 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
               Icon(Icons.warning_rounded, color: Color(0xFFFF5722), size: 24),
               SizedBox(width: 12),
               Text('异常预警'),
+            ],
+          ),
+        ),
+        const PopupMenuItem<String>(
+          value: 'ai_assistant',
+          child: Row(
+            children: [
+              Icon(Icons.auto_awesome, color: Color(0xFFFFB300), size: 24),
+              SizedBox(width: 12),
+              Text('AI助手'),
             ],
           ),
         ),
@@ -294,6 +312,17 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
             context,
             MaterialPageRoute(
               builder: (context) => const ExtremeWeatherAlertScreen(),
+            ),
+          );
+        }
+        break;
+
+      case 'lunar':
+        if (context.mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const LunarCalendarScreen(),
             ),
           );
         }

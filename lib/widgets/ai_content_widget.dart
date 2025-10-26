@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_constants.dart';
+import 'typewriter_text_widget.dart';
 
 /// AI内容组件 - 支持渐进式展示
 ///
@@ -243,7 +244,7 @@ class _AIContentWidgetState extends State<AIContentWidget> {
     );
   }
 
-  /// AI内容显示（渐入动画）
+  /// AI内容显示（打字机效果）
   Widget _buildAIContent() {
     return TweenAnimationBuilder<double>(
       key: const ValueKey('content'),
@@ -259,8 +260,10 @@ class _AIContentWidgetState extends State<AIContentWidget> {
           ),
         );
       },
-      child: Text(
-        _content ?? widget.defaultContent,
+      child: TypewriterTextWidget(
+        text: _content ?? widget.defaultContent,
+        charDelay: const Duration(milliseconds: 30), // 每个字符延迟30ms（更自然）
+        lineDelay: const Duration(milliseconds: 200), // 每行之间延迟200ms（更好的停顿感）
         style: TextStyle(
           color: AppColors.textPrimary,
           fontSize: 14,

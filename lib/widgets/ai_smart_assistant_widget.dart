@@ -7,6 +7,7 @@ import '../constants/app_constants.dart';
 import '../services/weather_alert_service.dart';
 import '../models/commute_advice_model.dart';
 import 'weather_alert_widget.dart';
+import 'typewriter_text_widget.dart';
 
 /// 增强版AI智能助手组件 - 整合天气摘要和通勤提醒
 class AISmartAssistantWidget extends StatefulWidget {
@@ -294,10 +295,12 @@ class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
                 ),
                 const SizedBox(width: 8),
               ],
-              // 摘要文本
+              // 摘要文本（打字机效果）
               Expanded(
-                child: Text(
-                  summary,
+                child: TypewriterTextWidget(
+                  text: summary,
+                  charDelay: const Duration(milliseconds: 30),
+                  lineDelay: const Duration(milliseconds: 200),
                   style: TextStyle(
                     color: textColor,
                     fontSize: 14,
@@ -529,18 +532,18 @@ class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
                       ),
                     ],
                   ),
-                  // 始终显示内容（3行，省略号结尾）
+                  // 始终显示内容（打字机效果）
                   const SizedBox(height: 8),
-                  Text(
-                    advice.content,
+                  TypewriterTextWidget(
+                    text: advice.content,
+                    charDelay: const Duration(milliseconds: 30),
+                    lineDelay: const Duration(milliseconds: 200),
                     style: TextStyle(
                       color: textColor,
                       fontSize: 14,
                       height: 1.5,
                       fontWeight: FontWeight.w600, // AI内容加粗
                     ),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),

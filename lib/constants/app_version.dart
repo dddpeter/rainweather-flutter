@@ -8,29 +8,29 @@ class AppVersion {
 
   /// 应用版本号（显示用）
   /// 格式: "主版本号.次版本号.修订号"
-  static const String version = '1.12.6';
+  static const String version = '1.13.0';
 
   /// 应用构建号
-  static const int buildNumber = 16;
+  static const int buildNumber = 17;
 
   /// 完整版本信息
   /// 格式: "版本号+构建号"
   static const String fullVersion = '$version+$buildNumber';
 
   /// 应用名称
-  static const String appName = '知雨天气';
+  static const String appName = '智雨天气';
 
   /// 应用英文名称
   static const String appNameEn = 'Rain Weather';
 
   /// 版权信息
-  static const String copyright = '© 2025 知雨天气. All rights reserved.';
+  static const String copyright = '© 2025 智雨天气. All rights reserved.';
 
   /// 应用描述
   static const String description = '一款简洁美观的智能天气预报应用';
 
   /// 版本发布日期
-  static const String releaseDate = '2025-01-18';
+  static const String releaseDate = '2025-01-19';
 
   /// 获取版本信息摘要
   static String getVersionSummary() {

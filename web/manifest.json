@@ -1,11 +1,11 @@
 {
-    "name": "知雨天气2",
-    "short_name": "知雨天气2",
+    "name": "智雨天气",
+    "short_name": "智雨天气",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "知雨天气2 - 智能天气预报应用",
+    "description": "智雨天气 - 智能天气预报应用",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

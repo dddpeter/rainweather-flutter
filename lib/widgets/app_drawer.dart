@@ -858,14 +858,10 @@ class AppDrawer extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '• AI内容打字机效果展示\n'
-                      '• 缓存内容直接显示，快速响应\n'
-                      '• AI提示词专业化和实用化\n'
-                      '• 黄历节日AI解读功能\n'
-                      '• 黄历详情页面重构\n'
-                      '• 24小时天气卡片布局优化\n'
-                      '• 代码结构优化和重构\n'
-                      '• 修复文本装饰问题',
+                      '• 应用名称更新为"智雨天气"\n'
+                      '• 全面提升应用品牌形象\n'
+                      '• 优化用户体验和视觉效果\n'
+                      '• 修复已知问题',
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,

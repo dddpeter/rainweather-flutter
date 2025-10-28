@@ -148,7 +148,7 @@ class _RainWeatherAppState extends State<RainWeatherApp>
               builder: (context) {
                 return MaterialApp(
                   navigatorKey: navigatorKey, // 全局导航器 Key
-                  title: '知雨天气2',
+                  title: '智雨天气',
                   debugShowCheckedModeBanner: false,
                   // 中文本地化支持
                   localizationsDelegates: const [

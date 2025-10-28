@@ -228,7 +228,15 @@ This Flutter app is a complete refactor of the original Android weather app with
 
 ## Changelog
 
-### v1.12.6 (Latest - 2025-01-18)
+### v1.13.0 (Latest - 2025-01-19)
+
+**Brand Upgrade**
+- ✨ **App Name Update**: Upgraded from "知雨天气2" to "智雨天气"
+- 🎨 **Enhanced Brand Identity**: More concise and memorable app name
+- 📱 **Full Platform Update**: Unified name across Android, iOS, Web, Windows, Linux
+- 🎯 **Improved User Experience**: Clearer brand recognition
+
+### v1.12.6 (2025-01-18)
 
 **AI Content Optimization**
 - ✨ **Typewriter Effect**: All AI-generated content supports line-by-line typewriter effect for better user experience

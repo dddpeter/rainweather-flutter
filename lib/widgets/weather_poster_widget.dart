@@ -586,7 +586,7 @@ class WeatherPosterWidget extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        '知雨天气 · 精准预报 贴心提醒',
+                        '智雨天气 · 精准预报 贴心提醒',
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.9),
                           fontSize: 10,

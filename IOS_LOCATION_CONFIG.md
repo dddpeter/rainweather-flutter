@@ -89,10 +89,10 @@ if (Platform.isIOS) {
 
 ```xml
 <key>NSLocationWhenInUseUsageDescription</key>
-<string>知雨天气需要获取您的位置信息，以便为您提供当前所在地的精准天气预报和天气提醒服务</string>
+<string>智雨天气需要获取您的位置信息，以便为您提供当前所在地的精准天气预报和天气提醒服务</string>
 
 <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-<string>知雨天气需要持续定位权限，以便在后台为您推送实时天气变化提醒</string>
+<string>智雨天气需要持续定位权限，以便在后台为您推送实时天气变化提醒</string>
 ```
 
 **备用的API Keys配置**（可选）：

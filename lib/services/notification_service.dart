@@ -187,7 +187,7 @@ class NotificationService {
           styleInformation: BigTextStyleInformation(
             alert.content,
             contentTitle: alert.title,
-            summaryText: '知雨天气 - ${alert.cityName}',
+            summaryText: '智雨天气 - ${alert.cityName}',
           ),
         ),
         iOS: DarwinNotificationDetails(
@@ -356,7 +356,7 @@ class NotificationService {
         mainAdvice.content,
         htmlFormatBigText: false,
         contentTitle: '$timeSlotName ${mainAdvice.icon} ${mainAdvice.title}',
-        summaryText: '知雨天气 · ${advices.length}条通勤建议',
+        summaryText: '智雨天气 · ${advices.length}条通勤建议',
         htmlFormatContentTitle: false,
         htmlFormatSummaryText: false,
       );

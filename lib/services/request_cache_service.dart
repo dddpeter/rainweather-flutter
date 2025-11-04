@@ -225,8 +225,8 @@ class CacheConfig {
   /// 天气数据缓存时间
   static const Duration weatherData = Duration(minutes: 10);
 
-  /// AI请求缓存时间
-  static const Duration aiRequest = Duration(hours: 1);
+  /// AI请求缓存时间（5分钟，避免频繁重复生成）
+  static const Duration aiRequest = Duration(minutes: 5);
 
   /// 定位数据缓存时间
   static const Duration locationData = Duration(minutes: 30);

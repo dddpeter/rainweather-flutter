@@ -21,48 +21,63 @@ class AISmartAssistantWidget extends StatefulWidget {
 
 class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
   String? _lastWeatherDataKey; // 记录上次的天气数据key
+  bool _hasTriggeredGeneration = false; // 标记是否已触发过生成
+
+  @override
+  void dispose() {
+    _hasTriggeredGeneration = false;
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    // 监听天气数据变化，只在数据真正改变时才触发AI生成
-    final weatherProvider = context.read<WeatherProvider>();
-    final currentWeather = weatherProvider.currentWeather;
-
-    // 构建唯一key：天气+温度+时间
-    final currentDataKey = currentWeather != null
-        ? '${currentWeather.current?.current?.weather ?? ''}_'
-              '${currentWeather.current?.current?.temperature ?? ''}_'
-              '${currentWeather.current?.current?.reporttime ?? ''}'
-        : null;
-
-    // 只在天气数据真正改变时才触发AI生成
-    if (currentDataKey != null && currentDataKey != _lastWeatherDataKey) {
-      _lastWeatherDataKey = currentDataKey;
-
-      // 延时触发，避免和build冲突
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          final wp = context.read<WeatherProvider>();
-          if (wp.weatherSummary == null || wp.weatherSummary!.isEmpty) {
-            print('🚀 AISmartAssistantWidget: 天气数据变化，触发AI摘要生成');
-            wp.generateWeatherSummary();
-          } else {
-            print('🚀 AISmartAssistantWidget: 已有缓存，跳过生成');
-          }
-        }
-      });
-    }
-
     // 使用 Selector 只监听天气摘要相关状态
     return Selector<
       WeatherProvider,
-      ({String? weatherSummary, bool isGeneratingSummary})
+      ({String? weatherSummary, bool isGeneratingSummary, String? weatherKey})
     >(
-      selector: (context, weatherProvider) => (
-        weatherSummary: weatherProvider.weatherSummary,
-        isGeneratingSummary: weatherProvider.isGeneratingSummary,
-      ),
+      selector: (context, weatherProvider) {
+        final currentWeather = weatherProvider.currentWeather;
+        // 构建唯一key：天气+温度+时间
+        final currentDataKey = currentWeather != null
+            ? '${currentWeather.current?.current?.weather ?? ''}_'
+                  '${currentWeather.current?.current?.temperature ?? ''}_'
+                  '${currentWeather.current?.current?.reporttime ?? ''}'
+            : null;
+
+        return (
+          weatherSummary: weatherProvider.weatherSummary,
+          isGeneratingSummary: weatherProvider.isGeneratingSummary,
+          weatherKey: currentDataKey,
+        );
+      },
       builder: (context, data, child) {
+        // 只在天气数据真正改变时才触发AI生成
+        if (data.weatherKey != null && data.weatherKey != _lastWeatherDataKey) {
+          _lastWeatherDataKey = data.weatherKey;
+          _hasTriggeredGeneration = false; // 重置触发标记
+        }
+
+        // 只触发一次生成
+        if (data.weatherKey != null &&
+            !_hasTriggeredGeneration &&
+            (data.weatherSummary == null || data.weatherSummary!.isEmpty) &&
+            !data.isGeneratingSummary) {
+          _hasTriggeredGeneration = true;
+
+          // 延时触发，避免在build过程中修改状态
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              try {
+                final wp = context.read<WeatherProvider>();
+                print('🚀 AISmartAssistantWidget: 天气数据变化，触发AI摘要生成');
+                wp.generateWeatherSummary();
+              } catch (e) {
+                print('❌ AISmartAssistantWidget: 触发AI生成失败 - $e');
+              }
+            }
+          });
+        }
         final themeProvider = context.read<ThemeProvider>();
 
         // 调试日志
@@ -205,24 +220,37 @@ class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
     String? weatherSummary,
     bool isGeneratingSummary,
   ) {
-    // 根据生成状态显示不同内容
+    // 根据生成状态显示不同内容，确保总有默认值
     String summary;
-    if (isGeneratingSummary) {
-      summary = '正在生成天气摘要...';
-    } else if (weatherSummary != null && weatherSummary.isNotEmpty) {
-      summary = weatherSummary;
-    } else {
-      summary = '天气摘要生成中，请稍候...';
+    try {
+      if (isGeneratingSummary) {
+        summary = '正在生成天气摘要...';
+      } else if (weatherSummary != null && weatherSummary.isNotEmpty) {
+        summary = weatherSummary;
+      } else {
+        summary = '天气摘要生成中，请稍候...';
+      }
+    } catch (e) {
+      print('❌ _buildWeatherSummary: 处理摘要文本失败 - $e');
+      summary = '天气摘要加载中...';
     }
 
-    final themeProvider = context.read<ThemeProvider>();
+    ThemeProvider? themeProvider;
+    try {
+      themeProvider = context.read<ThemeProvider>();
+    } catch (e) {
+      print('❌ _buildWeatherSummary: 获取ThemeProvider失败 - $e');
+    }
+
+    // 使用默认值防止null
+    final isLightTheme = themeProvider?.isLightTheme ?? true;
 
     // 橙色系背景（天气摘要）
     final backgroundColor = const Color(0xFFFFB74D);
-    final iconColor = themeProvider.isLightTheme
+    final iconColor = isLightTheme
         ? const Color(0xFF012d78) // 亮色模式：主题深蓝
         : Colors.white; // 暗色模式：白色
-    final textColor = themeProvider.isLightTheme
+    final textColor = isLightTheme
         ? const Color(0xFF012d78) // 亮色模式：主题深蓝
         : AppColors.textPrimary; // 暗色模式：白色
 
@@ -234,9 +262,7 @@ class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
         // 浮起效果阴影
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(
-              themeProvider.isLightTheme ? 0.08 : 0.15,
-            ),
+            color: Colors.black.withOpacity(isLightTheme ? 0.08 : 0.15),
             blurRadius: 6,
             offset: const Offset(0, 2),
             spreadRadius: 0,
@@ -252,9 +278,7 @@ class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: iconColor.withOpacity(
-                    themeProvider.isLightTheme ? 0.2 : 0.3,
-                  ),
+                  color: iconColor.withOpacity(isLightTheme ? 0.2 : 0.3),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Icon(Icons.wb_sunny, color: iconColor, size: 16),
@@ -315,13 +339,21 @@ class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
 
     // 始终只显示第一条（最重要的）
     final displayAdvice = sortedAdvices.first;
-    final themeProvider = context.read<ThemeProvider>();
+
+    ThemeProvider? themeProvider;
+    try {
+      themeProvider = context.read<ThemeProvider>();
+    } catch (e) {
+      print('❌ _buildCommuteAdvicesSection: 获取ThemeProvider失败 - $e');
+    }
+
+    final isLightTheme = themeProvider?.isLightTheme ?? true;
 
     // 绿色系背景（通勤提醒）
-    final iconColor = themeProvider.isLightTheme
+    final iconColor = isLightTheme
         ? const Color(0xFF012d78) // 亮色模式：主题深蓝
         : Colors.white; // 暗色模式：白色
-    final textColor = themeProvider.isLightTheme
+    final textColor = isLightTheme
         ? const Color(0xFF012d78) // 亮色模式：主题深蓝
         : AppColors.textPrimary; // 暗色模式：白色
 
@@ -334,9 +366,7 @@ class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: iconColor.withOpacity(
-                  themeProvider.isLightTheme ? 0.2 : 0.3,
-                ),
+                color: iconColor.withOpacity(isLightTheme ? 0.2 : 0.3),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Icon(Icons.commute_rounded, color: iconColor, size: 16),
@@ -381,43 +411,60 @@ class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
   Widget _buildCommuteAdviceItem(dynamic advice, List<dynamic> allAdvices) {
     final levelColor = advice.getLevelColor();
     final levelName = advice.getLevelName();
-    final weatherProvider = context.read<WeatherProvider>();
-    final alertService = WeatherAlertService.instance;
-    final themeProvider = context.read<ThemeProvider>();
+
+    WeatherProvider? weatherProvider;
+    WeatherAlertService? alertService;
+    ThemeProvider? themeProvider;
+
+    try {
+      weatherProvider = context.read<WeatherProvider>();
+      alertService = WeatherAlertService.instance;
+      themeProvider = context.read<ThemeProvider>();
+    } catch (e) {
+      print('❌ _buildCommuteAdviceItem: 获取Provider失败 - $e');
+    }
+
+    final isLightTheme = themeProvider?.isLightTheme ?? true;
 
     // 绿色系背景（通勤提醒）
     final backgroundColor = const Color(0xFF64DD17);
-    final textColor = themeProvider.isLightTheme
+    final textColor = isLightTheme
         ? const Color(0xFF012d78) // 亮色模式：主题深蓝
         : AppColors.textPrimary; // 暗色模式：白色
 
     // AI标签颜色
-    final aiColor = themeProvider.isLightTheme
+    final aiColor = isLightTheme
         ? const Color(0xFF004CFF)
         : const Color(0xFFFFB300);
 
     return InkWell(
-      onTap: () {
-        // 点击打开综合提醒页面
-        final currentLocation = weatherProvider.currentLocation;
-        final currentCity =
-            currentLocation?.district ?? currentLocation?.city ?? '未知';
-        // 获取天气提醒（智能提醒）
-        final smartAlerts = alertService.getAlertsForCity(
-          currentCity,
-          currentLocation,
-        );
+      onTap: weatherProvider != null && alertService != null
+          ? () {
+              try {
+                // 点击打开综合提醒页面
+                final currentLocation = weatherProvider!.currentLocation;
+                final currentCity =
+                    currentLocation?.district ?? currentLocation?.city ?? '未知';
+                // 获取天气提醒（智能提醒）
+                final smartAlerts = alertService!.getAlertsForCity(
+                  currentCity,
+                  currentLocation,
+                );
 
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => WeatherAlertDetailScreen(
-              alerts: smartAlerts,
-              commuteAdvices: allAdvices.cast(),
-            ),
-          ),
-        );
-      },
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => WeatherAlertDetailScreen(
+                      alerts: smartAlerts,
+                      commuteAdvices: allAdvices.cast(),
+                    ),
+                  ),
+                );
+              } catch (e) {
+                print('❌ _buildCommuteAdviceItem: 打开提醒页面失败 - $e');
+              }
+            }
+          : null,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
@@ -428,9 +475,7 @@ class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
           // 浮起效果阴影
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(
-                themeProvider.isLightTheme ? 0.08 : 0.15,
-              ),
+              color: Colors.black.withOpacity(isLightTheme ? 0.08 : 0.15),
               blurRadius: 6,
               offset: const Offset(0, 2),
               spreadRadius: 0,

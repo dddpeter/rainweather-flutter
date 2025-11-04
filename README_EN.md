@@ -228,6 +228,26 @@ This Flutter app is a complete refactor of the original Android weather app with
 
 ## Changelog
 
+### v1.13.1 (2025-01-20)
+
+**Stability Optimization**
+- 🛡️ **Enhanced AI Component Error Handling**: Fixed potential red screen issues when no cache is available
+- 🔄 **Widget State Management Optimization**: Avoid triggering state updates during build process, resolving InheritedElement assertion failures
+- 🎯 **Provider Null Safety Enhancement**: Added null safety checks and default value fallbacks for all Provider access
+- ⚡ **AI Generation Trigger Optimization**: Use Selector to precisely monitor state changes and prevent duplicate triggers
+
+**Cache Strategy Optimization**
+- 💾 **AI Cache Duration Adjustment**: Reduced AI request cache from 1 hour to 5 minutes to minimize duplicate generation
+- 🚀 **Startup Experience Optimization**: Always display cached data first, then silently refresh latest content in background
+- 📦 **Database Cache Update**: Unified AI summary and 15-day forecast cache validity period to 5 minutes
+- 🎨 **Smart Cache Judgment**: Automatically select display strategy based on cache freshness
+
+**Error Handling Improvements**
+- 🛠️ **Exception Fallback Mechanism**: Added try-catch protection to all critical components
+- 📝 **Friendly Error Messages**: Display user-friendly default messages in exceptional situations
+- 🔍 **Detailed Error Logging**: Complete log output for easier troubleshooting
+- 💪 **Robustness Enhancement**: No crashes even with network exceptions or cache failures
+
 ### v1.13.0 (Latest - 2025-01-19)
 
 **Brand Upgrade**

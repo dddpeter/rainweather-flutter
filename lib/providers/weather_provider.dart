@@ -165,6 +165,11 @@ class WeatherProvider extends ChangeNotifier {
   // ==================== 初始化方法 ====================
 
   /// 快速启动：先加载缓存数据，后台刷新
+  ///
+  /// 策略：
+  /// 1. 总是先显示缓存数据（无论是否过期），确保用户立即看到内容
+  /// 2. 后台异步刷新最新数据，成功后平滑替换
+  /// 3. 刷新失败时保持显示缓存数据，不影响用户体验
   Future<void> quickStart() async {
     WeatherProviderLogger.box('快速启动模式');
 
@@ -212,14 +217,32 @@ class WeatherProvider extends ChangeNotifier {
         return;
       }
 
-      // 检查缓存是否过期（但不阻塞显示）
+      // 检查缓存状态（不阻塞显示）
       final isCacheExpired = await _isCacheExpired(weatherKey);
-      final cacheStatus = isCacheExpired ? '（已过期，将后台更新）' : '（有效）';
+      final cacheAge = await _getCacheAge(weatherKey);
 
-      WeatherProviderLogger.info('使用SQLite缓存数据快速显示 $cacheStatus');
+      // 判断缓存是否陈旧（超过1小时）
+      final isCacheStale =
+          cacheAge != null && cacheAge > AppConstants.cacheStaleThreshold;
+
+      // 构建缓存状态信息
+      String cacheStatus;
+      if (isCacheStale) {
+        cacheStatus =
+            '（已陈旧 ${cacheAge.inHours}小时${cacheAge.inMinutes % 60}分钟前，将后台更新）';
+      } else if (isCacheExpired) {
+        cacheStatus = '（已过期，将后台更新）';
+      } else {
+        cacheStatus = '（有效）';
+      }
+
+      WeatherProviderLogger.info('✅ 总是先显示缓存数据 $cacheStatus');
       WeatherProviderLogger.debug(
         '位置: ${cachedLocation.district}, 温度: ${cachedWeather.current?.current?.temperature ?? '--'}℃',
       );
+      if (cacheAge != null) {
+        WeatherProviderLogger.debug('缓存时间: ${cacheAge.inMinutes}分钟前');
+      }
 
       // 立即设置缓存数据并通知UI（无论是否过期）
       _currentWeather = cachedWeather;
@@ -1111,6 +1134,21 @@ class WeatherProvider extends ChangeNotifier {
     } catch (e) {
       WeatherProviderLogger.info('Error checking cache expiration: $e');
       return true; // 出错时强制刷新
+    }
+  }
+
+  /// 获取缓存年龄（距离缓存时间多久）
+  /// 返回 null 表示无法获取缓存年龄
+  Future<Duration?> _getCacheAge(String cacheKey) async {
+    try {
+      // 从智能缓存获取缓存年龄
+      final cacheAge = await _smartCache.getCacheAge(
+        cacheKey.replaceAll(':', '_'),
+      );
+      return cacheAge;
+    } catch (e) {
+      WeatherProviderLogger.info('Error getting cache age: $e');
+      return null;
     }
   }
 

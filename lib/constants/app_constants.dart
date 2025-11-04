@@ -337,6 +337,9 @@ class AppConstants {
   // Cache Expiration (15 minutes)
   static const Duration cacheExpiration = Duration(minutes: 15);
 
+  // Cache Stale Threshold (1 hour) - 超过此时间显示加载动画
+  static const Duration cacheStaleThreshold = Duration(hours: 1);
+
   // Sun/Moon Index Cache Expiration (6 hours)
   static const Duration sunMoonIndexCacheExpiration = Duration(hours: 6);
 }

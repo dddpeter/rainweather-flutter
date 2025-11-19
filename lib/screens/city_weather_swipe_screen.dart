@@ -1,0 +1,1704 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import '../providers/weather_provider.dart';
+import '../providers/theme_provider.dart';
+import '../widgets/weather_chart.dart';
+import '../services/weather_service.dart';
+import '../services/weather_share_service.dart';
+import '../constants/app_colors.dart';
+import '../constants/app_constants.dart';
+import '../widgets/sun_moon_widget.dart';
+import '../widgets/life_index_widget.dart';
+import '../widgets/weather_animation_widget.dart';
+import '../widgets/hourly_chart.dart';
+import '../widgets/hourly_list.dart';
+import '../widgets/forecast15d_chart.dart';
+import '../widgets/weather_details_widget.dart';
+import '../widgets/ai_content_widget.dart';
+import '../widgets/air_quality_card.dart';
+import '../models/weather_model.dart';
+import '../models/location_model.dart';
+import '../models/sun_moon_index_model.dart';
+import '../utils/weather_icon_helper.dart';
+import 'weather_alerts_screen.dart';
+
+class CityWeatherSwipeScreen extends StatefulWidget {
+  final String cityName;
+
+  const CityWeatherSwipeScreen({super.key, required this.cityName});
+
+  @override
+  State<CityWeatherSwipeScreen> createState() => _CityWeatherSwipeScreenState();
+}
+
+class _CityWeatherSwipeScreenState extends State<CityWeatherSwipeScreen>
+    with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
+  late PageController _pageController;
+  late AnimationController _animationController;
+  late Animation<double> _animation;
+  
+  int _currentPage = 0;
+  final List<String> _pageTitles = [
+    '当前天气',
+    '24小时预报',
+    '15日预报',
+  ];
+
+  @override
+  bool get wantKeepAlive => true; // 保持页面状态
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _animation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // 获取指定城市的天气数据（包含日出日落和生活指数数据）
+      await context.read<WeatherProvider>().getWeatherForCity(widget.cityName);
+    });
+  }
+
+  @override
+  void didUpdateWidget(CityWeatherSwipeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 如果城市名称发生变化，重新获取天气数据
+    if (oldWidget.cityName != widget.cityName) {
+      print(
+        '🏙️ CityWeatherSwipeScreen: City changed from ${oldWidget.cityName} to ${widget.cityName}',
+      );
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        await context.read<WeatherProvider>().getWeatherForCity(
+          widget.cityName,
+        );
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _onPageChanged(int page) {
+    setState(() {
+      _currentPage = page;
+    });
+    _animationController.reset();
+    _animationController.forward();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context); // 必须调用以支持AutomaticKeepAlive
+    // 使用Consumer监听主题变化，确保整个页面在主题切换时重建
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, _) {
+        // 确保AppColors使用最新的主题
+        AppColors.setThemeProvider(themeProvider);
+
+        return PopScope(
+          onPopInvoked: (didPop) {
+            if (didPop) {
+              // 手势返回时重置到当前定位数据
+              context.read<WeatherProvider>().restoreCurrentLocationWeather();
+            }
+          },
+          child: Scaffold(
+            // 右下角浮动返回按钮
+            floatingActionButton: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.buttonShadow,
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: AppColors.cardBackground,
+                borderRadius: BorderRadius.circular(28),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(28),
+                  onTap: () {
+                    // 返回时重置到当前定位数据
+                    context
+                        .read<WeatherProvider>()
+                        .restoreCurrentLocationWeather();
+                    Navigator.pop(context);
+                  },
+                  child: Container(
+                    width: 56,
+                    height: 56,
+                    alignment: Alignment.center,
+                    child: Icon(
+                      Icons.arrow_back,
+                      color: AppColors.textPrimary,
+                      size: 24,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            body: Container(
+              decoration: BoxDecoration(
+                gradient: AppColors.screenBackgroundGradient,
+              ),
+              child: SafeArea(
+                child: Consumer<WeatherProvider>(
+                  builder: (context, weatherProvider, child) {
+                    if (weatherProvider.isLoading &&
+                        weatherProvider.currentWeather == null) {
+                      return Center(
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            AppColors.textPrimary,
+                          ),
+                        ),
+                      );
+                    }
+
+                    if (weatherProvider.error != null) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              color: AppColors.textPrimary,
+                              size: 64,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              '加载失败',
+                              style: TextStyle(
+                                color: AppColors.textPrimary,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              weatherProvider.error!,
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 14,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 24),
+                            ElevatedButton(
+                              onPressed: () => weatherProvider
+                                  .getWeatherForCity(widget.cityName),
+                              child: const Text('重试'),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    return Column(
+                      children: [
+                        // 页面指示器
+                        _buildPageIndicator(),
+
+                        // 滑动页面内容
+                        Expanded(
+                          child: PageView(
+                            controller: _pageController,
+                            onPageChanged: _onPageChanged,
+                            children: [
+                              _buildCurrentWeatherPage(weatherProvider),
+                              _buildHourlyForecastPage(weatherProvider),
+                              _build15DayForecastPage(weatherProvider),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTopWeatherSection(WeatherProvider weatherProvider) {
+    final weather = weatherProvider.currentWeather;
+    final current = weather?.current?.current;
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        // 固定深蓝色背景（不区分亮暗模式）
+        color: AppColors.weatherHeaderCardBackground,
+        // 添加露营场景背景图片（透明化处理）
+        image: const DecorationImage(
+          image: AssetImage('assets/images/backgroud.png'),
+          fit: BoxFit.cover,
+          opacity: 0.25, // 优化：降低透明度，提升文字对比度和可读性
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 16.0),
+          child: Column(
+            children: [
+              const SizedBox(height: 8),
+              // City name and navigation
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  InkWell(
+                    onTap: () {
+                      // 返回时重置到当前定位数据
+                      context
+                          .read<WeatherProvider>()
+                          .restoreCurrentLocationWeather();
+                      Navigator.of(context).pop();
+                    },
+                    borderRadius: BorderRadius.circular(20),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Icon(
+                        Icons.arrow_back,
+                        color: context.read<ThemeProvider>().getColor(
+                          'headerIconColor',
+                        ),
+                        size: AppColors.titleBarIconSize,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.location_on_rounded,
+                            color: context.read<ThemeProvider>().getColor(
+                              'headerTextPrimary',
+                            ),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            widget.cityName,
+                            style: TextStyle(
+                              color: context.read<ThemeProvider>().getColor(
+                                'headerTextPrimary',
+                              ),
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  // 分享图标
+                  _buildShareButton(context, weatherProvider),
+                ],
+              ),
+              const SizedBox(height: 24), // 减小间距
+              // Weather animation, weather text and temperature
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start, // 顶部对齐
+                children: [
+                  // 左侧天气动画区域 - 主要视觉焦点
+                  Flexible(
+                    flex: 50,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center, // 居中显示
+                      mainAxisAlignment: MainAxisAlignment.start, // 顶部对齐
+                      children: [
+                        WeatherAnimationWidget(
+                          weatherType: current?.weather ?? '晴',
+                          size: 100, // 适中的动画尺寸
+                          isPlaying: true,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  // 右侧温度和天气汉字区域 - 紧凑布局
+                  Flexible(
+                    flex: 50,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.baseline,
+                          textBaseline: TextBaseline.alphabetic,
+                          children: [
+                            Text(
+                              '${current?.temperature ?? '--'}',
+                              style: TextStyle(
+                                color: context.read<ThemeProvider>().getColor(
+                                  'headerTextPrimary',
+                                ),
+                                fontSize: 56, // 增大温度字体
+                                fontWeight: FontWeight.bold,
+                                height: 1.0, // 紧凑行高
+                              ),
+                            ),
+                            Text(
+                              '℃',
+                              style: TextStyle(
+                                color: context.read<ThemeProvider>().getColor(
+                                  'headerTextPrimary',
+                                ),
+                                fontSize: 40,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        // 体感温度
+                        if (current?.feelstemperature != null &&
+                            current?.feelstemperature != current?.temperature)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.thermostat_rounded,
+                                  color: context.read<ThemeProvider>().getColor(
+                                    'headerTextSecondary',
+                                  ),
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '体感 ${current?.feelstemperature}℃',
+                                  style: TextStyle(
+                                    color: context
+                                        .read<ThemeProvider>()
+                                        .getColor('headerTextSecondary'),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        const SizedBox(height: 6), // 减小间距
+                        Text(
+                          current?.weather ?? '晴',
+                          style: TextStyle(
+                            color: context.read<ThemeProvider>().getColor(
+                              'headerTextSecondary',
+                            ),
+                            fontSize: 20, // 减小天气文字
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+
+              // 简化的详细信息
+              const SizedBox(height: 32),
+              _buildSimplifiedDetails(weather),
+
+              // 农历日期
+              if (weather?.current?.nongLi != null) ...[
+                const SizedBox(height: 60),
+                Text(
+                  weather!.current!.nongLi!,
+                  style: TextStyle(
+                    color: context.read<ThemeProvider>().getColor(
+                      'headerTextSecondary',
+                    ),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPageIndicator() {
+    return Container(
+      height: 50,
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(_pageTitles.length, (index) {
+          final isSelected = index == _currentPage;
+          return GestureDetector(
+            onTap: () {
+              if (!isSelected) {
+                _pageController.animateToPage(
+                  index,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                );
+              }
+            },
+            child: AnimatedBuilder(
+              animation: _animation,
+              builder: (context, child) {
+                return Container(
+                  width: 90, // 增加宽度，从70改为90
+                  height: 32,
+                  margin: const EdgeInsets.symmetric(horizontal: 4), // 稍微增加边距
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppColors.primaryBlue.withOpacity(0.2)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isSelected
+                          ? AppColors.primaryBlue.withOpacity(0.5)
+                          : AppColors.textSecondary.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Center(
+                    child: FittedBox( // 使用FittedBox确保文字不超出容器
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        _pageTitles[index],
+                        style: TextStyle(
+                          color: isSelected
+                              ? AppColors.primaryBlue
+                              : AppColors.textSecondary,
+                          fontSize: isSelected ? 14 : 12, // 稍微增大字体
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 1, // 限制为一行
+                        overflow: TextOverflow.ellipsis, // 超出时显示省略号
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  // 第一个页面：当前天气
+  Widget _buildCurrentWeatherPage(WeatherProvider weatherProvider) {
+    return RefreshIndicator(
+      onRefresh: () async {
+        await weatherProvider.getWeatherForCity(
+          widget.cityName,
+          forceRefreshAI: true,
+        );
+      },
+      color: AppColors.primaryBlue,
+      backgroundColor: AppColors.backgroundSecondary,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          children: [
+            // 合并的头部天气信息区域
+            _buildTopWeatherSection(weatherProvider),
+            const SizedBox(height: 16),
+            // AI智能助手（24小时天气总结） - 移动到空气质量上方
+            _buildAISummaryForCurrentWeather(weatherProvider),
+            AppColors.cardSpacingWidget,
+            // 空气质量卡片
+            AirQualityCard(weather: weatherProvider.currentWeather),
+            AppColors.cardSpacingWidget,
+            // 今日提醒卡片（在详细信息前面）
+            _buildWeatherTipsCard(weatherProvider),
+            AppColors.cardSpacingWidget,
+            // 详细信息卡片
+            WeatherDetailsWidget(
+              weather: weatherProvider.currentWeather,
+              showAirQuality: false,
+            ),
+            AppColors.cardSpacingWidget,
+            // 生活指数
+            LifeIndexWidget(weatherProvider: weatherProvider),
+            AppColors.cardSpacingWidget,
+            const SunMoonWidget(),
+            AppColors.cardSpacingWidget,
+            _buildTemperatureChart(weatherProvider),
+            const SizedBox(height: 80), // Space for bottom buttons
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 第二个页面：24小时预报
+  Widget _buildHourlyForecastPage(WeatherProvider weatherProvider) {
+    final weather = weatherProvider.currentWeather;
+    final hourlyForecast = weather?.forecast24h ?? [];
+
+    return RefreshIndicator(
+      onRefresh: () async {
+        await weatherProvider.getWeatherForCity(
+          widget.cityName,
+          forceRefreshAI: true,
+        );
+      },
+      color: AppColors.primaryBlue,
+      backgroundColor: AppColors.backgroundSecondary,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          children: [
+            const SizedBox(height: 16),
+            // 24小时温度趋势图
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppConstants.screenHorizontalPadding,
+              ),
+              child: HourlyChart(hourlyForecast: hourlyForecast),
+            ),
+            AppColors.cardSpacingWidget,
+
+            // 24小时天气列表
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppConstants.screenHorizontalPadding,
+              ),
+              child: HourlyList(
+                hourlyForecast: hourlyForecast,
+                weatherService: WeatherService.getInstance(),
+              ),
+            ),
+            AppColors.cardSpacingWidget,
+
+            const SizedBox(height: 80), // Space for bottom buttons
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 第三个页面：15日预报
+  Widget _build15DayForecastPage(WeatherProvider weatherProvider) {
+    final weather = weatherProvider.currentWeather;
+    final forecast15d = weather?.forecast15d ?? [];
+
+    return RefreshIndicator(
+      onRefresh: () async {
+        await weatherProvider.getWeatherForCity(
+          widget.cityName,
+          forceRefreshAI: true,
+        );
+      },
+      color: AppColors.primaryBlue,
+      backgroundColor: AppColors.backgroundSecondary,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          children: [
+            const SizedBox(height: 16),
+            // 15日天气AI总结 - 移动到15日温度趋势图表上方
+            _buildAISummaryFor15DayWeather(weatherProvider),
+            AppColors.cardSpacingWidget,
+            // 15日预报图表
+            if (forecast15d.isNotEmpty) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppConstants.screenHorizontalPadding,
+                ),
+                child: Forecast15dChart(
+                  forecast15d: forecast15d.skip(1).toList(),
+                ),
+              ),
+              AppColors.cardSpacingWidget,
+
+              // 15日预报列表
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppConstants.screenHorizontalPadding,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 标题
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.calendar_today,
+                          color: AppColors.accentBlue,
+                          size: AppConstants.sectionTitleIconSize,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '15日详细预报',
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: AppConstants.sectionTitleFontSize,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // 15日预报列表（跳过第一个对象，即昨天）
+                    ...forecast15d.skip(1).toList().asMap().entries.map((
+                      entry,
+                    ) {
+                      final index = entry.key + 1; // 保持原始索引
+                      final day = entry.value;
+                      return _buildForecastCard(day, weatherProvider, index);
+                    }),
+                  ],
+                ),
+              ),
+              AppColors.cardSpacingWidget,
+            ],
+
+            const SizedBox(height: 80), // Space for bottom buttons
+          ],
+        ),
+      ),
+    );
+  }
+
+
+  // 当前天气页面的AI总结
+  Widget _buildAISummaryForCurrentWeather(WeatherProvider weatherProvider) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppConstants.screenHorizontalPadding,
+      ),
+      child: AIContentWidget(
+        title: 'AI智能助手',
+        icon: Icons.auto_awesome,
+        cityName: widget.cityName, // 传入城市名称
+        refreshKey: weatherProvider
+            .currentWeather
+            ?.current
+            ?.current
+            ?.reporttime, // 使用报告时间作为刷新键
+        fetchAIContent: () async {
+          try {
+            // 如果已有内容，直接返回
+            if (weatherProvider.weatherSummary != null &&
+                weatherProvider.weatherSummary!.isNotEmpty) {
+              return weatherProvider.weatherSummary!;
+            }
+
+            // 如果正在生成中，等待一下再检查
+            if (weatherProvider.isGeneratingSummary) {
+              print('⏳ AI摘要正在生成中，等待完成...');
+              // 等待最多5秒
+              for (int i = 0; i < 50; i++) {
+                await Future.delayed(const Duration(milliseconds: 100));
+                if (weatherProvider.weatherSummary != null &&
+                    weatherProvider.weatherSummary!.isNotEmpty) {
+                  return weatherProvider.weatherSummary!;
+                }
+                if (!weatherProvider.isGeneratingSummary) {
+                  break; // 生成完成，跳出循环
+                }
+              }
+            }
+
+            // 如果仍然没有内容且不在生成中，尝试生成一次
+            if ((weatherProvider.weatherSummary == null ||
+                    weatherProvider.weatherSummary!.isEmpty) &&
+                !weatherProvider.isGeneratingSummary) {
+              print('🔄 开始生成城市天气AI摘要: ${widget.cityName}');
+              await weatherProvider.generateWeatherSummary(
+                cityName: widget.cityName, // 传入城市名称
+              );
+            }
+
+            // 最终检查
+            if (weatherProvider.weatherSummary != null &&
+                weatherProvider.weatherSummary!.isNotEmpty) {
+              return weatherProvider.weatherSummary!;
+            }
+
+            // 如果仍然没有内容，返回默认内容而不是抛出异常
+            print('⚠️ 无法获取AI摘要，使用默认内容');
+            return '今日天气舒适，适合出行。注意温差变化，合理增减衣物。';
+          } catch (e) {
+            print('❌ 加载AI智能助手失败: $e');
+            // 返回默认内容而不是抛出异常，避免无限重试
+            return '今日天气舒适，适合出行。注意温差变化，合理增减衣物。';
+          }
+        },
+        defaultContent: '今日天气舒适，适合出行。注意温差变化，合理增减衣物。',
+      ),
+    );
+  }
+
+  // 15日天气页面的AI总结
+  Widget _buildAISummaryFor15DayWeather(WeatherProvider weatherProvider) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppConstants.screenHorizontalPadding,
+      ),
+      child: AIContentWidget(
+        title: '15日天气趋势',
+        icon: Icons.trending_up,
+        cityName: widget.cityName, // 传入城市名称
+        refreshKey: weatherProvider
+            .currentWeather
+            ?.current
+            ?.current
+            ?.reporttime, // 使用报告时间作为刷新键
+        fetchAIContent: () async {
+          try {
+            // 如果已有内容，直接返回
+            if (weatherProvider.forecast15dSummary != null &&
+                weatherProvider.forecast15dSummary!.isNotEmpty) {
+              return weatherProvider.forecast15dSummary!;
+            }
+
+            // 如果正在生成中，等待一下再检查
+            if (weatherProvider.isGenerating15dSummary) {
+              print('⏳ 15日AI总结正在生成中，等待完成...');
+              // 等待最多5秒
+              for (int i = 0; i < 50; i++) {
+                await Future.delayed(const Duration(milliseconds: 100));
+                if (weatherProvider.forecast15dSummary != null &&
+                    weatherProvider.forecast15dSummary!.isNotEmpty) {
+                  return weatherProvider.forecast15dSummary!;
+                }
+                if (!weatherProvider.isGenerating15dSummary) {
+                  break; // 生成完成，跳出循环
+                }
+              }
+            }
+
+            // 如果仍然没有内容且不在生成中，尝试生成一次
+            if ((weatherProvider.forecast15dSummary == null ||
+                    weatherProvider.forecast15dSummary!.isEmpty) &&
+                !weatherProvider.isGenerating15dSummary) {
+              print('🔄 开始生成城市15日天气AI总结: ${widget.cityName}');
+              await weatherProvider.generateForecast15dSummary(
+                cityName: widget.cityName, // 传入城市名称
+              );
+            }
+
+            // 最终检查
+            if (weatherProvider.forecast15dSummary != null &&
+                weatherProvider.forecast15dSummary!.isNotEmpty) {
+              return weatherProvider.forecast15dSummary!;
+            }
+
+            // 如果仍然没有内容，返回默认内容而不是抛出异常
+            print('⚠️ 无法获取15日AI总结，使用默认内容');
+            return '未来半月天气平稳，温度变化不大，适合安排户外活动。';
+          } catch (e) {
+            print('❌ 加载15日天气趋势失败: $e');
+            // 返回默认内容而不是抛出异常，避免无限重试
+            return '未来半月天气平稳，温度变化不大，适合安排户外活动。';
+          }
+        },
+        defaultContent: '未来半月天气平稳，温度变化不大，适合安排户外活动。',
+      ),
+    );
+  }
+
+  Widget _buildTemperatureChart(WeatherProvider weatherProvider) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppConstants.screenHorizontalPadding,
+      ),
+      child: Card(
+        elevation: AppColors.cardElevation,
+        shadowColor: AppColors.cardShadowColor,
+        color: AppColors.materialCardColor,
+        shape: AppColors.cardShape,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.show_chart,
+                    color: AppColors.accentBlue,
+                    size: AppConstants.sectionTitleIconSize,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '7日温度趋势',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: AppConstants.sectionTitleFontSize,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 220,
+                child: WeatherChart(
+                  dailyForecast: weatherProvider.dailyForecast,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWeatherTipsCard(WeatherProvider weatherProvider) {
+    final weather = weatherProvider.currentWeather;
+    final tips = weather?.current?.tips;
+    final current = weather?.current?.current;
+
+    if (tips == null && current == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppConstants.screenHorizontalPadding,
+      ),
+      child: Card(
+        elevation: AppColors.cardElevation,
+        shadowColor: AppColors.cardShadowColor,
+        color: AppColors.materialCardColor,
+        surfaceTintColor: Colors.transparent,
+        shape: AppColors.cardShape,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.lightbulb_rounded,
+                    color: AppColors.warning,
+                    size: AppConstants.sectionTitleIconSize,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '今日提醒',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: AppConstants.sectionTitleFontSize,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              if (tips != null) ...[
+                _buildTipItem(Icons.wb_sunny_rounded, tips, AppColors.warning),
+                const SizedBox(height: 12),
+              ],
+
+              if (current?.temperature != null)
+                _buildTipItem(
+                  Icons.checkroom_rounded,
+                  _getClothingSuggestion(
+                    current!.temperature!,
+                    current.weather,
+                  ),
+                  const Color(0xFF64DD17), // 绿色（避免使用蓝色系）
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTipItem(IconData icon, String text, Color color) {
+    final themeProvider = context.read<ThemeProvider>();
+    // 根据传入的color判断是橙色还是绿色
+    final isOrange = color == AppColors.warning || color.value == 0xFFFFB74D;
+
+    // 根据颜色和主题决定样式
+    Color backgroundColor;
+    Color iconColor;
+    Color textColor;
+    double iconBackgroundOpacity;
+
+    // 背景色的基础颜色（主题深蓝或橄榄绿）
+    final baseColor = isOrange
+        ? const Color(0xFF012d78) // 主题深蓝
+        : const Color(0xFF6B8E23); // 橄榄绿
+
+    if (themeProvider.isLightTheme) {
+      // 亮色模式：图标主题深蓝色，背景保持深蓝/橄榄绿半透明，文字主题深蓝
+      iconColor = const Color(0xFF012d78); // 图标主题深蓝色
+      backgroundColor = baseColor.withOpacity(0.25); // 背景保持深蓝/橄榄绿半透明
+      textColor = const Color(0xFF012d78); // 主题深蓝字
+      iconBackgroundOpacity = 0.2;
+    } else {
+      // 暗色模式：图标白色，背景橙/绿半透明，文字白色
+      iconColor = Colors.white; // 图标白色
+      backgroundColor = color.withOpacity(0.25); // 背景橙/绿半透明
+      textColor = AppColors.textPrimary; // 白字
+      iconBackgroundOpacity = 0.3;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(4),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(
+              themeProvider.isLightTheme ? 0.08 : 0.15,
+            ),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(iconBackgroundOpacity),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Icon(icon, color: iconColor, size: 16),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: textColor, // 使用配对的文字颜色
+                fontSize: 14,
+                height: 1.5,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getClothingSuggestion(String temperature, String? weather) {
+    try {
+      final temp = int.parse(temperature);
+      final hasRain = weather?.contains('雨') ?? false;
+      final hasSnow = weather?.contains('雪') ?? false;
+
+      String suggestion = '';
+
+      if (temp >= 30) {
+        suggestion = '天气炎热，建议穿短袖、短裤等清凉透气的衣服';
+      } else if (temp >= 25) {
+        suggestion = '天气温暖，适合穿短袖、薄长裤等夏季服装';
+      } else if (temp >= 20) {
+        suggestion = '天气舒适，建议穿长袖衬衫、薄外套等';
+      } else if (temp >= 15) {
+        suggestion = '天气微凉，建议穿夹克、薄毛衣等';
+      } else if (temp >= 10) {
+        suggestion = '天气较冷，建议穿厚外套、毛衣等保暖衣物';
+      } else if (temp >= 0) {
+        suggestion = '天气寒冷，建议穿棉衣、羽绒服等厚实保暖的衣服';
+      } else {
+        suggestion = '天气严寒，建议穿加厚羽绒服、保暖内衣等防寒衣物';
+      }
+
+      if (hasRain) {
+        suggestion += '，记得带伞☂️';
+      } else if (hasSnow) {
+        suggestion += '，注意防滑保暖❄️';
+      }
+
+      return suggestion;
+    } catch (e) {
+      return '根据天气情况适当增减衣物';
+    }
+  }
+
+  Widget _buildForecastCard(
+    DailyWeather day,
+    WeatherProvider weatherProvider,
+    int index,
+  ) {
+    // 根据实际日期判断今天和明天
+    final isToday = _isToday(day.forecasttime ?? '');
+    final isTomorrow = _isTomorrow(day.forecasttime ?? '');
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Card(
+        elevation: AppColors.cardElevation,
+        shadowColor: AppColors.cardShadowColor,
+        color: AppColors.materialCardColor,
+        shape: AppColors.cardShape,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              // Date and week
+              SizedBox(
+                width: 60,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isToday
+                            ? AppColors.accentBlue.withOpacity(0.2)
+                            : AppColors.accentGreen.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(1),
+                        border: Border.all(
+                          color: isToday
+                              ? AppColors.accentBlue.withOpacity(0.5)
+                              : AppColors.accentGreen.withOpacity(0.5),
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        isToday
+                            ? '今天'
+                            : isTomorrow
+                            ? '明天'
+                            : day.week ?? '',
+                        style: TextStyle(
+                          color: isToday
+                              ? AppColors.textPrimary
+                              : AppColors.accentGreen,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      day.forecasttime ?? '',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    if (day.sunrise_sunset != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        day.sunrise_sunset!,
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Weather info - compact horizontal layout
+              Expanded(
+                child: Row(
+                  children: [
+                    // Morning weather (使用pm数据)
+                    Expanded(
+                      child: _buildCompactWeatherPeriod(
+                        '上午',
+                        day.weather_pm ?? '晴',
+                        day.temperature_pm ?? '--',
+                        day.weather_pm_pic ?? 'n00',
+                        day.winddir_pm ?? '',
+                        day.windpower_pm ?? '',
+                        weatherProvider,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Divider
+                    Container(
+                      width: 1,
+                      height: 40,
+                      color: AppColors.dividerColor,
+                    ),
+                    const SizedBox(width: 8),
+                    // Evening weather (使用am数据)
+                    Expanded(
+                      child: _buildCompactWeatherPeriod(
+                        '下午',
+                        day.weather_am ?? '晴',
+                        day.temperature_am ?? '--',
+                        day.weather_am_pic ?? 'd00',
+                        day.winddir_am ?? '',
+                        day.windpower_am ?? '',
+                        weatherProvider,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompactWeatherPeriod(
+    String period,
+    String weather,
+    String temperature,
+    String weatherPic,
+    String windDir,
+    String windPower,
+    WeatherProvider weatherProvider,
+  ) {
+    // 判断是白天还是夜间（根据时段）
+    // 注意：上午使用pm数据（夜间），下午使用am数据（白天）
+    final isNight = WeatherIconHelper.isNightByPeriod(period);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          period,
+          style: TextStyle(
+            color: AppColors.textSecondary,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            // Weather icon - 使用中文PNG图标
+            Container(
+              width: 32,
+              height: 32,
+              alignment: Alignment.center,
+              child: WeatherIconHelper.buildWeatherIcon(weather, isNight, 28),
+            ),
+            const SizedBox(width: 4),
+            // Temperature
+            Text(
+              '${_formatNumber(temperature)}℃',
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 2),
+        // Weather description
+        Text(
+          weather,
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        // Wind info
+        if (windDir.isNotEmpty || windPower.isNotEmpty)
+          Text(
+            '$windDir$windPower',
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 10),
+          ),
+      ],
+    );
+  }
+
+  /// 判断是否为今天
+  bool _isToday(String forecastTime) {
+    if (forecastTime.isEmpty) return false;
+
+    try {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+
+      // 尝试解析预报时间
+      DateTime forecastDate;
+      if (forecastTime.contains('-')) {
+        // 格式：2024-10-06 或 10-06
+        final parts = forecastTime.split(' ')[0].split('-');
+        if (parts.length == 3) {
+          // 完整日期格式
+          forecastDate = DateTime(
+            int.parse(parts[0]),
+            int.parse(parts[1]),
+            int.parse(parts[2]),
+          );
+        } else if (parts.length == 2) {
+          // 月-日格式
+          forecastDate = DateTime(
+            now.year,
+            int.parse(parts[0]),
+            int.parse(parts[1]),
+          );
+        } else {
+          return false;
+        }
+      } else if (forecastTime.contains('/')) {
+        // 格式：2024/10/06 或 10/06
+        final parts = forecastTime.split(' ')[0].split('/');
+        if (parts.length == 3) {
+          // 完整日期格式
+          forecastDate = DateTime(
+            int.parse(parts[0]),
+            int.parse(parts[1]),
+            int.parse(parts[2]),
+          );
+        } else if (parts.length == 2) {
+          // 月/日格式
+          forecastDate = DateTime(
+            now.year,
+            int.parse(parts[0]),
+            int.parse(parts[1]),
+          );
+        } else {
+          return false;
+        }
+      } else {
+        return false;
+      }
+
+      return forecastDate.year == today.year &&
+          forecastDate.month == today.month &&
+          forecastDate.day == today.day;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// 判断是否为明天
+  bool _isTomorrow(String forecastTime) {
+    if (forecastTime.isEmpty) return false;
+
+    try {
+      final now = DateTime.now();
+      final tomorrow = DateTime(now.year, now.month, now.day + 1);
+
+      // 尝试解析预报时间
+      DateTime forecastDate;
+      if (forecastTime.contains('-')) {
+        // 格式：2024-10-06 或 10-06
+        final parts = forecastTime.split(' ')[0].split('-');
+        if (parts.length == 3) {
+          // 完整日期格式
+          forecastDate = DateTime(
+            int.parse(parts[0]),
+            int.parse(parts[1]),
+            int.parse(parts[2]),
+          );
+        } else if (parts.length == 2) {
+          // 月-日格式
+          forecastDate = DateTime(
+            now.year,
+            int.parse(parts[0]),
+            int.parse(parts[1]),
+          );
+        } else {
+          return false;
+        }
+      } else if (forecastTime.contains('/')) {
+        // 格式：2024/10/06 或 10/06
+        final parts = forecastTime.split(' ')[0].split('/');
+        if (parts.length == 3) {
+          // 完整日期格式
+          forecastDate = DateTime(
+            int.parse(parts[0]),
+            int.parse(parts[1]),
+            int.parse(parts[2]),
+          );
+        } else if (parts.length == 2) {
+          // 月/日格式
+          forecastDate = DateTime(
+            now.year,
+            int.parse(parts[0]),
+            int.parse(parts[1]),
+          );
+        } else {
+          return false;
+        }
+      } else {
+        return false;
+      }
+
+      return forecastDate.year == tomorrow.year &&
+          forecastDate.month == tomorrow.month &&
+          forecastDate.day == tomorrow.day;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// 格式化数值，去掉小数位
+  String _formatNumber(dynamic value) {
+    if (value == null) return '--';
+
+    if (value is String) {
+      // 如果是字符串，尝试转换为数字
+      final numValue = double.tryParse(value);
+      if (numValue != null) {
+        return numValue.toInt().toString();
+      }
+      return value;
+    }
+
+    if (value is num) {
+      return value.toInt().toString();
+    }
+
+    return value.toString();
+  }
+
+  /// 构建分享按钮
+  Widget _buildShareButton(
+    BuildContext context,
+    WeatherProvider weatherProvider,
+  ) {
+    return InkWell(
+      onTap: () {
+        _shareWeather(context, weatherProvider);
+      },
+      borderRadius: BorderRadius.circular(20),
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Icon(
+          Icons.share_rounded,
+          color: context.read<ThemeProvider>().getColor(
+            'headerIconColor',
+          ),
+          size: AppColors.titleBarIconSize,
+        ),
+      ),
+    );
+  }
+
+  /// 分享天气信息
+  void _shareWeather(BuildContext context, WeatherProvider weatherProvider) async {
+    final weather = weatherProvider.currentWeather;
+    
+    if (weather == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('天气数据加载中，请稍后再试'),
+          backgroundColor: AppColors.error,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+    
+    // 创建位置模型
+    final location = LocationModel(
+      address: widget.cityName,
+      city: widget.cityName,
+      district: widget.cityName,
+      province: '', // 如果需要可以从天气数据中获取
+      country: '中国',
+      street: '',
+      adcode: '',
+      town: '',
+      lat: 0.0,
+      lng: 0.0,
+    );
+    
+    // 获取日出日落和生活指数数据
+    SunMoonIndexData? sunMoonIndexData;
+    try {
+      sunMoonIndexData = weatherProvider.sunMoonIndexData;
+    } catch (e) {
+      print('获取日出日落和生活指数数据失败: $e');
+    }
+    
+    // 使用WeatherShareService生成并预览海报
+    try {
+      final success = await WeatherShareService.instance.generateAndSavePoster(
+        context: context,
+        weather: weather,
+        location: location,
+        themeProvider: context.read<ThemeProvider>(),
+        sunMoonIndexData: sunMoonIndexData,
+      );
+      
+      if (!success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('生成海报失败，请稍后再试'),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      print('分享天气海报失败: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('分享失败：${e.toString()}'),
+          backgroundColor: AppColors.error,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  /// 构建气象预警图标按钮（仅显示原始预警，与主要城市列表卡片一致）
+  Widget _buildAlertIcon(
+    BuildContext context,
+    WeatherProvider weatherProvider,
+  ) {
+    final weather = weatherProvider.currentWeather;
+
+    // 获取气象预警（原始预警数据，来自天气API）
+    final alerts = weather?.current?.alerts;
+
+    // 过滤掉过期的预警
+    final validAlerts = _filterExpiredAlerts(alerts);
+    final hasValidAlerts = validAlerts.isNotEmpty;
+
+    if (!hasValidAlerts) {
+      return const SizedBox(width: 40); // 占位保持对称
+    }
+
+    // 气象预警数量
+    final alertCount = validAlerts.length;
+
+    // 显示气象预警图标
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => WeatherAlertsScreen(alerts: validAlerts),
+          ),
+        );
+      },
+      borderRadius: BorderRadius.circular(20),
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Stack(
+          children: [
+            Icon(
+              Icons.warning_rounded,
+              color: AppColors.error,
+              size: AppColors.titleBarIconSize,
+            ),
+            // 显示预警数量角标
+            if (alertCount > 1)
+              Positioned(
+                right: 0,
+                top: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: AppColors.error,
+                    shape: BoxShape.circle,
+                  ),
+                  constraints: const BoxConstraints(
+                    minWidth: 14,
+                    minHeight: 14,
+                  ),
+                  child: Text(
+                    '$alertCount',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 过滤掉过期的气象预警
+  List<WeatherAlert> _filterExpiredAlerts(List<WeatherAlert>? alerts) {
+    if (alerts == null || alerts.isEmpty) {
+      return [];
+    }
+
+    final now = DateTime.now();
+    final validAlerts = <WeatherAlert>[];
+
+    for (final alert in alerts) {
+      // 检查预警是否有发布时间
+      if (alert.publishTime == null || alert.publishTime!.isEmpty) {
+        // 没有发布时间，保留
+        validAlerts.add(alert);
+        continue;
+      }
+
+      try {
+        // 解析发布时间（格式如: "2025-10-10 08:00:00"）
+        final publishTime = DateTime.parse(alert.publishTime!);
+
+        // 预警有效期：发布后24小时内
+        final expiryTime = publishTime.add(const Duration(hours: 24));
+
+        if (now.isBefore(expiryTime)) {
+          validAlerts.add(alert);
+        } else {
+          print('🗑️ 过滤过期预警: ${alert.type} (发布时间: ${alert.publishTime})');
+        }
+      } catch (e) {
+        // 解析失败，保留该预警
+        print('⚠️ 无法解析预警时间: ${alert.publishTime}，保留该预警');
+        validAlerts.add(alert);
+      }
+    }
+
+    return validAlerts;
+  }
+
+  /// 构建简化的详细信息（头部区域）
+  Widget _buildSimplifiedDetails(dynamic weather) {
+    if (weather?.current?.current == null) {
+      return const SizedBox.shrink();
+    }
+
+    final current = weather.current.current;
+
+    String _formatNumber(dynamic value) {
+      if (value == null) return '--';
+      if (value is String) return value;
+      return value.toString();
+    }
+
+    return Row(
+      children: [
+        // 湿度
+        Expanded(
+          child: _buildSimpleInfoChip(
+            Icons.water_drop,
+            '湿度',
+            '${_formatNumber(current.humidity)}%',
+          ),
+        ),
+        const SizedBox(width: 8),
+        // 风力
+        Expanded(
+          child: _buildSimpleInfoChip(
+            Icons.air,
+            '风力',
+            '${current.winddir ?? '--'} ${current.windpower ?? ''}',
+          ),
+        ),
+        const SizedBox(width: 8),
+        // 气压
+        Expanded(
+          child: _buildSimpleInfoChip(
+            Icons.compress,
+            '气压',
+            '${_formatNumber(current.airpressure)}hpa',
+          ),
+        ),
+        const SizedBox(width: 8),
+        // 能见度
+        Expanded(
+          child: _buildSimpleInfoChip(
+            Icons.visibility,
+            '能见度',
+            '${_formatNumber(current.visibility)}km',
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 构建简单的信息标签
+  Widget _buildSimpleInfoChip(IconData icon, String label, String value) {
+    final themeProvider = context.read<ThemeProvider>();
+    return Container(
+      height: 60, // 固定高度，确保所有标签高度一致
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // 第一行：图标 + 标题
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                color: themeProvider.getColor('headerTextSecondary'),
+                size: 14,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  color: themeProvider.getColor('headerTextSecondary'),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          // 第二行：数值
+          Text(
+            value,
+            style: TextStyle(
+              color: themeProvider.getColor('headerTextSecondary'),
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+}

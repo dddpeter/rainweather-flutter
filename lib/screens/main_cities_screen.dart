@@ -11,7 +11,7 @@ import '../services/location_change_notifier.dart';
 import '../utils/city_name_matcher.dart';
 import '../utils/weather_icon_helper.dart';
 import '../widgets/city_card_skeleton.dart';
-import 'city_weather_tabs_screen.dart';
+import 'city_weather_swipe_screen.dart';
 import 'weather_alerts_screen.dart';
 
 class MainCitiesScreen extends StatefulWidget {
@@ -432,7 +432,7 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
                                             context,
                                             MaterialPageRoute(
                                               builder: (context) =>
-                                                  CityWeatherTabsScreen(
+                                                  CityWeatherSwipeScreen(
                                                     cityName: city.name,
                                                   ),
                                             ),

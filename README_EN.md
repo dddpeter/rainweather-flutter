@@ -228,6 +228,25 @@ This Flutter app is a complete refactor of the original Android weather app with
 
 ## Changelog
 
+### v1.13.2 (2025-11-19)
+
+**City Weather Page Redesign**
+- 🎯 **Swipe Page Design**: Changed from TabBarView to PageView, supporting left-right swipe switching
+- 📱 **Three Independent Pages**: Current weather, 24-hour forecast, and 15-day forecast, each page can scroll independently
+- 🎨 **Custom Page Indicator**: Supports click switching and animation effects, optimizing user experience
+- 📊 **Content Reorganization**: Integrated content originally scattered in different tabs into independent pages
+
+**Share Function Upgrade**
+- 🖼️ **Weather Poster Generation**: Share function changed to generate beautiful weather posters
+- 📱 **Preview and Save**: Users can preview the poster and save it to the album
+- 🎨 **Rich Information Display**: Poster includes current weather, temperature, air quality, life index and other detailed information
+- 🔧 **Error Handling Optimization**: Added comprehensive error handling and user-friendly prompts
+
+**User Experience Optimization**
+- 📐 **Layout Improvement**: Optimized page layout and visual effects, improving user experience
+- 🔄 **Interaction Optimization**: Improved swipe interaction and page switching, making operations smoother
+- 🐛 **Bug Fixes**: Fixed known issues and improved application stability
+
 ### v1.13.1 (2025-01-20)
 
 **Stability Optimization**
@@ -248,7 +267,26 @@ This Flutter app is a complete refactor of the original Android weather app with
 - 🔍 **Detailed Error Logging**: Complete log output for easier troubleshooting
 - 💪 **Robustness Enhancement**: No crashes even with network exceptions or cache failures
 
-### v1.13.0 (Latest - 2025-01-19)
+### v1.13.2 (Latest - 2025-11-19)
+
+**City Weather Page Redesign**
+- 🎯 **Swipe Page Design**: Changed from TabBarView to PageView, supporting left-right swipe switching
+- 📱 **Three Independent Pages**: Current weather, 24-hour forecast, and 15-day forecast, each page can scroll independently
+- 🎨 **Custom Page Indicator**: Supports click switching and animation effects, optimizing user experience
+- 📊 **Content Reorganization**: Integrated content originally scattered in different tabs into independent pages
+
+**Share Function Upgrade**
+- 🖼️ **Weather Poster Generation**: Share function changed to generate beautiful weather posters
+- 📱 **Preview and Save**: Users can preview of poster and save it to the album
+- 🎨 **Rich Information Display**: Poster includes current weather, temperature, air quality, life index and other detailed information
+- 🔧 **Error Handling Optimization**: Added comprehensive error handling and user-friendly prompts
+
+**User Experience Optimization**
+- 📐 **Layout Improvement**: Optimized page layout and visual effects, improving user experience
+- 🔄 **Interaction Optimization**: Improved swipe interaction and page switching, making operations smoother
+- 🐛 **Bug Fixes**: Fixed known issues and improved application stability
+
+### v1.13.0 (2025-01-19)
 
 **Brand Upgrade**
 - ✨ **App Name Update**: Upgraded from "知雨天气2" to "智雨天气"

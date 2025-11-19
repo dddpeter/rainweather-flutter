@@ -858,10 +858,10 @@ class AppDrawer extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '• 应用名称更新为"智雨天气"\n'
-                      '• 全面提升应用品牌形象\n'
-                      '• 优化用户体验和视觉效果\n'
-                      '• 修复已知问题',
+                      '• 重新设计城市天气页面，支持左右滑动切换\n'
+                      '• 优化分享功能，支持生成精美天气海报\n'
+                      '• 改进页面布局和用户体验\n'
+                      '• 修复已知问题并提升稳定性',
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,

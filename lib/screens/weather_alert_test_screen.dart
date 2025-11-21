@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/weather_alert_model.dart';
 import '../models/weather_model.dart';
 import '../models/location_model.dart';
@@ -7,6 +8,7 @@ import '../services/notification_service.dart';
 import '../services/location_service.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_constants.dart';
+import '../providers/theme_provider.dart';
 
 /// 当前定位天气提醒测试页面
 class WeatherAlertTestScreen extends StatefulWidget {
@@ -30,44 +32,106 @@ class _WeatherAlertTestScreenState extends State<WeatherAlertTestScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('当前定位天气提醒测试'),
-        backgroundColor: AppColors.primaryBlue,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _refreshAlerts,
-            tooltip: '刷新提醒',
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        AppColors.setThemeProvider(themeProvider);
+
+        return Container(
+          decoration: BoxDecoration(
+            gradient: AppColors.screenBackgroundGradient,
           ),
-          IconButton(
-            icon: const Icon(Icons.clear_all),
-            onPressed: _clearAllAlerts,
-            tooltip: '清空提醒',
-          ),
-        ],
-      ),
-      body: Container(
-        decoration: BoxDecoration(gradient: AppColors.screenBackgroundGradient),
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildTestActions(),
-                    AppColors.cardSpacingWidget,
-                    _buildCurrentAlerts(),
-                    AppColors.cardSpacingWidget,
-                    _buildTestScenarios(),
-                    AppColors.cardSpacingWidget,
-                    _buildAlertStatistics(),
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            appBar: AppBar(
+              elevation: 4,
+              backgroundColor: Colors.transparent,
+              flexibleSpace: Container(
+                decoration: BoxDecoration(
+                  // 半透明背景 - 基于主题色，已包含透明度
+                  color: AppColors.appBarBackground,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 20,
+                      offset: const Offset(0, 2),
+                    ),
                   ],
                 ),
               ),
-      ),
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(0.5),
+                child: Container(
+                  height: 0.5,
+                  color: themeProvider.getColor('border').withOpacity(0.2),
+                ),
+              ),
+              foregroundColor: themeProvider.isLightTheme
+                  ? AppColors.primaryBlue
+                  : AppColors.accentBlue,
+              title: Text(
+                '当前定位天气提醒测试',
+                style: TextStyle(
+                  color: themeProvider.isLightTheme
+                      ? AppColors.primaryBlue
+                      : AppColors.accentBlue,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              centerTitle: true,
+              leading: IconButton(
+                icon: Icon(
+                  Icons.arrow_back,
+                  color: themeProvider.isLightTheme
+                      ? AppColors.primaryBlue
+                      : AppColors.accentBlue,
+                ),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+              actions: [
+                IconButton(
+                  icon: Icon(
+                    Icons.refresh,
+                    color: themeProvider.isLightTheme
+                        ? AppColors.primaryBlue
+                        : AppColors.accentBlue,
+                  ),
+                  onPressed: _refreshAlerts,
+                  tooltip: '刷新提醒',
+                ),
+                IconButton(
+                  icon: Icon(
+                    Icons.clear_all,
+                    color: themeProvider.isLightTheme
+                        ? AppColors.primaryBlue
+                        : AppColors.accentBlue,
+                  ),
+                  onPressed: _clearAllAlerts,
+                  tooltip: '清空提醒',
+                ),
+              ],
+            ),
+            body: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                              _buildTestActions(),
+                              AppColors.cardSpacingWidget,
+                              _buildCurrentAlerts(),
+                              AppColors.cardSpacingWidget,
+                              _buildTestScenarios(),
+                              AppColors.cardSpacingWidget,
+                        _buildAlertStatistics(),
+                        const SizedBox(height: 80),
+                      ],
+                    ),
+            ),
+          ),
+        );
+      },
     );
   }
 

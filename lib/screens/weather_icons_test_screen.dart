@@ -62,36 +62,89 @@ class _WeatherIconsTestScreenState extends State<WeatherIconsTestScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = context.read<ThemeProvider>();
-    AppColors.setThemeProvider(themeProvider);
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        AppColors.setThemeProvider(themeProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('天气图标测试'),
-        backgroundColor: AppColors.primaryBlue,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.info_outline),
-            onPressed: _showInfoDialog,
+        return Container(
+          decoration: BoxDecoration(
+            gradient: AppColors.screenBackgroundGradient,
           ),
-        ],
-      ),
-      body: Container(
-        decoration: BoxDecoration(gradient: AppColors.screenBackgroundGradient),
-        child: Column(
-          children: [
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            appBar: AppBar(
+              elevation: 4,
+              backgroundColor: Colors.transparent,
+              flexibleSpace: Container(
+                decoration: BoxDecoration(
+                  // 半透明背景 - 基于主题色，已包含透明度
+                  color: AppColors.appBarBackground,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 20,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+              ),
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(0.5),
+                child: Container(
+                  height: 0.5,
+                  color: themeProvider.getColor('border').withOpacity(0.2),
+                ),
+              ),
+              foregroundColor: themeProvider.isLightTheme
+                  ? AppColors.primaryBlue
+                  : AppColors.accentBlue,
+              title: Text(
+                '天气图标测试',
+                style: TextStyle(
+                  color: themeProvider.isLightTheme
+                      ? AppColors.primaryBlue
+                      : AppColors.accentBlue,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              centerTitle: true,
+              leading: IconButton(
+                icon: Icon(
+                  Icons.arrow_back,
+                  color: themeProvider.isLightTheme
+                      ? AppColors.primaryBlue
+                      : AppColors.accentBlue,
+                ),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+              actions: [
+                IconButton(
+                  icon: Icon(
+                    Icons.info_outline,
+                    color: themeProvider.isLightTheme
+                        ? AppColors.primaryBlue
+                        : AppColors.accentBlue,
+                  ),
+                  onPressed: _showInfoDialog,
+                ),
+              ],
+            ),
+            body: Column(
+              children: [
             // 搜索栏
             _buildSearchBar(),
 
             // 分类选择
             _buildCategorySelector(),
 
-            // 图标网格
-            Expanded(child: _buildIconGrid()),
-          ],
-        ),
-      ),
+                // 图标网格
+                Expanded(child: _buildIconGrid()),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

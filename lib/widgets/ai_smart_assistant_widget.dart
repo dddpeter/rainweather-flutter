@@ -334,6 +334,11 @@ class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
 
   /// 构建通勤提醒部分
   Widget _buildCommuteAdvicesSection(List<dynamic> advices) {
+    // 安全检查：如果列表为空，返回空容器
+    if (advices.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     final sortedAdvices = List.from(advices);
     sortedAdvices.sort((a, b) => a.priority.compareTo(b.priority));
 

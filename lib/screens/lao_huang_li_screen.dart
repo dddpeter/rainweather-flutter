@@ -109,27 +109,58 @@ class _LaoHuangLiScreenState extends State<LaoHuangLiScreen> {
           child: Scaffold(
             backgroundColor: Colors.transparent,
             appBar: AppBar(
+              elevation: 4,
               backgroundColor: Colors.transparent,
-              foregroundColor: AppColors.textPrimary,
-              elevation: 0,
+              flexibleSpace: Container(
+                decoration: BoxDecoration(
+                  // 半透明背景 - 基于主题色，已包含透明度
+                  color: AppColors.appBarBackground,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 20,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+              ),
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(0.5),
+                child: Container(
+                  height: 0.5,
+                  color: themeProvider.getColor('border').withOpacity(0.2),
+                ),
+              ),
+              foregroundColor: themeProvider.isLightTheme
+                  ? AppColors.primaryBlue
+                  : AppColors.accentBlue,
               title: Text(
                 '黄历详情',
                 style: TextStyle(
-                  color: AppColors.textPrimary,
+                  color: themeProvider.isLightTheme
+                      ? AppColors.primaryBlue
+                      : AppColors.accentBlue,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               centerTitle: true,
               leading: IconButton(
-                icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
+                icon: Icon(
+                  Icons.arrow_back,
+                  color: themeProvider.isLightTheme
+                      ? AppColors.primaryBlue
+                      : AppColors.accentBlue,
+                ),
                 onPressed: () => Navigator.of(context).pop(),
               ),
               actions: [
                 IconButton(
                   icon: Icon(
                     Icons.calendar_today,
-                    color: AppColors.textPrimary,
+                    color: themeProvider.isLightTheme
+                        ? AppColors.primaryBlue
+                        : AppColors.accentBlue,
                   ),
                   onPressed: _selectDate,
                 ),

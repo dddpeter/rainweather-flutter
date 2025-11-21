@@ -153,6 +153,10 @@ class AppColors {
   /// 次背景色
   static Color get backgroundSecondary => _getColor('surface');
 
+  /// AppBar 和底部导航背景色 - 与 Drawer 头部背景色一致
+  /// 使用 backgroundSecondary，确保文字图标清晰可见
+  static Color get appBarBackground => backgroundSecondary;
+
   /// 强调绿色
   static Color get accentGreen => _getColor('success');
 
@@ -327,7 +331,7 @@ class AppColors {
 
   /// Material 卡片的 elevation（根据主题调整）
   static double get cardElevation =>
-      _themeProvider?.isLightTheme == true ? 1 : 2;
+      _themeProvider?.isLightTheme == true ? 2 : 2; // 亮色模式也使用 2，增强边缘可见性
 
   /// Material 卡片的形状
   static RoundedRectangleBorder get cardShape =>
@@ -339,12 +343,12 @@ class AppColors {
 
   /// Material 卡片的颜色（根据主题返回对应的卡片背景色）
   static Color get materialCardColor => _themeProvider?.isLightTheme == true
-      ? lightCardBackground // 亮色模式：淡琥珀金
+      ? const Color(0xFFF8FAFF) // 亮色模式：带轻微蓝色调的白色背景
       : darkCardBackground; // 暗色模式：半透明白色
 
   /// Material 卡片的阴影颜色（亮色主题用淡色，暗色主题用深色）
   static Color get cardShadowColor => _themeProvider?.isLightTheme == true
-      ? Colors.black.withOpacity(0.1)
+      ? Colors.black.withOpacity(0.15) // 亮色模式：增强阴影，提高边缘可见性
       : Colors.black.withOpacity(0.3);
 
   // 公共弹窗样式
@@ -407,8 +411,8 @@ class AppColors {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Color(0xFF8edafc), // 指定的亮蓝色
-                  Color(0xFFE1F5FE), // 浅蓝色渐变
+                  Color(0xFFF5F5F5), // 浅灰色
+                  Color(0xFFEEEEEE), // 稍深的浅灰色
                 ],
               )
             : const LinearGradient(

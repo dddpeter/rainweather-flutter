@@ -523,69 +523,121 @@ class WeatherAlertDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final totalCount = alerts.length + commuteAdvices.length;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('综合提醒 ($totalCount条)'),
-        backgroundColor: AppColors.primaryBlue,
-        foregroundColor: Colors.white,
-      ),
-      body: Container(
-        decoration: BoxDecoration(gradient: AppColors.primaryGradient),
-        child: totalCount == 0
-            ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.check_circle_outline,
-                      size: 64,
-                      color: AppColors.textSecondary,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      '暂无提醒',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 16,
-                      ),
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        AppColors.setThemeProvider(themeProvider);
+
+        return Container(
+          decoration: BoxDecoration(
+            gradient: AppColors.screenBackgroundGradient,
+          ),
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            appBar: AppBar(
+              elevation: 4,
+              backgroundColor: Colors.transparent,
+              flexibleSpace: Container(
+                decoration: BoxDecoration(
+                  // 半透明背景 - 基于主题色，已包含透明度
+                  color: AppColors.appBarBackground,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 20,
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
-              )
-            : ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  // 天气提醒区域
-                  if (alerts.isNotEmpty) ...[
-                    _buildSectionHeader('天气提醒', alerts.length, Icons.cloud),
-                    const SizedBox(height: 8),
-                    ...alerts.map(
-                      (alert) => Container(
-                        margin: const EdgeInsets.only(bottom: 16),
-                        child: _buildAlertCard(alert),
-                      ),
-                    ),
-                  ],
-
-                  // 通勤提醒区域
-                  if (commuteAdvices.isNotEmpty) ...[
-                    if (alerts.isNotEmpty) const SizedBox(height: 8),
-                    _buildSectionHeader(
-                      '通勤提醒',
-                      commuteAdvices.length,
-                      Icons.commute,
-                    ),
-                    const SizedBox(height: 8),
-                    ...commuteAdvices.map(
-                      (advice) => Container(
-                        margin: const EdgeInsets.only(bottom: 16),
-                        child: _buildCommuteCard(advice, context),
-                      ),
-                    ),
-                  ],
-                ],
               ),
-      ),
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(0.5),
+                child: Container(
+                  height: 0.5,
+                  color: themeProvider.getColor('border').withOpacity(0.2),
+                ),
+              ),
+              foregroundColor: themeProvider.isLightTheme
+                  ? AppColors.primaryBlue
+                  : AppColors.accentBlue,
+              title: Text(
+                '综合提醒 ($totalCount条)',
+                style: TextStyle(
+                  color: themeProvider.isLightTheme
+                      ? AppColors.primaryBlue
+                      : AppColors.accentBlue,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              centerTitle: true,
+              leading: IconButton(
+                icon: Icon(
+                  Icons.arrow_back,
+                  color: themeProvider.isLightTheme
+                      ? AppColors.primaryBlue
+                      : AppColors.accentBlue,
+                ),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ),
+            body: totalCount == 0
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.check_circle_outline,
+                          size: 64,
+                          color: AppColors.textSecondary,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          '暂无提醒',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                              // 天气提醒区域
+                              if (alerts.isNotEmpty) ...[
+                                _buildSectionHeader('天气提醒', alerts.length, Icons.cloud),
+                                const SizedBox(height: 8),
+                                ...alerts.map(
+                                  (alert) => Container(
+                                    margin: const EdgeInsets.only(bottom: 16),
+                                    child: _buildAlertCard(alert),
+                                  ),
+                                ),
+                              ],
+
+                              // 通勤提醒区域
+                              if (commuteAdvices.isNotEmpty) ...[
+                                if (alerts.isNotEmpty) const SizedBox(height: 8),
+                                _buildSectionHeader(
+                                  '通勤提醒',
+                                  commuteAdvices.length,
+                                  Icons.commute,
+                                ),
+                                const SizedBox(height: 8),
+                                ...commuteAdvices.map(
+                                  (advice) => Container(
+                                    margin: const EdgeInsets.only(bottom: 16),
+                                    child: _buildCommuteCard(advice, context),
+                                  ),
+                                ),
+                              ],
+                              const SizedBox(height: 80),
+                    ],
+                  ),
+          ),
+        );
+      },
     );
   }
 

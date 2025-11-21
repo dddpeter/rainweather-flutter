@@ -9,6 +9,7 @@ import '../screens/outfit_advisor_screen.dart';
 import '../screens/health_advisor_screen.dart';
 import '../screens/extreme_weather_alert_screen.dart';
 import '../screens/lunar_calendar_screen.dart';
+import '../widgets/weather_alert_widget.dart';
 
 /// 主应用的顶部导航栏
 class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -33,10 +34,8 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
       backgroundColor: Colors.transparent,
       flexibleSpace: Container(
         decoration: BoxDecoration(
-          // 半透明背景
-          color: themeProvider.isLightTheme
-              ? AppColors.backgroundSecondary.withOpacity(0.85)
-              : AppColors.backgroundSecondary.withOpacity(0.9),
+          // 半透明背景 - 基于主题色，已包含透明度
+          color: AppColors.appBarBackground,
           // 模糊效果
           boxShadow: [
             BoxShadow(
@@ -260,14 +259,17 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
           district,
           currentLocation,
         );
-        // 显示未读提醒数量
+        // 获取通勤提醒
+        final commuteAdvices = weatherProvider.commuteAdvices;
+        // 跳转到综合提醒页面
         if (context.mounted) {
-          final unreadCount = smartAlerts.length;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('您有 $unreadCount 条天气提醒'),
-              duration: const Duration(seconds: 2),
-              backgroundColor: AppColors.primaryBlue,
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => WeatherAlertDetailScreen(
+                alerts: smartAlerts,
+                commuteAdvices: commuteAdvices,
+              ),
             ),
           );
         }

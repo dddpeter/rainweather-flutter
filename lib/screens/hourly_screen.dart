@@ -254,25 +254,40 @@ class _HourlyScreenState extends State<HourlyScreen>
             ),
           ],
         ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: AppColors.glassBackground,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.cardBorder, width: 1),
-          ),
-          child: Text(
-            _getCurrentTime(),
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              decoration: TextDecoration.none,
-              decorationColor: Colors.transparent,
-              decorationStyle: TextDecorationStyle.solid,
-              decorationThickness: 0,
-            ),
-          ),
+        Consumer<ThemeProvider>(
+          builder: (context, themeProvider, _) {
+            // 使用 plain 效果：背景主题色半透明，文字主题色，边框主题色
+            final themeColor = themeProvider.isLightTheme
+                ? AppColors.primaryBlue
+                : AppColors.accentBlue;
+            final backgroundColor = themeColor.withOpacity(0.15); // 半透明背景
+            final textColor = themeColor; // 主题色文字
+            final borderColor = themeColor; // 主题色边框
+            
+            return Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: backgroundColor,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: borderColor,
+                  width: 1,
+                ),
+              ),
+              child: Text(
+                _getCurrentTime(),
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  decoration: TextDecoration.none,
+                  decorationColor: Colors.transparent,
+                  decorationStyle: TextDecorationStyle.solid,
+                  decorationThickness: 0,
+                ),
+              ),
+            );
+          },
         ),
       ],
     );

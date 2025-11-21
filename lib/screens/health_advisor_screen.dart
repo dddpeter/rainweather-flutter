@@ -109,21 +109,67 @@ class _HealthAdvisorScreenState extends State<HealthAdvisorScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = context.read<ThemeProvider>();
-    AppColors.setThemeProvider(themeProvider);
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        AppColors.setThemeProvider(themeProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('健康管家'),
-        backgroundColor: AppColors.primaryBlue,
-        foregroundColor: Colors.white,
-      ),
-      body: Container(
-        decoration: BoxDecoration(gradient: AppColors.screenBackgroundGradient),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
+        return Container(
+          decoration: BoxDecoration(
+            gradient: AppColors.screenBackgroundGradient,
+          ),
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            appBar: AppBar(
+              elevation: 4,
+              backgroundColor: Colors.transparent,
+              flexibleSpace: Container(
+                decoration: BoxDecoration(
+                  // 半透明背景 - 基于主题色，已包含透明度
+                  color: AppColors.appBarBackground,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 20,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+              ),
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(0.5),
+                child: Container(
+                  height: 0.5,
+                  color: themeProvider.getColor('border').withOpacity(0.2),
+                ),
+              ),
+              foregroundColor: themeProvider.isLightTheme
+                  ? AppColors.primaryBlue
+                  : AppColors.accentBlue,
+              title: Text(
+                '健康管家',
+                style: TextStyle(
+                  color: themeProvider.isLightTheme
+                      ? AppColors.primaryBlue
+                      : AppColors.accentBlue,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              centerTitle: true,
+              leading: IconButton(
+                icon: Icon(
+                  Icons.arrow_back,
+                  color: themeProvider.isLightTheme
+                      ? AppColors.primaryBlue
+                      : AppColors.accentBlue,
+                ),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ),
+            body: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
               // 人群选择卡片
               Card(
                 elevation: AppColors.cardElevation,
@@ -350,11 +396,14 @@ class _HealthAdvisorScreenState extends State<HealthAdvisorScreen> {
                     ),
                   ),
                 ),
-              ),
-            ],
+                      ),
+                      const SizedBox(height: 80),
+                    ],
+                  ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/weather_alert_model.dart';
 import '../services/weather_alert_service.dart';
 import '../services/notification_service.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_constants.dart';
+import '../providers/theme_provider.dart';
 
 /// 天气提醒设置页面
 class WeatherAlertSettingsScreen extends StatefulWidget {
@@ -35,31 +37,82 @@ class _WeatherAlertSettingsScreenState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('天气提醒设置'),
-        backgroundColor: AppColors.primaryBlue,
-        foregroundColor: Colors.white,
-      ),
-      body: Container(
-        decoration: BoxDecoration(gradient: AppColors.screenBackgroundGradient),
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildBasicSettings(),
-                    _buildCommuteSettings(),
-                    _buildAirQualitySettings(),
-                    _buildTemperatureSettings(),
-                    _buildNotificationSettings(),
-                    _buildAlertRules(),
-                    const SizedBox(height: 16),
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        AppColors.setThemeProvider(themeProvider);
+
+        return Container(
+          decoration: BoxDecoration(
+            gradient: AppColors.screenBackgroundGradient,
+          ),
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            appBar: AppBar(
+              elevation: 4,
+              backgroundColor: Colors.transparent,
+              flexibleSpace: Container(
+                decoration: BoxDecoration(
+                  // 半透明背景 - 基于主题色，已包含透明度
+                  color: AppColors.appBarBackground,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 20,
+                      offset: const Offset(0, 2),
+                    ),
                   ],
                 ),
               ),
-      ),
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(0.5),
+                child: Container(
+                  height: 0.5,
+                  color: themeProvider.getColor('border').withOpacity(0.2),
+                ),
+              ),
+              foregroundColor: themeProvider.isLightTheme
+                  ? AppColors.primaryBlue
+                  : AppColors.accentBlue,
+              title: Text(
+                '天气提醒设置',
+                style: TextStyle(
+                  color: themeProvider.isLightTheme
+                      ? AppColors.primaryBlue
+                      : AppColors.accentBlue,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              centerTitle: true,
+              leading: IconButton(
+                icon: Icon(
+                  Icons.arrow_back,
+                  color: themeProvider.isLightTheme
+                      ? AppColors.primaryBlue
+                      : AppColors.accentBlue,
+                ),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ),
+            body: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                            _buildBasicSettings(),
+                            _buildCommuteSettings(),
+                            _buildAirQualitySettings(),
+                            _buildTemperatureSettings(),
+                            _buildNotificationSettings(),
+                        _buildAlertRules(),
+                        const SizedBox(height: 80),
+                      ],
+                    ),
+            ),
+          ),
+        );
+      },
     );
   }
 

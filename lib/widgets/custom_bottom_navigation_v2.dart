@@ -21,7 +21,8 @@ class CustomBottomNavigationV2 extends StatelessWidget {
       builder: (context, themeProvider, child) {
         return Container(
           decoration: BoxDecoration(
-            color: AppColors.backgroundSecondary,
+            // 亮色模式使用浅蓝色，暗色模式使用深色
+            color: AppColors.appBarBackground,
             boxShadow: [
               BoxShadow(
                 color: AppColors.borderColor.withOpacity(0.1),

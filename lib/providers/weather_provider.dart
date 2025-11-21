@@ -106,6 +106,8 @@ class WeatherProvider extends ChangeNotifier {
   List<CommuteAdviceModel> _commuteAdvices = [];
   bool _hasShownCommuteAdviceToday = false; // 今日是否已显示过通勤建议
   Timer? _commuteCleanupTimer; // 通勤建议清理定时器
+  Timer? _weatherDataWatcher; // 天气数据变化监听器
+  bool _isWeatherDataWatcherActive = false; // 监听器是否激活
 
   // ==================== AI智能摘要 ====================
   String? _weatherSummary; // AI生成的天气摘要
@@ -611,8 +613,8 @@ class WeatherProvider extends ChangeNotifier {
       // 启动通勤建议清理定时器
       _startCommuteCleanupTimer();
 
-      // App重启：清理当前时段的旧建议，重新生成
-      _cleanAndRegenerateCommuteAdvices();
+      // ✨ 优化：等待天气数据完全加载后再生成通勤建议
+      await _generateCommuteAdvicesAfterDataLoaded();
 
       // 生成AI智能天气摘要（只在没有内容时生成）
       if (_weatherSummary == null || _weatherSummary!.isEmpty) {
@@ -869,6 +871,12 @@ class WeatherProvider extends ChangeNotifier {
 
         // 刷新成功后，检查并生成通勤提醒
         await checkAndGenerateCommuteAdvices();
+
+        // ✨ 优化：检查通勤建议是否为空，如果为空且在通勤时段则尝试重新生成
+        if (_commuteAdvices.isEmpty && CommuteAdviceService.isInCommuteTime()) {
+          WeatherProviderLogger.info('🔍 天气数据刷新后通勤建议为空，尝试重新生成');
+          await _cleanAndRegenerateCommuteAdvices();
+        }
 
         // 通知UI更新
         notifyListeners();
@@ -2454,6 +2462,57 @@ class WeatherProvider extends ChangeNotifier {
 
   // ==================== 通勤建议相关方法 ====================
 
+  /// ✨ 新增：等待天气数据完全加载后再生成通勤建议（解决初始化时序问题）
+  Future<void> _generateCommuteAdvicesAfterDataLoaded() async {
+    WeatherProviderLogger.info('\n╔════════════════════════════════════════╗');
+    WeatherProviderLogger.info('║ 🔄 等待天气数据完全加载后生成通勤建议 ║');
+    WeatherProviderLogger.info('╚════════════════════════════════════════╝');
+
+    try {
+      // 等待最多5秒，确保天气数据加载完成
+      int attempts = 0;
+      const maxAttempts = 50; // 5秒，每100ms检查一次
+
+      while (attempts < maxAttempts) {
+        if (_currentWeather != null &&
+            _currentLocation != null &&
+            _currentWeather!.current?.current != null &&
+            _currentWeather!.forecast24h != null &&
+            _currentWeather!.forecast24h!.isNotEmpty) {
+          WeatherProviderLogger.success('✅ 天气数据已完全加载，开始生成通勤建议');
+          break;
+        }
+
+        await Future.delayed(const Duration(milliseconds: 100));
+        attempts++;
+
+        if (attempts % 10 == 0) { // 每秒记录一次进度
+          WeatherProviderLogger.info('⏳ 等待天气数据加载... (${attempts * 100}ms)');
+        }
+      }
+
+      if (attempts >= maxAttempts) {
+        WeatherProviderLogger.warning('⚠️ 等待天气数据加载超时，继续尝试生成通勤建议');
+      }
+
+      // 数据加载完成后，清理并重新生成通勤建议
+      await _cleanAndRegenerateCommuteAdvices();
+
+      // 启动天气数据变化监听，实现智能重试机制
+      _startWeatherDataWatcher();
+
+    } catch (e, stackTrace) {
+      Logger.e(
+        '等待天气数据完成后生成通勤建议失败',
+        tag: 'WeatherProvider',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      // 失败时至少加载现有建议
+      await loadCommuteAdvices();
+    }
+  }
+
   /// App重启时清理并重新生成通勤建议
   Future<void> _cleanAndRegenerateCommuteAdvices() async {
     WeatherProviderLogger.info('\n╔════════════════════════════════════════╗');
@@ -3083,6 +3142,27 @@ class WeatherProvider extends ChangeNotifier {
     try {
       WeatherProviderLogger.info('\n📚 开始加载通勤建议...');
 
+      // ✨ 优化：先尝试从内存缓存快速恢复（提升启动速度）
+      if (_commuteAdvices.isNotEmpty) {
+        final currentTimeSlot = CommuteAdviceService.getCurrentCommuteTimeSlot();
+        final hasValidCache = _commuteAdvices.any((advice) {
+          // 检查缓存是否仍然有效（今天的建议且未过期）
+          final isToday = advice.timestamp.day == DateTime.now().day;
+          final isCurrentSlot = currentTimeSlot == null || advice.timeSlot == currentTimeSlot;
+          final isNotExpired = !CommuteAdviceService.isTimeSlotEnded(advice.timeSlot);
+          return isToday && (isCurrentSlot || !CommuteAdviceService.isInCommuteTime()) && isNotExpired;
+        });
+
+        if (hasValidCache) {
+          WeatherProviderLogger.info('⚡ 使用内存缓存通勤建议: ${_commuteAdvices.length}条');
+          if (notifyUI) notifyListeners();
+          return;
+        } else {
+          WeatherProviderLogger.info('🗑️ 内存缓存已过期，从数据库重新加载');
+          _commuteAdvices = []; // 清空过期缓存
+        }
+      }
+
       // 先清理数据库中的重复数据
       await _databaseService.cleanDuplicateCommuteAdvices();
 
@@ -3213,9 +3293,10 @@ class WeatherProvider extends ChangeNotifier {
   void _startCommuteCleanupTimer() {
     _stopCommuteCleanupTimer();
 
-    // 每5分钟检查一次是否需要清理
-    _commuteCleanupTimer = Timer.periodic(const Duration(minutes: 5), (timer) {
+    // 每2分钟检查一次是否需要清理和新时段
+    _commuteCleanupTimer = Timer.periodic(const Duration(minutes: 2), (timer) {
       _checkAndCleanupCommuteAdvices();
+      checkAndGenerateCommuteAdvices();
     });
 
     WeatherProviderLogger.warning('通勤建议清理定时器已启动');
@@ -3225,6 +3306,74 @@ class WeatherProvider extends ChangeNotifier {
   void _stopCommuteCleanupTimer() {
     _commuteCleanupTimer?.cancel();
     _commuteCleanupTimer = null;
+  }
+
+  /// ✨ 新增：启动天气数据变化监听器（智能重试机制）
+  void _startWeatherDataWatcher() {
+    if (_isWeatherDataWatcherActive) {
+      WeatherProviderLogger.info('天气数据监听器已在运行中');
+      return;
+    }
+
+    _stopWeatherDataWatcher();
+
+    // 每30秒检查一次天气数据是否更新，如果通勤建议为空且在通勤时段则重新生成
+    _weatherDataWatcher = Timer.periodic(const Duration(seconds: 30), (timer) {
+      _checkAndRegenerateCommuteIfNeeded();
+    });
+
+    _isWeatherDataWatcherActive = true;
+    WeatherProviderLogger.info('🔍 天气数据变化监听器已启动');
+  }
+
+  /// 停止天气数据变化监听器
+  void _stopWeatherDataWatcher() {
+    _weatherDataWatcher?.cancel();
+    _weatherDataWatcher = null;
+    _isWeatherDataWatcherActive = false;
+  }
+
+  /// 检查并智能重新生成通勤建议
+  void _checkAndRegenerateCommuteIfNeeded() {
+    // 检查是否在通勤时段
+    if (!CommuteAdviceService.isInCommuteTime()) {
+      return; // 不在通勤时段，跳过
+    }
+
+    // 检查天气数据是否可用
+    if (_currentWeather == null ||
+        _currentLocation == null ||
+        _currentWeather!.current?.current == null ||
+        _currentWeather!.forecast24h == null ||
+        _currentWeather!.forecast24h!.isEmpty) {
+      return; // 天气数据不可用，跳过
+    }
+
+    // 检查通勤建议是否为空或已过期
+    bool shouldRegenerate = false;
+
+    if (_commuteAdvices.isEmpty) {
+      shouldRegenerate = true;
+      WeatherProviderLogger.info('🔍 监听器检测到通勤建议为空，尝试重新生成');
+    } else {
+      // 检查是否有已结束时段的建议需要清理
+      final currentTimeSlot = CommuteAdviceService.getCurrentCommuteTimeSlot();
+      if (currentTimeSlot != null) {
+        final hasExpiredAdvices = _commuteAdvices.any((advice) {
+          return advice.timeSlot != currentTimeSlot;
+        });
+
+        if (hasExpiredAdvices) {
+          shouldRegenerate = true;
+          WeatherProviderLogger.info('🔍 监听器检测到有过期建议，尝试重新生成');
+        }
+      }
+    }
+
+    if (shouldRegenerate) {
+      WeatherProviderLogger.info('🔄 监听器触发通勤建议重新生成');
+      _cleanAndRegenerateCommuteAdvices();
+    }
   }
 
   /// 检查并清理通勤建议
@@ -3344,6 +3493,8 @@ class WeatherProvider extends ChangeNotifier {
     _stopPeriodicRefresh();
     // 停止通勤建议清理定时器
     _stopCommuteCleanupTimer();
+    // 停止天气数据变化监听器
+    _stopWeatherDataWatcher();
     super.dispose();
   }
 }

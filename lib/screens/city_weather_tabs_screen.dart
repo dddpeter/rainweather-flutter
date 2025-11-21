@@ -4,6 +4,7 @@ import '../providers/weather_provider.dart';
 import '../providers/theme_provider.dart';
 import '../widgets/weather_chart.dart';
 import '../services/weather_service.dart';
+import '../services/weather_share_service.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_constants.dart';
 import '../widgets/sun_moon_widget.dart';
@@ -16,6 +17,8 @@ import '../widgets/weather_details_widget.dart';
 import '../widgets/ai_content_widget.dart';
 import '../widgets/air_quality_card.dart';
 import '../models/weather_model.dart';
+import '../models/location_model.dart';
+import '../models/sun_moon_index_model.dart';
 import '../utils/weather_icon_helper.dart';
 import 'weather_alerts_screen.dart';
 
@@ -85,43 +88,7 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
             }
           },
           child: Scaffold(
-            // 右下角浮动返回按钮
-            floatingActionButton: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(28),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.buttonShadow,
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Material(
-                color: AppColors.cardBackground,
-                borderRadius: BorderRadius.circular(28),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(28),
-                  onTap: () {
-                    // 返回时重置到当前定位数据
-                    context
-                        .read<WeatherProvider>()
-                        .restoreCurrentLocationWeather();
-                    Navigator.pop(context);
-                  },
-                  child: Container(
-                    width: 56,
-                    height: 56,
-                    alignment: Alignment.center,
-                    child: Icon(
-                      Icons.arrow_back,
-                      color: AppColors.textPrimary,
-                      size: 24,
-                    ),
-                  ),
-                ),
-              ),
-            ),
+            appBar: _buildAppBar(context, themeProvider),
             body: Container(
               decoration: BoxDecoration(
                 gradient: AppColors.screenBackgroundGradient,
@@ -186,12 +153,20 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
 
                         // 标签页
                         Container(
-                          color: AppColors.backgroundPrimary,
+                          color: AppColors.appBarBackground, // 使用与 AppBar 一致的背景色
                           child: TabBar(
                             controller: _tabController,
-                            indicatorColor: AppColors.primaryBlue,
-                            labelColor: AppColors.textPrimary,
-                            unselectedLabelColor: AppColors.textSecondary,
+                            indicatorColor: themeProvider.isLightTheme
+                                ? AppColors.primaryBlue
+                                : AppColors.accentBlue, // 使用与 AppBar 一致的颜色
+                            labelColor: themeProvider.isLightTheme
+                                ? AppColors.primaryBlue
+                                : AppColors.accentBlue, // 使用与 AppBar 一致的颜色
+                            unselectedLabelColor: themeProvider.isLightTheme
+                                ? AppColors.textSecondary // 亮色模式：使用次要文字色，提高对比度
+                                : AppColors.accentBlue.withOpacity(0.6), // 暗色模式：使用半透明主题色
+                            dividerColor: Colors.transparent, // 移除下边框
+                            dividerHeight: 0, // 移除下边框高度
                             labelStyle: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -212,6 +187,7 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
                         Expanded(
                           child: TabBarView(
                             controller: _tabController,
+                            physics: const AlwaysScrollableScrollPhysics(), // 允许滚动切换
                             children: [
                               _buildCurrentWeatherTab(weatherProvider),
                               _buildForecastTab(weatherProvider),
@@ -229,6 +205,165 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
         );
       },
     );
+  }
+
+  /// 构建 AppBar
+  PreferredSizeWidget _buildAppBar(
+    BuildContext context,
+    ThemeProvider themeProvider,
+  ) {
+    return AppBar(
+      elevation: 4,
+      backgroundColor: Colors.transparent,
+      flexibleSpace: Container(
+        decoration: BoxDecoration(
+          color: AppColors.appBarBackground,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 20,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+      ),
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(0.5),
+        child: Container(
+          height: 0.5,
+          color: themeProvider.getColor('border').withOpacity(0.2),
+        ),
+      ),
+      toolbarHeight: 56,
+      titleSpacing: 0,
+      leading: IconButton(
+        icon: Icon(
+          Icons.arrow_back,
+          color: themeProvider.isLightTheme
+              ? AppColors.primaryBlue
+              : AppColors.accentBlue,
+          size: 24,
+        ),
+        onPressed: () {
+          // 返回时重置到当前定位数据
+          context.read<WeatherProvider>().restoreCurrentLocationWeather();
+          Navigator.of(context).pop();
+        },
+        tooltip: '返回',
+      ),
+      title: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.location_on_rounded,
+            color: themeProvider.isLightTheme
+                ? AppColors.primaryBlue
+                : AppColors.accentBlue,
+            size: 20,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            widget.cityName,
+            style: TextStyle(
+              color: themeProvider.isLightTheme
+                  ? AppColors.primaryBlue
+                  : AppColors.accentBlue,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+      centerTitle: true,
+      actions: [
+        // 分享按钮
+        Consumer<WeatherProvider>(
+          builder: (context, weatherProvider, _) => IconButton(
+            icon: Icon(
+              Icons.share_rounded,
+              color: themeProvider.isLightTheme
+                  ? AppColors.primaryBlue
+                  : AppColors.accentBlue,
+              size: 24,
+            ),
+            onPressed: () => _shareWeather(context, weatherProvider),
+            tooltip: '分享天气',
+          ),
+        ),
+        const SizedBox(width: 8),
+      ],
+    );
+  }
+
+  /// 分享天气信息
+  void _shareWeather(
+    BuildContext context,
+    WeatherProvider weatherProvider,
+  ) async {
+    final weather = weatherProvider.currentWeather;
+
+    if (weather == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('天气数据加载中，请稍后再试'),
+          backgroundColor: AppColors.error,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    // 创建位置模型
+    final location = LocationModel(
+      address: widget.cityName,
+      city: widget.cityName,
+      district: widget.cityName,
+      province: '',
+      country: '中国',
+      street: '',
+      adcode: '',
+      town: '',
+      lat: 0.0,
+      lng: 0.0,
+    );
+
+    // 获取日出日落和生活指数数据
+    SunMoonIndexData? sunMoonIndexData;
+    try {
+      sunMoonIndexData = weatherProvider.sunMoonIndexData;
+    } catch (e) {
+      print('获取日出日落和生活指数数据失败: $e');
+    }
+
+    // 使用WeatherShareService生成并预览海报
+    try {
+      final success = await WeatherShareService.instance.generateAndSavePoster(
+        context: context,
+        weather: weather,
+        location: location,
+        themeProvider: context.read<ThemeProvider>(),
+        sunMoonIndexData: sunMoonIndexData,
+      );
+
+      if (!success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('生成海报失败，请稍后再试'),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      print('分享天气海报失败: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('分享失败：${e.toString()}'),
+          backgroundColor: AppColors.error,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   Widget _buildTopWeatherSection(WeatherProvider weatherProvider) {
@@ -261,60 +396,9 @@ class _CityWeatherTabsScreenState extends State<CityWeatherTabsScreen>
           child: Column(
             children: [
               const SizedBox(height: 8),
-              // City name and navigation
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  InkWell(
-                    onTap: () {
-                      // 返回时重置到当前定位数据
-                      context
-                          .read<WeatherProvider>()
-                          .restoreCurrentLocationWeather();
-                      Navigator.of(context).pop();
-                    },
-                    borderRadius: BorderRadius.circular(20),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Icon(
-                        Icons.arrow_back,
-                        color: context.read<ThemeProvider>().getColor(
-                          'headerIconColor',
-                        ),
-                        size: AppColors.titleBarIconSize,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Center(
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.location_on_rounded,
-                            color: context.read<ThemeProvider>().getColor(
-                              'headerTextPrimary',
-                            ),
-                            size: 20,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            widget.cityName,
-                            style: TextStyle(
-                              color: context.read<ThemeProvider>().getColor(
-                                'headerTextPrimary',
-                              ),
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  // 预警图标
-                  _buildAlertIcon(context, weatherProvider),
-                ],
+              // 预警图标（居中显示）
+              Center(
+                child: _buildAlertIcon(context, weatherProvider),
               ),
               const SizedBox(height: 24), // 减小间距
               // Weather animation, weather text and temperature

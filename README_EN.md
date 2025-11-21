@@ -228,6 +228,30 @@ This Flutter app is a complete refactor of the original Android weather app with
 
 ## Changelog
 
+### v1.13.3 (2025-01-21)
+
+**Lunar Calendar Feature Optimization**
+- 🎯 **Swipe Page Design**: Lunar calendar detail page changed to swipe page, supporting left-right swipe switching
+- 🤖 **AI Interpretation Page**: Added independent AI interpretation page, providing intelligent lunar calendar interpretation
+- 📱 **Page Indicator**: Optimized page switching experience, supporting click and swipe switching
+- 🎨 **UI Optimization**: Optimized lunar calendar page, removed duplicate today's lunar interpretation card
+
+**Commute Reminder Optimization**
+- 🔄 **Auto Cleanup Logic**: Fixed issue where commute reminders didn't disappear after time slot ended
+- ⏰ **Time Slot Judgment Optimization**: Use user-configured commute time slots for judgment, no longer using hardcoded times
+- 🧹 **Cleanup Mechanism Improvement**: Optimized cleanup logic to ensure ended reminders are cleaned up in time
+- 📊 **Filter Optimization**: When not in commute time slot, only show non-ended reminders
+
+**UI Detail Optimization**
+- 📐 **Sunrise/Sunset Card**: Optimized layout to make cards more compact
+- 🎨 **Page Indicator**: Fixed button color display issue in light mode, consistent with AppBar icon color
+- 🎯 **Lunar Detail Entry**: Optimized button color to improve visibility
+
+**Bug Fixes**
+- 🐛 **Commute Reminder Cleanup**: Fixed issue where commute reminders didn't disappear after time slot ended
+- 🐛 **Color Display**: Fixed color issues for page indicator and buttons in light mode
+- 🐛 **Layout Optimization**: Fixed overly loose layout issue for sunrise/sunset card
+
 ### v1.13.2 (2025-11-19)
 
 **City Weather Page Redesign**

@@ -858,10 +858,12 @@ class AppDrawer extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '• 重新设计城市天气页面，支持左右滑动切换\n'
-                      '• 优化分享功能，支持生成精美天气海报\n'
-                      '• 改进页面布局和用户体验\n'
-                      '• 修复已知问题并提升稳定性',
+                      '• 黄历详情页面改为滑动页面设计\n'
+                      '• 新增AI解读页面，支持左右滑动切换\n'
+                      '• 优化通勤提醒自动清理逻辑\n'
+                      '• 修复通勤提醒时段结束后不消失的问题\n'
+                      '• 优化日出日落卡片布局，更加紧凑\n'
+                      '• 修复页面指示器按钮颜色显示问题',
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,

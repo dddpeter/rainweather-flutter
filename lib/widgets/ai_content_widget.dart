@@ -105,6 +105,37 @@ class _AIContentWidgetState extends State<AIContentWidget> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = context.read<ThemeProvider>();
+    
+    // AI渐变色：使用常量
+    final aiGradient = themeProvider.isLightTheme
+        ? LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.aiGradientBlueDark.withOpacity(AppColors.aiGradientOpacity),
+              AppColors.aiGradientBlueMid.withOpacity(AppColors.aiGradientOpacity),
+              AppColors.aiGradientBlueLight.withOpacity(AppColors.aiGradientOpacity),
+            ],
+            stops: const [0.0, 0.5, 1.0], // 渐变停止点，让渐变更平滑明显
+          )
+        : LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.aiGradientAmberDark.withOpacity(AppColors.aiGradientOpacity),
+              AppColors.aiGradientAmberMid.withOpacity(AppColors.aiGradientOpacity),
+              AppColors.aiGradientAmberLight.withOpacity(AppColors.aiGradientOpacity),
+            ],
+            stops: const [0.0, 0.5, 1.0], // 渐变停止点，让渐变更平滑明显
+          );
+    
+    // 文字颜色：使用常量，确保高对比度
+    final textColor = themeProvider.isLightTheme
+        ? AppColors.aiTextColorLight
+        : AppColors.aiTextColorDark;
+    
+    // 图标颜色：与文字颜色一致
+    final iconColor = textColor;
 
     return Padding(
       padding: const EdgeInsets.symmetric(
@@ -113,82 +144,88 @@ class _AIContentWidgetState extends State<AIContentWidget> {
       child: Card(
         elevation: AppColors.cardElevation,
         shadowColor: AppColors.cardShadowColor,
-        color: AppColors.materialCardColor,
+        color: Colors.transparent, // 使用透明，让渐变背景显示
         surfaceTintColor: Colors.transparent,
         shape: AppColors.cardShape,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 标题栏（立即显示）
-              Row(
-                children: [
-                  Icon(
-                    widget.icon,
-                    color: AppColors.accentBlue,
-                    size: AppConstants.sectionTitleIconSize,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    widget.title,
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: AppConstants.sectionTitleFontSize,
-                      fontWeight: FontWeight.bold,
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: aiGradient,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 标题栏（立即显示）
+                Row(
+                  children: [
+                    Icon(
+                      widget.icon,
+                      color: iconColor, // 使用高对比度图标颜色
+                      size: AppConstants.sectionTitleIconSize,
                     ),
-                  ),
-                  const Spacer(),
-                  // AI标签
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
+                    const SizedBox(width: 8),
+                    Text(
+                      widget.title,
+                      style: TextStyle(
+                        color: textColor, // 使用高对比度文字颜色
+                        fontSize: AppConstants.sectionTitleFontSize,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    decoration: BoxDecoration(
-                      color:
-                          (themeProvider.isLightTheme
-                                  ? const Color(0xFF004CFF)
-                                  : const Color(0xFFFFB300))
-                              .withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.auto_awesome,
-                          color: themeProvider.isLightTheme
-                              ? const Color(0xFF004CFF)
-                              : const Color(0xFFFFB300),
-                          size: 10,
+                    const Spacer(),
+                    // AI标签：使用白色背景+深色文字，确保高对比度
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(
+                          themeProvider.isLightTheme 
+                              ? AppColors.labelWhiteBgOpacityLight 
+                              : AppColors.labelWhiteBgOpacityDark
                         ),
-                        const SizedBox(width: 2),
-                        Text(
-                          'AI',
-                          style: TextStyle(
-                            color: themeProvider.isLightTheme
-                                ? const Color(0xFF004CFF)
-                                : const Color(0xFFFFB300),
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(
+                          color: textColor.withOpacity(AppColors.labelBorderOpacity),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.auto_awesome,
+                            color: textColor, // 使用高对比度颜色
+                            size: 10,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 2),
+                          Text(
+                            'AI',
+                            style: TextStyle(
+                              color: textColor, // 使用高对比度颜色
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
+                  ],
+                ),
+                const SizedBox(height: 16),
 
-              // 内容区域（渐进式显示）
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                switchInCurve: Curves.easeOut,
-                switchOutCurve: Curves.easeIn,
-                child: _buildContent(),
-              ),
-            ],
+                // 内容区域（渐进式显示）
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  switchInCurve: Curves.easeOut,
+                  switchOutCurve: Curves.easeIn,
+                  child: _buildContent(),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -263,84 +300,102 @@ class _AIContentWidgetState extends State<AIContentWidget> {
           ),
         );
       },
-      child: _isFromCache
-          ? Text(
-              _content ?? widget.defaultContent,
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 14,
-                height: 1.5,
-                fontWeight: FontWeight.w600, // AI内容加粗
-              ),
-            )
-          : TypewriterTextWidget(
-              text: _content ?? widget.defaultContent,
-              charDelay: const Duration(milliseconds: 30), // 每个字符延迟30ms（更自然）
-              lineDelay: const Duration(
-                milliseconds: 200,
-              ), // 每行之间延迟200ms（更好的停顿感）
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 14,
-                height: 1.5,
-                fontWeight: FontWeight.w600, // AI内容加粗
-              ),
-            ),
+      child: Builder(
+        builder: (context) {
+          final themeProvider = context.read<ThemeProvider>();
+          final contentTextColor = themeProvider.isLightTheme
+              ? AppColors.aiTextColorLight
+              : AppColors.aiTextColorDark;
+          
+          return _isFromCache
+              ? Text(
+                  _content ?? widget.defaultContent,
+                  style: TextStyle(
+                    color: contentTextColor,
+                    fontSize: 14,
+                    height: 1.5,
+                    fontWeight: FontWeight.w600, // AI内容加粗
+                  ),
+                )
+              : TypewriterTextWidget(
+                  text: _content ?? widget.defaultContent,
+                  charDelay: const Duration(milliseconds: 30), // 每个字符延迟30ms（更自然）
+                  lineDelay: const Duration(
+                    milliseconds: 200,
+                  ), // 每行之间延迟200ms（更好的停顿感）
+                  style: TextStyle(
+                    color: contentTextColor,
+                    fontSize: 14,
+                    height: 1.5,
+                    fontWeight: FontWeight.w600, // AI内容加粗
+                  ),
+                );
+        },
+      ),
     );
   }
 
   /// 错误状态（显示重试按钮）
   Widget _buildErrorState() {
-    return Column(
-      key: const ValueKey('error'),
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // 根据是否为超时显示不同内容
-        if (_isTimeout)
-          // 超时状态：显示"暂未获取到结果"
-          Text(
-            '暂未获取到结果',
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 14,
-              height: 1.5,
-              fontWeight: FontWeight.w500, // 提示文字中等粗细
-            ),
-          )
-        else
-          // 其他错误：显示默认内容
-          Text(
-            widget.defaultContent,
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 14,
-              height: 1.5,
-              fontWeight: FontWeight.w500, // 默认内容中等粗细
-            ),
-          ),
-        const SizedBox(height: 12),
-        Row(
+    return Builder(
+      builder: (context) {
+        final themeProvider = context.read<ThemeProvider>();
+        final errorTextColor = themeProvider.isLightTheme
+            ? AppColors.aiTextColorLight
+            : AppColors.aiTextColorDark;
+        
+        return Column(
+          key: const ValueKey('error'),
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextButton.icon(
-              onPressed: () {
-                setState(() {
-                  _isFromCache = false; // 重置缓存状态
-                });
-                _loadAIContent();
-              },
-              icon: const Icon(Icons.refresh, size: 16),
-              label: const Text('重新生成'),
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.primaryBlue,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
+            // 根据是否为超时显示不同内容
+            if (_isTimeout)
+              // 超时状态：显示"暂未获取到结果"
+              Text(
+                '暂未获取到结果',
+                style: TextStyle(
+                  color: errorTextColor, // 使用高对比度文字颜色
+                  fontSize: 14,
+                  height: 1.5,
+                  fontWeight: FontWeight.w500, // 提示文字中等粗细
+                ),
+              )
+            else
+              // 其他错误：显示默认内容
+              Text(
+                widget.defaultContent,
+                style: TextStyle(
+                  color: errorTextColor, // 使用高对比度文字颜色
+                  fontSize: 14,
+                  height: 1.5,
+                  fontWeight: FontWeight.w500, // 默认内容中等粗细
                 ),
               ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                TextButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _isFromCache = false; // 重置缓存状态
+                    });
+                    _loadAIContent();
+                  },
+                  icon: const Icon(Icons.refresh, size: 16),
+                  label: const Text('重新生成'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.primaryBlue,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
-        ),
-      ],
+        );
+      },
     );
   }
 }

@@ -526,4 +526,49 @@ class AppColors {
   /// 柠檬黄 - 天气黄色预警
   static const Color lightCardYellow = Color(0xFFD5004D);
   static const Color lightCardYellowText = Color(0xFF2B3D4F); // 藏青灰字
+
+  // ==================== AI卡片颜色常量 ====================
+  
+  /// AI标签颜色
+  /// 亮色模式：蓝色
+  static const Color aiLabelColorLight = Color(0xFF004CFF);
+  /// 暗色模式：金琥珀色
+  static const Color aiLabelColorDark = Color(0xFFFFB300);
+
+  /// AI渐变背景色 - 亮色模式
+  static const Color aiGradientBlueDark = Color(0xFF004CFF); // 深蓝色
+  static const Color aiGradientBlueMid = Color(0xFF6C8FFF); // 中蓝色
+  static const Color aiGradientBlueLight = Color(0xFFB3D9FF); // 浅蓝色
+  
+  /// AI渐变背景色 - 暗色模式
+  static const Color aiGradientAmberDark = Color(0xFFFFB300); // 深金琥珀色
+  static const Color aiGradientAmberMid = Color(0xFFFFC947); // 中金琥珀色
+  static const Color aiGradientAmberLight = Color(0xFFFFE082); // 浅金琥珀色
+  
+  /// AI渐变背景透明度
+  static const double aiGradientOpacity = 0.8;
+  
+  /// AI卡片文字颜色
+  /// 亮色模式：深色文字（在蓝色渐变背景上）
+  static const Color aiTextColorLight = Color(0xDE000000); // black87 (222/255 = 0.87)
+  /// 暗色模式：深蓝色文字（在金琥珀色渐变背景上）
+  static const Color aiTextColorDark = Color(0xFF001A4D);
+  
+  /// 通勤提醒小卡片背景色
+  /// 亮色模式：柔和青色
+  static const Color commuteCardBgLight = Color(0xFF4DD0E1);
+  /// 暗色模式：柔和绿色（非黄色系）
+  static const Color commuteCardBgDark = Color(0xFF66BB6A);
+  /// 通勤提醒小卡片背景透明度
+  static const double commuteCardBgOpacity = 0.85;
+  
+  /// AI标签背景透明度
+  static const double aiLabelBgOpacity = 0.15;
+  
+  /// 标签边框透明度
+  static const double labelBorderOpacity = 0.3;
+  
+  /// 标签白色背景透明度
+  static const double labelWhiteBgOpacityLight = 0.9;
+  static const double labelWhiteBgOpacityDark = 0.2;
 }

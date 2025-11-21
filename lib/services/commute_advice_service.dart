@@ -862,13 +862,34 @@ class CommuteAdviceService {
   /// 判断时段是否已结束（用于自动清理）
   static bool isTimeSlotEnded(CommuteTimeSlot timeSlot) {
     final now = DateTime.now();
-    final hour = now.hour;
+    
+    // 从天气提醒设置中读取通勤时间配置
+    final settings = WeatherAlertService.instance.settings;
+    final commuteTime = settings.commuteTime;
+    
+    final currentMinutes = now.hour * 60 + now.minute;
 
     switch (timeSlot) {
       case CommuteTimeSlot.morning:
-        return hour >= 10; // 10点后早高峰结束
+        // 早高峰结束：当前时间 >= 早高峰结束时间
+        final morningEndMinutes =
+            commuteTime.morningEnd.hour * 60 + commuteTime.morningEnd.minute;
+        return currentMinutes >= morningEndMinutes;
       case CommuteTimeSlot.evening:
-        return hour >= 20 || hour < 17; // 20点后或17点前晚高峰结束
+        // 晚高峰结束：当前时间 >= 晚高峰结束时间，或者当前时间 < 晚高峰开始时间（跨天情况）
+        final eveningStartMinutes =
+            commuteTime.eveningStart.hour * 60 + commuteTime.eveningStart.minute;
+        final eveningEndMinutes =
+            commuteTime.eveningEnd.hour * 60 + commuteTime.eveningEnd.minute;
+        
+        // 如果晚高峰结束时间 < 开始时间（跨天），需要特殊处理
+        if (eveningEndMinutes < eveningStartMinutes) {
+          // 跨天情况：当前时间 >= 结束时间 或 当前时间 < 开始时间
+          return currentMinutes >= eveningEndMinutes || currentMinutes < eveningStartMinutes;
+        } else {
+          // 正常情况：当前时间 >= 结束时间
+          return currentMinutes >= eveningEndMinutes;
+        }
     }
   }
 }

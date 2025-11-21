@@ -202,6 +202,7 @@ class _LaoHuangLiScreenState extends State<LaoHuangLiScreen>
 
   /// 构建页面指示器
   Widget _buildPageIndicator(ThemeProvider themeProvider) {
+    // 使用与 AppBar 图标一致的颜色
     final iconColor = themeProvider.isLightTheme
         ? AppColors.primaryBlue
         : AppColors.accentBlue;
@@ -239,9 +240,7 @@ class _LaoHuangLiScreenState extends State<LaoHuangLiScreen>
                     border: Border.all(
                       color: isSelected
                           ? iconColor.withOpacity(0.5)
-                          : themeProvider.isLightTheme
-                              ? AppColors.textSecondary
-                              : iconColor.withOpacity(0.3),
+                          : iconColor.withOpacity(0.3), // 未选中也使用主题色，提高可见度
                       width: 1,
                     ),
                   ),
@@ -253,9 +252,7 @@ class _LaoHuangLiScreenState extends State<LaoHuangLiScreen>
                         style: TextStyle(
                           color: isSelected
                               ? iconColor
-                              : themeProvider.isLightTheme
-                                  ? AppColors.textSecondary
-                                  : iconColor.withOpacity(0.6),
+                              : iconColor.withOpacity(0.7), // 未选中也使用主题色，提高可见度
                           fontSize: 14,
                           fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                         ),

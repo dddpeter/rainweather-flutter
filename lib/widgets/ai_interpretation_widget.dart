@@ -26,11 +26,21 @@ class _AIInterpretationWidgetState extends State<AIInterpretationWidget> {
   String? _lunarInterpretation;
   bool _isLoadingInterpretation = false;
   DateTime? _cachedInterpretationDate;
+  String? _cachedLunarInfo; // 缓存农历信息，用于判断是否需要重新解读
 
   @override
   void initState() {
     super.initState();
+    // 清除缓存以确保使用新的提示词设置
+    _clearCache();
     _loadLunarInterpretation();
+  }
+
+  /// 清除缓存
+  void _clearCache() {
+    _cachedInterpretationDate = null;
+    _cachedLunarInfo = null;
+    _lunarInterpretation = null;
   }
 
   /// 去掉Markdown格式符号，保留纯文本
@@ -53,13 +63,17 @@ class _AIInterpretationWidgetState extends State<AIInterpretationWidget> {
       widget.selectedDate.day,
     );
 
-    // 检查缓存：如果是同一天且已有缓存，且不强制刷新，则直接返回
+    // 创建当前农历信息的字符串表示，用于缓存比较
+    final currentLunarInfo = '${widget.lunarInfo.goodThings.join(',')}|${widget.lunarInfo.badThings.join(',')}|${widget.lunarInfo.lunarDate}|${widget.lunarInfo.isHuangDaoDay}|${widget.lunarInfo.solarTerm ?? ''}';
+
+    // 检查缓存：如果是同一天、农历信息相同且已有缓存，且不强制刷新，则直接返回
     if (!forceRefresh &&
         _cachedInterpretationDate != null &&
         _lunarInterpretation != null &&
         _cachedInterpretationDate!.year == selectedDate.year &&
         _cachedInterpretationDate!.month == selectedDate.month &&
-        _cachedInterpretationDate!.day == selectedDate.day) {
+        _cachedInterpretationDate!.day == selectedDate.day &&
+        _cachedLunarInfo == currentLunarInfo) {
       return;
     }
 
@@ -68,17 +82,38 @@ class _AIInterpretationWidgetState extends State<AIInterpretationWidget> {
     });
 
     try {
-      final prompt = _aiService.buildLunarYiJiPrompt(
-        goodThings: widget.lunarInfo.goodThings.isEmpty
-            ? '诸事不宜'
-            : widget.lunarInfo.goodThings.join('、'),
-        badThings: widget.lunarInfo.badThings.isEmpty
-            ? '百无禁忌'
-            : widget.lunarInfo.badThings.join('、'),
-        lunarDate: widget.lunarInfo.lunarDate,
-        isHuangDaoDay: widget.lunarInfo.isHuangDaoDay,
-        solarTerm: widget.lunarInfo.solarTerm ?? '无节气',
-      );
+      final prompt = '''请根据以下农历信息，提供一份简洁、实用且符合现代汉语习惯的黄历解读：
+
+日期信息：
+- 公历：${widget.selectedDate.year}年${widget.selectedDate.month}月${widget.selectedDate.day}日
+- 农历：${widget.lunarInfo.lunarDate}
+- 干支：${widget.lunarInfo.yearGanZhi}年 ${widget.lunarInfo.monthGanZhi}月 ${widget.lunarInfo.dayGanZhi}日
+- 星宿：${widget.lunarInfo.starName}（${widget.lunarInfo.starLuck}）
+${widget.lunarInfo.solarTerm != null ? '- 节气：${widget.lunarInfo.solarTerm}' : ''}
+
+宜忌事项：
+${widget.lunarInfo.goodThings.isEmpty ? '- 宜：诸事不宜' : '- 宜：${widget.lunarInfo.goodThings.join('、')}'}
+${widget.lunarInfo.badThings.isEmpty ? '- 忌：百无禁忌' : '- 忌：${widget.lunarInfo.badThings.join('、')}'}
+${widget.lunarInfo.isHuangDaoDay ? '- 特殊：今日为黄道吉日，诸事大吉' : ''}
+
+请提供：
+1. 整体运势分析（180-270字）
+2. 今日重点关注和提醒（100-135字）
+3. 适合的活动建议（100-135字）
+4. 需要注意的事项（100-135字）
+
+要求：
+- 使用现代、自然的汉语表达，避免过于古板或传统的说法
+- 内容要简洁实用，贴近现代生活
+- 语言要温暖积极，给人以正能量
+- 如果是黄道吉日，要特别强调吉祥寓意
+
+特别要求：
+- 行事建议要更符合现代汉语习惯，使用现代人常用的表达方式
+- 避免过于传统的说法，改用更自然的现代表达
+- 建议要具体实用，贴近当代人的实际生活
+- 特别提示要温暖亲切，符合现代人的语言习惯
+''';
 
       final interpretation = await _aiService.generateSmartAdvice(prompt);
 
@@ -86,6 +121,7 @@ class _AIInterpretationWidgetState extends State<AIInterpretationWidget> {
         setState(() {
           _lunarInterpretation = interpretation;
           _cachedInterpretationDate = selectedDate; // 保存缓存日期
+          _cachedLunarInfo = currentLunarInfo; // 保存缓存农历信息
           _isLoadingInterpretation = false;
         });
       }
@@ -141,12 +177,12 @@ class _AIInterpretationWidgetState extends State<AIInterpretationWidget> {
                 ],
                 stops: const [0.0, 0.5, 1.0],
               );
-    
+        
         // 文字颜色：使用常量，确保高对比度
         final textColor = themeProvider.isLightTheme
             ? AppColors.aiTextColorLight
             : AppColors.aiTextColorDark;
-    
+        
         // 图标颜色：与文字颜色一致
         final iconColor = textColor;
 
@@ -190,7 +226,7 @@ class _AIInterpretationWidgetState extends State<AIInterpretationWidget> {
                             ),
                           ),
                           const Spacer(),
-                          // AI标签：使用白色背景+深色文字，确保高对比度
+                          // AI标签
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 6,
@@ -213,14 +249,14 @@ class _AIInterpretationWidgetState extends State<AIInterpretationWidget> {
                               children: [
                                 Icon(
                                   Icons.auto_awesome,
-                                  color: textColor, // 使用高对比度颜色
+                                  color: textColor,
                                   size: 10,
                                 ),
                                 const SizedBox(width: 2),
                                 Text(
                                   'AI',
                                   style: TextStyle(
-                                    color: textColor, // 使用高对比度颜色
+                                    color: textColor,
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
                                   ),

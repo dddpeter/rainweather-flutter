@@ -22,23 +22,23 @@ class LunarDetailWidget extends StatelessWidget {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return SingleChildScrollView(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(8), // 减小外边距，使内容更紧凑
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // 顶部：日期和农历信息合并
               _buildCompactHeader(themeProvider),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8), // 减小间距
 
               // 节气节日（如果有）
               if (lunarInfo.hasSpecialDay()) ...[
                 _buildSpecialDayCard(themeProvider),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8), // 减小间距
               ],
 
               // 宜忌和吉神方位合并卡片
               _buildMergedCard(themeProvider),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8), // 减小间距
 
               // 彭祖百忌
               _buildPengZuCard(themeProvider),
@@ -66,12 +66,12 @@ class LunarDetailWidget extends StatelessWidget {
       surfaceTintColor: Colors.transparent,
       shape: AppColors.cardShape,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12), // 减小内边距
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              AppColors.error.withOpacity(0.08),
-              AppColors.warning.withOpacity(0.08),
+              AppColors.error.withOpacity(0.06), // 降低透明度，更柔和
+              AppColors.warning.withOpacity(0.06), // 降低透明度，更柔和
             ],
           ),
           borderRadius: BorderRadius.circular(8),
@@ -86,9 +86,9 @@ class LunarDetailWidget extends StatelessWidget {
                 lunarInfo.solarTerm!,
                 lunarService.getSolarTermEmoji(lunarInfo.solarTerm!),
                 lunarService.getSolarTermDescription(lunarInfo.solarTerm!),
-                AppColors.warning,
+                AppColors.warning, // 使用主题颜色
               ),
-              if (hasFestivals) const SizedBox(height: 16),
+              if (hasFestivals) const SizedBox(height: 12), // 减小间距
             ],
 
             // 节日（如果有）- 可能有多个
@@ -103,9 +103,9 @@ class LunarDetailWidget extends StatelessWidget {
                       festival,
                       lunarService.getFestivalEmoji(festival),
                       lunarService.getFestivalDescription(festival),
-                      AppColors.error,
+                      AppColors.error, // 使用主题颜色
                     ),
-                    if (!isLast) const SizedBox(height: 16),
+                    if (!isLast) const SizedBox(height: 12), // 减小间距
                   ],
                 );
               }),
@@ -130,45 +130,45 @@ class LunarDetailWidget extends StatelessWidget {
           children: [
             // 大图标
             Container(
-              width: 64,
-              height: 64,
+              width: 56, // 减小尺寸
+              height: 56, // 减小尺寸
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.5),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10), // 减小圆角
               ),
               child: Center(
-                child: Text(emoji, style: const TextStyle(fontSize: 40)),
+                child: Text(emoji, style: const TextStyle(fontSize: 32)), // 减小字体
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12), // 减小间距
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
+                      horizontal: 6, // 减小内边距
+                      vertical: 3, // 减小内边距
                     ),
                     decoration: BoxDecoration(
-                      color: color,
+                      color: color, // 使用传入的主题颜色
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
                       type,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 11,
+                        fontSize: 10, // 减小字体
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4), // 减小间距
                   Text(
                     name,
                     style: TextStyle(
                       color: AppColors.textPrimary,
-                      fontSize: 20, // 从24缩小到20
+                      fontSize: 18, // 进一步减小字体
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.5,
                     ),
@@ -179,28 +179,28 @@ class LunarDetailWidget extends StatelessWidget {
           ],
         ),
         if (description.isNotEmpty) ...[
-          const SizedBox(height: 12),
+          const SizedBox(height: 8), // 减小间距
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(10), // 减小内边距
             decoration: BoxDecoration(
               color: AppColors.borderColor.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(6), // 减小圆角
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(
                   Icons.info_outline,
-                  color: AppColors.primaryBlue,
-                  size: 18,
+                  color: AppColors.primaryBlue, // 使用主题颜色
+                  size: 16, // 减小图标
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6), // 减小间距
                 Expanded(
                   child: Text(
                     description,
                     style: TextStyle(
                       color: AppColors.textPrimary,
-                      fontSize: 12, // 从14进一步缩小到12
+                      fontSize: 11, // 进一步减小字体
                       fontWeight: FontWeight.w500,
                       height: 1.3, // 调整行高
                     ),
@@ -247,84 +247,88 @@ class CompactHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: AppColors.cardElevation,
-      shadowColor: AppColors.cardShadowColor,
-      color: AppColors.materialCardColor,
-      surfaceTintColor: Colors.transparent,
-      shape: AppColors.cardShape,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 公历日期和星期
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return Card(
+          elevation: AppColors.cardElevation,
+          shadowColor: AppColors.cardShadowColor,
+          color: AppColors.materialCardColor,
+          surfaceTintColor: Colors.transparent,
+          shape: AppColors.cardShape,
+          child: Padding(
+            padding: const EdgeInsets.all(12), // 减小内边距
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '${selectedDate.year}年${selectedDate.month}月${selectedDate.day}日',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1,
-                  ),
+                // 公历日期和星期
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  children: [
+                    Text(
+                      '${selectedDate.month}月${selectedDate.day}日', // 简化显示，去掉年份
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 16, // 减小字体
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(width: 8), // 减小间距
+                    Text(
+                      _getWeekDay(selectedDate),
+                      style: TextStyle(
+                        color: AppColors.warning, // 使用主题颜色
+                        fontSize: 16, // 减小字体
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                Text(
-                  _getWeekDay(selectedDate),
-                  style: TextStyle(
-                    color: AppColors.warning,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
+                const SizedBox(height: 12), // 减小间距
 
-            // 农历信息：列表布局
-            _buildDetailRow(
-              Icons.calendar_month,
-              '农历',
-              lunarInfo.getFullLunarDate(),
-              '',
-              AppColors.primaryBlue,
-            ),
-            const SizedBox(height: 8),
-            _buildDetailRow(
-              Icons.history,
-              '干支',
-              '${lunarInfo.yearGanZhi} ${lunarInfo.monthGanZhi} ${lunarInfo.dayGanZhi}',
-              '',
-              AppColors.primaryBlue,
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildDetailSmallCard(
-                    '星座',
-                    lunarInfo.constellation,
-                    AppColors.warning,
-                  ),
+                // 农历信息：列表布局
+                _buildDetailRow(
+                  Icons.calendar_month,
+                  '农历',
+                  lunarInfo.getFullLunarDate(),
+                  '',
+                  AppColors.primaryBlue, // 使用主题颜色
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _buildStarSmallCard(
-                    '星宿',
-                    lunarInfo.starName,
-                    lunarInfo.starLuck,
-                  ),
+                const SizedBox(height: 6), // 减小间距
+                _buildDetailRow(
+                  Icons.history,
+                  '干支',
+                  '${lunarInfo.yearGanZhi} ${lunarInfo.monthGanZhi} ${lunarInfo.dayGanZhi}',
+                  '',
+                  AppColors.primaryBlue, // 使用主题颜色
+                ),
+                const SizedBox(height: 6), // 减小间距
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildDetailSmallCard(
+                        '星座',
+                        lunarInfo.constellation,
+                        AppColors.warning, // 使用主题颜色
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _buildStarSmallCard(
+                        '星宿',
+                        lunarInfo.starName,
+                        lunarInfo.starLuck,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -337,34 +341,34 @@ class CompactHeader extends StatelessWidget {
     Color iconColor,
   ) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: 4), // 减小垂直间距
       child: Row(
         children: [
           // 彩色图标背景
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(6), // 减小内边距
             decoration: BoxDecoration(
               color: iconColor.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(8), // 减小圆角
               border: Border.all(color: iconColor.withOpacity(0.6), width: 1),
             ),
-            child: Icon(icon, color: iconColor, size: 22),
+            child: Icon(icon, color: iconColor, size: 18), // 减小图标
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10), // 减小间距
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Wrap(
                   crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 8,
-                  runSpacing: 4,
+                  spacing: 6, // 减小间距
+                  runSpacing: 3, // 减小间距
                   children: [
                     Text(
                       label,
                       style: TextStyle(
                         color: AppColors.textPrimary,
-                        fontSize: 14,
+                        fontSize: 13, // 减小字体
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -372,7 +376,7 @@ class CompactHeader extends StatelessWidget {
                       value,
                       style: TextStyle(
                         color: AppColors.textPrimary,
-                        fontSize: 14,
+                        fontSize: 13, // 减小字体
                         fontWeight: FontWeight.bold,
                       ),
                       // 允许折行显示完整文字
@@ -386,7 +390,7 @@ class CompactHeader extends StatelessWidget {
                       description,
                       style: TextStyle(
                         color: AppColors.textSecondary,
-                        fontSize: 11,
+                        fontSize: 10, // 减小字体
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -402,10 +406,10 @@ class CompactHeader extends StatelessWidget {
   /// 构建方位竖向卡片
   Widget _buildDetailSmallCard(String label, String value, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12), // 减小内边距
       decoration: BoxDecoration(
         color: color.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10), // 减小圆角
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -413,20 +417,20 @@ class CompactHeader extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              color: color,
-              fontSize: 11,
+              color: color, // 使用传入的主题颜色
+              fontSize: 10, // 减小字体
               fontWeight: FontWeight.bold,
               letterSpacing: 0.5,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6), // 减小间距
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(
               value,
               style: TextStyle(
                 color: AppColors.textPrimary,
-                fontSize: 16,
+                fontSize: 14, // 减小字体
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -440,16 +444,16 @@ class CompactHeader extends StatelessWidget {
   Widget _buildStarSmallCard(String label, String starName, String starLuck) {
     // 判断吉凶颜色
     final isGood = starLuck == '吉';
-    final luckColor = isGood ? AppColors.accentGreen : AppColors.warning;
+    final luckColor = isGood ? AppColors.accentGreen : AppColors.warning; // 使用主题颜色
     final luckTextColor = isGood
         ? const Color(0xFFFFD700) // 吉字黄色
         : Colors.red; // 凶字红色
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12), // 减小内边距
       decoration: BoxDecoration(
         color: luckColor.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10), // 减小圆角
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -457,13 +461,13 @@ class CompactHeader extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              color: luckColor,
-              fontSize: 11,
+              color: luckColor, // 使用主题颜色
+              fontSize: 10, // 减小字体
               fontWeight: FontWeight.bold,
               letterSpacing: 0.5,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6), // 减小间距
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Text.rich(
@@ -473,7 +477,7 @@ class CompactHeader extends StatelessWidget {
                     text: '$starName(',
                     style: TextStyle(
                       color: AppColors.textPrimary,
-                      fontSize: 16,
+                      fontSize: 14, // 减小字体
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -481,7 +485,7 @@ class CompactHeader extends StatelessWidget {
                     text: starLuck,
                     style: TextStyle(
                       color: luckTextColor,
-                      fontSize: 16,
+                      fontSize: 14, // 减小字体
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -489,7 +493,7 @@ class CompactHeader extends StatelessWidget {
                     text: ')',
                     style: TextStyle(
                       color: AppColors.textPrimary,
-                      fontSize: 16,
+                      fontSize: 14, // 减小字体
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -527,7 +531,7 @@ class MergedCard extends StatelessWidget {
       surfaceTintColor: Colors.transparent,
       shape: AppColors.cardShape,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12), // 减小内边距
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -536,15 +540,15 @@ class MergedCard extends StatelessWidget {
               children: [
                 Icon(
                   Icons.event_available_rounded,
-                  color: AppColors.accentGreen,
-                  size: 20,
+                  color: AppColors.accentGreen, // 使用主题颜色
+                  size: 18, // 减小图标
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6), // 减小间距
                 Text(
                   '宜忌',
                   style: TextStyle(
                     color: AppColors.textPrimary,
-                    fontSize: 16,
+                    fontSize: 15, // 减小字体
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -552,8 +556,8 @@ class MergedCard extends StatelessWidget {
                 if (lunarInfo.isHuangDaoDay)
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
+                      horizontal: 6, // 减小内边距
+                      vertical: 3, // 减小内边距
                     ),
                     decoration: BoxDecoration(
                       color: AppColors.warning.withOpacity(0.15),
@@ -562,13 +566,13 @@ class MergedCard extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.star, color: AppColors.warning, size: 14),
-                        const SizedBox(width: 4),
+                        Icon(Icons.star, color: AppColors.warning, size: 12), // 减小图标
+                        const SizedBox(width: 3), // 减小间距
                         Text(
                           '黄道吉日',
                           style: TextStyle(
-                            color: AppColors.warning,
-                            fontSize: 12,
+                            color: AppColors.warning, // 使用主题颜色
+                            fontSize: 11, // 减小字体
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -577,7 +581,7 @@ class MergedCard extends StatelessWidget {
                   ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8), // 减小间距
 
             // 宜忌内容 - 两列布局：上面是标签，下面是内容
             YiJiTwoColumnLayout(
@@ -589,7 +593,7 @@ class MergedCard extends StatelessWidget {
                   : lunarInfo.badThings.join('、'),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 16), // 减小间距
 
             // 分隔线
             Container(
@@ -597,24 +601,24 @@ class MergedCard extends StatelessWidget {
               color: AppColors.textTertiary.withOpacity(0.2),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 16), // 减小间距
 
             // 吉神方位部分
             Row(
               children: [
-                Icon(Icons.explore, color: AppColors.primaryBlue, size: 20),
-                const SizedBox(width: 8),
+                Icon(Icons.explore, color: AppColors.primaryBlue, size: 18), // 减小图标，使用主题颜色
+                const SizedBox(width: 6), // 减小间距
                 Text(
                   '吉神方位',
                   style: TextStyle(
                     color: AppColors.textPrimary,
-                    fontSize: 16,
+                    fontSize: 15, // 减小字体
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8), // 减小间距
 
             // 吉神方位 - 竖向卡片布局
             Row(
@@ -625,22 +629,22 @@ class MergedCard extends StatelessWidget {
                     direction: LunarService.getInstance().convertDirectionToCommon(
                       lunarInfo.caiShenDirection,
                     ),
-                    color: AppColors.accentGreen,
+                    color: AppColors.accentGreen, // 使用主题颜色
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6), // 减小间距
                 Expanded(
                   child: DirectionCard(
                     label: '喜神',
                     direction: LunarService.getInstance().convertDirectionToCommon(
                       lunarInfo.xiShenDirection,
                     ),
-                    color: AppColors.warning,
+                    color: AppColors.warning, // 使用主题颜色
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6), // 减小间距
             Row(
               children: [
                 Expanded(
@@ -649,15 +653,15 @@ class MergedCard extends StatelessWidget {
                     direction: LunarService.getInstance().convertDirectionToCommon(
                       lunarInfo.fuShenDirection,
                     ),
-                    color: AppColors.primaryBlue,
+                    color: AppColors.primaryBlue, // 使用主题颜色
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6), // 减小间距
                 Expanded(
                   child: DirectionCard(
                     label: '冲煞',
                     direction: lunarInfo.chongSha,
-                    color: AppColors.textSecondary,
+                    color: AppColors.textSecondary, // 使用主题颜色
                   ),
                 ),
               ],
@@ -785,7 +789,7 @@ class _PengZuCardState extends State<PengZuCard> {
           surfaceTintColor: Colors.transparent,
           shape: AppColors.cardShape,
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12), // 减小内边距
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -793,24 +797,24 @@ class _PengZuCardState extends State<PengZuCard> {
                   children: [
                     Icon(
                       Icons.report_problem_outlined,
-                      color: AppColors.warning,
-                      size: 20,
+                      color: AppColors.warning, // 使用主题颜色
+                      size: 18, // 减小图标
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6), // 减小间距
                     Text(
                       '彭祖百忌',
                       style: TextStyle(
                         color: AppColors.textPrimary,
-                        fontSize: 16,
+                        fontSize: 15, // 减小字体
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8), // 减小间距
                 // 彭祖百忌原文
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(10), // 减小内边距
                   decoration: BoxDecoration(
                     color: AppColors.warning.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(4),
@@ -819,23 +823,23 @@ class _PengZuCardState extends State<PengZuCard> {
                     widget.lunarInfo.pengZuBaiji,
                     style: TextStyle(
                       color: AppColors.textPrimary,
-                      fontSize: 14,
-                      height: 1.5,
+                      fontSize: 13, // 减小字体
+                      height: 1.4, // 减小行高
                     ),
                   ),
                 ),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: 8), // 减小间距
 
                 // AI解读 - 使用AI卡片样式
                 Container(
-                  margin: const EdgeInsets.only(top: 12),
+                  margin: const EdgeInsets.only(top: 8), // 减小外边距
                   decoration: BoxDecoration(
                     gradient: aiGradient,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(10), // 减小内边距
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -844,14 +848,14 @@ class _PengZuCardState extends State<PengZuCard> {
                             Icon(
                               Icons.auto_awesome,
                               color: iconColor, // 使用高对比度图标颜色
-                              size: 16,
+                              size: 14, // 减小图标
                             ),
-                            const SizedBox(width: 6),
+                            const SizedBox(width: 5), // 减小间距
                             Text(
                               'AI解读',
                               style: TextStyle(
                                 color: textColor, // 使用高对比度文字颜色
-                                fontSize: 13,
+                                fontSize: 12, // 减小字体
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -859,13 +863,13 @@ class _PengZuCardState extends State<PengZuCard> {
                             // AI标签：使用白色背景+深色文字，确保高对比度
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
+                                horizontal: 5, // 减小内边距
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(
-                                  themeProvider.isLightTheme 
-                                      ? AppColors.labelWhiteBgOpacityLight 
+                                  themeProvider.isLightTheme
+                                      ? AppColors.labelWhiteBgOpacityLight
                                       : AppColors.labelWhiteBgOpacityDark
                                 ),
                                 borderRadius: BorderRadius.circular(4),
@@ -880,14 +884,14 @@ class _PengZuCardState extends State<PengZuCard> {
                                   Icon(
                                     Icons.auto_awesome,
                                     color: textColor, // 使用高对比度颜色
-                                    size: 10,
+                                    size: 9, // 减小图标
                                   ),
                                   const SizedBox(width: 2),
                                   Text(
                                     'AI',
                                     style: TextStyle(
                                       color: textColor, // 使用高对比度颜色
-                                      fontSize: 10,
+                                      fontSize: 9, // 减小字体
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -896,24 +900,24 @@ class _PengZuCardState extends State<PengZuCard> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 6), // 减小间距
                         if (_isLoadingPengZuInterpretation)
                           Row(
                             children: [
                               SizedBox(
-                                width: 16,
-                                height: 16,
+                                width: 14, // 减小尺寸
+                                height: 14,
                                 child: CircularProgressIndicator(
                                   color: textColor, // 使用高对比度颜色
                                   strokeWidth: 2,
                                 ),
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: 10), // 减小间距
                               Text(
                                 '正在解读...',
                                 style: TextStyle(
                                   color: textColor, // 使用高对比度文字颜色
-                                  fontSize: 13,
+                                  fontSize: 12, // 减小字体
                                 ),
                               ),
                             ],
@@ -923,8 +927,8 @@ class _PengZuCardState extends State<PengZuCard> {
                             _pengZuInterpretation!,
                             style: TextStyle(
                               color: textColor, // 使用高对比度文字颜色
-                              fontSize: 13,
-                              height: 1.5,
+                              fontSize: 12, // 减小字体
+                              height: 1.4, // 减小行高
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -957,10 +961,10 @@ class DirectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(10), // 减小内边距
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10), // 减小圆角
         border: Border.all(color: color.withOpacity(0.3), width: 1),
       ),
       child: Column(
@@ -969,17 +973,17 @@ class DirectionCard extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              color: color,
-              fontSize: 12,
+              color: color, // 使用传入的主题颜色
+              fontSize: 11, // 减小字体
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6), // 减小间距
           Text(
             direction,
             style: TextStyle(
               color: AppColors.textPrimary,
-              fontSize: 16,
+              fontSize: 14, // 减小字体
               fontWeight: FontWeight.bold,
             ),
             textAlign: TextAlign.center,
@@ -1018,7 +1022,7 @@ class YiJiTwoColumnLayout extends StatelessWidget {
                   // 宜标签
                   Expanded(
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      padding: const EdgeInsets.symmetric(vertical: 6), // 减小内边距
                       decoration: BoxDecoration(
                         color: AppColors.accentGreen.withOpacity(isLightTheme ? 0.1 : 0.15),
                         borderRadius: const BorderRadius.only(
@@ -1033,14 +1037,14 @@ class YiJiTwoColumnLayout extends StatelessWidget {
                           children: [
                             Text(
                               '😊',
-                              style: TextStyle(fontSize: 16),
+                              style: TextStyle(fontSize: 14), // 减小字体
                             ),
-                            const SizedBox(width: 4),
+                            const SizedBox(width: 3), // 减小间距
                             Text(
                               '宜',
                               style: TextStyle(
-                                color: AppColors.accentGreen,
-                                fontSize: 14,
+                                color: AppColors.accentGreen, // 使用主题颜色
+                                fontSize: 13, // 减小字体
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -1057,7 +1061,7 @@ class YiJiTwoColumnLayout extends StatelessWidget {
                   // 忌标签
                   Expanded(
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      padding: const EdgeInsets.symmetric(vertical: 6), // 减小内边距
                       decoration: BoxDecoration(
                         color: AppColors.error.withOpacity(isLightTheme ? 0.1 : 0.15),
                         borderRadius: const BorderRadius.only(
@@ -1072,14 +1076,14 @@ class YiJiTwoColumnLayout extends StatelessWidget {
                           children: [
                             Text(
                               '😟',
-                              style: TextStyle(fontSize: 16),
+                              style: TextStyle(fontSize: 14), // 减小字体
                             ),
-                            const SizedBox(width: 4),
+                            const SizedBox(width: 3), // 减小间距
                             Text(
                               '忌',
                               style: TextStyle(
-                                color: AppColors.error,
-                                fontSize: 14,
+                                color: AppColors.error, // 使用主题颜色
+                                fontSize: 13, // 减小字体
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -1104,7 +1108,7 @@ class YiJiTwoColumnLayout extends StatelessWidget {
                   // 宜内容
                   Expanded(
                     child: Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(10), // 减小内边距
                       decoration: BoxDecoration(
                         color: AppColors.accentGreen.withOpacity(isLightTheme ? 0.05 : 0.1),
                         borderRadius: const BorderRadius.only(
@@ -1117,9 +1121,9 @@ class YiJiTwoColumnLayout extends StatelessWidget {
                         textAlign: TextAlign.left, // 左对齐
                         style: TextStyle(
                           color: AppColors.textPrimary,
-                          fontSize: 14,
+                          fontSize: 13, // 减小字体
                           fontWeight: FontWeight.bold,
-                          height: 1.5,
+                          height: 1.4, // 减小行高
                         ),
                         // 允许折行显示完整文字
                       ),
@@ -1133,7 +1137,7 @@ class YiJiTwoColumnLayout extends StatelessWidget {
                   // 忌内容
                   Expanded(
                     child: Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(10), // 减小内边距
                       decoration: BoxDecoration(
                         color: AppColors.error.withOpacity(isLightTheme ? 0.05 : 0.1),
                         borderRadius: const BorderRadius.only(
@@ -1146,9 +1150,9 @@ class YiJiTwoColumnLayout extends StatelessWidget {
                         textAlign: TextAlign.left, // 左对齐
                         style: TextStyle(
                           color: AppColors.textPrimary,
-                          fontSize: 14,
+                          fontSize: 13, // 减小字体
                           fontWeight: FontWeight.bold,
-                          height: 1.5,
+                          height: 1.4, // 减小行高
                         ),
                         // 允许折行显示完整文字
                       ),

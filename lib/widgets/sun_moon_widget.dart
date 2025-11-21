@@ -55,7 +55,7 @@ class _SunMoonCard extends StatelessWidget {
             surfaceTintColor: Colors.transparent,
             shape: AppColors.cardShape,
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -65,11 +65,11 @@ class _SunMoonCard extends StatelessWidget {
                     title: '日出日落',
                     color: AppColors.sunrise,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
 
                   // 田字型布局（带中心月相emoji和月龄）
                   SizedBox(
-                    height: 156,
+                    height: 130,
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
@@ -87,8 +87,8 @@ class _SunMoonCard extends StatelessWidget {
                             children: [
                               // 月相emoji
                               Container(
-                                width: 50,
-                                height: 50,
+                                width: 42,
+                                height: 42,
                                 decoration: BoxDecoration(
                                   color: AppColors.moon,
                                   shape: BoxShape.circle,
@@ -97,18 +97,18 @@ class _SunMoonCard extends StatelessWidget {
                                   child: Text(
                                     _getMoonPhaseEmoji(moon?.moonage),
                                     style: const TextStyle(
-                                      fontSize: 40,
+                                      fontSize: 32,
                                       height: 1,
                                     ),
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 6),
                               // 月相名称
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
+                                  horizontal: 6,
+                                  vertical: 3,
                                 ),
                                 decoration: BoxDecoration(
                                   color: AppColors.moon.withOpacity(0.1),
@@ -219,7 +219,7 @@ class _SunMoonGrid extends StatelessWidget {
             // 第一行
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.only(top: 8),
+                padding: const EdgeInsets.only(top: 4),
                 child: Row(
                   children: [
                     // 日出
@@ -251,7 +251,7 @@ class _SunMoonGrid extends StatelessWidget {
             // 第二行
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.only(bottom: 4),
                 child: Row(
                   children: [
                     // 日落
@@ -303,32 +303,32 @@ class _GridItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 70,
-      padding: const EdgeInsets.all(8),
+      height: 60,
+      padding: const EdgeInsets.all(6),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 20, color: color),
+              Icon(icon, size: 18, color: color),
               const SizedBox(width: 4),
               Text(
                 label,
                 style: TextStyle(
                   color: AppColors.textSecondary,
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: FontWeight.w500,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 3),
           Text(
             time,
             style: TextStyle(
               color: color,
-              fontSize: 16,
+              fontSize: 15,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -382,7 +382,7 @@ class _SunriseSunsetCard extends StatelessWidget {
             surfaceTintColor: Colors.transparent,
             shape: AppColors.cardShape,
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -405,7 +405,7 @@ class _SunriseSunsetCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
 
                   // 日出日落信息
                   Row(
@@ -431,11 +431,11 @@ class _SunriseSunsetCard extends StatelessWidget {
                   ),
 
                   // 白昼时长
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
+                      horizontal: 10,
+                      vertical: 6,
                     ),
                     decoration: BoxDecoration(
                       color: AppColors.warning.withOpacity(0.1),
@@ -503,21 +503,21 @@ class _SunriseSunsetItem extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 20, color: color),
+            Icon(icon, size: 18, color: color),
             const SizedBox(width: 6),
             Text(
               label,
               style: TextStyle(
                 color: AppColors.textSecondary,
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
             color: color.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),

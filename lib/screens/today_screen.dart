@@ -28,6 +28,7 @@ import '../utils/error_handler.dart';
 import '../utils/logger.dart';
 import '../widgets/error_dialog.dart';
 import 'hourly_screen.dart';
+import 'lao_huang_li_screen.dart';
 
 class TodayScreen extends StatefulWidget {
   const TodayScreen({super.key});
@@ -1399,7 +1400,19 @@ class _TodayScreenState extends State<TodayScreen>
     try {
       final lunarService = LunarService.getInstance();
       final lunarInfo = lunarService.getLunarInfo(DateTime.now());
-      return LunarInfoWidget(lunarInfo: lunarInfo);
+      return Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppConstants.screenHorizontalPadding,
+        ),
+        child: Card(
+          elevation: AppColors.cardElevation,
+          shadowColor: AppColors.cardShadowColor,
+          color: AppColors.materialCardColor,
+          surfaceTintColor: Colors.transparent,
+          shape: AppColors.cardShape,
+          child: LunarInfoWidget(lunarInfo: lunarInfo),
+        ),
+      );
     } catch (e) {
       print('❌ 获取农历信息失败: $e');
       return const SizedBox.shrink();
@@ -1411,7 +1424,19 @@ class _TodayScreenState extends State<TodayScreen>
     try {
       final lunarService = LunarService.getInstance();
       final lunarInfo = lunarService.getLunarInfo(DateTime.now());
-      return YiJiWidget(lunarInfo: lunarInfo);
+      return Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppConstants.screenHorizontalPadding,
+        ),
+        child: Card(
+          elevation: AppColors.cardElevation,
+          shadowColor: AppColors.cardShadowColor,
+          color: AppColors.materialCardColor,
+          surfaceTintColor: Colors.transparent,
+          shape: AppColors.cardShape,
+          child: YiJiWidget(lunarInfo: lunarInfo),
+        ),
+      );
     } catch (e) {
       print('❌ 获取宜忌信息失败: $e');
       return const SizedBox.shrink();
@@ -1428,7 +1453,19 @@ class _TodayScreenState extends State<TodayScreen>
         return const SizedBox.shrink();
       }
 
-      return SolarTermListWidget(solarTerms: upcomingTerms, title: '即将到来的节气');
+      return Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppConstants.screenHorizontalPadding,
+        ),
+        child: Card(
+          elevation: AppColors.cardElevation,
+          shadowColor: AppColors.cardShadowColor,
+          color: AppColors.materialCardColor,
+          surfaceTintColor: Colors.transparent,
+          shape: AppColors.cardShape,
+          child: SolarTermListWidget(solarTerms: upcomingTerms, title: '即将到来的节气'),
+        ),
+      );
     } catch (e) {
       print('❌ 获取节气信息失败: $e');
       return const SizedBox.shrink();

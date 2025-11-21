@@ -612,6 +612,9 @@ class WeatherProvider extends ChangeNotifier {
 
       // 启动通勤建议清理定时器
       _startCommuteCleanupTimer();
+      
+      // 立即检查并清理已结束的通勤建议
+      _checkAndCleanupCommuteAdvices();
 
       // ✨ 优化：等待天气数据完全加载后再生成通勤建议
       await _generateCommuteAdvicesAfterDataLoaded();
@@ -3145,6 +3148,19 @@ class WeatherProvider extends ChangeNotifier {
       // ✨ 优化：先尝试从内存缓存快速恢复（提升启动速度）
       if (_commuteAdvices.isNotEmpty) {
         final currentTimeSlot = CommuteAdviceService.getCurrentCommuteTimeSlot();
+        
+        // 先过滤掉已结束的建议
+        final validAdvices = _commuteAdvices.where((advice) {
+          final isToday = advice.timestamp.day == DateTime.now().day;
+          final isNotExpired = !CommuteAdviceService.isTimeSlotEnded(advice.timeSlot);
+          return isToday && isNotExpired;
+        }).toList();
+        
+        if (validAdvices.length != _commuteAdvices.length) {
+          WeatherProviderLogger.info('🗑️ 内存缓存中有已结束的建议，已过滤');
+          _commuteAdvices = validAdvices;
+        }
+        
         final hasValidCache = _commuteAdvices.any((advice) {
           // 检查缓存是否仍然有效（今天的建议且未过期）
           final isToday = advice.timestamp.day == DateTime.now().day;
@@ -3181,15 +3197,14 @@ class WeatherProvider extends ChangeNotifier {
 
       // 过滤逻辑：
       // 1. 如果当前在通勤时段，只显示当前时段的建议
-      // 2. 如果不在通勤时段，显示今日的所有建议（允许回顾）
+      // 2. 如果不在通勤时段，只显示未结束的建议（已结束的建议会被自动清理）
       final filteredAdvices = advices.where((advice) {
         if (currentTimeSlot != null) {
           // 在通勤时段内，只显示当前时段的建议
           return advice.timeSlot == currentTimeSlot;
         } else {
-          // 不在通勤时段，显示今日所有建议（允许用户回顾）
-          // 只要是今天的建议，就显示
-          return true;
+          // 不在通勤时段，只显示未结束的建议
+          return !CommuteAdviceService.isTimeSlotEnded(advice.timeSlot);
         }
       }).toList();
 
@@ -3391,20 +3406,35 @@ class WeatherProvider extends ChangeNotifier {
 
       // 不在通勤时段，检查是否需要清理
       if (_commuteAdvices.isNotEmpty) {
-        final firstAdvice = _commuteAdvices.first;
-        if (CommuteAdviceService.isTimeSlotEnded(firstAdvice.timeSlot)) {
-          // 时段已结束，清理当天该时段的建议
-          await _databaseService.cleanEndedTimeSlotAdvices(
-            firstAdvice.timeSlot.toString().split('.').last,
-          );
+        // 收集所有已结束时段的建议
+        final endedTimeSlots = <String>{};
+        for (final advice in _commuteAdvices) {
+          if (CommuteAdviceService.isTimeSlotEnded(advice.timeSlot)) {
+            endedTimeSlots.add(advice.timeSlot.toString().split('.').last);
+          }
+        }
 
-          // 重新加载建议
-          await loadCommuteAdvices();
+        // 清理所有已结束时段的建议
+        if (endedTimeSlots.isNotEmpty) {
+          int totalDeleted = 0;
+          for (final timeSlotStr in endedTimeSlots) {
+            final deletedCount = await _databaseService.cleanEndedTimeSlotAdvices(timeSlotStr);
+            totalDeleted += deletedCount;
+            WeatherProviderLogger.info('清理$timeSlotStr时段的通勤建议: $deletedCount条');
+          }
 
-          // 重置今日显示标记
-          _hasShownCommuteAdviceToday = false;
+          if (totalDeleted > 0) {
+            // 清空内存缓存，强制从数据库重新加载
+            _commuteAdvices = [];
+            
+            // 重新加载建议（不使用缓存）
+            await loadCommuteAdvices(notifyUI: true);
 
-          WeatherProviderLogger.success('通勤时段结束，已清理建议');
+            // 重置今日显示标记
+            _hasShownCommuteAdviceToday = false;
+
+            WeatherProviderLogger.success('通勤时段结束，已清理$totalDeleted条建议');
+          }
         }
       }
     } catch (e) {

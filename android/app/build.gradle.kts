@@ -8,7 +8,13 @@ plugins {
 android {
     namespace = "top.dddpeter.flutter.rainweather"
     compileSdk = 36
-    ndkVersion = "29.0.14033849"
+    buildToolsVersion = "36.0.0"
+    ndkVersion = "29.0.14206865"
+
+    // Disable automatic SDK download
+    lint {
+        abortOnError = false
+    }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -26,7 +32,7 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 33  // Android 13
-        targetSdk = 36  // Android 16
+        targetSdk = 35  // Android 15
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }

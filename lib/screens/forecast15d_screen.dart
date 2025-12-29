@@ -213,6 +213,7 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
                                   ?.current
                                   ?.reporttime, // 使用报告时间作为刷新键
                               fetchAIContent: () async {
+                                // 如果已经有内容，直接返回
                                 if (weatherProvider.forecast15dSummary !=
                                         null &&
                                     weatherProvider
@@ -220,16 +221,30 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
                                         .isNotEmpty) {
                                   return weatherProvider.forecast15dSummary!;
                                 }
+
+                                // 触发生成（如果已在生成中不会重复）
                                 await weatherProvider
                                     .generateForecast15dSummary();
-                                if (weatherProvider.forecast15dSummary !=
-                                        null &&
-                                    weatherProvider
-                                        .forecast15dSummary!
-                                        .isNotEmpty) {
-                                  return weatherProvider.forecast15dSummary!;
+
+                                // 等待生成完成（最多等待10秒）
+                                int attempts = 0;
+                                const maxAttempts = 20; // 20 * 500ms = 10秒
+                                while (attempts < maxAttempts) {
+                                  await Future.delayed(const Duration(milliseconds: 500));
+
+                                  // 检查是否生成成功
+                                  if (weatherProvider.forecast15dSummary !=
+                                          null &&
+                                      weatherProvider
+                                          .forecast15dSummary!
+                                          .isNotEmpty) {
+                                    return weatherProvider.forecast15dSummary!;
+                                  }
+
+                                  attempts++;
                                 }
-                                // 如果没有获取到内容，抛出异常让AIContentWidget处理
+
+                                // 如果等待后还是没有获取到内容，抛出异常让AIContentWidget处理
                                 throw Exception('未获取到AI内容');
                               },
                               defaultContent: '未来半月天气平稳，温度变化不大，适合安排户外活动。',

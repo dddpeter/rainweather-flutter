@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/lunar_model.dart';
-import '../screens/lunar_calendar_screen.dart';
 import '../screens/lao_huang_li_screen.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_constants.dart';
@@ -213,7 +212,7 @@ class LunarInfoWidget extends StatelessWidget {
   }
 }
 
-/// 宜忌卡片组件
+/// 宜忌卡片组件 - 美化版
 class YiJiWidget extends StatelessWidget {
   final LunarInfo lunarInfo;
 
@@ -222,21 +221,47 @@ class YiJiWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    
+    final isLight = themeProvider.isLightTheme;
+
+    // 准备宜忌数据
+    final goodItems = lunarInfo.goodThings.isEmpty
+        ? ['诸事不宜']
+        : lunarInfo.goodThings;
+    final badItems = lunarInfo.badThings.isEmpty
+        ? ['百无禁忌']
+        : lunarInfo.badThings;
+
     return Padding(
-      padding: const EdgeInsets.all(16), // 与其他卡片一致
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 标题 - 与详细信息卡片样式一致
+          // 标题行
           Row(
             children: [
-              Icon(
-                Icons.event_available_rounded,
-                color: AppColors.accentBlue,
-                size: AppConstants.sectionTitleIconSize,
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: isLight
+                        ? [
+                            AppColors.accentBlue.withOpacity(0.15),
+                            AppColors.accentBlue.withOpacity(0.08),
+                          ]
+                        : [
+                            AppColors.accentBlue.withOpacity(0.25),
+                            AppColors.accentBlue.withOpacity(0.15),
+                          ],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.event_available_rounded,
+                  color: AppColors.accentBlue,
+                  size: 18,
+                ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Text(
                 '宜忌提醒',
                 style: TextStyle(
@@ -246,7 +271,7 @@ class YiJiWidget extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              // 黄历详情入口
+              // 黄历详情入口 - 优化样式
               InkWell(
                 onTap: () {
                   Navigator.push(
@@ -256,190 +281,270 @@ class YiJiWidget extends StatelessWidget {
                     ),
                   );
                 },
-                borderRadius: BorderRadius.circular(8),
-                child: Builder(
-                  builder: (context) {
-                    // 使用与 AppBar 图标一致的颜色
-                    final buttonColor = themeProvider.isLightTheme
-                        ? AppColors.primaryBlue
-                        : AppColors.accentBlue;
-                    
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: isLight
+                          ? [
+                              AppColors.accentBlue.withOpacity(0.12),
+                              AppColors.accentBlue.withOpacity(0.06),
+                            ]
+                          : [
+                              AppColors.accentBlue.withOpacity(0.2),
+                              AppColors.accentBlue.withOpacity(0.1),
+                            ],
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: AppColors.accentBlue.withOpacity(
+                        isLight ? 0.3 : 0.4,
                       ),
-                      decoration: BoxDecoration(
-                        color: buttonColor.withOpacity(
-                          themeProvider.isLightTheme ? 0.15 : 0.1,
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.event_note,
+                        color: AppColors.accentBlue,
+                        size: 14,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '黄历详情',
+                        style: TextStyle(
+                          color: AppColors.accentBlue,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.3,
                         ),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: buttonColor.withOpacity(
-                            themeProvider.isLightTheme ? 0.5 : 0.3,
-                          ),
-                          width: 1,
-                        ),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.event_note,
-                            color: buttonColor,
-                            size: 16,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '黄历详情',
-                            style: TextStyle(
-                              color: buttonColor,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700, // 加粗字体
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          // 宜 - 与今日提醒样式一致
-          _buildYiJiItem(
-            Icons.check_circle_rounded,
-            '宜',
-            lunarInfo.goodThings.isEmpty
-                ? '诸事不宜'
-                : lunarInfo.goodThings.join('、'),
-            AppColors.accentGreen,
-          ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
-          // 忌 - 与今日提醒样式一致
-          _buildYiJiItem(
-            Icons.cancel_rounded,
-            '忌',
-            lunarInfo.badThings.isEmpty
-                ? '百无禁忌'
-                : lunarInfo.badThings.join('、'),
-            AppColors.error,
+          // 宜忌卡片 - 使用渐变卡片设计，固定高度
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // 宜卡片
+                Expanded(
+                  child: _buildYiJiCard(
+                    context,
+                    isGood: true,
+                    items: goodItems,
+                    icon: Icons.check_circle_rounded,
+                    color: AppColors.accentGreen,
+                    isLight: isLight,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // 忌卡片
+                Expanded(
+                  child: _buildYiJiCard(
+                    context,
+                    isGood: false,
+                    items: badItems,
+                    icon: Icons.cancel_rounded,
+                    color: AppColors.error,
+                    isLight: isLight,
+                  ),
+                ),
+              ],
+            ),
           ),
 
-          // 黄道吉日标识
+          // 黄道吉日标识 - 特殊样式
           if (lunarInfo.isHuangDaoDay) ...[
             const SizedBox(height: 12),
-            _buildYiJiItem(
-              Icons.star_rounded,
-              '黄道吉日',
-              '今日为黄道吉日，诸事宜',
-              AppColors.warning,
-            ),
+            _buildHuangDaoDayCard(isLight),
           ],
         ],
       ),
     );
   }
 
-  Widget _buildYiJiItem(IconData icon, String label, String text, Color color) {
-    return Builder(
-      builder: (context) {
-        final themeProvider = Provider.of<ThemeProvider>(
-          context,
-          listen: false,
-        );
+  /// 构建宜忌卡片
+  Widget _buildYiJiCard(
+    BuildContext context, {
+    required bool isGood,
+    required List<String> items,
+    required IconData icon,
+    required Color color,
+    required bool isLight,
+  }) {
+    final label = isGood ? '宜' : '忌';
+    final displayText = items.join('、');
 
-        // 根据主题决定颜色（与节气小卡片一致）
-        Color iconColorFinal;
-        Color backgroundColor;
-        Color textColor;
-        double iconBackgroundOpacity;
-
-        // 黄道吉日在暗色模式下使用琥珀金色
-        final isHuangDaoDay = label == '黄道吉日';
-        final baseColor = (isHuangDaoDay && !themeProvider.isLightTheme)
-            ? const Color(0xFFFFB300) // 暗色模式黄道吉日使用琥珀金色
-            : color;
-
-        if (themeProvider.isLightTheme) {
-          // 亮色模式：图标主题深蓝色，背景保持原色半透明，文字主题深蓝
-          iconColorFinal = const Color(0xFF012d78); // 图标主题深蓝色
-          backgroundColor = color.withOpacity(0.25); // 背景保持原色半透明
-          textColor = const Color(0xFF012d78); // 主题深蓝字
-          iconBackgroundOpacity = 0.2;
-        } else {
-          // 暗色模式：图标白色，背景原色半透明（黄道吉日用琥珀金），文字白色
-          iconColorFinal = Colors.white; // 图标白色
-          backgroundColor = baseColor.withOpacity(0.25); // 背景原色半透明
-          textColor = AppColors.textPrimary; // 白字
-          iconBackgroundOpacity = 0.3;
-        }
-
-        return Container(
-          padding: const EdgeInsets.symmetric(
-            vertical: 12,
-            horizontal: 14,
-          ), // 与节气小卡片一致
-          decoration: BoxDecoration(
-            color: backgroundColor,
-            borderRadius: BorderRadius.circular(4),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(
-                  themeProvider.isLightTheme ? 0.08 : 0.15,
-                ),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-                spreadRadius: 0,
-              ),
-            ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isLight
+              ? [
+                  color.withOpacity(0.12),
+                  color.withOpacity(0.05),
+                ]
+              : [
+                  color.withOpacity(0.2),
+                  color.withOpacity(0.1),
+                ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withOpacity(isLight ? 0.25 : 0.35),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(isLight ? 0.15 : 0.25),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+            spreadRadius: -2,
           ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.max,
+        children: [
+          // 标签行
+          Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(6),
+                padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: iconColorFinal.withOpacity(iconBackgroundOpacity),
-                  borderRadius: BorderRadius.circular(4),
+                  color: isLight
+                      ? color.withOpacity(0.15)
+                      : color.withOpacity(0.25),
+                  borderRadius: BorderRadius.circular(5),
                 ),
-                child: Icon(icon, color: iconColorFinal, size: 16), // 与节气小卡片一致
+                child: Icon(
+                  icon,
+                  color: color,
+                  size: 14,
+                ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      label,
-                      style: TextStyle(
-                        color: textColor, // 使用配对的文字颜色
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500, // 与节气小卡片一致
-                        letterSpacing: 0.2,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      text,
-                      style: TextStyle(
-                        color: textColor, // 使用配对的文字颜色
-                        fontSize: 14,
-                        height: 1.4,
-                      ),
-                    ),
-                  ],
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
                 ),
               ),
             ],
           ),
-        );
-      },
+          const SizedBox(height: 8),
+          // 内容文字 - 使用Expanded填充剩余空间
+          Expanded(
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: Text(
+                displayText,
+                style: TextStyle(
+                  color: AppColors.textPrimary.withOpacity(0.85),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  height: 1.4,
+                ),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 构建黄道吉日卡片
+  Widget _buildHuangDaoDayCard(bool isLight) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isLight
+              ? [
+                  const Color(0xFFFFF8E1), // 金色系亮色
+                  const Color(0xFFFFECB3),
+                ]
+              : [
+                  const Color(0xFFFFB300).withOpacity(0.2),
+                  const Color(0xFFFF8F00).withOpacity(0.1),
+                ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFFFFB300).withOpacity(isLight ? 0.4 : 0.6),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFFB300).withOpacity(isLight ? 0.2 : 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+            spreadRadius: -2,
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.star_rounded,
+            color: const Color(0xFFFFB300),
+            size: 20,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            '黄道吉日',
+            style: TextStyle(
+              color: const Color(0xFFFFB300),
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Container(
+            height: 16,
+            width: 1,
+            color: const Color(0xFFFFB300).withOpacity(0.5),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            '诸事宜',
+            style: TextStyle(
+              color: AppColors.textPrimary.withOpacity(0.8),
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
+
+/// 节气节日列表组件
 
 /// 节气节日列表组件
 class SolarTermListWidget extends StatelessWidget {

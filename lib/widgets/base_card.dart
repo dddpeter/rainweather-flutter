@@ -57,10 +57,10 @@ class BaseCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final effectivePadding = padding ?? AppColors.getCardPadding(cardType);
+    // 默认只设置水平 margin，垂直间距由页面布局统一控制
     final effectiveMargin = margin ??
         const EdgeInsets.symmetric(
           horizontal: AppConstants.screenHorizontalPadding,
-          vertical: 6,
         );
 
     final cardContent = Padding(

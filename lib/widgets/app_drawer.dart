@@ -33,13 +33,15 @@ class AppDrawer extends StatelessWidget {
               // 基础功能组
               _buildSectionTitle('基础功能'),
 
+              const SizedBox(height: 4),
+
               // 主题推荐提示
               _buildThemeRecommendation(context, themeProvider),
 
               // 主题配色快速切换
               _buildThemeQuickSwitch(context, themeProvider),
 
-              const Divider(height: 16, indent: 16, endIndent: 16),
+              const SizedBox(height: 8),
 
               // 主题设置
               _buildMenuItem(
@@ -75,13 +77,12 @@ class AppDrawer extends StatelessWidget {
                 },
               ),
 
-              // 天气雷达图功能已移除
-              const Divider(height: 24, indent: 16, endIndent: 16),
+              const SizedBox(height: 12),
 
               // 测试功能组（二级菜单，可展开/收起）
               _buildTestFunctionsMenu(context),
 
-              const Divider(height: 24, indent: 16, endIndent: 16),
+              const SizedBox(height: 12),
 
               // 关于应用
               _buildMenuItem(
@@ -105,71 +106,147 @@ class AppDrawer extends StatelessWidget {
 
   /// 构建抽屉头部
   Widget _buildDrawerHeader(BuildContext context, ThemeProvider themeProvider) {
-    // 与 AppBar 和底部 tabbar 使用相同的背景颜色
+    // 获取当前主题方案
+    final scheme = AppThemes.getScheme(themeProvider.themeScheme);
+    final isLight = themeProvider.isLightTheme;
+    
+    // 使用主题方案中定义的头部渐变
+    final headerGradient = scheme.getHeaderGradient(isLight);
+    
+    // 根据主题方案和亮暗模式计算文字颜色
+    // 某些主题（如amber、sunset等）在亮色模式下背景较浅，需要深色文字
+    final needsDarkText = _needsDarkHeaderText(themeProvider.themeScheme, isLight);
+    final textColor = needsDarkText ? const Color(0xFF1A1A1A) : Colors.white;
+    final textSecondaryColor = needsDarkText 
+        ? const Color(0xFF4A4A4A) 
+        : Colors.white.withOpacity(0.9);
+    final descriptionBgColor = needsDarkText
+        ? Colors.black.withOpacity(0.08)
+        : Colors.white.withOpacity(0.2);
+
     final headerDecoration = BoxDecoration(
-      color: AppColors.backgroundSecondary,
+      gradient: headerGradient,
+      boxShadow: [
+        BoxShadow(
+          color: _getHeaderShadowColor(themeProvider.themeScheme, isLight),
+          blurRadius: 8,
+          offset: const Offset(0, 4),
+        ),
+      ],
     );
 
-    // 使用主题色作为文字颜色（暗色模式下使用更亮的accent色）
-    final textColor = themeProvider.isLightTheme
-        ? AppColors.primaryBlue
-        : AppColors.accentBlue; // 暗色模式使用更亮的强调色
-    final subtextColor = AppColors.textTertiary; // 使用三级文字色（更淡）
-
-    return DrawerHeader(
+    return Container(
       decoration: headerDecoration,
-      margin: EdgeInsets.zero,
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
+      padding: const EdgeInsets.fromLTRB(16, 64, 16, 24),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // 应用图标（添加背景容器提高可见度）
+          // 应用图标（添加发光效果）
           Container(
-            width: 48,
-            height: 48,
+            width: 52,
+            height: 52,
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
+              color: Colors.white.withOpacity(0.95),
+              borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+                BoxShadow(
+                  color: Colors.white.withOpacity(0.3),
+                  blurRadius: 6,
+                  spreadRadius: 1,
                 ),
               ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(12),
               child: Image.asset(
                 'assets/images/app_icon.png',
-                width: 48,
-                height: 48,
+                width: 52,
+                height: 52,
                 fit: BoxFit.cover,
               ),
             ),
           ),
-          const SizedBox(height: 12),
-          // 应用名称
-          Text(
-            AppVersion.appName,
-            style: TextStyle(
-              color: textColor,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
+          const SizedBox(width: 12),
+          // 右侧文字信息
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 应用名称
+                Text(
+                  AppVersion.appName,
+                  style: TextStyle(
+                    color: textColor,
+                    fontSize: 19,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.3,
+                    height: 1.1,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                // 应用描述
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: descriptionBgColor,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    AppVersion.description,
+                    style: TextStyle(
+                      color: textSecondaryColor, 
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      height: 1.1,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 4),
-          // 应用描述
-          Text(
-            AppVersion.description,
-            style: TextStyle(color: subtextColor, fontSize: 12),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
     );
+  }
+
+  /// 判断是否需要深色文字（浅色背景）
+  bool _needsDarkHeaderText(AppThemeScheme scheme, bool isLight) {
+    // 亮色模式下，某些主题的头部背景较浅，需要深色文字
+    if (isLight) {
+      return scheme == AppThemeScheme.amber || 
+             scheme == AppThemeScheme.sunset ||
+             scheme == AppThemeScheme.rose;
+    }
+    // 暗色模式下，所有主题都使用浅色背景，所以用白色文字
+    return false;
+  }
+
+  /// 获取头部阴影颜色
+  Color _getHeaderShadowColor(AppThemeScheme scheme, bool isLight) {
+    if (isLight) {
+      // 亮色模式下的阴影颜色
+      switch (scheme) {
+        case AppThemeScheme.amber:
+          return const Color(0xFFFF8F00).withOpacity(0.3);
+        case AppThemeScheme.sunset:
+          return const Color(0xFFFF5722).withOpacity(0.3);
+        case AppThemeScheme.rose:
+          return const Color(0xFFE91E63).withOpacity(0.3);
+        default:
+          return AppColors.primaryBlue.withOpacity(0.3);
+      }
+    } else {
+      // 暗色模式下的阴影颜色
+      return AppColors.accentBlue.withOpacity(0.3);
+    }
   }
 
   /// 构建主题推荐提示
@@ -199,26 +276,50 @@ class AppDrawer extends StatelessWidget {
 
     final recommendedScheme = recommendation['scheme'] as AppThemeScheme;
     final reason = recommendation['reason'] as String;
+    final primaryColor = themeProvider.isLightTheme
+        ? AppColors.primaryBlue
+        : AppColors.accentBlue;
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.backgroundSecondary.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: AppColors.primaryBlue.withOpacity(0.2),
-          width: 1,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            primaryColor.withOpacity(0.12),
+            primaryColor.withOpacity(0.06),
+          ],
         ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: primaryColor.withOpacity(0.3),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: primaryColor.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.auto_awesome_outlined,
-            color: AppColors.primaryBlue,
-            size: 20,
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: primaryColor.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              Icons.auto_awesome_outlined,
+              color: primaryColor,
+              size: 20,
+            ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -228,30 +329,36 @@ class AppDrawer extends StatelessWidget {
                   style: TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: 13,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w700,
+                    height: 1.3,
                   ),
                 ),
               ],
             ),
           ),
           const SizedBox(width: 8),
-          FilledButton(
+          OutlinedButton(
             onPressed: () {
               themeProvider.setThemeScheme(recommendedScheme);
               AppColors.setThemeProvider(themeProvider);
             },
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.primaryBlue,
-              foregroundColor: Colors.white,
-              minimumSize: const Size(0, 32),
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+            style: OutlinedButton.styleFrom(
+              backgroundColor: primaryColor.withOpacity(0.1),
+              foregroundColor: primaryColor,
+              minimumSize: const Size(0, 36),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              elevation: 0,
+              side: BorderSide(
+                color: primaryColor,
+                width: 1.5,
+              ),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(8),
               ),
             ),
             child: const Text(
               '应用',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
             ),
           ),
         ],
@@ -269,8 +376,8 @@ class AppDrawer extends StatelessWidget {
         : AppColors.accentBlue;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      height: 90,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      height: 100,
       child: ListView(
         scrollDirection: Axis.horizontal,
         children: AppThemes.allSchemes.asMap().entries.map((entry) {
@@ -280,7 +387,7 @@ class AppDrawer extends StatelessWidget {
               themeProvider.themeScheme == AppThemeScheme.values[index];
 
           return _ThemeCardWithPulse(
-            width: 70,
+            width: 78,
             scheme: scheme,
             isSelected: isSelected,
             activeColor: activeColor,
@@ -297,15 +404,35 @@ class AppDrawer extends StatelessWidget {
   /// 构建分组标题
   Widget _buildSectionTitle(String title) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      child: Text(
-        title,
-        style: TextStyle(
-          color: AppColors.textSecondary,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.5,
-        ),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+      child: Row(
+        children: [
+          Container(
+            width: 4,
+            height: 16,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  AppColors.primaryBlue,
+                  AppColors.primaryBlue.withOpacity(0.6),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            title,
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -318,77 +445,110 @@ class AppDrawer extends StatelessWidget {
         ? AppColors.primaryBlue
         : AppColors.accentBlue;
 
-    return ExpansionTile(
-      leading: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: iconColor.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(Icons.science, color: iconColor, size: 22),
-      ),
-      title: Text(
-        '测试功能',
-        style: TextStyle(
-          color: AppColors.textPrimary,
-          fontSize: 15,
-          fontWeight: FontWeight.w500,
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: AppColors.backgroundSecondary,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.borderColor.withOpacity(0.3),
+          width: 1,
         ),
       ),
-      subtitle: Text(
-        '开发调试工具',
-        style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          dividerColor: Colors.transparent,
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
+        ),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          leading: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  iconColor.withOpacity(0.15),
+                  iconColor.withOpacity(0.08),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(Icons.science, color: iconColor, size: 24),
+          ),
+          title: Text(
+            '测试功能',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          subtitle: Text(
+            '开发调试工具',
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+          ),
+          iconColor: AppColors.textPrimary,
+          collapsedIconColor: AppColors.textSecondary,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Column(
+                children: [
+                  _buildSubMenuItem(
+                    context,
+                    icon: Icons.bug_report,
+                    title: '天气提醒测试',
+                    onTap: () {
+                      Navigator.pop(context);
+                      _navigateToWeatherAlertTest(context);
+                    },
+                  ),
+                  _buildSubMenuItem(
+                    context,
+                    icon: Icons.animation,
+                    title: '天气动画测试',
+                    onTap: () {
+                      Navigator.pop(context);
+                      _navigateToWeatherTest(context);
+                    },
+                  ),
+                  _buildSubMenuItem(
+                    context,
+                    icon: Icons.format_align_center,
+                    title: '天气布局测试',
+                    onTap: () {
+                      Navigator.pop(context);
+                      _navigateToWeatherLayoutTest(context);
+                    },
+                  ),
+                  _buildSubMenuItem(
+                    context,
+                    icon: Icons.location_on,
+                    title: '定位服务测试',
+                    onTap: () {
+                      Navigator.pop(context);
+                      _navigateToAllLocationTest(context);
+                    },
+                  ),
+                  _buildSubMenuItem(
+                    context,
+                    icon: Icons.image,
+                    title: '天气图标测试',
+                    onTap: () {
+                      Navigator.pop(context);
+                      _navigateToWeatherIconsTest(context);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
-      iconColor: AppColors.textPrimary,
-      collapsedIconColor: AppColors.textSecondary,
-      children: [
-        _buildSubMenuItem(
-          context,
-          icon: Icons.bug_report,
-          title: '天气提醒测试',
-          onTap: () {
-            Navigator.pop(context);
-            _navigateToWeatherAlertTest(context);
-          },
-        ),
-        _buildSubMenuItem(
-          context,
-          icon: Icons.animation,
-          title: '天气动画测试',
-          onTap: () {
-            Navigator.pop(context);
-            _navigateToWeatherTest(context);
-          },
-        ),
-        _buildSubMenuItem(
-          context,
-          icon: Icons.format_align_center,
-          title: '天气布局测试',
-          onTap: () {
-            Navigator.pop(context);
-            _navigateToWeatherLayoutTest(context);
-          },
-        ),
-        _buildSubMenuItem(
-          context,
-          icon: Icons.location_on,
-          title: '定位服务测试',
-          onTap: () {
-            Navigator.pop(context);
-            _navigateToAllLocationTest(context);
-          },
-        ),
-        _buildSubMenuItem(
-          context,
-          icon: Icons.image,
-          title: '天气图标测试',
-          onTap: () {
-            Navigator.pop(context);
-            _navigateToWeatherIconsTest(context);
-          },
-        ),
-      ],
     );
   }
 
@@ -405,23 +565,43 @@ class AppDrawer extends StatelessWidget {
         ? AppColors.primaryBlue
         : AppColors.accentBlue;
 
-    return ListTile(
-      contentPadding: const EdgeInsets.only(left: 72, right: 16),
-      leading: Icon(icon, color: iconColor, size: 20),
-      title: Text(
-        title,
-        style: TextStyle(
-          color: AppColors.textPrimary,
-          fontSize: 14,
-          fontWeight: FontWeight.w400,
+    return Container(
+      margin: const EdgeInsets.only(left: 16, right: 16, top: 2, bottom: 2),
+      decoration: BoxDecoration(
+        color: AppColors.backgroundSecondary.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(10),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            child: Row(
+              children: [
+                Icon(icon, color: iconColor, size: 20),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right,
+                  color: AppColors.textTertiary,
+                  size: 18,
+                ),
+              ],
+            ),
+          ),
         ),
       ),
-      trailing: Icon(
-        Icons.chevron_right,
-        color: AppColors.textTertiary,
-        size: 18,
-      ),
-      onTap: onTap,
     );
   }
 
@@ -439,36 +619,80 @@ class AppDrawer extends StatelessWidget {
         ? AppColors.primaryBlue
         : AppColors.accentBlue;
 
-    return ListTile(
-      leading: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: iconColor.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(icon, color: iconColor, size: 22),
-      ),
-      title: Text(
-        title,
-        style: TextStyle(
-          color: AppColors.textPrimary,
-          fontSize: 15,
-          fontWeight: FontWeight.w500,
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.backgroundSecondary,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.borderColor.withOpacity(0.3),
+          width: 1,
         ),
       ),
-      subtitle: subtitle != null
-          ? Text(
-              subtitle,
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
-            )
-          : null,
-      trailing: Icon(
-        Icons.chevron_right,
-        color: AppColors.textTertiary,
-        size: 20,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: [
+                // 图标容器
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        iconColor.withOpacity(0.15),
+                        iconColor.withOpacity(0.08),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, color: iconColor, size: 24),
+                ),
+                const SizedBox(width: 14),
+                // 标题和副标题
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (subtitle != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle,
+                          style: TextStyle(
+                            color: AppColors.textSecondary, 
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                // 箭头图标
+                Icon(
+                  Icons.chevron_right,
+                  color: AppColors.textTertiary,
+                  size: 20,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
-      onTap: onTap,
     );
   }
 
@@ -990,58 +1214,128 @@ class _ThemeCardWithPulseState extends State<_ThemeCardWithPulse>
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: widget.isSelected
                     ? widget.activeColor
-                    : Colors.transparent,
-                width: widget.isSelected ? 3 : 0,
+                    : widget.activeColor.withOpacity(0.3),
+                width: widget.isSelected ? 2.5 : 1.5,
               ),
               boxShadow: widget.isSelected
                   ? [
-                      // 内层阴影（边框高光）
+                      // 选中时的轻微阴影
                       BoxShadow(
-                        color: widget.activeColor.withOpacity(0.5),
-                        blurRadius: 0,
+                        color: widget.activeColor.withOpacity(0.2),
+                        blurRadius: 4,
                         spreadRadius: 1,
                       ),
-                      // 中层阴影（光晕效果）
+                      // 底部阴影
                       BoxShadow(
-                        color: widget.activeColor.withOpacity(
-                          _glowAnimation.value,
-                        ),
-                        blurRadius: 16,
-                        spreadRadius: 3,
-                      ),
-                      // 外层阴影（柔和效果）
-                      BoxShadow(
-                        color: widget.activeColor.withOpacity(0.3),
-                        blurRadius: 12,
-                        spreadRadius: 2,
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
                       ),
                     ]
-                  : null,
+                  : [
+                      // 未选中时的边框阴影
+                      BoxShadow(
+                        color: widget.activeColor.withOpacity(0.15),
+                        blurRadius: 4,
+                        spreadRadius: 1,
+                      ),
+                      // 未选中时的底部阴影
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
             ),
             child: Container(
               decoration: BoxDecoration(
-                color: widget.scheme.previewColor,
-                borderRadius: BorderRadius.circular(9),
+                gradient: LinearGradient(
+                  begin: Alignment(-0.5, -0.5),
+                  end: Alignment(1.0, 1.0),
+                  colors: [
+                    widget.scheme.previewColor,
+                    widget.scheme.previewColor.withOpacity(0.82),
+                  ],
+                  stops: const [0.0, 1.0],
+                ),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(widget.scheme.icon, color: Colors.white, size: 24),
-                  const SizedBox(height: 4),
-                  Text(
-                    widget.scheme.name.replaceAll('主题', ''),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
+                  // 图标
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(widget.isSelected ? 0.25 : 0.15),
+                      shape: BoxShape.circle,
+                      boxShadow: widget.isSelected
+                          ? [
+                              BoxShadow(
+                                color: Colors.white.withOpacity(0.3),
+                                blurRadius: 8,
+                                spreadRadius: 2,
+                              ),
+                            ]
+                          : null,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    child: Icon(
+                      widget.scheme.icon, 
+                      color: Colors.white, 
+                      size: 28,
+                    ),
                   ),
+                  const SizedBox(height: 6),
+                  // 主题名称
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: Text(
+                      widget.scheme.name.replaceAll('主题', ''),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.4,
+                        height: 1.1,
+                        shadows: widget.isSelected
+                            ? [
+                                Shadow(
+                                  color: Colors.black.withOpacity(0.3),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 1),
+                                ),
+                              ]
+                            : null,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  // 选中指示器
+                  if (widget.isSelected)
+                    Container(
+                      margin: const EdgeInsets.only(top: 4),
+                      width: 24,
+                      height: 3,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.white.withOpacity(0.5),
+                            blurRadius: 4,
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    const SizedBox(height: 7),
                 ],
               ),
             ),

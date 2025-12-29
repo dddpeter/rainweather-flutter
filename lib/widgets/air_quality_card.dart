@@ -177,7 +177,7 @@ class AirQualityCard extends StatelessWidget {
                   const SizedBox(width: 4),
                   Expanded(child: _buildLevelTag('重度', AppColors.airHeavy)),
                   const SizedBox(width: 4),
-                  Expanded(child: _buildLevelTag('严重', AppColors.airSevere)),
+                  Expanded(child: _buildLevelTag('严重', AppColors.airSevere, isSevere: true)),
                 ],
               ),
             ],
@@ -200,20 +200,29 @@ class AirQualityCard extends StatelessWidget {
   }
 
   /// 构建等级标签
-  Widget _buildLevelTag(String text, Color color) {
+  Widget _buildLevelTag(String text, Color color, {bool isSevere = false}) {
+    // 对于"严重"等级，在暗色模式下使用更亮的颜色
+    final tagColor = isSevere 
+        ? const Color(0xFFBA68C8) // 使用更亮的紫色（Material Purple 300）
+        : color;
+    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
+        color: tagColor.withOpacity(isSevere ? 0.35 : 0.2),
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color.withOpacity(0.5), width: 1),
+        border: Border.all(
+          color: tagColor.withOpacity(isSevere ? 0.8 : 0.5), 
+          width: isSevere ? 1.5 : 1
+        ),
       ),
       child: Text(
         text,
         style: TextStyle(
-          color: color,
+          color: tagColor,
           fontSize: 10,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
+          height: 1.0,
         ),
         textAlign: TextAlign.center,
       ),

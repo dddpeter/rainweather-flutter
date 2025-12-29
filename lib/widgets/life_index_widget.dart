@@ -158,10 +158,10 @@ class LifeIndexWidget extends StatelessWidget {
     Color textColor;
     double iconBackgroundOpacity;
 
-    // 背景色的基础颜色（橙色或绿色）
+    // 背景色的基础颜色（橙色或绿色）- 使用自动对比度版本
     final baseColor = isFirstColumn
-        ? const Color(0xFFFFB74D) // 第一列橙色
-        : const Color(0xFF64DD17); // 第二列绿色
+        ? AppColors.lifeIndexOrangeAuto // 第一列橙色
+        : AppColors.lifeIndexGreenAuto; // 第二列绿色
 
     if (themeProvider.isLightTheme) {
       // 亮色模式：图标主题深蓝色，背景保持橙/绿半透明，文字主题深蓝
@@ -308,10 +308,10 @@ class LifeIndexWidget extends StatelessWidget {
         final bool isFirstColumn =
             indexInList % 2 == 0; // 第一列（0, 2, 4）使用橙色，第二列（1, 3, 5）使用绿色
 
-        // 根据所在列决定颜色
+        // 根据所在列决定颜色 - 使用自动对比度版本
         final Color indexColor = isFirstColumn
-            ? const Color(0xFFFFB74D) // 第一列使用橙色
-            : const Color(0xFF64DD17); // 第二列使用绿色（替换原来的蓝色）
+            ? AppColors.lifeIndexOrangeAuto // 第一列使用橙色
+            : AppColors.lifeIndexGreenAuto; // 第二列使用绿色
 
         return AlertDialog(
           backgroundColor: AppColors.backgroundSecondary,

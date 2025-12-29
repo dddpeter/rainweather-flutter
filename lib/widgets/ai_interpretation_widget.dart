@@ -155,36 +155,19 @@ ${widget.lunarInfo.isHuangDaoDay ? '- 特殊：今日为黄道吉日，诸事大
   Widget build(BuildContext context) {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
-        // AI渐变色：使用常量
-        final aiGradient = themeProvider.isLightTheme
-            ? LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppColors.aiGradientLightDark.withOpacity(AppColors.aiGradientOpacity),
-                  AppColors.aiGradientLightMid.withOpacity(AppColors.aiGradientOpacity),
-                  AppColors.aiGradientLightLight.withOpacity(AppColors.aiGradientOpacity),
-                ],
-                stops: const [0.0, 0.5, 1.0],
-              )
-            : LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppColors.aiGradientDarkDark.withOpacity(AppColors.aiGradientOpacity),
-                  AppColors.aiGradientDarkMid.withOpacity(AppColors.aiGradientOpacity),
-                  AppColors.aiGradientDarkLight.withOpacity(AppColors.aiGradientOpacity),
-                ],
-                stops: const [0.0, 0.5, 1.0],
-              );
-        
-        // 文字颜色：使用常量，确保高对比度
-        final textColor = themeProvider.isLightTheme
-            ? AppColors.aiTextColorLight
-            : AppColors.aiTextColorDark;
-        
+        final isLight = themeProvider.isLightTheme;
+
+        // AI渐变色：使用统一的AI配色方案
+        final aiGradient = AIColorScheme.getAIGradient(isLight);
+
+        // 文字颜色：使用优化的AI配色方案
+        final textColor = AIColorScheme.getAITextColor(isLight);
+
         // 图标颜色：与文字颜色一致
         final iconColor = textColor;
+
+        // AI标签颜色
+        final aiLabelColor = AIColorScheme.getAILabelColor(isLight);
 
         return SingleChildScrollView(
           padding: const EdgeInsets.all(12),
@@ -234,13 +217,13 @@ ${widget.lunarInfo.isHuangDaoDay ? '- 特殊：今日为黄道吉日，诸事大
                             ),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(
-                                themeProvider.isLightTheme 
-                                    ? AppColors.labelWhiteBgOpacityLight 
+                                isLight
+                                    ? AppColors.labelWhiteBgOpacityLight
                                     : AppColors.labelWhiteBgOpacityDark
                               ),
                               borderRadius: BorderRadius.circular(4),
                               border: Border.all(
-                                color: textColor.withOpacity(AppColors.labelBorderOpacity),
+                                color: aiLabelColor.withOpacity(AIColorScheme.labelBorderOpacity),
                                 width: 1,
                               ),
                             ),
@@ -249,14 +232,14 @@ ${widget.lunarInfo.isHuangDaoDay ? '- 特殊：今日为黄道吉日，诸事大
                               children: [
                                 Icon(
                                   Icons.auto_awesome,
-                                  color: textColor,
+                                  color: aiLabelColor,
                                   size: 10,
                                 ),
                                 const SizedBox(width: 2),
                                 Text(
                                   'AI',
                                   style: TextStyle(
-                                    color: textColor,
+                                    color: aiLabelColor,
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
                                   ),

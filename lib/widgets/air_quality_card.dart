@@ -201,19 +201,19 @@ class AirQualityCard extends StatelessWidget {
 
   /// 构建等级标签
   Widget _buildLevelTag(String text, Color color, {bool isSevere = false}) {
-    // 对于"严重"等级，在暗色模式下使用更亮的颜色
-    final tagColor = isSevere 
-        ? const Color(0xFFBA68C8) // 使用更亮的紫色（Material Purple 300）
+    // 对于"严重"等级，统一使用基础紫色，通过透明度调整明暗
+    final tagColor = isSevere
+        ? AppColors.airSevere // 统一使用 Material Purple 700
         : color;
     
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
       decoration: BoxDecoration(
-        color: tagColor.withOpacity(isSevere ? 0.35 : 0.2),
+        color: tagColor.withOpacity(0.2), // 统一透明度
         borderRadius: BorderRadius.circular(4),
         border: Border.all(
-          color: tagColor.withOpacity(isSevere ? 0.8 : 0.5), 
-          width: isSevere ? 1.5 : 1
+          color: tagColor.withOpacity(0.5),
+          width: 1,
         ),
       ),
       child: Text(

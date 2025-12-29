@@ -116,9 +116,9 @@ class AppDrawer extends StatelessWidget {
     // 根据主题方案和亮暗模式计算文字颜色
     // 某些主题（如amber、sunset等）在亮色模式下背景较浅，需要深色文字
     final needsDarkText = _needsDarkHeaderText(themeProvider.themeScheme, isLight);
-    final textColor = needsDarkText ? const Color(0xFF1A1A1A) : Colors.white;
-    final textSecondaryColor = needsDarkText 
-        ? const Color(0xFF4A4A4A) 
+    final textColor = needsDarkText ? AppColors.drawerHeaderTextDark : Colors.white;
+    final textSecondaryColor = needsDarkText
+        ? AppColors.drawerHeaderTextSecondary
         : Colors.white.withOpacity(0.9);
     final descriptionBgColor = needsDarkText
         ? Colors.black.withOpacity(0.08)

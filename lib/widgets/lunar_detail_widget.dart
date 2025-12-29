@@ -442,12 +442,12 @@ class CompactHeader extends StatelessWidget {
 
   /// 构建星宿小卡片（星宿 + 吉凶）
   Widget _buildStarSmallCard(String label, String starName, String starLuck) {
-    // 判断吉凶颜色
+    // 判断吉凶颜色 - 使用优化的对比度颜色
     final isGood = starLuck == '吉';
     final luckColor = isGood ? AppColors.accentGreen : AppColors.warning; // 使用主题颜色
     final luckTextColor = isGood
-        ? const Color(0xFFFFD700) // 吉字黄色
-        : Colors.red; // 凶字红色
+        ? AppColors.auspiciousGold // 吉字黄金色（自动根据主题选择）
+        : AppColors.ominousRed; // 凶字红色（自动根据主题选择）
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12), // 减小内边距
@@ -750,35 +750,14 @@ class _PengZuCardState extends State<PengZuCard> {
     return Builder(
       builder: (context) {
         final themeProvider = context.read<ThemeProvider>();
-        
-        // AI渐变色：使用常量
-        final aiGradient = themeProvider.isLightTheme
-            ? LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppColors.aiGradientLightDark.withOpacity(AppColors.aiGradientOpacity),
-                  AppColors.aiGradientLightMid.withOpacity(AppColors.aiGradientOpacity),
-                  AppColors.aiGradientLightLight.withOpacity(AppColors.aiGradientOpacity),
-                ],
-                stops: const [0.0, 0.5, 1.0],
-              )
-            : LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppColors.aiGradientDarkDark.withOpacity(AppColors.aiGradientOpacity),
-                  AppColors.aiGradientDarkMid.withOpacity(AppColors.aiGradientOpacity),
-                  AppColors.aiGradientDarkLight.withOpacity(AppColors.aiGradientOpacity),
-                ],
-                stops: const [0.0, 0.5, 1.0],
-              );
-        
-        // 文字颜色：使用常量，确保高对比度
-        final textColor = themeProvider.isLightTheme
-            ? AppColors.aiTextColorLight
-            : AppColors.aiTextColorDark;
-        
+        final isLight = themeProvider.isLightTheme;
+
+        // AI渐变色：使用统一的AI配色方案
+        final aiGradient = AIColorScheme.getAIGradient(isLight);
+
+        // 文字颜色：使用优化的AI配色方案
+        final textColor = AIColorScheme.getAITextColor(isLight);
+
         // 图标颜色：与文字颜色一致
         final iconColor = textColor;
 
@@ -868,13 +847,13 @@ class _PengZuCardState extends State<PengZuCard> {
                               ),
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(
-                                  themeProvider.isLightTheme
+                                  isLight
                                       ? AppColors.labelWhiteBgOpacityLight
                                       : AppColors.labelWhiteBgOpacityDark
                                 ),
                                 borderRadius: BorderRadius.circular(4),
                                 border: Border.all(
-                                  color: textColor.withOpacity(AppColors.labelBorderOpacity),
+                                  color: textColor.withOpacity(AIColorScheme.labelBorderOpacity),
                                   width: 1,
                                 ),
                               ),

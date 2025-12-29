@@ -1,6 +1,178 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 import '../providers/theme_provider.dart';
 import 'theme_extensions.dart';
+
+/// 颜色对比度工具
+class ColorContrast {
+  /// 计算相对亮度
+  static double _luminance(Color color) {
+    final r = _linearize(color.red / 255);
+    final g = _linearize(color.green / 255);
+    final b = _linearize(color.blue / 255);
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  }
+
+  static double _linearize(double colorChannel) {
+    if (colorChannel <= 0.03928) {
+      return colorChannel / 12.92;
+    } else {
+      return math.pow((colorChannel + 0.055) / 1.055, 2.4).toDouble();
+    }
+  }
+
+  /// 计算对比度 (WCAG标准)
+  static double contrast(Color foreground, Color background) {
+    final fgLum = _luminance(foreground);
+    final bgLum = _luminance(background);
+    final lighter = math.max(fgLum, bgLum);
+    final darker = math.min(fgLum, bgLum);
+    return (lighter + 0.05) / (darker + 0.05);
+  }
+
+  /// 检查是否满足WCAG AA标准 (4.5:1)
+  static bool meetsAA(Color foreground, Color background) {
+    return contrast(foreground, background) >= 4.5;
+  }
+
+  /// 检查是否满足WCAG AAA标准 (7:1)
+  static bool meetsAAA(Color foreground, Color background) {
+    return contrast(foreground, background) >= 7.0;
+  }
+
+  /// 自动选择合适的文字颜色（黑或白）
+  static Color autoTextColor(Color background) {
+    const white = Colors.white;
+    const black = Color(0xFF1A1A1A);
+    return contrast(white, background) > contrast(black, background) ? white : black;
+  }
+}
+
+/// AI配色方案 - 统一所有AI功能的配色
+class AIColorScheme {
+  // 琥珀金系 - 主要AI功能
+  static const Color aiGoldDark = Color(0xFFFF8F00);
+  static const Color aiGoldMedium = Color(0xFFFFA726);
+  static const Color aiGoldLight = Color(0xFFFFCC80);
+  static const Color aiGoldLighter = Color(0xFFFFE082);
+
+  // 深琥珀金系 - 用于文字和图标
+  static const Color aiGoldTextDark = Color(0xFF4E342E);
+  static const Color aiGoldTextMedium = Color(0xFF5D4037);
+  static const Color aiGoldTextLight = Color(0xFF6D4C41);
+
+  // AI标签颜色
+  static const Color aiLabelLight = Color(0xFFFF8F00);
+  static const Color aiLabelDark = Color(0xFFFFB300);
+
+  /// 获取AI渐变（已优化对比度）
+  static LinearGradient getAIGradient(bool isLight) {
+    return LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: isLight
+          ? [aiGoldLighter, aiGoldLight, aiGoldMedium]
+          : [aiGoldDark, aiGoldMedium, aiGoldLight],
+      stops: const [0.0, 0.5, 1.0],
+    );
+  }
+
+  /// 获取AI文字颜色（优化对比度）
+  static Color getAITextColor(bool isLight) {
+    return isLight ? aiGoldTextDark : aiGoldTextMedium;
+  }
+
+  /// 获取AI图标颜色
+  static Color getAIIconColor(bool isLight) {
+    return getAITextColor(isLight);
+  }
+
+  /// 获取AI标签颜色
+  static Color getAILabelColor(bool isLight) {
+    return isLight ? aiLabelLight : aiLabelDark;
+  }
+
+  /// AI渐变透明度
+  static const double gradientOpacity = 0.8;
+
+  /// AI标签背景透明度
+  static const double labelBgOpacity = 0.15;
+
+  /// 标签边框透明度
+  static const double labelBorderOpacity = 0.3;
+}
+
+/// 语义化颜色层级
+class AppColorShades {
+  // 主色层级 - 蓝色系
+  static const Color primary50 = Color(0xFFE3F2FD);
+  static const Color primary100 = Color(0xFFBBDEFB);
+  static const Color primary200 = Color(0xFF90CAF9);
+  static const Color primary300 = Color(0xFF64B5F6);
+  static const Color primary400 = Color(0xFF42A5F5);
+  static const Color primary500 = Color(0xFF2196F3);
+  static const Color primary600 = Color(0xFF1E88E5);
+  static const Color primary700 = Color(0xFF1976D2);
+  static const Color primary800 = Color(0xFF1565C0);
+  static const Color primary900 = Color(0xFF0D47A1);
+
+  // 绿色层级
+  static const Color green100 = Color(0xFFC8E6C9);
+  static const Color green200 = Color(0xFFA5D6A7);
+  static const Color green300 = Color(0xFF81C784);
+  static const Color green400 = Color(0xFF66BB6A);
+  static const Color green500 = Color(0xFF4CAF50);
+  static const Color green600 = Color(0xFF43A047);
+  static const Color green700 = Color(0xFF388E3C);
+
+  // 橙色层级
+  static const Color orange100 = Color(0xFFFFE0B2);
+  static const Color orange200 = Color(0xFFFFCC80);
+  static const Color orange300 = Color(0xFFFFB74D);
+  static const Color orange400 = Color(0xFFFFA726);
+  static const Color orange500 = Color(0xFFFF9800);
+  static const Color orange600 = Color(0xFFFF8F00);
+  static const Color orange700 = Color(0xFFFF6F00);
+
+  // 金色层级
+  static const Color gold100 = Color(0xFFFFF8E1);
+  static const Color gold200 = Color(0xFFFFECB3);
+  static const Color gold300 = Color(0xFFFFD54F);
+  static const Color gold400 = Color(0xFFFFCA28);
+  static const Color gold500 = Color(0xFFFFC107);
+  static const Color gold600 = Color(0xFFFFB300);
+  static const Color gold700 = Color(0xFFFFA000);
+  static const Color gold800 = Color(0xFFFF8F00);
+  static const Color gold900 = Color(0xFFFF6F00);
+
+  // 红色层级
+  static const Color red100 = Color(0xFFFFCDD2);
+  static const Color red200 = Color(0xFFEF9A9A);
+  static const Color red300 = Color(0xFFE57373);
+  static const Color red400 = Color(0xFFEF5350);
+  static const Color red500 = Color(0xFFF44336);
+  static const Color red600 = Color(0xFFE53935);
+  static const Color red700 = Color(0xFFD32F2F);
+
+  /// 根据背景自动选择合适的主色层级
+  static Color getPrimaryForBackground(bool isLight, bool isCard) {
+    if (isLight) {
+      return isCard ? primary700 : primary900;
+    } else {
+      return isCard ? primary300 : primary200;
+    }
+  }
+
+  /// 根据背景选择绿色
+  static Color getGreenForBackground(bool isLight) {
+    return isLight ? green600 : green400;
+  }
+
+  /// 根据背景选择橙色
+  static Color getOrangeForBackground(bool isLight) {
+    return isLight ? orange600 : orange400;
+  }
+}
 
 /// 应用颜色配置 - 支持亮色和暗色主题
 ///
@@ -571,4 +743,65 @@ class AppColors {
   /// 标签白色背景透明度
   static const double labelWhiteBgOpacityLight = 0.9;
   static const double labelWhiteBgOpacityDark = 0.2;
+
+  // ==================== 特殊强调色 ====================
+
+  /// 吉祥色 - 农历吉字（根据主题自动选择）
+  static Color get auspiciousGold => _themeProvider?.isLightTheme == true
+      ? auspiciousGoldLight
+      : auspiciousGoldDark;
+
+  /// 农历凶字红色（根据主题自动选择）
+  static Color get ominousRed => _themeProvider?.isLightTheme == true
+      ? ominousRedLight
+      : ominousRedDark;
+
+  /// 生活指数橙色（根据主题自动选择）
+  static Color get lifeIndexOrangeAuto => _themeProvider?.isLightTheme == true
+      ? lifeIndexOrangeDark
+      : lifeIndexOrange;
+
+  /// 生活指数绿色（根据主题自动选择）
+  static Color get lifeIndexGreenAuto => _themeProvider?.isLightTheme == true
+      ? lifeIndexGreen
+      : lifeIndexGreenLight;
+
+  /// 生活指数第一列橙色 - 优化对比度
+  static const Color lifeIndexOrange = Color(0xFFFFB74D);
+  static const Color lifeIndexOrangeDark = Color(0xFFFF9800);
+
+  /// 生活指数第二列绿色 - 优化对比度
+  static const Color lifeIndexGreen = Color(0xFF64DD17);
+  static const Color lifeIndexGreenLight = Color(0xFF66BB6A);
+
+  /// 农历吉字金色 - 优化对比度
+  static const Color auspiciousGoldLight = Color(0xFFF9A825); // 亮色模式使用
+  static const Color auspiciousGoldDark = Color(0xFFFFD700); // 暗色模式使用
+
+  /// 农历凶字红色 - 优化对比度（避免纯红色）
+  static const Color ominousRedLight = Color(0xFFD32F2F); // 亮色模式
+  static const Color ominousRedDark = Color(0xFFE53935); // 暗色模式
+
+  /// 抽屉头部深色文字（浅色背景时使用）
+  static const Color drawerHeaderTextDark = Color(0xFF1A1A1A);
+
+  /// 抽屉头部次要文字颜色
+  static const Color drawerHeaderTextSecondary = Color(0xFF4A4A4A);
+
+  /// 空气质量严重污染亮色版本（通过透明度使用）
+  static const Color airSevereLight = Color(0xFFBA68C8);
+
+  // ==================== 通勤提醒专用渐变色 ====================
+
+  /// 通勤提醒深紫色
+  static const Color commuteDeepPurple = Color(0xFF4A148C);
+
+  /// 通勤提醒深蓝色
+  static const Color commuteDeepBlue = Color(0xFF1A237E);
+
+  /// 通勤提醒更深蓝色
+  static const Color commuteDarkerBlue = Color(0xFF0D47A1);
+
+  /// 通勤提醒金色光晕
+  static const Color commuteGoldGlow = Color(0xFFFFB300);
 }

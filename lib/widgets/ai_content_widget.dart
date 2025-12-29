@@ -112,9 +112,9 @@ class _AIContentWidgetState extends State<AIContentWidget> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              AppColors.aiGradientBlueDark.withOpacity(AppColors.aiGradientOpacity),
-              AppColors.aiGradientBlueMid.withOpacity(AppColors.aiGradientOpacity),
-              AppColors.aiGradientBlueLight.withOpacity(AppColors.aiGradientOpacity),
+              AppColors.aiGradientLightDark.withOpacity(AppColors.aiGradientOpacity),
+              AppColors.aiGradientLightMid.withOpacity(AppColors.aiGradientOpacity),
+              AppColors.aiGradientLightLight.withOpacity(AppColors.aiGradientOpacity),
             ],
             stops: const [0.0, 0.5, 1.0], // 渐变停止点，让渐变更平滑明显
           )
@@ -122,9 +122,9 @@ class _AIContentWidgetState extends State<AIContentWidget> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              AppColors.aiGradientAmberDark.withOpacity(AppColors.aiGradientOpacity),
-              AppColors.aiGradientAmberMid.withOpacity(AppColors.aiGradientOpacity),
-              AppColors.aiGradientAmberLight.withOpacity(AppColors.aiGradientOpacity),
+              AppColors.aiGradientDarkDark.withOpacity(AppColors.aiGradientOpacity),
+              AppColors.aiGradientDarkMid.withOpacity(AppColors.aiGradientOpacity),
+              AppColors.aiGradientDarkLight.withOpacity(AppColors.aiGradientOpacity),
             ],
             stops: const [0.0, 0.5, 1.0], // 渐变停止点，让渐变更平滑明显
           );
@@ -304,8 +304,8 @@ class _AIContentWidgetState extends State<AIContentWidget> {
         builder: (context) {
           final themeProvider = context.read<ThemeProvider>();
           final contentTextColor = themeProvider.isLightTheme
-              ? AppColors.aiTextColorLight
-              : AppColors.aiTextColorDark;
+              ? AppColors.aiTextColorLight // 亮色模式：使用 AppColors 常量
+              : AppColors.aiTextColorDark; // 暗色模式：使用 AppColors 常量
           
           return _isFromCache
               ? Text(
@@ -341,8 +341,8 @@ class _AIContentWidgetState extends State<AIContentWidget> {
       builder: (context) {
         final themeProvider = context.read<ThemeProvider>();
         final errorTextColor = themeProvider.isLightTheme
-            ? AppColors.aiTextColorLight
-            : AppColors.aiTextColorDark;
+            ? AppColors.aiTextColorLight // 亮色模式：使用 AppColors 常量
+            : AppColors.aiTextColorDark; // 暗色模式：使用 AppColors 常量
         
         return Column(
           key: const ValueKey('error'),

@@ -530,29 +530,29 @@ class AppColors {
   // ==================== AI卡片颜色常量 ====================
   
   /// AI标签颜色
-  /// 亮色模式：蓝色
-  static const Color aiLabelColorLight = Color(0xFF004CFF);
+  /// 亮色模式：琥珀金
+  static const Color aiLabelColorLight = Color(0xFFFF8F00);
   /// 暗色模式：金琥珀色
   static const Color aiLabelColorDark = Color(0xFFFFB300);
 
-  /// AI渐变背景色 - 亮色模式
-  static const Color aiGradientBlueDark = Color(0xFF004CFF); // 深蓝色
-  static const Color aiGradientBlueMid = Color(0xFF6C8FFF); // 中蓝色
-  static const Color aiGradientBlueLight = Color(0xFFB3D9FF); // 浅蓝色
+  /// AI渐变背景色 - 亮色模式（琥珀金变种色系）
+  static const Color aiGradientLightDark = Color(0xFFFF8F00); // 深琥珀金
+  static const Color aiGradientLightMid = Color(0xFFFFA726); // 中琥珀金
+  static const Color aiGradientLightLight = Color(0xFFFFCC80); // 浅琥珀金
   
-  /// AI渐变背景色 - 暗色模式
-  static const Color aiGradientAmberDark = Color(0xFFFFB300); // 深金琥珀色
-  static const Color aiGradientAmberMid = Color(0xFFFFC947); // 中金琥珀色
-  static const Color aiGradientAmberLight = Color(0xFFFFE082); // 浅金琥珀色
+  /// AI渐变背景色 - 暗色模式（琥珀金变种色系）
+  static const Color aiGradientDarkDark = Color(0xFFFFB300); // 深金琥珀色
+  static const Color aiGradientDarkMid = Color(0xFFFFC947); // 中金琥珀色
+  static const Color aiGradientDarkLight = Color(0xFFFFE082); // 浅金琥珀色
   
   /// AI渐变背景透明度
   static const double aiGradientOpacity = 0.8;
   
   /// AI卡片文字颜色
-  /// 亮色模式：深色文字（在蓝色渐变背景上）
-  static const Color aiTextColorLight = Color(0xDE000000); // black87 (222/255 = 0.87)
-  /// 暗色模式：深蓝色文字（在金琥珀色渐变背景上）
-  static const Color aiTextColorDark = Color(0xFF001A4D);
+  /// 亮色模式：深色文字（在琥珀金渐变背景上）
+  static const Color aiTextColorLight = Color(0xFF3E2723); // 深棕色，在琥珀金渐变背景上对比度高
+  /// 暗色模式：深色文字（在金琥珀色渐变背景上）
+  static const Color aiTextColorDark = Color(0xFF3E2723); // 深棕色，在金琥珀色渐变背景上对比度高
   
   /// 通勤提醒小卡片背景色
   /// 亮色模式：柔和青色

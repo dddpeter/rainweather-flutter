@@ -161,9 +161,9 @@ ${widget.lunarInfo.isHuangDaoDay ? '- 特殊：今日为黄道吉日，诸事大
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  AppColors.aiGradientBlueDark.withOpacity(AppColors.aiGradientOpacity),
-                  AppColors.aiGradientBlueMid.withOpacity(AppColors.aiGradientOpacity),
-                  AppColors.aiGradientBlueLight.withOpacity(AppColors.aiGradientOpacity),
+                  AppColors.aiGradientLightDark.withOpacity(AppColors.aiGradientOpacity),
+                  AppColors.aiGradientLightMid.withOpacity(AppColors.aiGradientOpacity),
+                  AppColors.aiGradientLightLight.withOpacity(AppColors.aiGradientOpacity),
                 ],
                 stops: const [0.0, 0.5, 1.0],
               )
@@ -171,9 +171,9 @@ ${widget.lunarInfo.isHuangDaoDay ? '- 特殊：今日为黄道吉日，诸事大
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  AppColors.aiGradientAmberDark.withOpacity(AppColors.aiGradientOpacity),
-                  AppColors.aiGradientAmberMid.withOpacity(AppColors.aiGradientOpacity),
-                  AppColors.aiGradientAmberLight.withOpacity(AppColors.aiGradientOpacity),
+                  AppColors.aiGradientDarkDark.withOpacity(AppColors.aiGradientOpacity),
+                  AppColors.aiGradientDarkMid.withOpacity(AppColors.aiGradientOpacity),
+                  AppColors.aiGradientDarkLight.withOpacity(AppColors.aiGradientOpacity),
                 ],
                 stops: const [0.0, 0.5, 1.0],
               );

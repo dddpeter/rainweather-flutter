@@ -5,6 +5,7 @@ import '../providers/theme_provider.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_constants.dart';
 import '../models/commute_advice_model.dart';
+import 'base_card.dart';
 
 /// 通勤建议组件
 class CommuteAdviceWidget extends StatefulWidget {
@@ -38,40 +39,11 @@ class _CommuteAdviceWidgetState extends State<CommuteAdviceWidget> {
               padding: const EdgeInsets.symmetric(
                 horizontal: AppConstants.screenHorizontalPadding,
               ),
-              child: Card(
-                elevation: AppColors.cardElevation,
-                shadowColor: AppColors.cardShadowColor,
-                color: AppColors.materialCardColor,
-                surfaceTintColor: Colors.transparent,
-                shape: AppColors.cardShape,
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    // ✨ AI智能助手专用渐变背景：使用统一的AI配色方案
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        AIColorScheme.aiGoldDark.withOpacity(0.9),
-                        AIColorScheme.aiGoldMedium.withOpacity(0.9),
-                        AIColorScheme.aiGoldLight.withOpacity(0.9),
-                      ],
-                    ),
-                    // 添加微妙的金色光晕效果
-                    boxShadow: [
-                      BoxShadow(
-                        color: AIColorScheme.aiGoldMedium.withOpacity(0.15),
-                        blurRadius: 20,
-                        offset: const Offset(0, 4),
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+              child: AICard(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                         // 标题行（可点击展开/收起）
                         InkWell(
                           onTap: () {
@@ -156,8 +128,6 @@ class _CommuteAdviceWidgetState extends State<CommuteAdviceWidget> {
                       ],
                     ),
                   ),
-                ),
-              ),
             );
           },
         );

@@ -5,6 +5,7 @@ import '../constants/app_colors.dart';
 import '../constants/app_constants.dart';
 import '../services/ai_service.dart';
 import '../models/lunar_model.dart';
+import 'base_card.dart';
 
 /// AI解读组件
 class AIInterpretationWidget extends StatefulWidget {
@@ -157,9 +158,6 @@ ${widget.lunarInfo.isHuangDaoDay ? '- 特殊：今日为黄道吉日，诸事大
       builder: (context, themeProvider, child) {
         final isLight = themeProvider.isLightTheme;
 
-        // AI渐变色：使用统一的AI配色方案
-        final aiGradient = AIColorScheme.getAIGradient(isLight);
-
         // 文字颜色：使用优化的AI配色方案
         final textColor = AIColorScheme.getAITextColor(isLight);
 
@@ -175,22 +173,11 @@ ${widget.lunarInfo.isHuangDaoDay ? '- 特殊：今日为黄道吉日，诸事大
             padding: const EdgeInsets.symmetric(
               horizontal: AppConstants.screenHorizontalPadding,
             ),
-            child: Card(
-              elevation: AppColors.cardElevation,
-              shadowColor: AppColors.cardShadowColor,
-              color: Colors.transparent,
-              surfaceTintColor: Colors.transparent,
-              shape: AppColors.cardShape,
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: aiGradient,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+            child: AICard(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                       // 标题栏
                       Row(
                         children: [
@@ -290,8 +277,6 @@ ${widget.lunarInfo.isHuangDaoDay ? '- 特殊：今日为黄道吉日，诸事大
                         ),
                     ],
                   ),
-                ),
-              ),
             ),
           ),
         );

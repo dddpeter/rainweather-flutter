@@ -6,6 +6,7 @@ import '../providers/weather_provider.dart';
 import '../providers/theme_provider.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_constants.dart';
+import 'base_card.dart';
 
 class LifeIndexWidget extends StatelessWidget {
   final WeatherProvider weatherProvider;
@@ -33,43 +34,34 @@ class LifeIndexWidget extends StatelessWidget {
         }
 
         if (showContainer) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppConstants.screenHorizontalPadding,
-            ),
-            child: Card(
-              elevation: AppColors.cardElevation,
-              shadowColor: AppColors.cardShadowColor,
-              color: AppColors.materialCardColor,
-              shape: AppColors.cardShape,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          return BaseCard(
+            cardType: CardType.standard,
+            useMaterialCard: true,
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.eco,
-                          color: AppColors.accentGreen,
-                          size: AppConstants.sectionTitleIconSize,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '生活指数',
-                          style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: AppConstants.sectionTitleFontSize,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
+                    Icon(
+                      Icons.eco,
+                      color: AppColors.accentGreen,
+                      size: AppConstants.sectionTitleIconSize,
                     ),
-                    const SizedBox(height: 12),
-                    lifeIndexContent,
+                    const SizedBox(width: 8),
+                    Text(
+                      '生活指数',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: AppConstants.sectionTitleFontSize,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
-              ),
+                const SizedBox(height: 12),
+                lifeIndexContent,
+              ],
             ),
           );
         } else {

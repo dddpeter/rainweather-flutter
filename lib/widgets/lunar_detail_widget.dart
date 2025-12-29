@@ -5,6 +5,7 @@ import '../models/lunar_model.dart';
 import '../providers/theme_provider.dart';
 import '../services/lunar_service.dart';
 import '../services/ai_service.dart';
+import 'base_card.dart';
 
 /// 农历详情组件
 class LunarDetailWidget extends StatelessWidget {
@@ -761,17 +762,13 @@ class _PengZuCardState extends State<PengZuCard> {
         // 图标颜色：与文字颜色一致
         final iconColor = textColor;
 
-        return Card(
-          elevation: AppColors.cardElevation,
-          shadowColor: AppColors.cardShadowColor,
-          color: AppColors.materialCardColor,
-          surfaceTintColor: Colors.transparent,
-          shape: AppColors.cardShape,
-          child: Padding(
-            padding: const EdgeInsets.all(12), // 减小内边距
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+        return BaseCard(
+          cardType: CardType.standard,
+          useMaterialCard: true,
+          padding: const EdgeInsets.all(12), // 减小内边距
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
                 Row(
                   children: [
                     Icon(
@@ -917,7 +914,6 @@ class _PengZuCardState extends State<PengZuCard> {
                 ),
               ],
             ),
-          ),
         );
       },
     );

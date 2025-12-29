@@ -3,6 +3,7 @@ import '../models/weather_model.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_constants.dart';
 import '../utils/weather_icon_helper.dart';
+import 'base_card.dart';
 
 /// 空气质量卡片组件
 /// 显示AQI数值、等级、标尺和等级说明
@@ -31,18 +32,10 @@ class AirQualityCard extends StatelessWidget {
     // 计算标尺位置（0-500范围）
     final progress = (aqi / 500).clamp(0.0, 1.0);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppConstants.screenHorizontalPadding,
-      ),
-      child: Card(
-        elevation: AppColors.cardElevation,
-        shadowColor: AppColors.cardShadowColor,
-        color: AppColors.materialCardColor,
-        shape: AppColors.cardShape,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
+    return BaseCard(
+      cardType: CardType.standard,
+      useMaterialCard: true,
+      child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // 标题行
@@ -181,9 +174,7 @@ class AirQualityCard extends StatelessWidget {
                 ],
               ),
             ],
-          ),
         ),
-      ),
     );
   }
 

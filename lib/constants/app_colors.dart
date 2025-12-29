@@ -3,6 +3,35 @@ import 'dart:math' as math;
 import '../providers/theme_provider.dart';
 import 'theme_extensions.dart';
 
+/// 卡片类型枚举
+enum CardType {
+  /// 标准卡片 - 用于主要内容展示
+  standard,
+
+  /// 紧凑卡片 - 用于空间受限的场景
+  compact,
+
+  /// 小型卡片 - 用于标签、按钮等小元素
+  small,
+
+  /// 带阴影卡片 - 用于需要强调的卡片
+  shadow,
+
+  /// 玻璃效果卡片 - 用于特殊视觉效果
+  glass,
+
+  /// AI渐变卡片 - 用于AI功能相关卡片
+  aiGradient,
+}
+
+/// 卡片阴影类型
+enum CardShadowType {
+  none,
+  standard,
+  light,
+  heavy,
+}
+
 /// 颜色对比度工具
 class ColorContrast {
   /// 计算相对亮度
@@ -415,6 +444,158 @@ class AppColors {
   /// 标题栏图标样式（用于装饰图标）
   static const double titleBarDecorIconSize = 20.0;
   static Color get titleBarDecorIconColor => _getColor('textSecondary');
+
+  // ==================== 卡片样式系统 ====================
+
+  /// 获取卡片装饰
+  static BoxDecoration getCardDecoration(
+    CardType type, {
+    Color? customColor,
+    BorderRadius? customRadius,
+  }) {
+    final radius = customRadius ?? BorderRadius.circular(8);
+
+    switch (type) {
+      case CardType.standard:
+        return BoxDecoration(
+          color: customColor ?? _getColor('cardBackground'),
+          borderRadius: radius,
+          border: Border.all(color: _getColor('cardBorder'), width: 1),
+        );
+
+      case CardType.compact:
+        return BoxDecoration(
+          color: customColor ?? _getColor('cardBackground'),
+          borderRadius: radius,
+          border: Border.all(color: _getColor('cardBorder'), width: 1),
+        );
+
+      case CardType.small:
+        return BoxDecoration(
+          color: customColor ?? _getColor('cardBackground'),
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: _getColor('cardBorder'), width: 1),
+        );
+
+      case CardType.shadow:
+        return BoxDecoration(
+          color: customColor ?? _getColor('cardBackground'),
+          borderRadius: radius,
+          border: Border.all(color: _getColor('cardBorder'), width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: _getColor('buttonShadow'),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        );
+
+      case CardType.glass:
+        return BoxDecoration(
+          color: _getColor('glassBackground'),
+          borderRadius: radius,
+          border: Border.all(color: _getColor('cardBorder'), width: 1),
+        );
+
+      case CardType.aiGradient:
+        final isLight = _themeProvider?.isLightTheme ?? false;
+        return BoxDecoration(
+          gradient: AIColorScheme.getAIGradient(isLight),
+          borderRadius: radius,
+          border: Border.all(
+            color: AIColorScheme.getAILabelColor(isLight).withOpacity(0.3),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AIColorScheme.aiGoldMedium.withOpacity(0.15),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
+              spreadRadius: 2,
+            ),
+          ],
+        );
+    }
+  }
+
+  /// 获取卡片内边距
+  static EdgeInsets getCardPadding(CardType type) {
+    switch (type) {
+      case CardType.standard:
+      case CardType.aiGradient:
+        return const EdgeInsets.all(16);
+      case CardType.compact:
+        return const EdgeInsets.all(12);
+      case CardType.small:
+        return const EdgeInsets.all(8);
+      case CardType.shadow:
+        return const EdgeInsets.all(16);
+      case CardType.glass:
+        return const EdgeInsets.all(12);
+    }
+  }
+
+  /// 获取卡片圆角半径
+  static double getCardBorderRadius(CardType type) {
+    switch (type) {
+      case CardType.standard:
+      case CardType.compact:
+      case CardType.shadow:
+      case CardType.glass:
+      case CardType.aiGradient:
+        return 8.0;
+      case CardType.small:
+        return 4.0;
+    }
+  }
+
+  /// 卡片边框样式
+  static Border getCardBorder({
+    Color? color,
+    double width = 1.0,
+  }) {
+    return Border.all(
+      color: color ?? _getColor('cardBorder'),
+      width: width,
+    );
+  }
+
+  /// 卡片阴影样式
+  static List<BoxShadow> getCardShadow({
+    CardShadowType type = CardShadowType.standard,
+  }) {
+    switch (type) {
+      case CardShadowType.none:
+        return [];
+      case CardShadowType.standard:
+        return [
+          BoxShadow(
+            color: _getColor('buttonShadow'),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ];
+      case CardShadowType.light:
+        return [
+          BoxShadow(
+            color: Colors.black.withOpacity(
+                _themeProvider?.isLightTheme == true ? 0.08 : 0.15),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ];
+      case CardShadowType.heavy:
+        return [
+          BoxShadow(
+            color: _getColor('buttonShadow'),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
+            spreadRadius: 2,
+          ),
+        ];
+    }
+  }
 
   // 底部导航栏样式
   /// 底部导航栏激活状态颜色

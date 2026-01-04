@@ -48,11 +48,15 @@ class RequestDeduplicator {
       );
 
       // 请求成功，完成并返回结果
-      completer.complete(result);
+      if (!completer.isCompleted) {
+        completer.complete(result);
+      }
       return result;
     } catch (e) {
       // 请求失败，完成并抛出异常
-      completer.completeError(e);
+      if (!completer.isCompleted) {
+        completer.completeError(e);
+      }
       rethrow;
     } finally {
       // 清理请求记录

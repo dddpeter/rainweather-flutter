@@ -94,9 +94,25 @@ class AIService {
         if (response.statusCode == 200) {
           Logger.s('HTTP请求成功', tag: 'AIService');
 
-          final jsonData = jsonDecode(utf8.decode(response.bodyBytes));
-          Logger.d('解析JSON成功', tag: 'AIService');
-          Logger.d('完整响应: ${jsonEncode(jsonData)}', tag: 'AIService');
+          // 安全的 JSON 解析
+          Map<String, dynamic>? jsonData;
+          try {
+            final decoded = utf8.decode(response.bodyBytes);
+            jsonData = jsonDecode(decoded) as Map<String, dynamic>;
+            Logger.d('解析JSON成功', tag: 'AIService');
+            Logger.d('完整响应: ${jsonEncode(jsonData)}', tag: 'AIService');
+          } on FormatException catch (e) {
+            Logger.e('JSON格式错误: ${e.message}', tag: 'AIService');
+            return null;
+          } catch (e) {
+            Logger.e('JSON解析失败', tag: 'AIService', error: e);
+            return null;
+          }
+
+          if (jsonData == null) {
+            Logger.w('JSON数据为空', tag: 'AIService');
+            return null;
+          }
 
           final choices = jsonData['choices'] as List?;
           Logger.d('Choices数量: ${choices?.length ?? 0}', tag: 'AIService');

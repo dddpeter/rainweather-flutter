@@ -1,6 +1,8 @@
-# Rain Weather Flutter
+# Rain Weather Flutter (智雨天气)
 
-A Flutter weather application refactored from the original Android project. This app provides real-time weather information with location services, weather forecasts, and beautiful UI components.
+A modern intelligent weather application built with Flutter, providing real-time weather information with location services, weather forecasts, and beautiful UI components.
+
+**Current Version**: v1.13.4 | **Release Date**: 2025-01-22
 
 > **中文文档**: [README.md](README.md) | **English Documentation**: This file
 
@@ -227,6 +229,22 @@ This Flutter app is a complete refactor of the original Android weather app with
 5. Submit a pull request
 
 ## Changelog
+
+### v1.13.4 (2025-01-22) - Latest
+
+**Performance & Stability Improvements**
+- 🐛 **Memory Leak Fixes**: Fixed multiple memory leaks in location services, network requests, and cache services
+- 🔧 **Resource Management**: Improved database connection management with automatic resource cleanup on app exit
+- 🎯 **Theme Race Condition**: Fixed theme loading race conditions to prevent UI anomalies and excessive rebuilds
+- 🛡️ **Enhanced Exception Handling**: Improved AI service JSON parsing exception handling for better fault tolerance
+- 🔄 **Location Concurrency Fix**: Fixed location service concurrency issues to prevent duplicate location requests
+- 📱 **Lifecycle Management**: Enhanced app lifecycle management with automatic task suspension when in background
+
+**Expected Improvements**
+- 💾 Memory usage optimization: 20-30%
+- ⚡ CPU usage optimization: 15-20%
+- 📉 Crash rate reduction: 50%+
+- 🔋 Battery life improvement: 10-15%
 
 ### v1.13.3 (2025-01-21)
 

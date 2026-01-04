@@ -16,6 +16,9 @@ import 'services/page_activation_observer.dart';
 import 'services/weather_widget_service.dart';
 import 'services/app_route_observer.dart';
 import 'services/app_initialization_service.dart';
+import 'services/database_service.dart';
+import 'services/weather_service.dart';
+import 'services/smart_cache_service.dart';
 import 'utils/app_recovery_manager.dart';
 import 'utils/global_exception_handler.dart';
 import 'utils/logger.dart';
@@ -65,7 +68,28 @@ class _RainWeatherAppState extends State<RainWeatherApp>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    // 清理数据库和服务资源
+    _cleanupResources();
     super.dispose();
+  }
+
+  /// 清理应用资源
+  void _cleanupResources() {
+    try {
+      // 关闭数据库连接
+      DatabaseService.getInstance().close();
+      Logger.d('数据库已关闭', tag: 'RainWeatherApp');
+
+      // 释放天气服务资源
+      WeatherService.getInstance().dispose();
+      Logger.d('天气服务已释放', tag: 'RainWeatherApp');
+
+      // 释放缓存服务资源
+      SmartCacheService().dispose();
+      Logger.d('缓存服务已释放', tag: 'RainWeatherApp');
+    } catch (e) {
+      Logger.e('清理资源失败', tag: 'RainWeatherApp', error: e);
+    }
   }
 
   @override

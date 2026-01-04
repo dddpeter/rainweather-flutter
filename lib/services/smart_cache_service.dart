@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'database_service.dart';
 
 /// 缓存数据类型
@@ -45,10 +46,13 @@ class CacheEntry {
 }
 
 /// 智能缓存服务 - 实现多级缓存和智能过期策略
-class SmartCacheService {
+class SmartCacheService extends WidgetsBindingObserver {
   static final SmartCacheService _instance = SmartCacheService._internal();
   factory SmartCacheService() => _instance;
-  SmartCacheService._internal();
+  SmartCacheService._internal() {
+    // 监听应用生命周期
+    WidgetsBinding.instance.addObserver(this);
+  }
 
   // 内存缓存（LRU策略）
   final Map<String, CacheEntry> _memoryCache = {};
@@ -265,6 +269,40 @@ class SmartCacheService {
     _preloadTimer = null;
     if (kDebugMode) {
       print('🛑 智能预加载服务已停止');
+    }
+  }
+
+  /// 监听应用生命周期变化
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (kDebugMode) {
+      print('📱 SmartCacheService: 应用状态变化 - $state');
+    }
+
+    switch (state) {
+      case AppLifecycleState.paused:
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.detached:
+        // 应用进入后台或被终止，停止预加载服务以节省资源
+        stopPreloadService();
+        break;
+      case AppLifecycleState.resumed:
+        // 应用恢复前台，重新启动预加载服务
+        startPreloadService();
+        break;
+      case AppLifecycleState.hidden:
+        // 应用隐藏，停止预加载服务
+        stopPreloadService();
+        break;
+    }
+  }
+
+  /// 销毁服务
+  void dispose() {
+    stopPreloadService();
+    WidgetsBinding.instance.removeObserver(this);
+    if (kDebugMode) {
+      print('🗑️ SmartCacheService: 服务已销毁');
     }
   }
 

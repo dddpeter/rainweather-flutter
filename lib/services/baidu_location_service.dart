@@ -202,11 +202,13 @@ class BaiduLocationService implements LocationProviderInterface {
   Future<void> stopLocation() async {
     try {
       await _loc.stopLocation();
-      _locationSubscription?.cancel();
-      _locationSubscription = null;
       print('✅ 百度定位已停止');
     } catch (e) {
       print('❌ 停止定位失败: $e');
+    } finally {
+      // 确保无论成功或失败都清理订阅
+      _locationSubscription?.cancel();
+      _locationSubscription = null;
     }
   }
 

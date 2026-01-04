@@ -8,24 +8,27 @@ class ThemeProvider extends ChangeNotifier {
   AppThemeMode _themeMode = AppThemeMode.system;
   AppThemeScheme _themeScheme = AppThemeScheme.blue;
   bool _isLightTheme = false;
+  bool _isInitialized = false; // 添加初始化标记
 
   AppThemeMode get themeMode => _themeMode;
   AppThemeScheme get themeScheme => _themeScheme;
   bool get isLightTheme => _isLightTheme;
+  bool get isInitialized => _isInitialized; // 暴露初始化状态
 
   ThemeProvider() {
     // 初始化默认主题状态
     _themeScheme = AppThemeScheme.blue; // 确保初始化为有效值
     _updateTheme();
-    _loadThemeFromPrefs();
-    // 监听系统主题变化
+    // 监听系统主题变化（添加防抖）
     WidgetsBinding.instance.platformDispatcher.onPlatformBrightnessChanged =
         () {
-          if (_themeMode == AppThemeMode.system) {
-            _updateTheme();
-            notifyListeners();
-          }
-        };
+      if (_themeMode == AppThemeMode.system && _isInitialized) {
+        _updateTheme();
+        notifyListeners();
+      }
+    };
+    // 异步加载主题配置
+    _loadThemeFromPrefs();
   }
 
   /// 切换主题方案
@@ -108,26 +111,37 @@ class ThemeProvider extends ChangeNotifier {
   }
 
   Future<void> _loadThemeFromPrefs() async {
-    final prefs = await SharedPreferences.getInstance();
+    try {
+      final prefs = await SharedPreferences.getInstance();
 
-    // 加载主题模式
-    final themeIndex = prefs.getInt('theme_mode') ?? 2; // 默认跟随系统
-    if (themeIndex >= 0 && themeIndex < AppThemeMode.values.length) {
-      _themeMode = AppThemeMode.values[themeIndex];
-    }
+      // 加载主题模式
+      final themeIndex = prefs.getInt('theme_mode') ?? 2; // 默认跟随系统
+      if (themeIndex >= 0 && themeIndex < AppThemeMode.values.length) {
+        _themeMode = AppThemeMode.values[themeIndex];
+      }
 
-    // 加载主题方案（添加边界检查）
-    final schemeIndex = prefs.getInt('theme_scheme') ?? 0; // 默认蓝色主题
-    if (schemeIndex >= 0 && schemeIndex < AppThemeScheme.values.length) {
-      _themeScheme = AppThemeScheme.values[schemeIndex];
-    } else {
-      // 如果索引超出范围，重置为默认值
+      // 加载主题方案（添加边界检查）
+      final schemeIndex = prefs.getInt('theme_scheme') ?? 0; // 默认蓝色主题
+      if (schemeIndex >= 0 && schemeIndex < AppThemeScheme.values.length) {
+        _themeScheme = AppThemeScheme.values[schemeIndex];
+      } else {
+        // 如果索引超出范围，重置为默认值
+        _themeScheme = AppThemeScheme.blue;
+        await prefs.setInt('theme_scheme', 0);
+      }
+
+      _updateTheme();
+      // 标记初始化完成
+      _isInitialized = true;
+      notifyListeners();
+    } catch (e) {
+      // 加载失败时使用默认值
+      _themeMode = AppThemeMode.system;
       _themeScheme = AppThemeScheme.blue;
-      await prefs.setInt('theme_scheme', 0);
+      _updateTheme();
+      _isInitialized = true; // 即使失败也标记为已初始化
+      notifyListeners();
     }
-
-    _updateTheme();
-    notifyListeners();
   }
 
   Future<void> _saveThemeToPrefs() async {

@@ -23,6 +23,7 @@ class LocationException implements Exception {
 class LocationService {
   static LocationService? _instance;
   LocationModel? _cachedLocation;
+  bool _isLocating = false; // 防止并发定位
   final GeocodingService _geocodingService = GeocodingService.getInstance();
   final EnhancedGeocodingService _enhancedGeocodingService =
       EnhancedGeocodingService.getInstance();
@@ -153,11 +154,20 @@ class LocationService {
 
   /// Get current location with proxy detection
   Future<LocationModel?> getCurrentLocation() async {
+    // 标记当前是否正在定位，防止并发
+    if (_isLocating) {
+      Logger.w('正在定位中，请勿重复调用', tag: 'LocationService');
+      return _cachedLocation;
+    }
+
+    _isLocating = true;
+
     try {
       // ① 优先尝试腾讯定位（添加超时）
       Logger.d('尝试腾讯定位...', tag: 'LocationService');
+      LocationModel? tencentLocation;
       try {
-        LocationModel? tencentLocation = await _tencentLocationService
+        tencentLocation = await _tencentLocationService
             .getCurrentLocation()
             .timeout(
               const Duration(seconds: 8),
@@ -166,14 +176,6 @@ class LocationService {
                 return null;
               },
             );
-        if (tencentLocation != null) {
-          Logger.s(
-            '腾讯定位成功: ${tencentLocation.district}',
-            tag: 'LocationService',
-          );
-          _cachedLocation = tencentLocation;
-          return tencentLocation;
-        }
       } catch (e, stackTrace) {
         Logger.e(
           '腾讯定位失败',
@@ -189,10 +191,20 @@ class LocationService {
         );
       }
 
+      if (tencentLocation != null) {
+        Logger.s(
+          '腾讯定位成功: ${tencentLocation.district}',
+          tag: 'LocationService',
+        );
+        _cachedLocation = tencentLocation;
+        return tencentLocation;
+      }
+
       // ② 腾讯定位失败，尝试高德地图定位
       Logger.d('尝试高德地图定位...', tag: 'LocationService');
+      LocationModel? amapLocation;
       try {
-        LocationModel? amapLocation = await _amapLocationService
+        amapLocation = await _amapLocationService
             .getCurrentLocation()
             .timeout(
               const Duration(seconds: 8),
@@ -201,14 +213,6 @@ class LocationService {
                 return null;
               },
             );
-        if (amapLocation != null) {
-          Logger.s(
-            '高德地图定位成功: ${amapLocation.district}',
-            tag: 'LocationService',
-          );
-          _cachedLocation = amapLocation;
-          return amapLocation;
-        }
       } catch (e, stackTrace) {
         Logger.e(
           '高德地图定位失败',
@@ -224,10 +228,20 @@ class LocationService {
         );
       }
 
+      if (amapLocation != null) {
+        Logger.s(
+          '高德地图定位成功: ${amapLocation.district}',
+          tag: 'LocationService',
+        );
+        _cachedLocation = amapLocation;
+        return amapLocation;
+      }
+
       // ③ 高德地图定位失败，尝试百度定位
       Logger.d('尝试百度定位...', tag: 'LocationService');
+      LocationModel? baiduLocation;
       try {
-        LocationModel? baiduLocation = await _baiduLocationService
+        baiduLocation = await _baiduLocationService
             .getCurrentLocation()
             .timeout(
               const Duration(seconds: 8),
@@ -236,11 +250,6 @@ class LocationService {
                 return null;
               },
             );
-        if (baiduLocation != null) {
-          Logger.s('百度定位成功: ${baiduLocation.district}', tag: 'LocationService');
-          _cachedLocation = baiduLocation;
-          return baiduLocation;
-        }
       } catch (e, stackTrace) {
         Logger.e(
           '百度定位失败',
@@ -254,6 +263,12 @@ class LocationService {
           context: 'LocationService.BaiduLocation',
           type: AppErrorType.location,
         );
+      }
+
+      if (baiduLocation != null) {
+        Logger.s('百度定位成功: ${baiduLocation.district}', tag: 'LocationService');
+        _cachedLocation = baiduLocation;
+        return baiduLocation;
       }
 
       // ④ 百度定位失败，尝试GPS定位
@@ -358,6 +373,9 @@ class LocationService {
       } else {
         throw LocationException('定位失败: ${e.toString()}');
       }
+    } finally {
+      // 无论成功或失败，都重置定位标志
+      _isLocating = false;
     }
   }
 

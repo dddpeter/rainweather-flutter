@@ -11,12 +11,26 @@ import 'network_config_service.dart';
 
 class WeatherService {
   static WeatherService? _instance;
+  late Dio _dio; // 复用的 Dio 实例
   final CityDataService _cityDataService = CityDataService.getInstance();
   final RequestDeduplicator _deduplicator = RequestDeduplicator();
   final RequestCacheService _cacheService = RequestCacheService();
   final NetworkConfigService _networkConfig = NetworkConfigService();
 
-  WeatherService._();
+  WeatherService._() {
+    // 初始化复用的 Dio 实例
+    _dio = Dio(
+      BaseOptions(
+        connectTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 30),
+        sendTimeout: const Duration(seconds: 15),
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'RainWeather/1.0.0 (Flutter)',
+        },
+      ),
+    );
+  }
 
   static WeatherService getInstance() {
     _instance ??= WeatherService._();
@@ -51,20 +65,12 @@ class WeatherService {
           networkQuality,
         );
 
-        // 创建带超时配置的 Dio 实例
-        final dio = Dio(
-          BaseOptions(
-            connectTimeout: adjustedConfig.connectTimeout,
-            receiveTimeout: adjustedConfig.receiveTimeout,
-            sendTimeout: adjustedConfig.sendTimeout,
-            headers: {
-              'Accept': 'application/json',
-              'User-Agent': 'RainWeather/1.0.0 (Flutter)',
-            },
-          ),
-        );
+        // 使用复用的 Dio 实例，动态调整超时配置
+        _dio.options.connectTimeout = adjustedConfig.connectTimeout;
+        _dio.options.receiveTimeout = adjustedConfig.receiveTimeout;
+        _dio.options.sendTimeout = adjustedConfig.sendTimeout;
 
-        final response = await dio.get(
+        final response = await _dio.get(
           '${AppConstants.weatherApiBaseUrl}$cityId',
         );
 
@@ -161,9 +167,15 @@ class WeatherService {
         // 先尝试从缓存获取
         final cachedData = await _cacheService.get<List<DailyWeather>>(
           requestKey,
-          (json) => (json['forecast'] as List)
-              .map((item) => DailyWeather.fromJson(item))
-              .toList(),
+          (json) {
+            if (json == null || json['forecast'] == null) {
+              return <DailyWeather>[];
+            }
+            final forecastList = json['forecast'] as List<dynamic>;
+            return forecastList
+                .map((item) => DailyWeather.fromJson(item as Map<String, dynamic>))
+                .toList();
+          },
         );
 
         if (cachedData != null) {
@@ -223,9 +235,15 @@ class WeatherService {
         // 先尝试从缓存获取
         final cachedData = await _cacheService.get<List<HourlyWeather>>(
           requestKey,
-          (json) => (json['forecast'] as List)
-              .map((item) => HourlyWeather.fromJson(item))
-              .toList(),
+          (json) {
+            if (json == null || json['forecast'] == null) {
+              return <HourlyWeather>[];
+            }
+            final forecastList = json['forecast'] as List<dynamic>;
+            return forecastList
+                .map((item) => HourlyWeather.fromJson(item as Map<String, dynamic>))
+                .toList();
+          },
         );
 
         if (cachedData != null) {
@@ -322,9 +340,29 @@ class WeatherService {
   /// 取消所有正在进行的请求
   void cancelAllRequests() {
     _deduplicator.cancelAll();
+    // 取消 Dio 的所有请求
+    _dio.close(force: true);
+    // 重新初始化 Dio 实例
+    _dio = Dio(
+      BaseOptions(
+        connectTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 30),
+        sendTimeout: const Duration(seconds: 15),
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'RainWeather/1.0.0 (Flutter)',
+        },
+      ),
+    );
     Logger.d('所有天气请求已取消', tag: 'WeatherService');
   }
 
   /// 获取正在进行的请求数量
   int get pendingRequestCount => _deduplicator.pendingRequestCount;
+
+  /// 销毁服务，释放资源
+  void dispose() {
+    _dio.close();
+    Logger.d('WeatherService 已销毁', tag: 'WeatherService');
+  }
 }

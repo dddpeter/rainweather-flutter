@@ -858,12 +858,12 @@ class AppDrawer extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '• 黄历详情页面改为滑动页面设计\n'
-                      '• 新增AI解读页面，支持左右滑动切换\n'
-                      '• 优化通勤提醒自动清理逻辑\n'
-                      '• 修复通勤提醒时段结束后不消失的问题\n'
-                      '• 优化日出日落卡片布局，更加紧凑\n'
-                      '• 修复页面指示器按钮颜色显示问题',
+                      '• 修复多处内存泄漏问题（定位、网络、缓存）\n'
+                      '• 优化数据库连接管理，自动释放资源\n'
+                      '• 修复主题加载竞态条件，避免UI异常\n'
+                      '• 增强AI服务JSON解析异常处理\n'
+                      '• 修复定位服务并发问题，防止重复定位\n'
+                      '• 完善应用生命周期管理',
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,

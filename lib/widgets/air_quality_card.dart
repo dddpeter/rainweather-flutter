@@ -3,6 +3,7 @@ import '../models/weather_model.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_constants.dart';
 import '../utils/weather_icon_helper.dart';
+import 'base_card.dart';
 
 /// 空气质量卡片组件
 /// 显示AQI数值、等级、标尺和等级说明
@@ -31,18 +32,10 @@ class AirQualityCard extends StatelessWidget {
     // 计算标尺位置（0-500范围）
     final progress = (aqi / 500).clamp(0.0, 1.0);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppConstants.screenHorizontalPadding,
-      ),
-      child: Card(
-        elevation: AppColors.cardElevation,
-        shadowColor: AppColors.cardShadowColor,
-        color: AppColors.materialCardColor,
-        shape: AppColors.cardShape,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
+    return BaseCard(
+      cardType: CardType.standard,
+      useMaterialCard: true,
+      child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // 标题行
@@ -177,13 +170,11 @@ class AirQualityCard extends StatelessWidget {
                   const SizedBox(width: 4),
                   Expanded(child: _buildLevelTag('重度', AppColors.airHeavy)),
                   const SizedBox(width: 4),
-                  Expanded(child: _buildLevelTag('严重', AppColors.airSevere)),
+                  Expanded(child: _buildLevelTag('严重', AppColors.airSevere, isSevere: true)),
                 ],
               ),
             ],
-          ),
         ),
-      ),
     );
   }
 
@@ -200,20 +191,29 @@ class AirQualityCard extends StatelessWidget {
   }
 
   /// 构建等级标签
-  Widget _buildLevelTag(String text, Color color) {
+  Widget _buildLevelTag(String text, Color color, {bool isSevere = false}) {
+    // 对于"严重"等级，统一使用基础紫色，通过透明度调整明暗
+    final tagColor = isSevere
+        ? AppColors.airSevere // 统一使用 Material Purple 700
+        : color;
+    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
+        color: tagColor.withOpacity(0.2), // 统一透明度
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color.withOpacity(0.5), width: 1),
+        border: Border.all(
+          color: tagColor.withOpacity(0.5),
+          width: 1,
+        ),
       ),
       child: Text(
         text,
         style: TextStyle(
-          color: color,
+          color: tagColor,
           fontSize: 10,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.w700,
+          height: 1.0,
         ),
         textAlign: TextAlign.center,
       ),

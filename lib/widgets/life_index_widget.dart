@@ -6,6 +6,7 @@ import '../providers/weather_provider.dart';
 import '../providers/theme_provider.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_constants.dart';
+import 'base_card.dart';
 
 class LifeIndexWidget extends StatelessWidget {
   final WeatherProvider weatherProvider;
@@ -33,43 +34,34 @@ class LifeIndexWidget extends StatelessWidget {
         }
 
         if (showContainer) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppConstants.screenHorizontalPadding,
-            ),
-            child: Card(
-              elevation: AppColors.cardElevation,
-              shadowColor: AppColors.cardShadowColor,
-              color: AppColors.materialCardColor,
-              shape: AppColors.cardShape,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          return BaseCard(
+            cardType: CardType.standard,
+            useMaterialCard: true,
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.eco,
-                          color: AppColors.accentGreen,
-                          size: AppConstants.sectionTitleIconSize,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '生活指数',
-                          style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: AppConstants.sectionTitleFontSize,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
+                    Icon(
+                      Icons.eco,
+                      color: AppColors.accentGreen,
+                      size: AppConstants.sectionTitleIconSize,
                     ),
-                    const SizedBox(height: 12),
-                    lifeIndexContent,
+                    const SizedBox(width: 8),
+                    Text(
+                      '生活指数',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: AppConstants.sectionTitleFontSize,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
-              ),
+                const SizedBox(height: 12),
+                lifeIndexContent,
+              ],
             ),
           );
         } else {
@@ -158,10 +150,10 @@ class LifeIndexWidget extends StatelessWidget {
     Color textColor;
     double iconBackgroundOpacity;
 
-    // 背景色的基础颜色（橙色或绿色）
+    // 背景色的基础颜色（橙色或绿色）- 使用自动对比度版本
     final baseColor = isFirstColumn
-        ? const Color(0xFFFFB74D) // 第一列橙色
-        : const Color(0xFF64DD17); // 第二列绿色
+        ? AppColors.lifeIndexOrangeAuto // 第一列橙色
+        : AppColors.lifeIndexGreenAuto; // 第二列绿色
 
     if (themeProvider.isLightTheme) {
       // 亮色模式：图标主题深蓝色，背景保持橙/绿半透明，文字主题深蓝
@@ -308,10 +300,10 @@ class LifeIndexWidget extends StatelessWidget {
         final bool isFirstColumn =
             indexInList % 2 == 0; // 第一列（0, 2, 4）使用橙色，第二列（1, 3, 5）使用绿色
 
-        // 根据所在列决定颜色
+        // 根据所在列决定颜色 - 使用自动对比度版本
         final Color indexColor = isFirstColumn
-            ? const Color(0xFFFFB74D) // 第一列使用橙色
-            : const Color(0xFF64DD17); // 第二列使用绿色（替换原来的蓝色）
+            ? AppColors.lifeIndexOrangeAuto // 第一列使用橙色
+            : AppColors.lifeIndexGreenAuto; // 第二列使用绿色
 
         return AlertDialog(
           backgroundColor: AppColors.backgroundSecondary,

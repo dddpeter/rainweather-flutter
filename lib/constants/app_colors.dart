@@ -1,6 +1,207 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 import '../providers/theme_provider.dart';
 import 'theme_extensions.dart';
+
+/// 卡片类型枚举
+enum CardType {
+  /// 标准卡片 - 用于主要内容展示
+  standard,
+
+  /// 紧凑卡片 - 用于空间受限的场景
+  compact,
+
+  /// 小型卡片 - 用于标签、按钮等小元素
+  small,
+
+  /// 带阴影卡片 - 用于需要强调的卡片
+  shadow,
+
+  /// 玻璃效果卡片 - 用于特殊视觉效果
+  glass,
+
+  /// AI渐变卡片 - 用于AI功能相关卡片
+  aiGradient,
+}
+
+/// 卡片阴影类型
+enum CardShadowType {
+  none,
+  standard,
+  light,
+  heavy,
+}
+
+/// 颜色对比度工具
+class ColorContrast {
+  /// 计算相对亮度
+  static double _luminance(Color color) {
+    final r = _linearize(color.red / 255);
+    final g = _linearize(color.green / 255);
+    final b = _linearize(color.blue / 255);
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  }
+
+  static double _linearize(double colorChannel) {
+    if (colorChannel <= 0.03928) {
+      return colorChannel / 12.92;
+    } else {
+      return math.pow((colorChannel + 0.055) / 1.055, 2.4).toDouble();
+    }
+  }
+
+  /// 计算对比度 (WCAG标准)
+  static double contrast(Color foreground, Color background) {
+    final fgLum = _luminance(foreground);
+    final bgLum = _luminance(background);
+    final lighter = math.max(fgLum, bgLum);
+    final darker = math.min(fgLum, bgLum);
+    return (lighter + 0.05) / (darker + 0.05);
+  }
+
+  /// 检查是否满足WCAG AA标准 (4.5:1)
+  static bool meetsAA(Color foreground, Color background) {
+    return contrast(foreground, background) >= 4.5;
+  }
+
+  /// 检查是否满足WCAG AAA标准 (7:1)
+  static bool meetsAAA(Color foreground, Color background) {
+    return contrast(foreground, background) >= 7.0;
+  }
+
+  /// 自动选择合适的文字颜色（黑或白）
+  static Color autoTextColor(Color background) {
+    const white = Colors.white;
+    const black = Color(0xFF1A1A1A);
+    return contrast(white, background) > contrast(black, background) ? white : black;
+  }
+}
+
+/// AI配色方案 - 统一所有AI功能的配色
+class AIColorScheme {
+  // 琥珀金系 - 主要AI功能
+  static const Color aiGoldDark = Color(0xFFFF8F00);
+  static const Color aiGoldMedium = Color(0xFFFFA726);
+  static const Color aiGoldLight = Color(0xFFFFCC80);
+  static const Color aiGoldLighter = Color(0xFFFFE082);
+
+  // 深琥珀金系 - 用于文字和图标
+  static const Color aiGoldTextDark = Color(0xFF4E342E);
+  static const Color aiGoldTextMedium = Color(0xFF5D4037);
+  static const Color aiGoldTextLight = Color(0xFF6D4C41);
+
+  // AI标签颜色
+  static const Color aiLabelLight = Color(0xFFFF8F00);
+  static const Color aiLabelDark = Color(0xFFFFB300);
+
+  /// 获取AI渐变（已优化对比度）
+  static LinearGradient getAIGradient(bool isLight) {
+    return LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: isLight
+          ? [aiGoldLighter, aiGoldLight, aiGoldMedium]
+          : [aiGoldDark, aiGoldMedium, aiGoldLight],
+      stops: const [0.0, 0.5, 1.0],
+    );
+  }
+
+  /// 获取AI文字颜色（优化对比度）
+  static Color getAITextColor(bool isLight) {
+    return isLight ? aiGoldTextDark : aiGoldTextMedium;
+  }
+
+  /// 获取AI图标颜色
+  static Color getAIIconColor(bool isLight) {
+    return getAITextColor(isLight);
+  }
+
+  /// 获取AI标签颜色
+  static Color getAILabelColor(bool isLight) {
+    return isLight ? aiLabelLight : aiLabelDark;
+  }
+
+  /// AI渐变透明度
+  static const double gradientOpacity = 0.8;
+
+  /// AI标签背景透明度
+  static const double labelBgOpacity = 0.15;
+
+  /// 标签边框透明度
+  static const double labelBorderOpacity = 0.3;
+}
+
+/// 语义化颜色层级
+class AppColorShades {
+  // 主色层级 - 蓝色系
+  static const Color primary50 = Color(0xFFE3F2FD);
+  static const Color primary100 = Color(0xFFBBDEFB);
+  static const Color primary200 = Color(0xFF90CAF9);
+  static const Color primary300 = Color(0xFF64B5F6);
+  static const Color primary400 = Color(0xFF42A5F5);
+  static const Color primary500 = Color(0xFF2196F3);
+  static const Color primary600 = Color(0xFF1E88E5);
+  static const Color primary700 = Color(0xFF1976D2);
+  static const Color primary800 = Color(0xFF1565C0);
+  static const Color primary900 = Color(0xFF0D47A1);
+
+  // 绿色层级
+  static const Color green100 = Color(0xFFC8E6C9);
+  static const Color green200 = Color(0xFFA5D6A7);
+  static const Color green300 = Color(0xFF81C784);
+  static const Color green400 = Color(0xFF66BB6A);
+  static const Color green500 = Color(0xFF4CAF50);
+  static const Color green600 = Color(0xFF43A047);
+  static const Color green700 = Color(0xFF388E3C);
+
+  // 橙色层级
+  static const Color orange100 = Color(0xFFFFE0B2);
+  static const Color orange200 = Color(0xFFFFCC80);
+  static const Color orange300 = Color(0xFFFFB74D);
+  static const Color orange400 = Color(0xFFFFA726);
+  static const Color orange500 = Color(0xFFFF9800);
+  static const Color orange600 = Color(0xFFFF8F00);
+  static const Color orange700 = Color(0xFFFF6F00);
+
+  // 金色层级
+  static const Color gold100 = Color(0xFFFFF8E1);
+  static const Color gold200 = Color(0xFFFFECB3);
+  static const Color gold300 = Color(0xFFFFD54F);
+  static const Color gold400 = Color(0xFFFFCA28);
+  static const Color gold500 = Color(0xFFFFC107);
+  static const Color gold600 = Color(0xFFFFB300);
+  static const Color gold700 = Color(0xFFFFA000);
+  static const Color gold800 = Color(0xFFFF8F00);
+  static const Color gold900 = Color(0xFFFF6F00);
+
+  // 红色层级
+  static const Color red100 = Color(0xFFFFCDD2);
+  static const Color red200 = Color(0xFFEF9A9A);
+  static const Color red300 = Color(0xFFE57373);
+  static const Color red400 = Color(0xFFEF5350);
+  static const Color red500 = Color(0xFFF44336);
+  static const Color red600 = Color(0xFFE53935);
+  static const Color red700 = Color(0xFFD32F2F);
+
+  /// 根据背景自动选择合适的主色层级
+  static Color getPrimaryForBackground(bool isLight, bool isCard) {
+    if (isLight) {
+      return isCard ? primary700 : primary900;
+    } else {
+      return isCard ? primary300 : primary200;
+    }
+  }
+
+  /// 根据背景选择绿色
+  static Color getGreenForBackground(bool isLight) {
+    return isLight ? green600 : green400;
+  }
+
+  /// 根据背景选择橙色
+  static Color getOrangeForBackground(bool isLight) {
+    return isLight ? orange600 : orange400;
+  }
+}
 
 /// 应用颜色配置 - 支持亮色和暗色主题
 ///
@@ -243,6 +444,158 @@ class AppColors {
   /// 标题栏图标样式（用于装饰图标）
   static const double titleBarDecorIconSize = 20.0;
   static Color get titleBarDecorIconColor => _getColor('textSecondary');
+
+  // ==================== 卡片样式系统 ====================
+
+  /// 获取卡片装饰
+  static BoxDecoration getCardDecoration(
+    CardType type, {
+    Color? customColor,
+    BorderRadius? customRadius,
+  }) {
+    final radius = customRadius ?? BorderRadius.circular(8);
+
+    switch (type) {
+      case CardType.standard:
+        return BoxDecoration(
+          color: customColor ?? _getColor('cardBackground'),
+          borderRadius: radius,
+          border: Border.all(color: _getColor('cardBorder'), width: 1),
+        );
+
+      case CardType.compact:
+        return BoxDecoration(
+          color: customColor ?? _getColor('cardBackground'),
+          borderRadius: radius,
+          border: Border.all(color: _getColor('cardBorder'), width: 1),
+        );
+
+      case CardType.small:
+        return BoxDecoration(
+          color: customColor ?? _getColor('cardBackground'),
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: _getColor('cardBorder'), width: 1),
+        );
+
+      case CardType.shadow:
+        return BoxDecoration(
+          color: customColor ?? _getColor('cardBackground'),
+          borderRadius: radius,
+          border: Border.all(color: _getColor('cardBorder'), width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: _getColor('buttonShadow'),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        );
+
+      case CardType.glass:
+        return BoxDecoration(
+          color: _getColor('glassBackground'),
+          borderRadius: radius,
+          border: Border.all(color: _getColor('cardBorder'), width: 1),
+        );
+
+      case CardType.aiGradient:
+        final isLight = _themeProvider?.isLightTheme ?? false;
+        return BoxDecoration(
+          gradient: AIColorScheme.getAIGradient(isLight),
+          borderRadius: radius,
+          border: Border.all(
+            color: AIColorScheme.getAILabelColor(isLight).withOpacity(0.3),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AIColorScheme.aiGoldMedium.withOpacity(0.15),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
+              spreadRadius: 2,
+            ),
+          ],
+        );
+    }
+  }
+
+  /// 获取卡片内边距
+  static EdgeInsets getCardPadding(CardType type) {
+    switch (type) {
+      case CardType.standard:
+      case CardType.aiGradient:
+        return const EdgeInsets.all(16);
+      case CardType.compact:
+        return const EdgeInsets.all(12);
+      case CardType.small:
+        return const EdgeInsets.all(8);
+      case CardType.shadow:
+        return const EdgeInsets.all(16);
+      case CardType.glass:
+        return const EdgeInsets.all(12);
+    }
+  }
+
+  /// 获取卡片圆角半径
+  static double getCardBorderRadius(CardType type) {
+    switch (type) {
+      case CardType.standard:
+      case CardType.compact:
+      case CardType.shadow:
+      case CardType.glass:
+      case CardType.aiGradient:
+        return 8.0;
+      case CardType.small:
+        return 4.0;
+    }
+  }
+
+  /// 卡片边框样式
+  static Border getCardBorder({
+    Color? color,
+    double width = 1.0,
+  }) {
+    return Border.all(
+      color: color ?? _getColor('cardBorder'),
+      width: width,
+    );
+  }
+
+  /// 卡片阴影样式
+  static List<BoxShadow> getCardShadow({
+    CardShadowType type = CardShadowType.standard,
+  }) {
+    switch (type) {
+      case CardShadowType.none:
+        return [];
+      case CardShadowType.standard:
+        return [
+          BoxShadow(
+            color: _getColor('buttonShadow'),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ];
+      case CardShadowType.light:
+        return [
+          BoxShadow(
+            color: Colors.black.withOpacity(
+                _themeProvider?.isLightTheme == true ? 0.08 : 0.15),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ];
+      case CardShadowType.heavy:
+        return [
+          BoxShadow(
+            color: _getColor('buttonShadow'),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
+            spreadRadius: 2,
+          ),
+        ];
+    }
+  }
 
   // 底部导航栏样式
   /// 底部导航栏激活状态颜色
@@ -530,29 +883,29 @@ class AppColors {
   // ==================== AI卡片颜色常量 ====================
   
   /// AI标签颜色
-  /// 亮色模式：蓝色
-  static const Color aiLabelColorLight = Color(0xFF004CFF);
+  /// 亮色模式：琥珀金
+  static const Color aiLabelColorLight = Color(0xFFFF8F00);
   /// 暗色模式：金琥珀色
   static const Color aiLabelColorDark = Color(0xFFFFB300);
 
-  /// AI渐变背景色 - 亮色模式
-  static const Color aiGradientBlueDark = Color(0xFF004CFF); // 深蓝色
-  static const Color aiGradientBlueMid = Color(0xFF6C8FFF); // 中蓝色
-  static const Color aiGradientBlueLight = Color(0xFFB3D9FF); // 浅蓝色
+  /// AI渐变背景色 - 亮色模式（琥珀金变种色系）
+  static const Color aiGradientLightDark = Color(0xFFFF8F00); // 深琥珀金
+  static const Color aiGradientLightMid = Color(0xFFFFA726); // 中琥珀金
+  static const Color aiGradientLightLight = Color(0xFFFFCC80); // 浅琥珀金
   
-  /// AI渐变背景色 - 暗色模式
-  static const Color aiGradientAmberDark = Color(0xFFFFB300); // 深金琥珀色
-  static const Color aiGradientAmberMid = Color(0xFFFFC947); // 中金琥珀色
-  static const Color aiGradientAmberLight = Color(0xFFFFE082); // 浅金琥珀色
+  /// AI渐变背景色 - 暗色模式（琥珀金变种色系）
+  static const Color aiGradientDarkDark = Color(0xFFFFB300); // 深金琥珀色
+  static const Color aiGradientDarkMid = Color(0xFFFFC947); // 中金琥珀色
+  static const Color aiGradientDarkLight = Color(0xFFFFE082); // 浅金琥珀色
   
   /// AI渐变背景透明度
   static const double aiGradientOpacity = 0.8;
   
   /// AI卡片文字颜色
-  /// 亮色模式：深色文字（在蓝色渐变背景上）
-  static const Color aiTextColorLight = Color(0xDE000000); // black87 (222/255 = 0.87)
-  /// 暗色模式：深蓝色文字（在金琥珀色渐变背景上）
-  static const Color aiTextColorDark = Color(0xFF001A4D);
+  /// 亮色模式：深色文字（在琥珀金渐变背景上）
+  static const Color aiTextColorLight = Color(0xFF3E2723); // 深棕色，在琥珀金渐变背景上对比度高
+  /// 暗色模式：深色文字（在金琥珀色渐变背景上）
+  static const Color aiTextColorDark = Color(0xFF3E2723); // 深棕色，在金琥珀色渐变背景上对比度高
   
   /// 通勤提醒小卡片背景色
   /// 亮色模式：柔和青色
@@ -571,4 +924,65 @@ class AppColors {
   /// 标签白色背景透明度
   static const double labelWhiteBgOpacityLight = 0.9;
   static const double labelWhiteBgOpacityDark = 0.2;
+
+  // ==================== 特殊强调色 ====================
+
+  /// 吉祥色 - 农历吉字（根据主题自动选择）
+  static Color get auspiciousGold => _themeProvider?.isLightTheme == true
+      ? auspiciousGoldLight
+      : auspiciousGoldDark;
+
+  /// 农历凶字红色（根据主题自动选择）
+  static Color get ominousRed => _themeProvider?.isLightTheme == true
+      ? ominousRedLight
+      : ominousRedDark;
+
+  /// 生活指数橙色（根据主题自动选择）
+  static Color get lifeIndexOrangeAuto => _themeProvider?.isLightTheme == true
+      ? lifeIndexOrangeDark
+      : lifeIndexOrange;
+
+  /// 生活指数绿色（根据主题自动选择）
+  static Color get lifeIndexGreenAuto => _themeProvider?.isLightTheme == true
+      ? lifeIndexGreen
+      : lifeIndexGreenLight;
+
+  /// 生活指数第一列橙色 - 优化对比度
+  static const Color lifeIndexOrange = Color(0xFFFFB74D);
+  static const Color lifeIndexOrangeDark = Color(0xFFFF9800);
+
+  /// 生活指数第二列绿色 - 优化对比度
+  static const Color lifeIndexGreen = Color(0xFF64DD17);
+  static const Color lifeIndexGreenLight = Color(0xFF66BB6A);
+
+  /// 农历吉字金色 - 优化对比度
+  static const Color auspiciousGoldLight = Color(0xFFF9A825); // 亮色模式使用
+  static const Color auspiciousGoldDark = Color(0xFFFFD700); // 暗色模式使用
+
+  /// 农历凶字红色 - 优化对比度（避免纯红色）
+  static const Color ominousRedLight = Color(0xFFD32F2F); // 亮色模式
+  static const Color ominousRedDark = Color(0xFFE53935); // 暗色模式
+
+  /// 抽屉头部深色文字（浅色背景时使用）
+  static const Color drawerHeaderTextDark = Color(0xFF1A1A1A);
+
+  /// 抽屉头部次要文字颜色
+  static const Color drawerHeaderTextSecondary = Color(0xFF4A4A4A);
+
+  /// 空气质量严重污染亮色版本（通过透明度使用）
+  static const Color airSevereLight = Color(0xFFBA68C8);
+
+  // ==================== 通勤提醒专用渐变色 ====================
+
+  /// 通勤提醒深紫色
+  static const Color commuteDeepPurple = Color(0xFF4A148C);
+
+  /// 通勤提醒深蓝色
+  static const Color commuteDeepBlue = Color(0xFF1A237E);
+
+  /// 通勤提醒更深蓝色
+  static const Color commuteDarkerBlue = Color(0xFF0D47A1);
+
+  /// 通勤提醒金色光晕
+  static const Color commuteGoldGlow = Color(0xFFFFB300);
 }

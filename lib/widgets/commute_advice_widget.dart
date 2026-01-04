@@ -5,6 +5,7 @@ import '../providers/theme_provider.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_constants.dart';
 import '../models/commute_advice_model.dart';
+import 'base_card.dart';
 
 /// 通勤建议组件
 class CommuteAdviceWidget extends StatefulWidget {
@@ -38,40 +39,11 @@ class _CommuteAdviceWidgetState extends State<CommuteAdviceWidget> {
               padding: const EdgeInsets.symmetric(
                 horizontal: AppConstants.screenHorizontalPadding,
               ),
-              child: Card(
-                elevation: AppColors.cardElevation,
-                shadowColor: AppColors.cardShadowColor,
-                color: AppColors.materialCardColor,
-                surfaceTintColor: Colors.transparent,
-                shape: AppColors.cardShape,
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    // ✨ AI智能助手专用渐变背景：深紫到深蓝
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Color(0xFF4A148C).withOpacity(0.9), // 深紫
-                        Color(0xFF1A237E).withOpacity(0.9), // 深蓝
-                        Color(0xFF0D47A1).withOpacity(0.9), // 更深蓝
-                      ],
-                    ),
-                    // 添加微妙的几何图案效果（金色光晕）
-                    boxShadow: [
-                      BoxShadow(
-                        color: Color(0xFFFFB300).withOpacity(0.1), // 金色光晕
-                        blurRadius: 20,
-                        offset: const Offset(0, 4),
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+              child: AICard(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                         // 标题行（可点击展开/收起）
                         InkWell(
                           onTap: () {
@@ -91,7 +63,7 @@ class _CommuteAdviceWidgetState extends State<CommuteAdviceWidget> {
                                 // 图标
                                 Icon(
                                   Icons.commute_rounded,
-                                  color: const Color(0xFFFFB300), // 金琥珀色
+                                  color: AIColorScheme.aiGoldMedium, // 统一的AI琥珀色
                                   size: AppConstants.sectionTitleIconSize,
                                 ),
                                 const SizedBox(width: 8),
@@ -156,8 +128,6 @@ class _CommuteAdviceWidgetState extends State<CommuteAdviceWidget> {
                       ],
                     ),
                   ),
-                ),
-              ),
             );
           },
         );
@@ -169,7 +139,7 @@ class _CommuteAdviceWidgetState extends State<CommuteAdviceWidget> {
   Widget _buildAdviceItem(CommuteAdviceModel advice, bool isCollapsed) {
     final levelColor = advice.getLevelColor();
     final levelName = advice.getLevelName();
-    const aiColor = Color(0xFFFFB300); // 琥珀色
+    final aiColor = AIColorScheme.aiGoldMedium; // 统一的AI琥珀色
 
     // ✨ 使用和AI智能助手完全一致的样式：金琥珀色边框和渐变背景
     return InkWell(
@@ -262,9 +232,7 @@ class _CommuteAdviceWidgetState extends State<CommuteAdviceWidget> {
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: const Color(
-                                    0xFFFFB300,
-                                  ).withOpacity(0.25),
+                                  color: AIColorScheme.aiGoldMedium.withOpacity(0.25),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Row(
@@ -272,14 +240,14 @@ class _CommuteAdviceWidgetState extends State<CommuteAdviceWidget> {
                                   children: [
                                     Icon(
                                       Icons.auto_awesome,
-                                      color: const Color(0xFFFFB300),
+                                      color: AIColorScheme.aiGoldMedium,
                                       size: 10,
                                     ),
                                     const SizedBox(width: 2),
                                     Text(
                                       'AI',
                                       style: TextStyle(
-                                        color: const Color(0xFFFFB300),
+                                        color: AIColorScheme.aiGoldMedium,
                                         fontSize: 10,
                                         fontWeight: FontWeight.bold,
                                       ),

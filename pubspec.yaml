@@ -2,7 +2,7 @@ name: rainweather_flutter
 description: "智雨天气 - 智能天气预报应用"
 publish_to: 'none'
 
-version: 1.13.4+21
+version: 1.13.5+22
 
 environment:
   sdk: ^3.9.2
@@ -27,7 +27,7 @@ dependencies:
   geolocator: ^14.0.2
   geocoding: ^4.0.0
   permission_handler: ^12.0.1
-  flutter_bmflocation: ^3.8.0  # 百度定位
+  # flutter_bmflocation: ^3.8.0  # 百度定位 - 暂时禁用（兼容性问题）
   fl_amap: ^3.4.3  # 高德地图定位
   flutter_tencent_lbs_plugin: ^0.1.0  # 腾讯定位
   
@@ -80,10 +80,14 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
-  
+
   # Code Generation
   build_runner: ^2.4.13
   json_serializable: ^6.8.0
+
+  # Testing
+  mocktail: ^1.0.4
+  sqflite_common_ffi: ^2.3.3
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

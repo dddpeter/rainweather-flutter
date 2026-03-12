@@ -186,21 +186,24 @@ class WeatherProvider extends ChangeNotifier {
       );
 
       if (cachedLocation == null) {
-        // 全新安装，无缓存数据，使用正常初始化流程
+        // 全新安装，无缓存数据
         WeatherProviderLogger.info('检测到全新安装（无缓存位置）');
-        WeatherProviderLogger.debug('策略: 使用正常初始化流程，同步加载数据');
-        WeatherProviderLogger.debug('预计时间: 5-10秒（需定位和获取数据）');
+        WeatherProviderLogger.info('策略: 立即显示默认天气，后台异步定位');
 
-        // 显示加载状态
-        _isLoading = true;
-        notifyListeners();
+        // 1. 立即设置默认位置（北京）
+        final defaultLocation = _getDefaultLocation();
+        _currentLocation = defaultLocation;
 
+        // 2. 立即加载默认位置的天气数据（不显示加载状态）
+        WeatherProviderLogger.info('正在加载默认位置天气数据: ${defaultLocation.district}');
         await initializeWeather();
 
-        _isLoading = false;
-        notifyListeners();
+        WeatherProviderLogger.success('默认位置天气数据已加载: ${defaultLocation.district}');
 
-        WeatherProviderLogger.success('全新安装初始化完成');
+        // 3. 后台异步执行真实定位，不阻塞UI
+        WeatherProviderLogger.info('后台异步定位已启动...');
+        _performBackgroundLocation();
+
         return;
       }
 
@@ -2080,12 +2083,13 @@ class WeatherProvider extends ChangeNotifier {
       notifyListeners();
 
       // 尝试获取当前位置
+      // 首次定位需要更长时间：腾讯(8s) + 高德(8s) + GPS(20s) + 缓冲
       LocationModel? newLocation = await _locationService
           .getCurrentLocation()
           .timeout(
-            const Duration(seconds: 15),
+            const Duration(seconds: 45), // 增加超时时间以适应首次定位
             onTimeout: () {
-              WeatherProviderLogger.warning('定位超时');
+              WeatherProviderLogger.warning('定位超时（45秒）');
               return null;
             },
           );
@@ -2140,12 +2144,30 @@ class WeatherProvider extends ChangeNotifier {
           WeatherProviderLogger.info('定位失败，但有缓存数据，保持显示');
           _error = null;
         } else {
-          // 无缓存数据，显示错误
-          _error = '定位失败，请检查网络连接和位置权限';
+          // 无缓存数据，使用默认位置（北京）并获取天气数据
+          WeatherProviderLogger.info('定位失败且无缓存，使用默认位置');
+          final defaultLocation = _getDefaultLocation();
+          _currentLocation = defaultLocation;
+          notifyListeners();
 
-          // 通知所有监听器定位失败
-          WeatherProviderLogger.debug('准备发送定位失败通知');
-          LocationChangeNotifier().notifyLocationFailed(_error!);
+          // 获取默认位置的天气数据
+          final success = await _loadWeatherDataForLocation(defaultLocation);
+          if (success) {
+            WeatherProviderLogger.success('默认位置天气数据加载成功: ${defaultLocation.district}');
+            _hasPerformedInitialLocation = true;
+            _error = null;
+
+            // 启动定时刷新
+            _startPeriodicRefresh();
+
+            // 通知定位成功（使用默认位置）
+            LocationChangeNotifier().notifyLocationSuccess(defaultLocation);
+          } else {
+            // 默认位置天气数据也加载失败
+            WeatherProviderLogger.error('默认位置天气数据加载失败');
+            _error = '无法获取天气数据，请检查网络连接';
+            LocationChangeNotifier().notifyLocationFailed(_error!);
+          }
         }
       }
     } catch (e) {
@@ -2156,13 +2178,97 @@ class WeatherProvider extends ChangeNotifier {
         WeatherProviderLogger.info('定位异常，但有缓存数据，保持显示');
         _error = null;
       } else {
-        // 无缓存数据，显示错误
-        _error = '定位失败: $e';
+        // 无缓存数据，使用默认位置（北京）并获取天气数据
+        WeatherProviderLogger.info('定位异常且无缓存，使用默认位置');
+        try {
+          final defaultLocation = _getDefaultLocation();
+          _currentLocation = defaultLocation;
+          notifyListeners();
+
+          // 获取默认位置的天气数据
+          final success = await _loadWeatherDataForLocation(defaultLocation);
+          if (success) {
+            WeatherProviderLogger.success('默认位置天气数据加载成功: ${defaultLocation.district}');
+            _hasPerformedInitialLocation = true;
+            _error = null;
+            _startPeriodicRefresh();
+            LocationChangeNotifier().notifyLocationSuccess(defaultLocation);
+          } else {
+            _error = '无法获取天气数据，请检查网络连接';
+            LocationChangeNotifier().notifyLocationFailed(_error!);
+          }
+        } catch (loadError) {
+          WeatherProviderLogger.error('加载默认位置天气数据异常: $loadError');
+          _error = '定位失败: $e';
+          LocationChangeNotifier().notifyLocationFailed(_error!);
+        }
       }
     } finally {
       _isLoading = false;
       _isLocationRefreshing = false; // 释放全局锁
       notifyListeners();
+    }
+  }
+
+  /// 后台异步执行定位（不阻塞UI）
+  ///
+  /// 用于首次安装时，先显示默认位置天气，后台异步获取真实定位
+  Future<void> _performBackgroundLocation() async {
+    try {
+      WeatherProviderLogger.info('后台定位开始...');
+
+      // 获取真实定位（使用较长的超时时间）
+      LocationModel? newLocation = await _locationService
+          .getCurrentLocation()
+          .timeout(
+            const Duration(seconds: 45),
+            onTimeout: () {
+              WeatherProviderLogger.warning('后台定位超时（45秒）');
+              return null;
+            },
+          );
+
+      if (newLocation != null) {
+        WeatherProviderLogger.success('后台定位成功: ${newLocation.district}');
+
+        // 检查是否与默认位置不同
+        final defaultLocation = _getDefaultLocation();
+        if (newLocation.adcode == defaultLocation.adcode) {
+          WeatherProviderLogger.info('定位位置与默认位置相同，无需更新');
+          return;
+        }
+
+        // 更新位置
+        _currentLocation = newLocation;
+        _locationService.setCachedLocation(newLocation);
+        _lastLocationTime = DateTime.now();
+
+        // 重新加载主要城市列表
+        await loadMainCities();
+
+        // 获取新位置的天气数据
+        final success = await _loadWeatherDataForLocation(newLocation);
+        if (success) {
+          WeatherProviderLogger.success('后台定位天气数据更新成功');
+          _hasPerformedInitialLocation = true;
+
+          // 启动定时刷新
+          _startPeriodicRefresh();
+
+          // 通知定位成功
+          LocationChangeNotifier().notifyLocationSuccess(newLocation);
+
+          // 显示定位成功提示（可选）
+          WeatherProviderLogger.info('位置已自动更新为: ${newLocation.district}');
+        } else {
+          WeatherProviderLogger.warning('后台定位天气数据加载失败，保持默认位置');
+        }
+      } else {
+        WeatherProviderLogger.info('后台定位失败，保持默认位置显示');
+      }
+    } catch (e) {
+      WeatherProviderLogger.error('后台定位异常: $e');
+      WeatherProviderLogger.info('保持默认位置显示');
     }
   }
 

@@ -20,12 +20,12 @@ class _CommuteAdviceWidgetState extends State<CommuteAdviceWidget> {
 
   @override
   Widget build(BuildContext context) {
-    // 使用嵌套 Consumer 同时监听主题和天气数据变化
+    // 使用 Selector 优化性能：只在 commuteAdvices 变化时重建
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
-        return Consumer<WeatherProvider>(
-          builder: (context, weatherProvider, child) {
-            final advices = weatherProvider.commuteAdvices;
+        return Selector<WeatherProvider, List<CommuteAdviceModel>>(
+          selector: (_, provider) => provider.commuteAdvices,
+          builder: (context, advices, child) {
 
             // 如果没有通勤建议，不显示组件
             if (advices.isEmpty) {
@@ -52,7 +52,7 @@ class _CommuteAdviceWidgetState extends State<CommuteAdviceWidget> {
                             });
                             // 展开时标记全部为已读
                             if (_isExpanded && unreadCount > 0) {
-                              weatherProvider.markAllCommuteAdvicesAsRead();
+                              context.read<WeatherProvider>().markAllCommuteAdvicesAsRead();
                             }
                           },
                           borderRadius: BorderRadius.circular(8),

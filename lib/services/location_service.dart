@@ -6,7 +6,7 @@ import '../utils/error_handler.dart';
 import 'geocoding_service.dart';
 import 'enhanced_geocoding_service.dart';
 import 'ip_location_service.dart';
-import 'baidu_location_service.dart';
+// import 'baidu_location_service.dart'; // 百度定位已禁用
 import 'amap_location_service.dart';
 import 'tencent_location_service.dart';
 
@@ -27,8 +27,8 @@ class LocationService {
   final GeocodingService _geocodingService = GeocodingService.getInstance();
   final EnhancedGeocodingService _enhancedGeocodingService =
       EnhancedGeocodingService.getInstance();
-  final BaiduLocationService _baiduLocationService =
-      BaiduLocationService.getInstance();
+  // final BaiduLocationService _baiduLocationService =
+  //     BaiduLocationService.getInstance(); // 百度定位已禁用
   final AMapLocationService _amapLocationService =
       AMapLocationService.getInstance();
   final TencentLocationService _tencentLocationService =
@@ -237,41 +237,7 @@ class LocationService {
         return amapLocation;
       }
 
-      // ③ 高德地图定位失败，尝试百度定位
-      Logger.d('尝试百度定位...', tag: 'LocationService');
-      LocationModel? baiduLocation;
-      try {
-        baiduLocation = await _baiduLocationService
-            .getCurrentLocation()
-            .timeout(
-              const Duration(seconds: 8),
-              onTimeout: () {
-                Logger.w('百度定位超时，切换到GPS定位', tag: 'LocationService');
-                return null;
-              },
-            );
-      } catch (e, stackTrace) {
-        Logger.e(
-          '百度定位失败',
-          tag: 'LocationService',
-          error: e,
-          stackTrace: stackTrace,
-        );
-        ErrorHandler.handleError(
-          e,
-          stackTrace: stackTrace,
-          context: 'LocationService.BaiduLocation',
-          type: AppErrorType.location,
-        );
-      }
-
-      if (baiduLocation != null) {
-        Logger.s('百度定位成功: ${baiduLocation.district}', tag: 'LocationService');
-        _cachedLocation = baiduLocation;
-        return baiduLocation;
-      }
-
-      // ④ 百度定位失败，尝试GPS定位
+      // ③ 高德地图定位失败，直接尝试GPS定位（百度定位已禁用）
       Logger.d('尝试GPS定位...', tag: 'LocationService');
 
       // 检查权限（参考方案：3行代码搞定）
@@ -300,8 +266,8 @@ class LocationService {
       // 获取位置（参考方案：单次定位）
       try {
         Position position = await getCurrentPositionChinaOptimized(
-          accuracy: LocationAccuracy.medium, // 使用中等精度，平衡速度和准确性
-          timeLimit: const Duration(seconds: 15), // 15秒超时
+          accuracy: LocationAccuracy.best, // 使用最佳精度，确保定位准确性
+          timeLimit: const Duration(seconds: 20), // 增加超时时间以适应高精度定位
         );
 
         // Use enhanced geocoding service (geocoding plugin) first
@@ -908,42 +874,44 @@ class LocationService {
   }
 
   /// 使用百度定位获取当前位置
-  Future<LocationModel?> getCurrentLocationWithBaidu() async {
-    try {
-      print('📍 使用百度定位获取当前位置...');
-      LocationModel? location = await _baiduLocationService
-          .getCurrentLocation();
-      if (location != null) {
-        print('✅ 百度定位成功: ${location.district}');
-        _cachedLocation = location;
-        return location;
-      } else {
-        print('❌ 百度定位失败');
-        return null;
-      }
-    } catch (e) {
-      print('❌ 百度定位错误: $e');
-      return null;
-    }
-  }
+  // 百度定位已禁用
+  // Future<LocationModel?> getCurrentLocationWithBaidu() async {
+  //   try {
+  //     print('📍 使用百度定位获取当前位置...');
+  //     LocationModel? location = await _baiduLocationService
+  //         .getCurrentLocation();
+  //     if (location != null) {
+  //       print('✅ 百度定位成功: ${location.district}');
+  //       _cachedLocation = location;
+  //       return location;
+  //     } else {
+  //       print('❌ 百度定位失败');
+  //       return null;
+  //     }
+  //   } catch (e) {
+  //     print('❌ 百度定位错误: $e');
+  //     return null;
+  //   }
+  // }
 
   /// 检查百度定位服务状态
-  Future<Map<String, dynamic>> checkBaiduLocationStatus() async {
-    try {
-      return await _baiduLocationService.getLocationCapabilities();
-    } catch (e) {
-      return {
-        'error': e.toString(),
-        'serviceAvailable': false,
-        'statusDescription': '无法检查百度定位状态',
-        'recommendation': '请检查网络连接和权限设置',
-      };
-    }
-  }
+  // 百度定位已禁用
+  // Future<Map<String, dynamic>> checkBaiduLocationStatus() async {
+  //   try {
+  //     return await _baiduLocationService.getLocationCapabilities();
+  //   } catch (e) {
+  //     return {
+  //       'error': e.toString(),
+  //       'serviceAvailable': false,
+  //       'statusDescription': '无法检查百度定位状态',
+  //       'recommendation': '请检查网络连接和权限设置',
+  //     };
+  //   }
+  // }
 
   /// Cleanup resources
   void cleanup() {
     _cachedLocation = null;
-    _baiduLocationService.cleanup();
+    // _baiduLocationService.cleanup(); // 百度定位已禁用
   }
 }

@@ -11,10 +11,11 @@ class SunMoonWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<WeatherProvider>(
-      builder: (context, weatherProvider, child) {
-        final sunMoonData = weatherProvider.sunMoonIndexData;
-        final forecast15d = weatherProvider.currentWeather?.forecast15d ?? [];
+    // 使用 Selector 优化：只在 sunMoonIndexData 变化时重建
+    return Selector<WeatherProvider, SunMoonIndexData?>(
+      selector: (_, provider) => provider.sunMoonIndexData,
+      builder: (context, sunMoonData, child) {
+        final forecast15d = context.read<WeatherProvider>().currentWeather?.forecast15d ?? [];
 
         // 优先使用API数据，如果没有则使用15天预报数据
         if (sunMoonData?.sunAndMoon != null) {

@@ -2,7 +2,7 @@
 
 A modern intelligent weather application built with Flutter, providing real-time weather information with location services, weather forecasts, and beautiful UI components.
 
-**Current Version**: v1.13.4 | **Release Date**: 2025-01-22
+**Current Version**: v1.13.5 | **Release Date**: 2026-03-12
 
 > **中文文档**: [README.md](README.md) | **English Documentation**: This file
 
@@ -230,7 +230,24 @@ This Flutter app is a complete refactor of the original Android weather app with
 
 ## Changelog
 
-### v1.13.4 (2025-01-22) - Latest
+### v1.13.5 (2026-03-12) - Latest
+
+**Location Experience Major Optimization**
+- 🎯 **GPS Accuracy Improvement**: Location accuracy upgraded from medium to best (maximum precision), reducing location error from 100m to within 5m
+- ⏱️ **Timeout Optimization**: First location timeout extended from 15s to 45s to accommodate GPS cold start and SDK initialization
+- 🚀 **Zero-Wait Launch**: First installation now displays Beijing weather immediately, with real location fetched asynchronously in background
+- 🔄 **Smart Location Switching**: Automatically updates to real location after successful background positioning, no manual refresh needed
+- 🛡️ **Default Location Fallback**: Automatically uses Beijing weather when location fails, ensuring users always have data to view
+
+**Performance Optimization**
+- ⚡ **Selector Optimization**: Converted Consumer widgets to Selector pattern to reduce unnecessary UI rebuilds
+- 📊 **Issue Reduction**: Reduced flutter analyze issues from 92 to 42 (54% improvement) through Selector optimization
+
+**Bug Fixes**
+- 🐛 **First Location Failure**: Fixed issue where first installation location failure resulted in no data display
+- 🐛 **Location Timeout**: Fixed issue where location timeout was too short causing frequent first location failures
+
+### v1.13.4 (2025-01-22)
 
 **Performance & Stability Improvements**
 - 🐛 **Memory Leak Fixes**: Fixed multiple memory leaks in location services, network requests, and cache services

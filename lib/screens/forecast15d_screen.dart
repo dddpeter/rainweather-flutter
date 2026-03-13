@@ -12,6 +12,46 @@ import '../widgets/ai_content_widget.dart';
 import '../utils/weather_icon_helper.dart';
 import 'daily_weather_detail_screen.dart';
 
+/// Selector 数据类：用于精确控制重建
+class _Forecast15dScreenData {
+  final bool isLoading;
+  final String? error;
+  final List<DailyWeather>? forecast15d;
+  final String? districtName;
+  final String? reportTime;
+  final String? forecast15dSummary;
+
+  const _Forecast15dScreenData({
+    required this.isLoading,
+    this.error,
+    this.forecast15d,
+    this.districtName,
+    this.reportTime,
+    this.forecast15dSummary,
+  });
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is _Forecast15dScreenData &&
+        other.isLoading == isLoading &&
+        other.error == error &&
+        other.forecast15d?.length == forecast15d?.length &&
+        other.districtName == districtName &&
+        other.reportTime == reportTime &&
+        other.forecast15dSummary == forecast15dSummary;
+  }
+
+  @override
+  int get hashCode =>
+      isLoading.hashCode ^
+      error.hashCode ^
+      (forecast15d?.length ?? 0).hashCode ^
+      districtName.hashCode ^
+      reportTime.hashCode ^
+      forecast15dSummary.hashCode;
+}
+
 class Forecast15dScreen extends StatefulWidget {
   const Forecast15dScreen({super.key});
 
@@ -73,8 +113,18 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
         // 确保AppColors使用最新的主题
         AppColors.setThemeProvider(themeProvider);
 
-        return Consumer<WeatherProvider>(
-          builder: (context, weatherProvider, child) {
+        return Selector<WeatherProvider, _Forecast15dScreenData>(
+          selector: (context, provider) {
+            return _Forecast15dScreenData(
+              isLoading: provider.isLoading,
+              error: provider.error,
+              forecast15d: provider.forecast15d,
+              districtName: provider.currentLocation?.district,
+              reportTime: provider.currentWeather?.current?.current?.reporttime,
+              forecast15dSummary: provider.forecast15dSummary,
+            );
+          },
+          builder: (context, data, child) {
             return Container(
               decoration: BoxDecoration(
                 gradient: AppColors.screenBackgroundGradient,
@@ -82,7 +132,7 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
               child: SafeArea(
                 child: Builder(
                   builder: (context) {
-                    if (weatherProvider.isLoading) {
+                    if (data.isLoading) {
                       return Center(
                         child: CircularProgressIndicator(
                           color: AppColors.textPrimary,
@@ -90,7 +140,7 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
                       );
                     }
 
-                    if (weatherProvider.error != null) {
+                    if (data.error != null) {
                       return Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -111,7 +161,7 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              weatherProvider.error!,
+                              data.error!,
                               style: TextStyle(
                                 color: AppColors.textSecondary,
                                 fontSize: 14,
@@ -121,7 +171,7 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
                             const SizedBox(height: 24),
                             ElevatedButton(
                               onPressed: () =>
-                                  weatherProvider.refresh15DayForecast(),
+                                  context.read<WeatherProvider>().refresh15DayForecast(),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primaryBlue,
                                 foregroundColor: AppColors.textPrimary,
@@ -133,7 +183,7 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
                       );
                     }
 
-                    final forecast15d = weatherProvider.forecast15d;
+                    final forecast15d = data.forecast15d;
 
                     if (forecast15d == null || forecast15d.isEmpty) {
                       return Center(
@@ -164,7 +214,7 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
                         if (Platform.isIOS) {
                           HapticFeedback.mediumImpact();
                         }
-                        await weatherProvider.refresh15DayForecast();
+                        await context.read<WeatherProvider>().refresh15DayForecast();
                         if (Platform.isIOS) {
                           HapticFeedback.lightImpact();
                         }
@@ -190,7 +240,7 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    '${weatherProvider.currentLocation?.district ?? '未知地区'} 未来15天天气预报',
+                                    '${data.districtName ?? '未知地区'} 未来15天天气预报',
                                     style: TextStyle(
                                       color: AppColors.textSecondary
                                           .withOpacity(0.8),
@@ -207,24 +257,17 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
                             child: AIContentWidget(
                               title: '15日天气趋势',
                               icon: Icons.trending_up,
-                              refreshKey: weatherProvider
-                                  .currentWeather
-                                  ?.current
-                                  ?.current
-                                  ?.reporttime, // 使用报告时间作为刷新键
+                              refreshKey: data.reportTime, // 使用报告时间作为刷新键
                               fetchAIContent: () async {
+                                final provider = context.read<WeatherProvider>();
                                 // 如果已经有内容，直接返回
-                                if (weatherProvider.forecast15dSummary !=
-                                        null &&
-                                    weatherProvider
-                                        .forecast15dSummary!
-                                        .isNotEmpty) {
-                                  return weatherProvider.forecast15dSummary!;
+                                if (provider.forecast15dSummary != null &&
+                                    provider.forecast15dSummary!.isNotEmpty) {
+                                  return provider.forecast15dSummary!;
                                 }
 
                                 // 触发生成（如果已在生成中不会重复）
-                                await weatherProvider
-                                    .generateForecast15dSummary();
+                                await provider.generateForecast15dSummary();
 
                                 // 等待生成完成（最多等待10秒）
                                 int attempts = 0;
@@ -233,12 +276,9 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
                                   await Future.delayed(const Duration(milliseconds: 500));
 
                                   // 检查是否生成成功
-                                  if (weatherProvider.forecast15dSummary !=
-                                          null &&
-                                      weatherProvider
-                                          .forecast15dSummary!
-                                          .isNotEmpty) {
-                                    return weatherProvider.forecast15dSummary!;
+                                  if (provider.forecast15dSummary != null &&
+                                      provider.forecast15dSummary!.isNotEmpty) {
+                                    return provider.forecast15dSummary!;
                                   }
 
                                   attempts++;
@@ -277,7 +317,6 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
                                 final day = forecast15d[actualIndex];
                                 return _buildForecastCard(
                                   day,
-                                  weatherProvider,
                                   actualIndex,
                                 );
                               },
@@ -301,7 +340,6 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
 
   Widget _buildForecastCard(
     DailyWeather day,
-    WeatherProvider weatherProvider,
     int index,
   ) {
     // 根据实际日期判断今天和明天
@@ -411,7 +449,6 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
                           day.weather_pm_pic ?? 'n00',
                           day.winddir_pm ?? '',
                           day.windpower_pm ?? '',
-                          weatherProvider,
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -431,7 +468,6 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
                           day.weather_am_pic ?? 'd00',
                           day.winddir_am ?? '',
                           day.windpower_am ?? '',
-                          weatherProvider,
                         ),
                       ),
                     ],
@@ -452,7 +488,6 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
     String weatherPic,
     String windDir,
     String windPower,
-    WeatherProvider weatherProvider,
   ) {
     // 判断是白天还是夜间（根据时段）
     // 注意：上午使用pm数据（夜间），下午使用am数据（白天）

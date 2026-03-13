@@ -44,6 +44,7 @@ class _TodayScreenState extends State<TodayScreen>
         PageActivationMixin,
         AutomaticKeepAliveClientMixin {
   bool _isVisible = false;
+  bool _needsRestore = false; // 是否需要恢复定位数据
   final WeatherAlertService _alertService = WeatherAlertService.instance;
   bool _isRefreshing = false; // 防止重复刷新
 
@@ -82,6 +83,43 @@ class _TodayScreenState extends State<TodayScreen>
 
     // 启动定时刷新
     _startPeriodicRefresh();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 检查是否需要恢复定位数据（移出 build 方法，避免递归重建）
+    final data = context.watch<WeatherProvider>();
+    final navigator = Navigator.of(context);
+    final canPop = navigator.canPop();
+
+    // 更新可见性状态
+    final newIsVisible = !canPop;
+    if (_isVisible != newIsVisible) {
+      _isVisible = newIsVisible;
+    }
+
+    // 检查是否需要恢复定位数据
+    _needsRestore = _shouldRestore(data);
+
+    if (_needsRestore) {
+      // 使用 post frame callback 避免在 build 期间调用 setState
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _needsRestore) {
+          context.read<WeatherProvider>().restoreCurrentLocationWeather();
+          _needsRestore = false;
+        }
+      });
+    }
+  }
+
+  /// 检查是否需要恢复定位数据
+  bool _shouldRestore(WeatherProvider data) {
+    final isTodayTab = data.currentTabIndex == 0;
+    return isTodayTab &&
+        data.currentLocationWeather != null &&
+        data.originalLocation != null &&
+        data.isShowingCityWeather;
   }
 
   /// 页面被激活时调用（类似Vue的activated）
@@ -190,19 +228,19 @@ class _TodayScreenState extends State<TodayScreen>
   Future<void> _performPeriodicRefresh() async {
     // 如果应用在后台或正在刷新中，跳过定时刷新
     if (_isAppInBackground || _isRefreshing) {
-      print('⏰ TodayScreen: 应用在后台或正在刷新中，跳过定时刷新');
+Logger.d('应用在后台或正在刷新中，跳过定时刷新', tag: 'TodayScreen');
       return;
     }
 
     // 如果页面不可见，跳过定时刷新
     if (!_isVisible) {
-      print('⏰ TodayScreen: 页面不可见，跳过定时刷新');
+Logger.d('页面不可见，跳过定时刷新', tag: 'TodayScreen');
       return;
     }
 
     try {
       _isRefreshing = true;
-      print('⏰ TodayScreen: 开始执行定时刷新');
+Logger.d('开始执行定时刷新', tag: 'TodayScreen');
 
       final weatherProvider = context.read<WeatherProvider>();
 
@@ -212,20 +250,20 @@ class _TodayScreenState extends State<TodayScreen>
       // 定时刷新时分析天气提醒（30分钟一次）
       if (weatherProvider.currentWeather != null &&
           weatherProvider.currentLocation != null) {
-        print('⏰ TodayScreen: 定时刷新天气提醒');
+        Logger.d('定时刷新天气提醒', tag: 'TodayScreen');
         final newAlerts = await _alertService.analyzeWeather(
           weatherProvider.currentWeather!,
           weatherProvider.currentLocation!,
         );
-        print('⏰ TodayScreen: 定时刷新天气提醒完成，新增提醒数量: ${newAlerts.length}');
+        Logger.d('定时刷新天气提醒完成，新增提醒数量: ${newAlerts.length}', tag: 'TodayScreen');
         if (mounted) {
           setState(() {}); // 刷新UI显示提醒
         }
       }
 
-      print('⏰ TodayScreen: 定时刷新完成');
+Logger.d('定时刷新完成', tag: 'TodayScreen');
     } catch (e) {
-      print('❌ TodayScreen: 定时刷新失败: $e');
+      Logger.e('定时刷新失败', tag: 'TodayScreen', error: e);
     } finally {
       _isRefreshing = false;
     }
@@ -371,20 +409,6 @@ class _TodayScreenState extends State<TodayScreen>
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // 检查当前页面是否可见
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final navigator = Navigator.of(context);
-      final canPop = navigator.canPop();
-      _isVisible = !canPop; // 如果无法弹出，说明是主页面
-      print(
-        '📱 TodayScreen didChangeDependencies - _isVisible: $_isVisible, canPop: $canPop',
-      );
-    });
-  }
-
-  @override
   void didUpdateWidget(TodayScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     print('=== TodayScreen didUpdateWidget called ===');
@@ -462,64 +486,6 @@ class _TodayScreenState extends State<TodayScreen>
               ),
               child: Builder(
                 builder: (context) {
-                  print('🔥 TodayScreen build called 🔥');
-                  print(
-                    '🌡️ Current weather temp: ${data.currentWeather?.current?.current?.temperature}',
-                  );
-                  print(
-                    '📍 Current location: ${data.currentLocation?.district}',
-                  );
-                  print(
-                    '🏠 Original location: ${data.originalLocation?.district}',
-                  );
-                  print(
-                    '💾 Current location weather: ${data.currentLocationWeather != null}',
-                  );
-
-                  // 简化逻辑：只在必要时检查恢复
-                  final isTodayTab = data.currentTabIndex == 0;
-                  final navigator = Navigator.of(context);
-                  final canPop = navigator.canPop();
-
-                  // 更新可见性状态
-                  _isVisible = !canPop;
-
-                  print(
-                    '📱 TodayScreen build - tabIndex: ${data.currentTabIndex}, isTodayTab: $isTodayTab',
-                  );
-
-                  // 简化逻辑：只在必要时恢复定位数据
-                  if (isTodayTab &&
-                      data.currentLocationWeather != null &&
-                      data.originalLocation != null &&
-                      data.isShowingCityWeather) {
-                    print(
-                      '=== TodayScreen build - checking if restore needed ===',
-                    );
-                    print(
-                      '🔍 isShowingCityWeather: ${data.isShowingCityWeather}',
-                    );
-                    print(
-                      '📱 _isVisible: $_isVisible, canPop: $canPop, isTodayTab: $isTodayTab',
-                    );
-                    print(
-                      'Current location: ${data.currentLocation?.district}',
-                    );
-                    print(
-                      'Original location: ${data.originalLocation?.district}',
-                    );
-                    print(
-                      '=== TodayScreen build - calling restoreCurrentLocationWeather ===',
-                    );
-                    context
-                        .read<WeatherProvider>()
-                        .restoreCurrentLocationWeather();
-                  } else {
-                    print(
-                      '🚫 TodayScreen build - no restore needed: isTodayTab=$isTodayTab, _isVisible=$_isVisible, canPop=$canPop, isShowingCityWeather=${data.isShowingCityWeather}',
-                    );
-                  }
-
                   if (data.currentWeather == null) {
                     return Center(
                       child: CircularProgressIndicator(

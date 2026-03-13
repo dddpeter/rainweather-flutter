@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../providers/weather_provider.dart';
 import '../providers/theme_provider.dart';
 import '../models/location_model.dart';
+import '../models/weather_model.dart';
 import '../services/weather_service.dart';
 import '../widgets/hourly_chart.dart';
 import '../widgets/hourly_list.dart';
@@ -19,6 +20,38 @@ class HourlyScreen extends StatefulWidget {
 
   @override
   State<HourlyScreen> createState() => _HourlyScreenState();
+}
+
+/// Selector 数据类：用于精确控制重建
+class _HourlyScreenData {
+  final bool isLoading;
+  final String? error;
+  final LocationModel? currentLocation;
+  final List<HourlyWeather>? hourlyForecast;
+
+  const _HourlyScreenData({
+    required this.isLoading,
+    this.error,
+    this.currentLocation,
+    required this.hourlyForecast,
+  });
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is _HourlyScreenData &&
+        other.isLoading == isLoading &&
+        other.error == error &&
+        other.currentLocation == currentLocation &&
+        other.hourlyForecast?.length == hourlyForecast?.length;
+  }
+
+  @override
+  int get hashCode =>
+      isLoading.hashCode ^
+      error.hashCode ^
+      currentLocation.hashCode ^
+      (hourlyForecast?.length ?? 0).hashCode;
 }
 
 class _HourlyScreenState extends State<HourlyScreen>
@@ -80,8 +113,16 @@ class _HourlyScreenState extends State<HourlyScreen>
         // 确保AppColors使用最新的主题
         AppColors.setThemeProvider(themeProvider);
 
-        return Consumer<WeatherProvider>(
-          builder: (context, weatherProvider, child) {
+        return Selector<WeatherProvider, _HourlyScreenData>(
+          selector: (context, provider) {
+            return _HourlyScreenData(
+              isLoading: provider.isLoading && provider.currentWeather == null,
+              error: provider.error,
+              currentLocation: provider.currentLocation,
+              hourlyForecast: provider.currentWeather?.forecast24h ?? [],
+            );
+          },
+          builder: (context, data, child) {
             return Container(
               decoration: BoxDecoration(
                 gradient: AppColors.screenBackgroundGradient,
@@ -89,8 +130,7 @@ class _HourlyScreenState extends State<HourlyScreen>
               child: SafeArea(
                 child: Builder(
                   builder: (context) {
-                    if (weatherProvider.isLoading &&
-                        weatherProvider.currentWeather == null) {
+                    if (data.isLoading) {
                       return Center(
                         child: CircularProgressIndicator(
                           color: AppColors.textPrimary,
@@ -98,7 +138,7 @@ class _HourlyScreenState extends State<HourlyScreen>
                       );
                     }
 
-                    if (weatherProvider.error != null) {
+                    if (data.error != null) {
                       return Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -119,7 +159,7 @@ class _HourlyScreenState extends State<HourlyScreen>
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              weatherProvider.error!,
+                              data.error!,
                               style: TextStyle(
                                 color: AppColors.textSecondary,
                                 fontSize: 14,
@@ -128,10 +168,7 @@ class _HourlyScreenState extends State<HourlyScreen>
                             ),
                             const SizedBox(height: 24),
                             ElevatedButton(
-                              onPressed: () => _handleRefreshWithFeedback(
-                                context,
-                                weatherProvider,
-                              ),
+                              onPressed: () => _handleRefreshWithFeedback(context),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primaryBlue,
                                 foregroundColor: AppColors.textPrimary,
@@ -142,7 +179,7 @@ class _HourlyScreenState extends State<HourlyScreen>
                             TextButton(
                               onPressed: () => _showErrorDialog(
                                 context,
-                                weatherProvider.error!,
+                                data.error!,
                               ),
                               child: Text(
                                 '查看详细错误信息',
@@ -157,9 +194,8 @@ class _HourlyScreenState extends State<HourlyScreen>
                       );
                     }
 
-                    final weather = weatherProvider.currentWeather;
-                    final location = weatherProvider.currentLocation;
-                    final hourlyForecast = weather?.forecast24h ?? [];
+                    final location = data.currentLocation;
+                    final hourlyForecast = data.hourlyForecast;
 
                     return RefreshIndicator(
                       onRefresh: () async {
@@ -167,7 +203,7 @@ class _HourlyScreenState extends State<HourlyScreen>
                         if (Platform.isIOS) {
                           HapticFeedback.mediumImpact();
                         }
-                        await weatherProvider.refreshWeatherData();
+                        await context.read<WeatherProvider>().refreshWeatherData();
                         if (Platform.isIOS) {
                           HapticFeedback.lightImpact();
                         }
@@ -187,7 +223,7 @@ class _HourlyScreenState extends State<HourlyScreen>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               // Header
-                              _buildHeader(location, weatherProvider),
+                              _buildHeader(location),
                               AppColors.cardSpacingWidget,
 
                               // 24小时温度趋势图
@@ -218,10 +254,7 @@ class _HourlyScreenState extends State<HourlyScreen>
     );
   }
 
-  Widget _buildHeader(
-    LocationModel? location,
-    WeatherProvider weatherProvider,
-  ) {
+  Widget _buildHeader(LocationModel? location) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -314,13 +347,10 @@ class _HourlyScreenState extends State<HourlyScreen>
   }
 
   /// 处理刷新按钮点击，显示反馈信息
-  Future<void> _handleRefreshWithFeedback(
-    BuildContext context,
-    WeatherProvider weatherProvider,
-  ) async {
+  Future<void> _handleRefreshWithFeedback(BuildContext context) async {
     try {
       // 执行强制刷新
-      await weatherProvider.forceRefreshWithLocation();
+      await context.read<WeatherProvider>().forceRefreshWithLocation();
     } catch (e) {
       // 静默处理错误，不显示Toast
       Logger.e('刷新失败', tag: 'HourlyScreen', error: e);
@@ -349,7 +379,7 @@ class _HourlyScreenState extends State<HourlyScreen>
       errorType: errorType,
       onRetry: () {
         Navigator.of(context).pop();
-        _handleRefreshWithFeedback(context, context.read<WeatherProvider>());
+        _handleRefreshWithFeedback(context);
       },
       retryText: '重试',
     );

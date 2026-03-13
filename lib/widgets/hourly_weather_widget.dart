@@ -21,87 +21,89 @@ class HourlyWeatherWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
-        if (hourlyForecast == null || hourlyForecast!.isEmpty) {
-          return Container(
-            padding: const EdgeInsets.all(16),
-            decoration: AppColors.standardCardDecoration,
-            child: Center(
-              child: Text(
-                '暂无24小时预报数据',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 16),
+    return RepaintBoundary(
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) {
+          if (hourlyForecast == null || hourlyForecast!.isEmpty) {
+            return Container(
+              padding: const EdgeInsets.all(16),
+              decoration: AppColors.standardCardDecoration,
+              child: Center(
+                child: Text(
+                  '暂无24小时预报数据',
+                  style: TextStyle(color: AppColors.textSecondary, fontSize: 16),
+                ),
+              ),
+            );
+          }
+
+          return Card(
+            elevation: AppColors.cardElevation,
+            shadowColor: AppColors.cardShadowColor,
+            color: AppColors.materialCardColor,
+            shape: AppColors.cardShape,
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.access_time,
+                              color: AppColors.accentBlue,
+                              size: AppConstants.sectionTitleIconSize,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '24小时预报',
+                              style: TextStyle(
+                                color: AppColors.textPrimary,
+                                fontSize: AppConstants.sectionTitleFontSize,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          '更多',
+                          style: TextStyle(
+                            color: themeProvider.isLightTheme
+                                ? AppColors.primaryBlue
+                                : AppColors.accentBlue,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(
+                    height: 90,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 2),
+                      itemCount: hourlyForecast!.length,
+                      itemExtent: 58, // 更小的固定宽度
+                      itemBuilder: (context, index) {
+                        final hour = hourlyForecast![index];
+                        return _buildHourlyItem(hour, index);
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
               ),
             ),
           );
-        }
-
-        return Card(
-          elevation: AppColors.cardElevation,
-          shadowColor: AppColors.cardShadowColor,
-          color: AppColors.materialCardColor,
-          shape: AppColors.cardShape,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.access_time,
-                            color: AppColors.accentBlue,
-                            size: AppConstants.sectionTitleIconSize,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '24小时预报',
-                            style: TextStyle(
-                              color: AppColors.textPrimary,
-                              fontSize: AppConstants.sectionTitleFontSize,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Text(
-                        '更多',
-                        style: TextStyle(
-                          color: themeProvider.isLightTheme
-                              ? AppColors.primaryBlue
-                              : AppColors.accentBlue,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(
-                  height: 90,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 2),
-                    itemCount: hourlyForecast!.length,
-                    itemExtent: 58, // 更小的固定宽度
-                    itemBuilder: (context, index) {
-                      final hour = hourlyForecast![index];
-                      return _buildHourlyItem(hour, index);
-                    },
-                  ),
-                ),
-                const SizedBox(height: 8),
-              ],
-            ),
-          ),
-        );
-      },
+        },
+      ),
     );
   }
 

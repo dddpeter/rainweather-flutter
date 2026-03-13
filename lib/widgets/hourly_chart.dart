@@ -14,190 +14,192 @@ class HourlyChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
-        if (hourlyForecast == null || hourlyForecast!.isEmpty) {
+    return RepaintBoundary(
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) {
+          if (hourlyForecast == null || hourlyForecast!.isEmpty) {
+            return SizedBox(
+              height: 200,
+              child: Card(
+                elevation: AppColors.cardElevation,
+                shadowColor: AppColors.cardShadowColor,
+                color: AppColors.materialCardColor,
+                shape: AppColors.cardShape,
+                child: Center(
+                  child: Text(
+                    '暂无24小时数据',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }
+
+          // 过滤显示24小时预报数据（从当前时间之后的下一个整点开始）
+          final filteredForecast = _filterHourlyForecast(hourlyForecast!);
+
           return SizedBox(
-            height: 200,
+            height: 240,
             child: Card(
               elevation: AppColors.cardElevation,
               shadowColor: AppColors.cardShadowColor,
               color: AppColors.materialCardColor,
               shape: AppColors.cardShape,
-              child: Center(
-                child: Text(
-                  '暂无24小时数据',
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 16,
-                  ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.show_chart,
+                          color: AppColors.accentBlue,
+                          size: AppConstants.sectionTitleIconSize,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '24小时温度趋势',
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: AppConstants.sectionTitleFontSize,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Expanded(
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          // 计算图表宽度：每个数据点约40px的间距，最小为屏幕宽度
+                          final chartWidth = (filteredForecast.length * 40.0)
+                              .clamp(constraints.maxWidth, double.infinity);
+
+                          return SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: SizedBox(
+                              width: chartWidth,
+                              height: constraints.maxHeight,
+                              child: Builder(
+                                builder: (context) {
+                                  // 准备图表数据
+                                  final lineBarsData = [
+                                    ChartStyles.createLineChartBarData(
+                                      spots: _getTemperatureSpots(
+                                        filteredForecast,
+                                      ),
+                                      color: AppColors.temperatureChart,
+                                      isCurved: true,
+                                      showDataLabels: true,
+                                      showBelowArea: true,
+                                      belowAreaOpacity: 0.1,
+                                    ),
+                                  ];
+
+                                  return Stack(
+                                    children: [
+                                      // 图表主体
+                                      LineChart(
+                                        LineChartData(
+                                          gridData: ChartStyles.getGridData(
+                                            showVertical: true,
+                                            horizontalInterval: 5,
+                                          ),
+                                          titlesData: FlTitlesData(
+                                            leftTitles: AxisTitles(
+                                              sideTitles: SideTitles(
+                                                showTitles: true,
+                                                reservedSize: ChartStyles
+                                                    .leftTitlesReservedSize,
+                                                interval: 5,
+                                                getTitlesWidget: (value, meta) {
+                                                  return Text(
+                                                    '${value.toInt()}℃',
+                                                    style:
+                                                        ChartStyles.getYAxisLabelStyle(),
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                            rightTitles: const AxisTitles(
+                                              sideTitles: SideTitles(
+                                                showTitles: false,
+                                                reservedSize: 25, // 为右侧预留空间
+                                              ),
+                                            ),
+                                            topTitles: const AxisTitles(
+                                              sideTitles: SideTitles(
+                                                showTitles: false,
+                                              ),
+                                            ),
+                                            bottomTitles: AxisTitles(
+                                              sideTitles: SideTitles(
+                                                showTitles: true,
+                                                reservedSize: ChartStyles
+                                                    .bottomTitlesReservedSize,
+                                                getTitlesWidget: (value, meta) {
+                                                  final index = value.toInt();
+                                                  if (index >= 0 &&
+                                                      index <
+                                                          filteredForecast
+                                                              .length) {
+                                                    return Text(
+                                                      _formatTime(
+                                                        filteredForecast[index]
+                                                                .forecasttime ??
+                                                            '',
+                                                      ),
+                                                      style:
+                                                          ChartStyles.getAxisLabelStyle(),
+                                                    );
+                                                  }
+                                                  return const Text('');
+                                                },
+                                              ),
+                                            ),
+                                          ),
+                                          borderData: ChartStyles.getBorderData(),
+                                          lineBarsData: lineBarsData,
+                                          minY:
+                                              _getMinTemperature(
+                                                filteredForecast,
+                                              ) -
+                                              5,
+                                          maxY:
+                                              _getMaxTemperature(
+                                                filteredForecast,
+                                              ) +
+                                              10, // 增加顶部空间，为图标和温度值预留位置
+                                          // 禁用默认的数据标签显示，使用自定义温度显示
+                                          lineTouchData: LineTouchData(
+                                            enabled: false,
+                                          ),
+                                        ),
+                                      ),
+                                      // 温度值叠加层
+                                      _buildTemperatureLabelsOverlay(
+                                        filteredForecast,
+                                      ),
+                                    ],
+                                  );
+                                },
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
           );
-        }
-
-        // 过滤显示24小时预报数据（从当前时间之后的下一个整点开始）
-        final filteredForecast = _filterHourlyForecast(hourlyForecast!);
-
-        return SizedBox(
-          height: 240,
-          child: Card(
-            elevation: AppColors.cardElevation,
-            shadowColor: AppColors.cardShadowColor,
-            color: AppColors.materialCardColor,
-            shape: AppColors.cardShape,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.show_chart,
-                        color: AppColors.accentBlue,
-                        size: AppConstants.sectionTitleIconSize,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '24小时温度趋势',
-                        style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: AppConstants.sectionTitleFontSize,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Expanded(
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        // 计算图表宽度：每个数据点约40px的间距，最小为屏幕宽度
-                        final chartWidth = (filteredForecast.length * 40.0)
-                            .clamp(constraints.maxWidth, double.infinity);
-
-                        return SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: SizedBox(
-                            width: chartWidth,
-                            height: constraints.maxHeight,
-                            child: Builder(
-                              builder: (context) {
-                                // 准备图表数据
-                                final lineBarsData = [
-                                  ChartStyles.createLineChartBarData(
-                                    spots: _getTemperatureSpots(
-                                      filteredForecast,
-                                    ),
-                                    color: AppColors.temperatureChart,
-                                    isCurved: true,
-                                    showDataLabels: true,
-                                    showBelowArea: true,
-                                    belowAreaOpacity: 0.1,
-                                  ),
-                                ];
-
-                                return Stack(
-                                  children: [
-                                    // 图表主体
-                                    LineChart(
-                                      LineChartData(
-                                        gridData: ChartStyles.getGridData(
-                                          showVertical: true,
-                                          horizontalInterval: 5,
-                                        ),
-                                        titlesData: FlTitlesData(
-                                          leftTitles: AxisTitles(
-                                            sideTitles: SideTitles(
-                                              showTitles: true,
-                                              reservedSize: ChartStyles
-                                                  .leftTitlesReservedSize,
-                                              interval: 5,
-                                              getTitlesWidget: (value, meta) {
-                                                return Text(
-                                                  '${value.toInt()}℃',
-                                                  style:
-                                                      ChartStyles.getYAxisLabelStyle(),
-                                                );
-                                              },
-                                            ),
-                                          ),
-                                          rightTitles: const AxisTitles(
-                                            sideTitles: SideTitles(
-                                              showTitles: false,
-                                              reservedSize: 25, // 为右侧预留空间
-                                            ),
-                                          ),
-                                          topTitles: const AxisTitles(
-                                            sideTitles: SideTitles(
-                                              showTitles: false,
-                                            ),
-                                          ),
-                                          bottomTitles: AxisTitles(
-                                            sideTitles: SideTitles(
-                                              showTitles: true,
-                                              reservedSize: ChartStyles
-                                                  .bottomTitlesReservedSize,
-                                              getTitlesWidget: (value, meta) {
-                                                final index = value.toInt();
-                                                if (index >= 0 &&
-                                                    index <
-                                                        filteredForecast
-                                                            .length) {
-                                                  return Text(
-                                                    _formatTime(
-                                                      filteredForecast[index]
-                                                              .forecasttime ??
-                                                          '',
-                                                    ),
-                                                    style:
-                                                        ChartStyles.getAxisLabelStyle(),
-                                                  );
-                                                }
-                                                return const Text('');
-                                              },
-                                            ),
-                                          ),
-                                        ),
-                                        borderData: ChartStyles.getBorderData(),
-                                        lineBarsData: lineBarsData,
-                                        minY:
-                                            _getMinTemperature(
-                                              filteredForecast,
-                                            ) -
-                                            5,
-                                        maxY:
-                                            _getMaxTemperature(
-                                              filteredForecast,
-                                            ) +
-                                            10, // 增加顶部空间，为图标和温度值预留位置
-                                        // 禁用默认的数据标签显示，使用自定义温度显示
-                                        lineTouchData: LineTouchData(
-                                          enabled: false,
-                                        ),
-                                      ),
-                                    ),
-                                    // 温度值叠加层
-                                    _buildTemperatureLabelsOverlay(
-                                      filteredForecast,
-                                    ),
-                                  ],
-                                );
-                              },
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
+        },
+      ),
     );
   }
 

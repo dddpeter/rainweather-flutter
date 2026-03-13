@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(flutter analyze:*)"
+      "Bash(flutter analyze:*)",
+      "Bash(flutter pub:*)",
+      "Bash(grep -rn \"child: Consumer\" /Users/dddpeter/myworks/personal/rainweather-flutter/lib/widgets/*.dart 2>/dev/null | head -5)"
     ]
   }
 }

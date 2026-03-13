@@ -4,6 +4,11 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'providers/weather_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/location_provider.dart';
+import 'providers/cities_provider.dart';
+import 'providers/ai_insights_provider.dart';
+import 'providers/weather_data_provider.dart';
+import 'providers/refresh_coordinator.dart';
 import 'screens/today_screen.dart';
 import 'screens/hourly_screen.dart';
 import 'screens/forecast15d_screen.dart';
@@ -147,7 +152,27 @@ class _RainWeatherAppState extends State<RainWeatherApp>
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider(create: (_) => WeatherProvider()),
+        // 新增Provider
+        ChangeNotifierProvider(create: (_) => LocationProvider()),
+        ChangeNotifierProvider(create: (_) => CitiesProvider()),
+        ChangeNotifierProvider(create: (_) => AIInsightsProvider()),
+        ChangeNotifierProvider(create: (_) => WeatherDataProvider()),
+        ChangeNotifierProvider(create: (_) => RefreshCoordinator()),
+        // WeatherProvider依赖上述Provider，最后注册并设置子Provider引用
+        ChangeNotifierProvider(
+          create: (context) {
+            final weatherProvider = WeatherProvider();
+            // 设置子Provider引用
+            weatherProvider.setChildProviders(
+              locationProvider: context.read<LocationProvider>(),
+              citiesProvider: context.read<CitiesProvider>(),
+              aiInsightsProvider: context.read<AIInsightsProvider>(),
+              weatherDataProvider: context.read<WeatherDataProvider>(),
+              refreshCoordinator: context.read<RefreshCoordinator>(),
+            );
+            return weatherProvider;
+          },
+        ),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {

@@ -14,69 +14,70 @@ class WeatherChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
-        if (dailyForecast == null || dailyForecast!.isEmpty) {
-          return Center(
-            child: Text(
-              '暂无数据',
-              style: TextStyle(color: AppColors.textSecondary),
+    return RepaintBoundary(
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) {
+          if (dailyForecast == null || dailyForecast!.isEmpty) {
+            return Center(
+              child: Text(
+                '暂无数据',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+            );
+          }
+
+          // 准备图表数据
+          final lineBarsData = [
+            // High temperature line (12点天气)
+            ChartStyles.createLineChartBarData(
+              spots: _getHighTemperatureSpots(),
+              color: AppColors.highTemp,
+              isCurved: true,
+              showDataLabels: true,
+              showBelowArea: false,
             ),
-          );
-        }
+            // Low temperature line (0点天气)
+            ChartStyles.createLineChartBarData(
+              spots: _getLowTemperatureSpots(),
+              color: AppColors.lowTemp,
+              isCurved: true,
+              showDataLabels: true,
+              showBelowArea: false,
+            ),
+          ];
 
-        // 准备图表数据
-        final lineBarsData = [
-          // High temperature line (12点天气)
-          ChartStyles.createLineChartBarData(
-            spots: _getHighTemperatureSpots(),
-            color: AppColors.highTemp,
-            isCurved: true,
-            showDataLabels: true,
-            showBelowArea: false,
-          ),
-          // Low temperature line (0点天气)
-          ChartStyles.createLineChartBarData(
-            spots: _getLowTemperatureSpots(),
-            color: AppColors.lowTemp,
-            isCurved: true,
-            showDataLabels: true,
-            showBelowArea: false,
-          ),
-        ];
+          return Padding(
+            padding: const EdgeInsets.only(
+              left: 8.0,
+              right: 8.0, // 增加右侧padding，确保最后一组数据完整显示
+              top: 8.0,
+              bottom: 0,
+            ),
 
-        return Padding(
-          padding: const EdgeInsets.only(
-            left: 8.0,
-            right: 8.0, // 增加右侧padding，确保最后一组数据完整显示
-            top: 8.0,
-            bottom: 0,
-          ),
-
-          child: Column(
-            children: [
-              Expanded(
-                child: Stack(
-                  children: [
-                    // 图表主体
-                    LineChart(
-                      LineChartData(
-                        gridData: ChartStyles.getGridData(
-                          showVertical: false,
-                          horizontalInterval: 5,
-                        ),
-                        titlesData: FlTitlesData(
-                          show: true,
-                          rightTitles: const AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: false,
-                              reservedSize: 40, // 为右侧预留空间，确保最后一组数据完整显示
+            child: Column(
+              children: [
+                Expanded(
+                  child: Stack(
+                    children: [
+                      // 图表主体
+                      LineChart(
+                        LineChartData(
+                          gridData: ChartStyles.getGridData(
+                            showVertical: false,
+                            horizontalInterval: 5,
+                          ),
+                          titlesData: FlTitlesData(
+                            show: true,
+                            rightTitles: const AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: false,
+                                reservedSize: 40, // 为右侧预留空间，确保最后一组数据完整显示
+                              ),
                             ),
-                          ),
-                          topTitles: const AxisTitles(
-                            sideTitles: SideTitles(showTitles: false),
-                          ),
-                          bottomTitles: AxisTitles(
+                            topTitles: const AxisTitles(
+                              sideTitles: SideTitles(showTitles: false),
+                            ),
+                            bottomTitles: AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
                               reservedSize:
@@ -144,6 +145,7 @@ class WeatherChart extends StatelessWidget {
           ),
         );
       },
+    ),
     );
   }
 

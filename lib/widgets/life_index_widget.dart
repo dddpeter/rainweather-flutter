@@ -8,78 +8,47 @@ import '../constants/app_colors.dart';
 import '../constants/app_constants.dart';
 import 'base_card.dart';
 
-class LifeIndexWidget extends StatelessWidget {
-  final WeatherProvider weatherProvider;
-  final bool showContainer;
+/// Memoization 缓存用于生活指数数据处理
+class _LifeIndexCache {
+  static final Map<String, _CachedLifeIndexData> _cache = {};
+  static const int _maxCacheSize = 50;
 
-  const LifeIndexWidget({
-    super.key,
-    required this.weatherProvider,
-    this.showContainer = true,
-  });
+  /// 获取缓存的数据，如果不存在则计算并缓存
+  static _CachedLifeIndexData getOrCompute(List<LifeIndex> indices) {
+    // 生成缓存键：基于指数数据的唯一标识
+    final cacheKey = _generateCacheKey(indices);
 
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
-        final sunMoonData = weatherProvider.sunMoonIndexData;
+    if (_cache.containsKey(cacheKey)) {
+      return _cache[cacheKey]!;
+    }
 
-        // 生活指数信息
-        Widget lifeIndexContent;
-        if (sunMoonData?.index != null && sunMoonData!.index!.isNotEmpty) {
-          lifeIndexContent = _buildLifeIndexGrid(context, sunMoonData.index!);
-        } else {
-          // 没有数据时不显示任何内容
-          lifeIndexContent = const SizedBox.shrink();
-        }
+    // 计算并缓存
+    final result = _computeLifeIndexData(indices);
+    _cache[cacheKey] = result;
 
-        if (showContainer) {
-          return BaseCard(
-            cardType: CardType.standard,
-            useMaterialCard: true,
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.eco,
-                      color: AppColors.accentGreen,
-                      size: AppConstants.sectionTitleIconSize,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '生活指数',
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: AppConstants.sectionTitleFontSize,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                lifeIndexContent,
-              ],
-            ),
-          );
-        } else {
-          return lifeIndexContent;
-        }
-      },
-    );
+    // 限制缓存大小，使用 LRU 策略
+    if (_cache.length > _maxCacheSize) {
+      _cache.remove(_cache.keys.first);
+    }
+
+    return result;
   }
 
-  Widget _buildLifeIndexGrid(BuildContext context, List<LifeIndex> indices) {
+  /// 生成缓存键
+  static String _generateCacheKey(List<LifeIndex> indices) {
+    return indices.map((i) => '${i.indexTypeCh}_${i.indexLevel}_${i.indexContent}').join('|');
+  }
+
+  /// 计算生活指数数据（过滤、分组、行构建）
+  static _CachedLifeIndexData _computeLifeIndexData(List<LifeIndex> indices) {
     // 过滤出需要显示的生活指数
-    final targetIndices = ['穿衣指数', '感冒指数', '化妆指数', '紫外线强度指数', '洗车指数', '运动指数'];
+    const targetIndices = ['穿衣指数', '感冒指数', '化妆指数', '紫外线强度指数', '洗车指数', '运动指数'];
 
     final filteredIndices = indices
         .where((index) => targetIndices.contains(index.indexTypeCh ?? ''))
         .toList();
 
-    // 将数据分成两列（第一列：穿衣指数、紫外线强度指数、洗车指数；第二列：感冒指数、化妆指数、运动指数）
+    // 将数据分成两列
     final List<LifeIndex> column1 = [];
     final List<LifeIndex> column2 = [];
 
@@ -91,7 +60,7 @@ class LifeIndexWidget extends StatelessWidget {
       }
     }
 
-    // 确保两列长度相同，不足的用空占位符补充
+    // 确保两列长度相同
     final int maxLen = math.max(column1.length, column2.length);
     while (column1.length < maxLen) {
       column1.add(_createPlaceholderIndex());
@@ -106,8 +75,102 @@ class LifeIndexWidget extends StatelessWidget {
       rows.add([column1[i], column2[i]]);
     }
 
+    return _CachedLifeIndexData(
+      rows: rows,
+      filteredCount: filteredIndices.length,
+    );
+  }
+
+  /// 创建占位符指数
+  static LifeIndex _createPlaceholderIndex() {
+    return LifeIndex(indexTypeCh: '', indexLevel: '', indexContent: '');
+  }
+
+  /// 清空缓存（可选，用于内存管理）
+  static void clearCache() {
+    _cache.clear();
+  }
+}
+
+/// 缓存的生活指数数据
+class _CachedLifeIndexData {
+  final List<List<LifeIndex>> rows;
+  final int filteredCount;
+
+  _CachedLifeIndexData({required this.rows, required this.filteredCount});
+}
+
+class LifeIndexWidget extends StatelessWidget {
+  final WeatherProvider weatherProvider;
+  final bool showContainer;
+
+  const LifeIndexWidget({
+    super.key,
+    required this.weatherProvider,
+    this.showContainer = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return RepaintBoundary(
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) {
+          final sunMoonData = weatherProvider.sunMoonIndexData;
+
+          // 生活指数信息
+          Widget lifeIndexContent;
+          if (sunMoonData?.index != null && sunMoonData!.index!.isNotEmpty) {
+            lifeIndexContent = _buildLifeIndexGrid(context, sunMoonData.index!);
+          } else {
+            // 没有数据时不显示任何内容
+            lifeIndexContent = const SizedBox.shrink();
+          }
+
+          if (showContainer) {
+            return BaseCard(
+              cardType: CardType.standard,
+              useMaterialCard: true,
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.eco,
+                        color: AppColors.accentGreen,
+                        size: AppConstants.sectionTitleIconSize,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '生活指数',
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: AppConstants.sectionTitleFontSize,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  lifeIndexContent,
+                ],
+              ),
+            );
+          } else {
+            return lifeIndexContent;
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildLifeIndexGrid(BuildContext context, List<LifeIndex> indices) {
+    // 使用 memoization 缓存获取处理后的数据
+    final cachedData = _LifeIndexCache.getOrCompute(indices);
+
     return Column(
-      children: rows.map((row) {
+      children: cachedData.rows.map((row) {
         return Padding(
           padding: const EdgeInsets.only(bottom: 4), // 减小间隙
           child: Row(
@@ -124,11 +187,6 @@ class LifeIndexWidget extends StatelessWidget {
         );
       }).toList(),
     );
-  }
-
-  /// 创建占位符指数
-  LifeIndex _createPlaceholderIndex() {
-    return LifeIndex(indexTypeCh: '', indexLevel: '', indexContent: '');
   }
 
   Widget _buildLifeIndexItem(

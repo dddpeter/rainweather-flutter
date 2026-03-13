@@ -26,6 +26,12 @@ import '../services/location_change_notifier.dart';
 import '../utils/weather_provider_logger.dart';
 import '../utils/weather_cache_manager.dart';
 import '../utils/network_status_service.dart';
+// 新Provider导入
+import 'location_provider.dart';
+import 'cities_provider.dart';
+import 'ai_insights_provider.dart';
+import 'weather_data_provider.dart';
+import 'refresh_coordinator.dart';
 
 /// WeatherProvider - 天气数据状态管理
 ///
@@ -35,6 +41,8 @@ import '../utils/network_status_service.dart';
 /// - 管理缓存和后台刷新
 /// - 提供AI智能摘要和通勤建议
 /// - 提供日出日落和生活指数数据
+///
+/// 架构：使用Facade模式，内部委托给专门的Provider
 class WeatherProvider extends ChangeNotifier {
   // ==================== 依赖服务 ====================
   final WeatherService _weatherService = WeatherService.getInstance();
@@ -45,6 +53,29 @@ class WeatherProvider extends ChangeNotifier {
   final WeatherAlertService _alertService = WeatherAlertService.instance;
   final WeatherWidgetService _widgetService =
       WeatherWidgetService.getInstance();
+
+  // ==================== 子Provider引用 ====================
+  LocationProvider? _locationProvider;
+  CitiesProvider? _citiesProvider;
+  AIInsightsProvider? _aiInsightsProvider;
+  WeatherDataProvider? _weatherDataProvider;
+  RefreshCoordinator? _refreshCoordinator;
+
+  /// 设置子Provider引用（在Provider注册后调用）
+  void setChildProviders({
+    required LocationProvider locationProvider,
+    required CitiesProvider citiesProvider,
+    required AIInsightsProvider aiInsightsProvider,
+    required WeatherDataProvider weatherDataProvider,
+    required RefreshCoordinator refreshCoordinator,
+  }) {
+    _locationProvider = locationProvider;
+    _citiesProvider = citiesProvider;
+    _aiInsightsProvider = aiInsightsProvider;
+    _weatherDataProvider = weatherDataProvider;
+    _refreshCoordinator = refreshCoordinator;
+    Logger.d('WeatherProvider: 子Provider已设置', tag: 'WeatherProvider');
+  }
 
   // 获取CityDataService实例
   CityDataService get _cityDataService => CityDataService.getInstance();
@@ -1486,6 +1517,29 @@ class WeatherProvider extends ChangeNotifier {
 
   /// 启动定时刷新
   void _startPeriodicRefresh() {
+    // 如果RefreshCoordinator已设置，使用它来管理定时刷新
+    if (_refreshCoordinator != null) {
+      WeatherProviderLogger.info('委托给RefreshCoordinator管理定时刷新');
+      _refreshCoordinator!.start(
+        onHourlyRefresh: () async {
+          WeatherProviderLogger.warning('WeatherProvider: 定时刷新触发');
+          await _performPeriodicRefresh();
+        },
+        onAppResume: () async {
+          WeatherProviderLogger.info('WeatherProvider: 应用恢复到前台');
+          // 应用恢复时刷新数据
+          if (_currentLocation != null) {
+            await _loadWeatherDataForLocation(_currentLocation!);
+          }
+        },
+      );
+      WeatherProviderLogger.warning(
+        'WeatherProvider: RefreshCoordinator已启动',
+      );
+      return;
+    }
+
+    // 保留原有的Timer实现（如果RefreshCoordinator未设置）
     _stopPeriodicRefresh(); // 先停止现有的定时器
 
     _refreshTimer = Timer.periodic(_refreshInterval, (timer) {
@@ -1500,6 +1554,14 @@ class WeatherProvider extends ChangeNotifier {
 
   /// 停止定时刷新
   void _stopPeriodicRefresh() {
+    // 如果RefreshCoordinator已设置，使用它来停止
+    if (_refreshCoordinator != null) {
+      _refreshCoordinator!.stop();
+      WeatherProviderLogger.warning('WeatherProvider: RefreshCoordinator已停止');
+      return;
+    }
+
+    // 保留原有的停止逻辑（如果RefreshCoordinator未设置）
     _refreshTimer?.cancel();
     _refreshTimer = null;
     WeatherProviderLogger.warning('WeatherProvider: 定时刷新已停止');
@@ -1648,6 +1710,17 @@ class WeatherProvider extends ChangeNotifier {
 
   /// Update cities sort order
   Future<void> updateCitiesSortOrder(List<CityModel> reorderedCities) async {
+    // 如果CitiesProvider已设置，委托给它处理排序更新
+    if (_citiesProvider != null) {
+      WeatherProviderLogger.info('委托给CitiesProvider更新城市排序');
+      await _citiesProvider!.updateCitiesSortOrder(reorderedCities);
+      // 同步城市列表
+      _mainCities = _citiesProvider!.mainCities;
+      notifyListeners();
+      return;
+    }
+
+    // 保留原有的排序逻辑（如果CitiesProvider未设置）
     try {
       // Update sort order for each city (excluding current location which should stay at 0)
       final currentLocationName = getCurrentLocationCityName();
@@ -1678,6 +1751,13 @@ class WeatherProvider extends ChangeNotifier {
 
   /// Search cities by name
   Future<List<CityModel>> searchCities(String query) async {
+    // 如果CitiesProvider已设置，委托给它处理搜索
+    if (_citiesProvider != null) {
+      WeatherProviderLogger.info('委托给CitiesProvider搜索城市: $query');
+      return await _citiesProvider!.searchCities(query);
+    }
+
+    // 保留原有的搜索逻辑（如果CitiesProvider未设置）
     try {
       return await _cityService.searchCities(query);
     } catch (e) {
@@ -1925,8 +2005,37 @@ class WeatherProvider extends ChangeNotifier {
     );
   }
 
+  /// 切换到指定城市的天气数据
+  void switchToCityWeather(LocationModel city) {
+    // 如果LocationProvider已设置，委托给它处理城市切换
+    if (_locationProvider != null) {
+      WeatherProviderLogger.info('委托给LocationProvider切换城市天气: ${city.district}');
+      _locationProvider!.switchToCityWeather(city);
+      // 同步状态
+      _currentLocation = _locationProvider!.currentLocation;
+      _isShowingCityWeather = _locationProvider!.isShowingCityWeather;
+    }
+
+    WeatherProviderLogger.info('切换到城市天气: ${city.district}');
+    // 标记当前显示城市天气数据
+    _isShowingCityWeather = true;
+    _currentLocation = city;
+
+    notifyListeners();
+  }
+
   /// 恢复到当前定位的天气数据（用于从城市天气页面返回到今日天气页面）
   void restoreCurrentLocationWeather() {
+    // 如果LocationProvider已设置，委托给它处理位置恢复
+    if (_locationProvider != null) {
+      WeatherProviderLogger.info('委托给LocationProvider恢复定位天气');
+      _locationProvider!.restoreLocationWeather();
+      // 同步状态
+      _currentLocation = _locationProvider!.currentLocation;
+      _originalLocation = _locationProvider!.originalLocation;
+      _isShowingCityWeather = _locationProvider!.isShowingCityWeather;
+    }
+
     WeatherProviderLogger.info('RESTORE CURRENT LOCATION WEATHER CALLED 🔄');
     WeatherProviderLogger.info(
       '💾 _currentLocationWeather != null: ${_currentLocationWeather != null}',
@@ -2051,7 +2160,19 @@ class WeatherProvider extends ChangeNotifier {
 
   /// 在进入今日天气页面后进行定位
   Future<void> performLocationAfterEntering() async {
-    // 检查全局定位刷新锁
+    // 如果LocationProvider已设置，委托给它处理
+    if (_locationProvider != null) {
+      WeatherProviderLogger.info('委托给LocationProvider处理定位');
+      await _locationProvider!.refreshLocation(forceRefresh: true);
+      // LocationProvider会触发通知，这里需要同步状态
+      _currentLocation = _locationProvider!.currentLocation;
+      _originalLocation = _locationProvider!.originalLocation;
+      _isShowingCityWeather = _locationProvider!.isShowingCityWeather;
+      _hasPerformedInitialLocation = _locationProvider!.hasPerformedInitialLocation;
+      _isLocationRefreshing = _locationProvider!.isLocationRefreshing;
+    }
+
+    // 保留原有的定位逻辑（如果LocationProvider未设置或需要额外处理）
     if (_isLocationRefreshing) {
       WeatherProviderLogger.debug('定位刷新正在进行中，跳过');
       return;
@@ -2770,6 +2891,19 @@ class WeatherProvider extends ChangeNotifier {
       return;
     }
 
+    // 如果AIInsightsProvider已设置，委托给它生成摘要
+    if (_aiInsightsProvider != null) {
+      WeatherProviderLogger.info('委托给AIInsightsProvider生成每日摘要');
+      final summary = await _aiInsightsProvider!.generateDailySummary(_currentWeather);
+      if (summary != null) {
+        _weatherSummary = summary;
+        _isGeneratingSummary = _aiInsightsProvider!.isGeneratingSummary;
+        notifyListeners();
+        return;
+      }
+    }
+
+    // 保留原有的生成逻辑（如果AIInsightsProvider未设置或返回null）
     try {
       _isGeneratingSummary = true;
       notifyListeners();
@@ -2953,6 +3087,19 @@ class WeatherProvider extends ChangeNotifier {
       return;
     }
 
+    // 如果AIInsightsProvider已设置，委托给它生成15日总结
+    if (_aiInsightsProvider != null) {
+      WeatherProviderLogger.info('委托给AIInsightsProvider生成15日总结');
+      final summary = await _aiInsightsProvider!.generate15dSummary(_forecast15d);
+      if (summary != null) {
+        _forecast15dSummary = summary;
+        _isGenerating15dSummary = _aiInsightsProvider!.isGenerating15dSummary;
+        notifyListeners();
+        return;
+      }
+    }
+
+    // 保留原有的生成逻辑（如果AIInsightsProvider未设置或返回null）
     try {
       _isGenerating15dSummary = true;
       notifyListeners();
@@ -3102,6 +3249,21 @@ class WeatherProvider extends ChangeNotifier {
     if (_isGeneratingCommuteAdvice) {
       WeatherProviderLogger.info('⏳ 通勤建议正在生成中，跳过重复调用');
       return;
+    }
+
+    // 如果AIInsightsProvider已设置，委托给它生成通勤建议
+    if (_aiInsightsProvider != null) {
+      WeatherProviderLogger.info('委托给AIInsightsProvider生成通勤建议');
+      final advices = await _aiInsightsProvider!.generateCommuteAdvice(
+        _currentWeather,
+        _sunMoonIndexData,
+      );
+      if (advices.isNotEmpty) {
+        _commuteAdvices = advices;
+        _isGeneratingCommuteAdvice = _aiInsightsProvider!.isGeneratingCommuteAdvice;
+        notifyListeners();
+        return;
+      }
     }
 
     // 检查是否在通勤时段
@@ -3625,12 +3787,14 @@ class WeatherProvider extends ChangeNotifier {
   void dispose() {
     // 移除网络状态监听
     _networkStatus.removeListener(_onNetworkStatusChanged);
-    // 停止定时刷新
+    // 停止定时刷新（如果使用了RefreshCoordinator，它会自动停止）
     _stopPeriodicRefresh();
     // 停止通勤建议清理定时器
     _stopCommuteCleanupTimer();
     // 停止天气数据变化监听器
     _stopWeatherDataWatcher();
+    // 停止RefreshCoordinator（如果已设置）
+    _refreshCoordinator?.stop();
     super.dispose();
   }
 }

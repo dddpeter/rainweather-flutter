@@ -19,82 +19,83 @@ class Forecast15dChart extends StatelessWidget {
     // 准备图表数据
     final chartData = _prepareChartData(forecast15d!);
 
-    return SizedBox(
-      height: 280,
-      child: Card(
-        elevation: AppColors.cardElevation,
-        shadowColor: AppColors.cardShadowColor,
-        color: AppColors.materialCardColor,
-        shape: AppColors.cardShape,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.trending_up,
-                    color: AppColors.warning,
-                    size: AppConstants.sectionTitleIconSize,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '15日温度趋势',
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: AppConstants.sectionTitleFontSize,
-                      fontWeight: FontWeight.bold,
+    return RepaintBoundary(
+      child: SizedBox(
+        height: 280,
+        child: Card(
+          elevation: AppColors.cardElevation,
+          shadowColor: AppColors.cardShadowColor,
+          color: AppColors.materialCardColor,
+          shape: AppColors.cardShape,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.trending_up,
+                      color: AppColors.warning,
+                      size: AppConstants.sectionTitleIconSize,
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    // 计算图表宽度：每个数据点约50px的间距，最小为屏幕宽度
-                    final chartWidth = (chartData.length * 50.0).clamp(
-                      constraints.maxWidth,
-                      double.infinity,
-                    );
+                    const SizedBox(width: 8),
+                    Text(
+                      '15日温度趋势',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: AppConstants.sectionTitleFontSize,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      // 计算图表宽度：每个数据点约50px的间距，最小为屏幕宽度
+                      final chartWidth = (chartData.length * 50.0).clamp(
+                        constraints.maxWidth,
+                        double.infinity,
+                      );
 
-                    return SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: SizedBox(
-                        width: chartWidth,
-                        height: constraints.maxHeight,
-                        child: Builder(
-                          builder: (context) {
-                            // 准备图表数据
-                            final lineBarsData = [
-                              // 最高温度线
-                              ChartStyles.createLineChartBarData(
-                                spots: chartData.asMap().entries.map((entry) {
-                                  return FlSpot(
-                                    entry.key.toDouble(),
-                                    entry.value['maxTemp'],
-                                  );
-                                }).toList(),
-                                color: AppColors.highTemp,
-                                isCurved: true,
-                                showDataLabels: true,
-                                showBelowArea: false,
-                              ),
-                              // 最低温度线
-                              ChartStyles.createLineChartBarData(
-                                spots: chartData.asMap().entries.map((entry) {
-                                  return FlSpot(
-                                    entry.key.toDouble(),
-                                    entry.value['minTemp'],
-                                  );
-                                }).toList(),
-                                color: AppColors.lowTemp,
-                                isCurved: true,
-                                showDataLabels: true,
-                                showBelowArea: false,
-                              ),
-                            ];
+                      return SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: SizedBox(
+                          width: chartWidth,
+                          height: constraints.maxHeight,
+                          child: Builder(
+                            builder: (context) {
+                              // 准备图表数据
+                              final lineBarsData = [
+                                // 最高温度线
+                                ChartStyles.createLineChartBarData(
+                                  spots: chartData.asMap().entries.map((entry) {
+                                    return FlSpot(
+                                      entry.key.toDouble(),
+                                      entry.value['maxTemp'],
+                                    );
+                                  }).toList(),
+                                  color: AppColors.highTemp,
+                                  isCurved: true,
+                                  showDataLabels: true,
+                                  showBelowArea: false,
+                                ),
+                                // 最低温度线
+                                ChartStyles.createLineChartBarData(
+                                  spots: chartData.asMap().entries.map((entry) {
+                                    return FlSpot(
+                                      entry.key.toDouble(),
+                                      entry.value['minTemp'],
+                                    );
+                                  }).toList(),
+                                  color: AppColors.lowTemp,
+                                  isCurved: true,
+                                  showDataLabels: true,
+                                  showBelowArea: false,
+                                ),
+                              ];
 
                             return Stack(
                               children: [
@@ -187,15 +188,16 @@ class Forecast15dChart extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              // 图例
-              ChartStyles.buildLegendContainer(
-                items: [
-                  MapEntry('最高温度', AppColors.highTemp),
-                  MapEntry('最低温度', AppColors.lowTemp),
-                ],
-                padding: const EdgeInsets.symmetric(vertical: 4),
-              ),
-            ],
+                // 图例
+                ChartStyles.buildLegendContainer(
+                  items: [
+                    MapEntry('最高温度', AppColors.highTemp),
+                    MapEntry('最低温度', AppColors.lowTemp),
+                  ],
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                ),
+              ],
+            ),
           ),
         ),
       ),

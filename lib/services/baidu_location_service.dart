@@ -94,7 +94,11 @@ class BaiduLocationService implements LocationProviderInterface {
       // 准备定位
       Map iosMap = iosOpt.getMap();
       Map androidMap = androidOpt.getMap();
-      bool success = await _loc.prepareLoc(androidMap, iosMap);
+      bool success = await _loc.prepareLoc(
+        androidMap,
+        iosMap,
+        <String, dynamic>{},
+      );
 
       if (success) {
         _isInitialized = true;

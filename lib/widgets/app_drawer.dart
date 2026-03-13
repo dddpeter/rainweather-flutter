@@ -1082,12 +1082,12 @@ class AppDrawer extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '• 修复多处内存泄漏问题（定位、网络、缓存）\n'
-                      '• 优化数据库连接管理，自动释放资源\n'
-                      '• 修复主题加载竞态条件，避免UI异常\n'
-                      '• 增强AI服务JSON解析异常处理\n'
-                      '• 修复定位服务并发问题，防止重复定位\n'
-                      '• 完善应用生命周期管理',
+                      '• 完成全面代码优化分析报告\n'
+                      '• 提出 WeatherProvider 拆分方案\n'
+                      '• 建议添加 Repository 层提升可测试性\n'
+                      '• 分析冗余定位 SDK，建议精简\n'
+                      '• 统一日志系统和异常处理规范\n'
+                      '• 数据库索引优化建议',
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,

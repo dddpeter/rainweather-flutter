@@ -2,7 +2,7 @@
 
 A modern intelligent weather application built with Flutter, providing real-time weather information with location services, weather forecasts, and beautiful UI components.
 
-**Current Version**: v1.13.5 | **Release Date**: 2026-03-12
+**Current Version**: v1.13.6 | **Release Date**: 2026-03-13
 
 > **中文文档**: [README.md](README.md) | **English Documentation**: This file
 
@@ -230,7 +230,22 @@ This Flutter app is a complete refactor of the original Android weather app with
 
 ## Changelog
 
-### v1.13.5 (2026-03-12) - Latest
+### v1.13.6 (2026-03-13) - Latest
+
+**Code Quality & Maintainability Optimization**
+- 📊 **Optimization Analysis Report**: Completed comprehensive code optimization analysis, identified multiple improvement areas
+- 🏗️ **Architecture Optimization**: Proposed WeatherProvider split strategy, suggested adding Repository layer
+- 🚀 **Performance Optimization**: List performance improvements, image preloading, database indexing
+- 🔧 **Dependency Management**: Analyzed redundant location SDKs, recommended streamlining to reduce app size
+- 📝 **Code Standards**: Unified logging system, magic number constants, consistent exception handling
+
+**Expected Benefits**
+- 📈 Significantly improved maintainability
+- 📦 App size reduction of 30-50MB (after removing redundant location SDKs)
+- ⚡ Improved list scrolling smoothness
+- 🎯 Enhanced code quality and testability
+
+### v1.13.5 (2026-03-12)
 
 **Location Experience Major Optimization**
 - 🎯 **GPS Accuracy Improvement**: Location accuracy upgraded from medium to best (maximum precision), reducing location error from 100m to within 5m

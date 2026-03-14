@@ -18,8 +18,12 @@ import '../widgets/ai_content_widget.dart';
 import '../widgets/air_quality_card.dart';
 import '../widgets/hourly_chart.dart';
 import '../widgets/hourly_list.dart';
+import '../widgets/common/state_widgets.dart';
+import '../widgets/common/info_chip_widget.dart';
+import '../widgets/weather/forecast_card_widget.dart';
 import '../models/location_model.dart';
-import '../utils/weather_icon_helper.dart';
+import '../utils/formatters.dart';
+import '../utils/clothing_advisor.dart';
 import '../services/weather_service.dart';
 
 /// 城市天气页面 - 全新实现
@@ -188,21 +192,26 @@ class _CityWeatherPageState extends State<CityWeatherPage>
   ) {
     // 1. 加载中状态
     if (cityWeatherData?.isLoading == true && weather == null) {
-      return Center(
-        child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(AppColors.textPrimary),
-        ),
-      );
+      return const LoadingWidget();
     }
 
     // 2. 错误状态（且没有缓存数据）
     if (cityWeatherData?.error != null && weather == null) {
-      return _buildErrorWidget(cityWeatherData!.error!, cityWeatherProvider);
+      return ErrorStateWidget(
+        error: cityWeatherData!.error,
+        onRetry: () => _loadCityWeather(forceRefresh: true),
+      );
     }
 
     // 3. 空数据状态
     if (weather == null) {
-      return _buildEmptyWidget(cityWeatherProvider);
+      return EmptyStateWidget(
+        icon: Icons.cloud_off_rounded,
+        message: '暂无天气数据',
+        subMessage: '无法获取 "${widget.cityName}" 的天气信息',
+        onAction: () => _loadCityWeather(forceRefresh: true),
+        actionText: '重试',
+      );
     }
 
     // 4. 正常显示
@@ -222,84 +231,6 @@ class _CityWeatherPageState extends State<CityWeatherPage>
           ),
         ),
       ],
-    );
-  }
-
-  /// 构建错误页面
-  Widget _buildErrorWidget(String error, CityWeatherProvider provider) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.error_outline,
-            color: AppColors.textPrimary,
-            size: 64,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            '加载失败',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            error,
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 14,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: () => _loadCityWeather(forceRefresh: true),
-            child: const Text('重试'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 构建空数据页面
-  Widget _buildEmptyWidget(CityWeatherProvider provider) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.cloud_off_rounded,
-            color: AppColors.textPrimary,
-            size: 64,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            '暂无天气数据',
-            style: TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '无法获取 "${widget.cityName}" 的天气信息',
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 14,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: () => _loadCityWeather(forceRefresh: true),
-            child: const Text('重试'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -545,91 +476,13 @@ class _CityWeatherPageState extends State<CityWeatherPage>
   Widget _buildSimplifiedDetails(CurrentWeather? current) {
     if (current == null) return const SizedBox.shrink();
 
-    return Row(
-      children: [
-        Expanded(
-          child: _buildSimpleInfoChip(
-            Icons.water_drop,
-            '湿度',
-            '${_formatNumber(current.humidity)}%',
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _buildSimpleInfoChip(
-            Icons.air,
-            '风力',
-            '${current.winddir ?? '--'} ${current.windpower ?? ''}',
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _buildSimpleInfoChip(
-            Icons.compress,
-            '气压',
-            '${_formatNumber(current.airpressure)}hpa',
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _buildSimpleInfoChip(
-            Icons.visibility,
-            '能见度',
-            '${_formatNumber(current.visibility)}km',
-          ),
-        ),
+    return WeatherInfoRow(
+      items: [
+        InfoChipData(icon: Icons.water_drop, label: '湿度', value: Formatters.formatHumidity(current.humidity)),
+        InfoChipData(icon: Icons.air, label: '风力', value: '${current.winddir ?? '--'} ${current.windpower ?? ''}'),
+        InfoChipData(icon: Icons.compress, label: '气压', value: Formatters.formatPressure(current.airpressure)),
+        InfoChipData(icon: Icons.visibility, label: '能见度', value: Formatters.formatVisibility(current.visibility)),
       ],
-    );
-  }
-
-  /// 构建简单的信息标签
-  Widget _buildSimpleInfoChip(IconData icon, String label, String value) {
-    final themeProvider = context.read<ThemeProvider>();
-    return Container(
-      height: 60,
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                color: themeProvider.getColor('headerTextSecondary'),
-                size: 14,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  color: themeProvider.getColor('headerTextSecondary'),
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              color: themeProvider.getColor('headerTextSecondary'),
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-            ),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
     );
   }
 
@@ -735,7 +588,7 @@ class _CityWeatherPageState extends State<CityWeatherPage>
               if (current?.temperature != null)
                 _buildTipItem(
                   Icons.checkroom_rounded,
-                  _getClothingSuggestion(
+                  ClothingAdvisor.getSuggestion(
                     current!.temperature!,
                     current.weather,
                   ),
@@ -972,7 +825,7 @@ class _CityWeatherPageState extends State<CityWeatherPage>
                     ...forecast15d.skip(1).toList().asMap().entries.map((entry) {
                       final index = entry.key + 1;
                       final day = entry.value;
-                      return _buildForecastCard(day, index);
+                      return ForecastCardWidget(day: day, index: index);
                     }),
                   ],
                 ),
@@ -1039,183 +892,6 @@ class _CityWeatherPageState extends State<CityWeatherPage>
     );
   }
 
-  /// 构建预报卡片
-  Widget _buildForecastCard(DailyWeather day, int index) {
-    final isToday = _isToday(day.forecasttime ?? '');
-    final isTomorrow = _isTomorrow(day.forecasttime ?? '');
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Card(
-        elevation: AppColors.cardElevation,
-        shadowColor: AppColors.cardShadowColor,
-        color: AppColors.materialCardColor,
-        shape: AppColors.cardShape,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              SizedBox(
-                width: 60,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isToday
-                            ? AppColors.accentBlue.withOpacity(0.2)
-                            : AppColors.accentGreen.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(1),
-                        border: Border.all(
-                          color: isToday
-                              ? AppColors.accentBlue.withOpacity(0.5)
-                              : AppColors.accentGreen.withOpacity(0.5),
-                          width: 1,
-                        ),
-                      ),
-                      child: Text(
-                        isToday
-                            ? '今天'
-                            : isTomorrow
-                                ? '明天'
-                                : day.week ?? '',
-                        style: TextStyle(
-                          color: isToday
-                              ? AppColors.textPrimary
-                              : AppColors.accentGreen,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      day.forecasttime ?? '',
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    if (day.sunrise_sunset != null) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        day.sunrise_sunset!,
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 10,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _buildCompactWeatherPeriod(
-                        '上午',
-                        day.weather_pm ?? '晴',
-                        day.temperature_pm ?? '--',
-                        day.weather_pm_pic ?? 'n00',
-                        day.winddir_pm ?? '',
-                        day.windpower_pm ?? '',
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      width: 1,
-                      height: 40,
-                      color: AppColors.dividerColor,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _buildCompactWeatherPeriod(
-                        '下午',
-                        day.weather_am ?? '晴',
-                        day.temperature_am ?? '--',
-                        day.weather_am_pic ?? 'd00',
-                        day.winddir_am ?? '',
-                        day.windpower_am ?? '',
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// 构建紧凑的天气时段
-  Widget _buildCompactWeatherPeriod(
-    String period,
-    String weather,
-    String temperature,
-    String weatherPic,
-    String windDir,
-    String windPower,
-  ) {
-    final isNight = WeatherIconHelper.isNightByPeriod(period);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          period,
-          style: TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Row(
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              alignment: Alignment.center,
-              child: WeatherIconHelper.buildWeatherIcon(weather, isNight, 28),
-            ),
-            const SizedBox(width: 4),
-            Text(
-              '${_formatNumber(temperature)}℃',
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 2),
-        Text(
-          weather,
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        if (windDir.isNotEmpty || windPower.isNotEmpty)
-          Text(
-            '$windDir$windPower',
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 10),
-          ),
-      ],
-    );
-  }
-
   /// 分享天气信息
   Future<void> _shareWeather(
     CityWeatherProvider provider,
@@ -1276,171 +952,5 @@ class _CityWeatherPageState extends State<CityWeatherPage>
         );
       }
     }
-  }
-
-  /// 获取穿衣建议
-  String _getClothingSuggestion(String temperature, String? weather) {
-    try {
-      final temp = int.parse(temperature);
-      final hasRain = weather?.contains('雨') ?? false;
-      final hasSnow = weather?.contains('雪') ?? false;
-
-      String suggestion = '';
-
-      if (temp >= 30) {
-        suggestion = '天气炎热，建议穿短袖、短裤等清凉透气的衣服';
-      } else if (temp >= 25) {
-        suggestion = '天气温暖，适合穿短袖、薄长裤等夏季服装';
-      } else if (temp >= 20) {
-        suggestion = '天气舒适，建议穿长袖衬衫、薄外套等';
-      } else if (temp >= 15) {
-        suggestion = '天气微凉，建议穿夹克、薄毛衣等';
-      } else if (temp >= 10) {
-        suggestion = '天气较冷，建议穿厚外套、毛衣等保暖衣物';
-      } else if (temp >= 0) {
-        suggestion = '天气寒冷，建议穿棉衣、羽绒服等厚实保暖的衣服';
-      } else {
-        suggestion = '天气严寒，建议穿加厚羽绒服、保暖内衣等防寒衣物';
-      }
-
-      if (hasRain) {
-        suggestion += '，记得带伞☂️';
-      } else if (hasSnow) {
-        suggestion += '，注意防滑保暖❄️';
-      }
-
-      return suggestion;
-    } catch (e) {
-      return '根据天气情况适当增减衣物';
-    }
-  }
-
-  /// 判断是否为今天
-  bool _isToday(String forecastTime) {
-    if (forecastTime.isEmpty) return false;
-
-    try {
-      final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
-
-      DateTime forecastDate;
-      if (forecastTime.contains('-')) {
-        final parts = forecastTime.split(' ')[0].split('-');
-        if (parts.length == 3) {
-          forecastDate = DateTime(
-            int.parse(parts[0]),
-            int.parse(parts[1]),
-            int.parse(parts[2]),
-          );
-        } else if (parts.length == 2) {
-          forecastDate = DateTime(
-            now.year,
-            int.parse(parts[0]),
-            int.parse(parts[1]),
-          );
-        } else {
-          return false;
-        }
-      } else if (forecastTime.contains('/')) {
-        final parts = forecastTime.split(' ')[0].split('/');
-        if (parts.length == 3) {
-          forecastDate = DateTime(
-            int.parse(parts[0]),
-            int.parse(parts[1]),
-            int.parse(parts[2]),
-          );
-        } else if (parts.length == 2) {
-          forecastDate = DateTime(
-            now.year,
-            int.parse(parts[0]),
-            int.parse(parts[1]),
-          );
-        } else {
-          return false;
-        }
-      } else {
-        return false;
-      }
-
-      return forecastDate.year == today.year &&
-          forecastDate.month == today.month &&
-          forecastDate.day == today.day;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  /// 判断是否为明天
-  bool _isTomorrow(String forecastTime) {
-    if (forecastTime.isEmpty) return false;
-
-    try {
-      final now = DateTime.now();
-      final tomorrow = DateTime(now.year, now.month, now.day + 1);
-
-      DateTime forecastDate;
-      if (forecastTime.contains('-')) {
-        final parts = forecastTime.split(' ')[0].split('-');
-        if (parts.length == 3) {
-          forecastDate = DateTime(
-            int.parse(parts[0]),
-            int.parse(parts[1]),
-            int.parse(parts[2]),
-          );
-        } else if (parts.length == 2) {
-          forecastDate = DateTime(
-            now.year,
-            int.parse(parts[0]),
-            int.parse(parts[1]),
-          );
-        } else {
-          return false;
-        }
-      } else if (forecastTime.contains('/')) {
-        final parts = forecastTime.split(' ')[0].split('/');
-        if (parts.length == 3) {
-          forecastDate = DateTime(
-            int.parse(parts[0]),
-            int.parse(parts[1]),
-            int.parse(parts[2]),
-          );
-        } else if (parts.length == 2) {
-          forecastDate = DateTime(
-            now.year,
-            int.parse(parts[0]),
-            int.parse(parts[1]),
-          );
-        } else {
-          return false;
-        }
-      } else {
-        return false;
-      }
-
-      return forecastDate.year == tomorrow.year &&
-          forecastDate.month == tomorrow.month &&
-          forecastDate.day == tomorrow.day;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  /// 格式化数值
-  String _formatNumber(dynamic value) {
-    if (value == null) return '--';
-
-    if (value is String) {
-      final numValue = double.tryParse(value);
-      if (numValue != null) {
-        return numValue.toInt().toString();
-      }
-      return value;
-    }
-
-    if (value is num) {
-      return value.toInt().toString();
-    }
-
-    return value.toString();
   }
 }

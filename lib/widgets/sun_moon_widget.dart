@@ -7,21 +7,45 @@ import '../constants/app_colors.dart';
 import '../constants/app_constants.dart';
 
 class SunMoonWidget extends StatelessWidget {
-  const SunMoonWidget({super.key});
+  final SunMoonIndexData? sunMoonIndexData;
+  final List<dynamic>? forecast15d;
+
+  const SunMoonWidget({super.key})
+      : sunMoonIndexData = null,
+        forecast15d = null;
+
+  /// 自定义构造函数，用于直接传入数据
+  const SunMoonWidget.custom({
+    super.key,
+    required this.sunMoonIndexData,
+    this.forecast15d,
+  });
 
   @override
   Widget build(BuildContext context) {
+    // 如果传入了自定义数据，直接使用
+    if (sunMoonIndexData != null) {
+      if (sunMoonIndexData!.sunAndMoon != null) {
+        return _SunMoonCard(sunAndMoon: sunMoonIndexData!.sunAndMoon!);
+      } else if (forecast15d != null && forecast15d!.isNotEmpty) {
+        return _SunriseSunsetCard(forecast15d: forecast15d!);
+      } else {
+        return const SizedBox.shrink();
+      }
+    }
+
     // 使用 Selector 优化：只在 sunMoonIndexData 变化时重建
     return Selector<WeatherProvider, SunMoonIndexData?>(
       selector: (_, provider) => provider.sunMoonIndexData,
       builder: (context, sunMoonData, child) {
-        final forecast15d = context.read<WeatherProvider>().currentWeather?.forecast15d ?? [];
+        final forecast15dData = forecast15d ??
+            context.read<WeatherProvider>().currentWeather?.forecast15d ?? [];
 
         // 优先使用API数据，如果没有则使用15天预报数据
         if (sunMoonData?.sunAndMoon != null) {
           return _SunMoonCard(sunAndMoon: sunMoonData!.sunAndMoon!);
-        } else if (forecast15d.isNotEmpty) {
-          return _SunriseSunsetCard(forecast15d: forecast15d);
+        } else if (forecast15dData.isNotEmpty) {
+          return _SunriseSunsetCard(forecast15d: forecast15dData);
         } else {
           return const SizedBox.shrink();
         }

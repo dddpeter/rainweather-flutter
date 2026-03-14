@@ -9,6 +9,8 @@ class WeatherInfoCard extends StatelessWidget {
   final IconData icon;
   final Color? iconColor;
   final Color? backgroundColor;
+  final String? accessibilityLabel;
+  final String? accessibilityHint;
 
   const WeatherInfoCard({
     super.key,
@@ -17,13 +19,15 @@ class WeatherInfoCard extends StatelessWidget {
     required this.icon,
     this.iconColor,
     this.backgroundColor,
+    this.accessibilityLabel,
+    this.accessibilityHint,
   });
 
   @override
   Widget build(BuildContext context) {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
-        return Container(
+        final container = Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: backgroundColor ?? AppColors.cardBackground,
@@ -62,6 +66,19 @@ class WeatherInfoCard extends StatelessWidget {
             ],
           ),
         );
+
+        // 添加无障碍支持
+        final defaultLabel = '$title: $value';
+        if (accessibilityLabel != null || accessibilityHint != null) {
+          return Semantics(
+            label: accessibilityLabel ?? defaultLabel,
+            hint: accessibilityHint,
+            container: true,
+            child: container,
+          );
+        }
+
+        return container;
       },
     );
   }

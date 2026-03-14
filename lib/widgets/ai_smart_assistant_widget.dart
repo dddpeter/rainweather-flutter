@@ -82,7 +82,7 @@ class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
 
         // 调试日志
         print(
-          '🔄 AISmartAssistantWidget build: weatherSummary=${data.weatherSummary?.substring(0, 20)}..., isGenerating=${data.isGeneratingSummary}',
+          '🔄 AISmartAssistantWidget build: weatherSummary=${data.weatherSummary != null && data.weatherSummary!.isNotEmpty ? data.weatherSummary!.substring(0, data.weatherSummary!.length > 20 ? 20 : data.weatherSummary!.length) : 'null'}..., isGenerating=${data.isGeneratingSummary}',
         );
 
         // 使用 context.read 获取通勤建议，避免在 Selector 中监听列表引用变化
@@ -90,12 +90,7 @@ class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
         final advices = weatherProvider.commuteAdvices;
         final hasCommuteAdvices = advices.isNotEmpty;
 
-        // AI标签颜色：使用常量
-        final aiColor = themeProvider.isLightTheme
-            ? AppColors.aiLabelColorLight
-            : AppColors.aiLabelColorDark;
-
-        // AI渐变色：基于AI标签颜色，使用常量
+        // AI渐变色：使用常量
         final aiGradient = themeProvider.isLightTheme
             ? LinearGradient(
                 begin: Alignment.topLeft,
@@ -299,9 +294,6 @@ class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
     final isLightTheme = themeProvider?.isLightTheme ?? true;
 
     // 文字颜色：使用常量，确保在AI渐变背景上清晰可见
-    final iconColor = isLightTheme
-        ? AppColors.aiTextColorLight
-        : AppColors.aiTextColorDark;
     final textColor = isLightTheme
         ? AppColors.aiTextColorLight
         : AppColors.aiTextColorDark;

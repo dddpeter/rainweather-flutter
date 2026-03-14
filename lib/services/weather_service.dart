@@ -168,7 +168,7 @@ class WeatherService {
         final cachedData = await _cacheService.get<List<DailyWeather>>(
           requestKey,
           (json) {
-            if (json == null || json['forecast'] == null) {
+            if (json['forecast'] == null) {
               return <DailyWeather>[];
             }
             final forecastList = json['forecast'] as List<dynamic>;
@@ -236,7 +236,7 @@ class WeatherService {
         final cachedData = await _cacheService.get<List<HourlyWeather>>(
           requestKey,
           (json) {
-            if (json == null || json['forecast'] == null) {
+            if (json['forecast'] == null) {
               return <HourlyWeather>[];
             }
             final forecastList = json['forecast'] as List<dynamic>;

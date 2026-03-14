@@ -8,11 +8,13 @@ class ThemeProvider extends ChangeNotifier {
   AppThemeMode _themeMode = AppThemeMode.system;
   AppThemeScheme _themeScheme = AppThemeScheme.blue;
   bool _isLightTheme = false;
+  bool _isHighContrastMode = false;
   bool _isInitialized = false; // 添加初始化标记
 
   AppThemeMode get themeMode => _themeMode;
   AppThemeScheme get themeScheme => _themeScheme;
   bool get isLightTheme => _isLightTheme;
+  bool get isHighContrastMode => _isHighContrastMode;
   bool get isInitialized => _isInitialized; // 暴露初始化状态
 
   ThemeProvider() {
@@ -38,9 +40,19 @@ class ThemeProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 切换高对比度模式
+  void setHighContrastMode(bool enabled) {
+    _isHighContrastMode = enabled;
+    _saveThemeToPrefs();
+    notifyListeners();
+  }
+
   /// 获取当前主题的亮色配色
   Map<String, Color> get lightColors {
     try {
+      if (_isHighContrastMode) {
+        return AppThemes.getHighContrastColors(true);
+      }
       return AppThemes.getScheme(_themeScheme).lightColors;
     } catch (e) {
       // 如果获取失败，返回蓝色主题的亮色配置
@@ -51,6 +63,9 @@ class ThemeProvider extends ChangeNotifier {
   /// 获取当前主题的暗色配色
   Map<String, Color> get darkColors {
     try {
+      if (_isHighContrastMode) {
+        return AppThemes.getHighContrastColors(false);
+      }
       return AppThemes.getScheme(_themeScheme).darkColors;
     } catch (e) {
       // 如果获取失败，返回蓝色主题的暗色配置
@@ -130,6 +145,9 @@ class ThemeProvider extends ChangeNotifier {
         await prefs.setInt('theme_scheme', 0);
       }
 
+      // 加载高对比度模式设置
+      _isHighContrastMode = prefs.getBool('high_contrast_mode') ?? false;
+
       _updateTheme();
       // 标记初始化完成
       _isInitialized = true;
@@ -138,6 +156,7 @@ class ThemeProvider extends ChangeNotifier {
       // 加载失败时使用默认值
       _themeMode = AppThemeMode.system;
       _themeScheme = AppThemeScheme.blue;
+      _isHighContrastMode = false;
       _updateTheme();
       _isInitialized = true; // 即使失败也标记为已初始化
       notifyListeners();
@@ -148,6 +167,7 @@ class ThemeProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('theme_mode', _themeMode.index);
     await prefs.setInt('theme_scheme', _themeScheme.index);
+    await prefs.setBool('high_contrast_mode', _isHighContrastMode);
   }
 
   String getThemeModeText() {

@@ -31,8 +31,6 @@ class LocationProviderFactory {
         return AMapLocationService.getInstance();
       case LocationProviderType.baidu:
         return BaiduLocationService.getInstance();
-      default:
-        return TencentLocationService.getInstance();
     }
   }
 

@@ -9,6 +9,7 @@ import 'providers/cities_provider.dart';
 import 'providers/ai_insights_provider.dart';
 import 'providers/weather_data_provider.dart';
 import 'providers/refresh_coordinator.dart';
+import 'providers/city_weather_provider.dart';
 import 'screens/today_screen.dart';
 import 'screens/hourly_screen.dart';
 import 'screens/forecast15d_screen.dart';
@@ -158,6 +159,17 @@ class _RainWeatherAppState extends State<RainWeatherApp>
         ChangeNotifierProvider(create: (_) => AIInsightsProvider()),
         ChangeNotifierProvider(create: (_) => WeatherDataProvider()),
         ChangeNotifierProvider(create: (_) => RefreshCoordinator()),
+        // CityWeatherProvider - 用于城市天气页面的独立数据管理
+        ChangeNotifierProvider(
+          create: (context) {
+            final cityWeatherProvider = CityWeatherProvider();
+            // 设置AIInsightsProvider引用
+            cityWeatherProvider.setAIInsightsProvider(
+              context.read<AIInsightsProvider>(),
+            );
+            return cityWeatherProvider;
+          },
+        ),
         // WeatherProvider依赖上述Provider，最后注册并设置子Provider引用
         ChangeNotifierProvider(
           create: (context) {

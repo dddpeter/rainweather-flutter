@@ -574,18 +574,16 @@ class _WeatherAlertSettingsScreenState
                             onPressed: () async {
                               final granted = await NotificationService.instance
                                   .requestPermissions();
-                              if (granted) {
-                                setState(() {});
-                                if (mounted) {
+                              if (mounted) {
+                                if (granted) {
+                                  setState(() {});
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: const Text('通知权限已授予'),
                                       backgroundColor: AppColors.accentGreen,
                                     ),
                                   );
-                                }
-                              } else {
-                                if (mounted) {
+                                } else {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: const Text(

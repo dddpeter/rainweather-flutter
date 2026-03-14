@@ -8,6 +8,288 @@ import 'night_weather_painters.dart';
 import '../utils/weather_animation_colors.dart';
 import '../providers/theme_provider.dart';
 
+// ==================== 天气动画配置 ====================
+
+/// 天气动画配置
+///
+/// 将所有天气类型的动画配置集中管理
+class WeatherAnimationConfig {
+  /// Painter类型
+  final CustomPainter Function(double mainAnimation, double particleAnimation, double cloudAnimation) createPainter;
+
+  /// 是否使用主动画
+  final bool useMainAnimation;
+
+  /// 是否使用粒子动画
+  final bool useParticleAnimation;
+
+  /// 是否使用云朵动画
+  final bool useCloudAnimation;
+
+  const WeatherAnimationConfig({
+    required this.createPainter,
+    this.useMainAnimation = true,
+    this.useParticleAnimation = false,
+    this.useCloudAnimation = false,
+  });
+}
+
+/// 天气类型映射表
+final Map<String, WeatherAnimationConfig> _weatherAnimationMap = {
+  // ==================== 晴天类 ====================
+  '晴': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => SunnyPainter(main),
+    useMainAnimation: true,
+  ),
+  '平静': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => SunnyPainter(main),
+    useMainAnimation: true,
+  ),
+
+  // ==================== 多云类 ====================
+  '多云': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => CloudyPainter(main, cloud),
+    useMainAnimation: true,
+    useCloudAnimation: true,
+  ),
+  '晴间多云': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => PartlyCloudyPainter(main, cloud),
+    useMainAnimation: true,
+    useCloudAnimation: true,
+  ),
+  '多云转晴': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => PartlyCloudyPainter(main, cloud),
+    useMainAnimation: true,
+    useCloudAnimation: true,
+  ),
+  '晴转多云': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => PartlyCloudyPainter(main, cloud),
+    useMainAnimation: true,
+    useCloudAnimation: true,
+  ),
+  '少云': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => FewCloudsPainter(main, cloud),
+    useMainAnimation: true,
+    useCloudAnimation: true,
+  ),
+
+  // ==================== 阴天类 ====================
+  '阴': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => OvercastPainter(cloud),
+    useCloudAnimation: true,
+  ),
+
+  // ==================== 雨类 ====================
+  '毛毛雨': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => DrizzlePainter(main, particle),
+    useMainAnimation: true,
+    useParticleAnimation: true,
+  ),
+  '小雨': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => RainPainter(main, particle),
+    useMainAnimation: true,
+    useParticleAnimation: true,
+  ),
+  '阵雨': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => ShowerRainPainter(main, particle),
+    useMainAnimation: true,
+    useParticleAnimation: true,
+  ),
+  '中雨': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => MediumRainPainter(main, particle),
+    useMainAnimation: true,
+    useParticleAnimation: true,
+  ),
+  '大雨': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => HeavyRainPainter(main, particle, 60),
+    useMainAnimation: true,
+    useParticleAnimation: true,
+  ),
+  '暴雨': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => HeavyRainPainter(main, particle, 120),
+    useMainAnimation: true,
+    useParticleAnimation: true,
+  ),
+  '大暴雨': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => HeavyRainPainter(main, particle, 200),
+    useMainAnimation: true,
+    useParticleAnimation: true,
+  ),
+  '特大暴雨': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => ExtremeHeavyRainPainter(main, particle),
+    useMainAnimation: true,
+    useParticleAnimation: true,
+  ),
+  '雷阵雨': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => ThunderstormPainter(main, particle),
+    useMainAnimation: true,
+    useParticleAnimation: true,
+  ),
+  '雷阵雨伴有冰雹': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => ThunderstormWithHailPainter(main, particle),
+    useMainAnimation: true,
+    useParticleAnimation: true,
+  ),
+
+  // ==================== 雪类 ====================
+  '雪': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => SnowPainter(main, particle),
+    useMainAnimation: true,
+    useParticleAnimation: true,
+  ),
+  '小雪': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => LightSnowPainter(main, particle),
+    useMainAnimation: true,
+    useParticleAnimation: true,
+  ),
+  '阵雪': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => ShowerSnowPainter(main, particle),
+    useMainAnimation: true,
+    useParticleAnimation: true,
+  ),
+  '中雪': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => MediumSnowPainter(main, particle),
+    useMainAnimation: true,
+    useParticleAnimation: true,
+  ),
+  '大雪': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => HeavySnowPainter(main, particle),
+    useMainAnimation: true,
+    useParticleAnimation: true,
+  ),
+  '暴雪': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => BlizzardPainter(main, particle),
+    useMainAnimation: true,
+    useParticleAnimation: true,
+  ),
+
+  // ==================== 混合天气类 ====================
+  '雨夹雪': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => SleetPainter(main, particle),
+    useMainAnimation: true,
+    useParticleAnimation: true,
+  ),
+  '雨雪天气': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => SleetPainter(main, particle),
+    useMainAnimation: true,
+    useParticleAnimation: true,
+  ),
+  '冻雨': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => FreezingRainPainter(main, particle),
+    useMainAnimation: true,
+    useParticleAnimation: true,
+  ),
+  '冰雹': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => HailPainter(main, particle),
+    useMainAnimation: true,
+    useParticleAnimation: true,
+  ),
+  '雨凇': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => RainGlazePainter(main, particle),
+    useMainAnimation: true,
+    useParticleAnimation: true,
+  ),
+
+  // ==================== 雾类 ====================
+  '轻雾': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => FogPainter(main, 0.3),
+    useMainAnimation: true,
+  ),
+  '雾': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => FogPainter(main, 0.5),
+    useMainAnimation: true,
+  ),
+  '浓雾': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => FogPainter(main, 0.7),
+    useMainAnimation: true,
+  ),
+  '强浓雾': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => FogPainter(main, 0.9),
+    useMainAnimation: true,
+  ),
+
+  // ==================== 霾类 ====================
+  '霾': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => HazePainter(main, particle, 20),
+    useMainAnimation: true,
+    useParticleAnimation: true,
+  ),
+  '中度霾': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => HazePainter(main, particle, 35),
+    useMainAnimation: true,
+    useParticleAnimation: true,
+  ),
+  '重度霾': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => HazePainter(main, particle, 50),
+    useMainAnimation: true,
+    useParticleAnimation: true,
+  ),
+  '严重霾': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => HazePainter(main, particle, 70),
+    useMainAnimation: true,
+    useParticleAnimation: true,
+  ),
+
+  // ==================== 沙尘类 ====================
+  '浮尘': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => FloatingDustPainter(main, particle),
+    useMainAnimation: true,
+    useParticleAnimation: true,
+  ),
+  '扬沙': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => BlowingSandPainter(main, particle),
+    useMainAnimation: true,
+    useParticleAnimation: true,
+  ),
+  '沙尘暴': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => DustStormPainter(main, particle),
+    useMainAnimation: true,
+    useParticleAnimation: true,
+  ),
+  '强沙尘暴': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => SevereDustStormPainter(main, particle),
+    useMainAnimation: true,
+    useParticleAnimation: true,
+  ),
+
+  // ==================== 夜间天气 ====================
+  '晴_夜': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => MoonPainter(main),
+    useMainAnimation: true,
+  ),
+  '多云_夜': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => CloudyNightPainter(main, cloud),
+    useMainAnimation: true,
+    useCloudAnimation: true,
+  ),
+  '晴间多云_夜': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => PartlyCloudyNightPainter(main, cloud),
+    useMainAnimation: true,
+    useCloudAnimation: true,
+  ),
+  '多云转晴_夜': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => PartlyCloudyNightPainter(main, cloud),
+    useMainAnimation: true,
+    useCloudAnimation: true,
+  ),
+  '晴转多云_夜': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => PartlyCloudyNightPainter(main, cloud),
+    useMainAnimation: true,
+    useCloudAnimation: true,
+  ),
+  '少云_夜': WeatherAnimationConfig(
+    createPainter: (main, particle, cloud) => FewCloudsNightPainter(main, cloud),
+    useMainAnimation: true,
+    useCloudAnimation: true,
+  ),
+};
+
+/// 获取天气动画配置
+WeatherAnimationConfig? _getWeatherAnimationConfig(String weatherType, {bool isNight = false}) {
+  final key = isNight ? '${weatherType}_夜' : weatherType;
+  return _weatherAnimationMap[key] ?? _weatherAnimationMap[weatherType];
+}
+
 class WeatherAnimationWidget extends StatefulWidget {
   final String weatherType;
   final double size;
@@ -137,633 +419,43 @@ class _WeatherAnimationWidgetState extends State<WeatherAnimationWidget>
   }
 
   Widget _buildWeatherAnimation() {
-    // 根据天气类型和时间选择动画
-    switch (widget.weatherType) {
-      case '晴':
-        return _isNighttime
-            ? _buildClearNightAnimation()
-            : _buildSunnyAnimation();
-      case '多云':
-        return _isNighttime
-            ? _buildCloudyNightAnimation()
-            : _buildCloudyAnimation();
-      case '晴间多云':
-      case '多云转晴':
-      case '晴转多云':
-        return _isNighttime
-            ? _buildPartlyCloudyNightAnimation()
-            : _buildPartlyCloudyAnimation();
-      case '少云':
-        return _isNighttime
-            ? _buildFewCloudsNightAnimation()
-            : _buildFewCloudsAnimation();
-      case '阴':
-        return _buildOvercastAnimation();
-      case '毛毛雨':
-        return _buildDrizzleAnimation();
-      case '小雨':
-        return _buildLightRainAnimation();
-      case '阵雨':
-        return _buildShowerRainAnimation();
-      case '中雨':
-        return _buildMediumRainAnimation();
-      case '大雨':
-        return _buildHeavyRainAnimation(60);
-      case '暴雨':
-        return _buildHeavyRainAnimation(120);
-      case '大暴雨':
-        return _buildHeavyRainAnimation(200);
-      case '特大暴雨':
-        return _buildExtremeHeavyRainAnimation();
-      case '雷阵雨':
-        return _buildThunderstormAnimation();
-      case '雷阵雨伴有冰雹':
-        return _buildThunderstormWithHailAnimation();
-      case '小雪':
-        return _buildLightSnowAnimation();
-      case '阵雪':
-        return _buildShowerSnowAnimation();
-      case '中雪':
-        return _buildMediumSnowAnimation();
-      case '大雪':
-        return _buildHeavySnowAnimation();
-      case '暴雪':
-        return _buildBlizzardAnimation();
-      case '雨夹雪':
-      case '雨雪天气':
-        return _buildSleetAnimation();
-      case '冻雨':
-        return _buildFreezingRainAnimation();
-      case '轻雾':
-        return _buildFogAnimation(0.3);
-      case '雾':
-        return _buildFogAnimation(0.5);
-      case '浓雾':
-        return _buildFogAnimation(0.7);
-      case '强浓雾':
-        return _buildFogAnimation(0.9);
-      case '霾':
-        return _buildHazeAnimation(20);
-      case '中度霾':
-        return _buildHazeAnimation(35);
-      case '重度霾':
-        return _buildHazeAnimation(50);
-      case '严重霾':
-        return _buildHazeAnimation(70);
-      case '浮尘':
-        return _buildFloatingDustAnimation();
-      case '扬沙':
-        return _buildBlowingSandAnimation();
-      case '沙尘暴':
-        return _buildDustStormAnimation();
-      case '强沙尘暴':
-        return _buildSevereDustStormAnimation();
-      case '冰雹':
-        return _buildHailAnimation();
-      case '雨凇':
-        return _buildRainGlazeAnimation();
-      case '雪':
-        return _buildSnowAnimation();
-      case '平静':
-        return _buildSunnyAnimation();
-      default:
-        return _buildSunnyAnimation();
+    // 使用内部配置获取动画配置
+    final config = _getWeatherAnimationConfig(widget.weatherType, isNight: _isNighttime);
+
+    if (config == null) {
+      // 默认返回晴天动画
+      return _buildAnimationFromConfig(_weatherAnimationMap['晴']!);
     }
+
+    return _buildAnimationFromConfig(config);
   }
 
-  // 晴天动画
-  Widget _buildSunnyAnimation() {
-    return AnimatedBuilder(
-      animation: _mainAnimation,
-      builder: (context, child) {
-        return CustomPaint(
-          painter: SunnyPainter(_mainAnimation.value),
-          size: Size(widget.size, widget.size),
-        );
-      },
-    );
-  }
+  /// 根据配置构建动画
+  Widget _buildAnimationFromConfig(WeatherAnimationConfig config) {
+    // 合并动画
+    final animations = <Listenable>[];
+    if (config.useMainAnimation) animations.add(_mainAnimation);
+    if (config.useParticleAnimation) animations.add(_particleController);
+    if (config.useCloudAnimation) animations.add(_cloudAnimation);
 
-  // 多云动画
-  Widget _buildCloudyAnimation() {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_mainAnimation, _cloudAnimation]),
-      builder: (context, child) {
-        return CustomPaint(
-          painter: CloudyPainter(_mainAnimation.value, _cloudAnimation.value),
-          size: Size(widget.size, widget.size),
-        );
-      },
-    );
-  }
+    final animation = animations.length == 1
+        ? animations.first
+        : Listenable.merge(animations);
 
-  // 少云动画
-  Widget _buildPartlyCloudyAnimation() {
     return AnimatedBuilder(
-      animation: Listenable.merge([_mainAnimation, _cloudAnimation]),
+      animation: animation,
       builder: (context, child) {
         return CustomPaint(
-          painter: PartlyCloudyPainter(
+          painter: config.createPainter(
             _mainAnimation.value,
+            _particleAnimation.value,
             _cloudAnimation.value,
           ),
           size: Size(widget.size, widget.size),
         );
       },
     );
-  }
-
-  // 少云动画
-  Widget _buildFewCloudsAnimation() {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_mainAnimation, _cloudAnimation]),
-      builder: (context, child) {
-        return CustomPaint(
-          painter: FewCloudsPainter(
-            _mainAnimation.value,
-            _cloudAnimation.value,
-          ),
-          size: Size(widget.size, widget.size),
-        );
-      },
-    );
-  }
-
-  // 阴天动画
-  Widget _buildOvercastAnimation() {
-    return AnimatedBuilder(
-      animation: _cloudAnimation,
-      builder: (context, child) {
-        return CustomPaint(
-          painter: OvercastPainter(_cloudAnimation.value),
-          size: Size(widget.size, widget.size),
-        );
-      },
-    );
-  }
-
-  // ==================== 夜间动画 ====================
-
-  // 晴朗夜空动画（月亮+星星）
-  Widget _buildClearNightAnimation() {
-    return AnimatedBuilder(
-      animation: _mainAnimation,
-      builder: (context, child) {
-        return CustomPaint(
-          painter: MoonPainter(_mainAnimation.value),
-          size: Size(widget.size, widget.size),
-        );
-      },
-    );
-  }
-
-  // 多云夜空动画（月亮+云）
-  Widget _buildCloudyNightAnimation() {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_mainAnimation, _cloudAnimation]),
-      builder: (context, child) {
-        return CustomPaint(
-          painter: CloudyNightPainter(
-            _mainAnimation.value,
-            _cloudAnimation.value,
-          ),
-          size: Size(widget.size, widget.size),
-        );
-      },
-    );
-  }
-
-  // 少云夜空动画（月亮+少量云）
-  Widget _buildPartlyCloudyNightAnimation() {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_mainAnimation, _cloudAnimation]),
-      builder: (context, child) {
-        return CustomPaint(
-          painter: PartlyCloudyNightPainter(
-            _mainAnimation.value,
-            _cloudAnimation.value,
-          ),
-          size: Size(widget.size, widget.size),
-        );
-      },
-    );
-  }
-
-  // 很少云夜空动画（月亮+一小朵云）
-  Widget _buildFewCloudsNightAnimation() {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_mainAnimation, _cloudAnimation]),
-      builder: (context, child) {
-        return CustomPaint(
-          painter: FewCloudsNightPainter(
-            _mainAnimation.value,
-            _cloudAnimation.value,
-          ),
-          size: Size(widget.size, widget.size),
-        );
-      },
-    );
-  }
-
-  // 毛毛雨动画 - 最轻的雨
-  Widget _buildDrizzleAnimation() {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_mainAnimation, _particleController]),
-      builder: (context, child) {
-        return CustomPaint(
-          painter: DrizzlePainter(
-            _mainAnimation.value,
-            _particleAnimation.value,
-          ),
-          size: Size(widget.size, widget.size),
-        );
-      },
-    );
-  }
-
-  // 小雨动画
-  Widget _buildLightRainAnimation() {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_mainAnimation, _particleController]),
-      builder: (context, child) {
-        return CustomPaint(
-          painter: RainPainter(_mainAnimation.value, _particleAnimation.value),
-          size: Size(widget.size, widget.size),
-        );
-      },
-    );
-  }
-
-  // 阵雨动画
-  Widget _buildShowerRainAnimation() {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_mainAnimation, _particleController]),
-      builder: (context, child) {
-        return CustomPaint(
-          painter: ShowerRainPainter(
-            _mainAnimation.value,
-            _particleAnimation.value,
-          ),
-          size: Size(widget.size, widget.size),
-        );
-      },
-    );
-  }
-
-  // 中雨动画
-  Widget _buildMediumRainAnimation() {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_mainAnimation, _particleController]),
-      builder: (context, child) {
-        return CustomPaint(
-          painter: MediumRainPainter(
-            _mainAnimation.value,
-            _particleAnimation.value,
-          ),
-          size: Size(widget.size, widget.size),
-        );
-      },
-    );
-  }
-
-  // 暴风雨动画
-  // Widget _buildStormAnimation() {
-  //   return AnimatedBuilder(
-  //     animation: Listenable.merge([_mainAnimation, _particleController]),
-  //     builder: (context, child) {
-  //       return CustomPaint(
-  //         painter: StormPainter(_mainAnimation.value, _particleAnimation.value),
-  //         size: Size(widget.size, widget.size),
-  //       );
-  //     },
-  //   );
-  // }
-
-  // 雪天动画
-  // 小雪动画
-  Widget _buildLightSnowAnimation() {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_mainAnimation, _particleController]),
-      builder: (context, child) {
-        return CustomPaint(
-          painter: LightSnowPainter(
-            _mainAnimation.value,
-            _particleAnimation.value,
-          ),
-          size: Size(widget.size, widget.size),
-        );
-      },
-    );
-  }
-
-  // 阵雪动画
-  Widget _buildShowerSnowAnimation() {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_mainAnimation, _particleController]),
-      builder: (context, child) {
-        return CustomPaint(
-          painter: ShowerSnowPainter(
-            _mainAnimation.value,
-            _particleAnimation.value,
-          ),
-          size: Size(widget.size, widget.size),
-        );
-      },
-    );
-  }
-
-  Widget _buildSnowAnimation() {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_mainAnimation, _particleController]),
-      builder: (context, child) {
-        return CustomPaint(
-          painter: SnowPainter(_mainAnimation.value, _particleAnimation.value),
-          size: Size(widget.size, widget.size),
-        );
-      },
-    );
-  }
-
-  // 中雪动画
-  Widget _buildMediumSnowAnimation() {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_mainAnimation, _particleController]),
-      builder: (context, child) {
-        return CustomPaint(
-          painter: MediumSnowPainter(
-            _mainAnimation.value,
-            _particleAnimation.value,
-          ),
-          size: Size(widget.size, widget.size),
-        );
-      },
-    );
-  }
-
-  // 雨夹雪动画
-  Widget _buildSleetAnimation() {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_mainAnimation, _particleController]),
-      builder: (context, child) {
-        return CustomPaint(
-          painter: SleetPainter(_mainAnimation.value, _particleAnimation.value),
-          size: Size(widget.size, widget.size),
-        );
-      },
-    );
-  }
-
-  // 雾天动画
-  Widget _buildFogAnimation(double intensity) {
-    return AnimatedBuilder(
-      animation: _mainAnimation,
-      builder: (context, child) {
-        return CustomPaint(
-          painter: FogPainter(_mainAnimation.value, intensity),
-          size: Size(widget.size, widget.size),
-        );
-      },
-    );
-  }
-
-  // 霾动画 - 黄色，粒子数量表示强度
-  Widget _buildHazeAnimation(int particleCount) {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_mainAnimation, _particleController]),
-      builder: (context, child) {
-        return CustomPaint(
-          painter: HazePainter(
-            _mainAnimation.value,
-            _particleAnimation.value,
-            particleCount,
-          ),
-          size: Size(widget.size, widget.size),
-        );
-      },
-    );
-  }
-
-  // 浮尘动画 - 粒子少、小、无漩涡
-  Widget _buildFloatingDustAnimation() {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_mainAnimation, _particleController]),
-      builder: (context, child) {
-        return CustomPaint(
-          painter: FloatingDustPainter(
-            _mainAnimation.value,
-            _particleAnimation.value,
-          ),
-          size: Size(widget.size, widget.size),
-        );
-      },
-    );
-  }
-
-  // 扬沙动画 - 粒子小、少、1个漩涡
-  Widget _buildBlowingSandAnimation() {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_mainAnimation, _particleController]),
-      builder: (context, child) {
-        return CustomPaint(
-          painter: BlowingSandPainter(
-            _mainAnimation.value,
-            _particleAnimation.value,
-          ),
-          size: Size(widget.size, widget.size),
-        );
-      },
-    );
-  }
-
-  // 沙尘暴动画 - 粒子少、2个漩涡
-  Widget _buildDustStormAnimation() {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_mainAnimation, _particleController]),
-      builder: (context, child) {
-        return CustomPaint(
-          painter: DustStormPainter(
-            _mainAnimation.value,
-            _particleAnimation.value,
-          ),
-          size: Size(widget.size, widget.size),
-        );
-      },
-    );
-  }
-
-  // 强沙尘暴动画 - 粒子多、大、3个漩涡
-  Widget _buildSevereDustStormAnimation() {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_mainAnimation, _particleController]),
-      builder: (context, child) {
-        return CustomPaint(
-          painter: SevereDustStormPainter(
-            _mainAnimation.value,
-            _particleAnimation.value,
-          ),
-          size: Size(widget.size, widget.size),
-        );
-      },
-    );
-  }
-
-  // 冻雨动画
-  Widget _buildFreezingRainAnimation() {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_mainAnimation, _particleController]),
-      builder: (context, child) {
-        return CustomPaint(
-          painter: FreezingRainPainter(
-            _mainAnimation.value,
-            _particleAnimation.value,
-          ),
-          size: Size(widget.size, widget.size),
-        );
-      },
-    );
-  }
-
-  // 冰雹动画
-  Widget _buildHailAnimation() {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_mainAnimation, _particleController]),
-      builder: (context, child) {
-        return CustomPaint(
-          painter: HailPainter(_mainAnimation.value, _particleAnimation.value),
-          size: Size(widget.size, widget.size),
-        );
-      },
-    );
-  }
-
-  // 雨凇动画
-  Widget _buildRainGlazeAnimation() {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_mainAnimation, _particleController]),
-      builder: (context, child) {
-        return CustomPaint(
-          painter: RainGlazePainter(
-            _mainAnimation.value,
-            _particleAnimation.value,
-          ),
-          size: Size(widget.size, widget.size),
-        );
-      },
-    );
-  }
-
-  // 大雨动画
-  Widget _buildHeavyRainAnimation([int particleCount = 50]) {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_mainAnimation, _particleController]),
-      builder: (context, child) {
-        return CustomPaint(
-          painter: HeavyRainPainter(
-            _mainAnimation.value,
-            _particleAnimation.value,
-            particleCount,
-          ),
-          size: Size(widget.size, widget.size),
-        );
-      },
-    );
-  }
-
-  // 特大暴雨动画 - 更极端的视觉效果
-  Widget _buildExtremeHeavyRainAnimation() {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_mainAnimation, _particleController]),
-      builder: (context, child) {
-        return CustomPaint(
-          painter: ExtremeHeavyRainPainter(
-            _mainAnimation.value,
-            _particleAnimation.value,
-          ),
-          size: Size(widget.size, widget.size),
-        );
-      },
-    );
-  }
-
-  // 极端暴雨动画
-  // Widget _buildExtremeRainAnimation() {
-  //   return AnimatedBuilder(
-  //     animation: Listenable.merge([_mainAnimation, _particleController]),
-  //     builder: (context, child) {
-  //       return CustomPaint(
-  //         painter: ExtremeRainPainter(
-  //           _mainAnimation.value,
-  //           _particleAnimation.value,
-  //         ),
-  //         size: Size(widget.size, widget.size),
-  //       );
-  //     },
-  //   );
-  // }
-
-  // 雷阵雨动画
-  Widget _buildThunderstormAnimation() {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_mainAnimation, _particleController]),
-      builder: (context, child) {
-        return CustomPaint(
-          painter: ThunderstormPainter(
-            _mainAnimation.value,
-            _particleAnimation.value,
-          ),
-          size: Size(widget.size, widget.size),
-        );
-      },
-    );
-  }
-
-  // 雷阵雨伴有冰雹动画
-  Widget _buildThunderstormWithHailAnimation() {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_mainAnimation, _particleController]),
-      builder: (context, child) {
-        return CustomPaint(
-          painter: ThunderstormWithHailPainter(
-            _mainAnimation.value,
-            _particleAnimation.value,
-          ),
-          size: Size(widget.size, widget.size),
-        );
-      },
-    );
-  }
-
-  // 大雪动画
-  Widget _buildHeavySnowAnimation() {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_mainAnimation, _particleController]),
-      builder: (context, child) {
-        return CustomPaint(
-          painter: HeavySnowPainter(
-            _mainAnimation.value,
-            _particleAnimation.value,
-          ),
-          size: Size(widget.size, widget.size),
-        );
-      },
-    );
-  }
-
-  // 暴雪动画
-  Widget _buildBlizzardAnimation() {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_mainAnimation, _particleController]),
-      builder: (context, child) {
-        return CustomPaint(
-          painter: BlizzardPainter(
-            _mainAnimation.value,
-            _particleAnimation.value,
-          ),
-          size: Size(widget.size, widget.size),
-        );
-      },
-    );
-  }
+ }
 }
 
 // 晴天绘制器

@@ -36,6 +36,12 @@ class BaseCard extends StatelessWidget {
   /// 点击事件
   final VoidCallback? onTap;
 
+  /// 无障碍标签
+  final String? accessibilityLabel;
+
+  /// 无障碍提示
+  final String? accessibilityHint;
+
   /// 卡片阴影类型
   final CardShadowType shadowType;
 
@@ -51,6 +57,8 @@ class BaseCard extends StatelessWidget {
     this.height,
     this.useMaterialCard = false,
     this.onTap,
+    this.accessibilityLabel,
+    this.accessibilityHint,
     this.shadowType = CardShadowType.none,
   });
 
@@ -68,11 +76,22 @@ class BaseCard extends StatelessWidget {
       child: child,
     );
 
-    if (useMaterialCard) {
-      return _buildMaterialCard(context, effectiveMargin, cardContent);
-    } else {
-      return _buildContainerCard(context, effectiveMargin, cardContent);
+    final card = useMaterialCard
+        ? _buildMaterialCard(context, effectiveMargin, cardContent)
+        : _buildContainerCard(context, effectiveMargin, cardContent);
+
+    // 添加无障碍支持
+    if (accessibilityLabel != null || accessibilityHint != null) {
+      return Semantics(
+        label: accessibilityLabel,
+        hint: accessibilityHint,
+        button: onTap != null,
+        container: true,
+        child: card,
+      );
     }
+
+    return card;
   }
 
   Widget _buildMaterialCard(

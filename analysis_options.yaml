@@ -9,26 +9,28 @@
 # packages, and plugins designed to encourage good coding practices.
 analyzer:
   errors:
+    # 保留必要的忽略（旧代码兼容性）
     deprecated_member_use: ignore
-    avoid_print: ignore
-    unnecessary_brace_in_string_interps: ignore
-    non_constant_identifier_names: ignore
+    # 逐步启用更严格的检查（但先保持宽松）
+    avoid_print: ignore  # 暂时保留，允许使用print进行调试
+    unnecessary_brace_in_string_interps: ignore  # 暂时保留
+    non_constant_identifier_names: ignore  # 暂时保留
+
 include: package:flutter_lints/flutter.yaml
 
 linter:
-  # The lint rules applied to this project can be customized in the
-  # section below to disable rules from the `package:flutter_lints/flutter.yaml`
-  # included above or to enable additional rules. A list of all available lints
-  # and their documentation is published at https://dart.dev/lints.
-  #
-  # Instead of disabling a lint rule for the entire project in the
-  # section below, it can also be suppressed for a single line of code
-  # or a specific dart file by using the `// ignore: name_of_lint` and
-  # `// ignore_for_file: name_of_lint` syntax on the line or in the file
-  # producing the lint.
   rules:
-    # avoid_print: false  # Uncomment to disable the `avoid_print` rule
-    # prefer_single_quotes: true  # Uncomment to enable the `prefer_single_quotes` rule
+    # 逐步引入的严格规则（仅启用最必要的）
+    # 代码质量
+    prefer_final_fields: true  # 推荐私有字段使用final
+
+    # 错误预防
+    avoid_unnecessary_containers: true  # 避免不必要的Container
+    no_logic_in_create_state: true  # createState中不应有逻辑
+
+    # 性能（可选，可后续启用）
+    # sized_box_for_whitespace: true  # 使用SizedBox代替Container做空白空间
+    # use_colored_box: true  # 使用ColoredBox代替Container做颜色
 
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options

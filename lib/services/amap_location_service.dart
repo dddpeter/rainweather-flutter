@@ -55,6 +55,7 @@ class AMapLocationService implements LocationProviderInterface {
   }
 
   /// 初始化高德地图定位服务
+  @override
   Future<void> initialize() async {
     if (_isInitialized) return;
 
@@ -122,6 +123,7 @@ class AMapLocationService implements LocationProviderInterface {
   }
 
   /// 获取当前位置（单次定位）
+  @override
   Future<LocationModel?> getCurrentLocation() async {
     try {
       print('🚀 AMapLocationService: 开始获取当前位置');

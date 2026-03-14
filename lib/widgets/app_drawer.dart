@@ -916,6 +916,34 @@ class AppDrawer extends StatelessWidget {
                       Icons.settings_brightness,
                       themeProvider.themeMode == AppThemeMode.system,
                     ),
+                    const SizedBox(height: 16),
+                    // 高对比度模式开关
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.contrast,
+                          color: AppColors.textSecondary,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          '高对比度模式',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const Spacer(),
+                        Switch(
+                          value: themeProvider.isHighContrastMode,
+                          onChanged: (value) {
+                            themeProvider.setHighContrastMode(value);
+                          },
+                          activeColor: AppColors.primaryBlue,
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -1152,7 +1180,6 @@ class _ThemeCardWithPulseState extends State<_ThemeCardWithPulse>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
-  late Animation<double> _glowAnimation;
 
   @override
   void initState() {
@@ -1165,11 +1192,6 @@ class _ThemeCardWithPulseState extends State<_ThemeCardWithPulse>
     _scaleAnimation = Tween<double>(
       begin: 1.0,
       end: 1.05,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
-
-    _glowAnimation = Tween<double>(
-      begin: 0.3,
-      end: 0.6,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     // 只在选中时播放动画

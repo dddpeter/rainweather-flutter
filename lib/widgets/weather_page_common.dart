@@ -342,7 +342,7 @@ class WeatherPageCommon {
             Expanded(
               child: _buildCompactDetailItem(
                 '风速',
-                '${weather.windpower ?? '--'}',
+                weather.windpower ?? '--',
                 Icons.air,
                 AppColors.accentGreen,
               ),

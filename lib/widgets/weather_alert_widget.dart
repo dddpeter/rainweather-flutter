@@ -134,7 +134,7 @@ class _WeatherAlertWidgetState extends State<WeatherAlertWidget> {
                 final isCollapsed =
                     !_isExpanded && !widget.showAll && index == 0;
                 return _buildAlertItem(alert, showFullContent: !isCollapsed);
-              }).toList(),
+              }),
             ],
           ),
         ),

@@ -85,11 +85,6 @@ class _LifeIndexCache {
   static LifeIndex _createPlaceholderIndex() {
     return LifeIndex(indexTypeCh: '', indexLevel: '', indexContent: '');
   }
-
-  /// 清空缓存（可选，用于内存管理）
-  static void clearCache() {
-    _cache.clear();
-  }
 }
 
 /// 缓存的生活指数数据
@@ -101,21 +96,30 @@ class _CachedLifeIndexData {
 }
 
 class LifeIndexWidget extends StatelessWidget {
-  final WeatherProvider weatherProvider;
+  final WeatherProvider? weatherProvider;
+  final SunMoonIndexData? sunMoonIndexData;
   final bool showContainer;
 
   const LifeIndexWidget({
     super.key,
     required this.weatherProvider,
     this.showContainer = true,
-  });
+  }) : sunMoonIndexData = null;
+
+  /// 自定义构造函数，用于直接传入数据
+  const LifeIndexWidget.custom({
+    super.key,
+    required this.sunMoonIndexData,
+    this.showContainer = true,
+  }) : weatherProvider = null;
 
   @override
   Widget build(BuildContext context) {
     return RepaintBoundary(
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
-          final sunMoonData = weatherProvider.sunMoonIndexData;
+          // 优先使用自定义数据，否则从 weatherProvider 获取
+          final sunMoonData = sunMoonIndexData ?? weatherProvider?.sunMoonIndexData;
 
           // 生活指数信息
           Widget lifeIndexContent;

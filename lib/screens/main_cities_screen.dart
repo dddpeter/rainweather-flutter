@@ -9,9 +9,11 @@ import '../constants/app_colors.dart';
 import '../constants/app_constants.dart';
 import '../services/location_change_notifier.dart';
 import '../utils/city_name_matcher.dart';
+import '../utils/error_handler.dart';
 import '../utils/weather_icon_helper.dart';
 import '../widgets/city_card_skeleton.dart';
-import 'city_weather_swipe_screen.dart';
+import '../widgets/error_dialog.dart';
+import 'city_weather_page.dart';
 import 'weather_alerts_screen.dart';
 
 class MainCitiesScreen extends StatefulWidget {
@@ -426,8 +428,9 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
                                             context,
                                             MaterialPageRoute(
                                               builder: (context) =>
-                                                  CityWeatherSwipeScreen(
+                                                  CityWeatherPage(
                                                     cityName: city.name,
+                                                    cityId: city.id,
                                                   ),
                                             ),
                                           );
@@ -1086,34 +1089,34 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
       final success = await weatherProvider
           .refreshFirstCityLocationAndWeather();
 
-      if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '定位成功，已更新为 ${weatherProvider.currentLocation?.district ?? "当前位置"}',
+      if (success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '定位成功，已更新为 ${weatherProvider.currentLocation?.district ?? "当前位置"}',
+              ),
+              backgroundColor: AppColors.success,
+              duration: const Duration(seconds: 1),
             ),
-            backgroundColor: AppColors.success,
-            duration: const Duration(seconds: 1),
-          ),
-        );
-      } else if (!success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('定位失败，保持显示之前的数据'),
-            backgroundColor: AppColors.warning,
-            duration: const Duration(seconds: 2),
-          ),
-        );
+          );
+        }
+      } else {
+        if (mounted) {
+          ErrorToast.show(
+            context: context,
+            message: '定位失败，保持显示之前的数据',
+            errorType: AppErrorType.location,
+          );
+        }
       }
     } catch (e) {
       print('❌ 更新位置失败: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('定位失败，保持显示原有数据'),
-            backgroundColor: AppColors.warning,
-            duration: const Duration(seconds: 2),
-          ),
+        ErrorToast.show(
+          context: context,
+          message: '定位失败，保持显示原有数据',
+          errorType: AppErrorType.location,
         );
       }
     }
@@ -1157,12 +1160,10 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
                     );
                   } else if (context.mounted) {
                     // 删除失败也显示Toast
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('删除城市失败，请重试'),
-                        backgroundColor: AppColors.error,
-                        duration: Duration(milliseconds: 1500),
-                      ),
+                    ErrorToast.show(
+                      context: context,
+                      message: '删除城市失败，请重试',
+                      errorType: AppErrorType.unknown,
                     );
                   }
                 },
@@ -1428,20 +1429,10 @@ class _AddCityDialogState extends State<_AddCityDialog> {
                                 } else {
                                   // 显示添加失败提示
                                   if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: const Text('添加城市失败，请重试'),
-                                        backgroundColor: AppColors.error,
-                                        duration: const Duration(
-                                          milliseconds: 1500,
-                                        ),
-                                        behavior: SnackBarBehavior.floating,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                        ),
-                                      ),
+                                    ErrorToast.show(
+                                      context: context,
+                                      message: '添加城市失败，请重试',
+                                      errorType: AppErrorType.unknown,
                                     );
                                   }
                                 }

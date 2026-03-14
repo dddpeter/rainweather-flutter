@@ -28,7 +28,6 @@ import '../utils/error_handler.dart';
 import '../utils/logger.dart';
 import '../widgets/error_dialog.dart';
 import 'hourly_screen.dart';
-import 'lao_huang_li_screen.dart';
 
 class TodayScreen extends StatefulWidget {
   const TodayScreen({super.key});
@@ -373,12 +372,13 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
     if (_isVisible) {
       print('❌ TodayScreen: 页面可见，显示错误信息');
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('定位失败: $error'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        if (mounted) {
+          ErrorToast.show(
+            context: context,
+            message: '定位失败: $error',
+            errorType: AppErrorType.location,
+          );
+        }
       });
     } else {
       print('❌ TodayScreen: 页面不可见，跳过显示错误信息');

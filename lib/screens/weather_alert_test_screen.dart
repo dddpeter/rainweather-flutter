@@ -993,6 +993,7 @@ class _WeatherAlertTestScreenState extends State<WeatherAlertTestScreen> {
   Future<void> _checkNotificationPermission() async {
     final hasPermission = await _notificationService.isPermissionGranted();
 
+    if (!mounted) return;
     showDialog(
       context: context,
       builder: (BuildContext context) {

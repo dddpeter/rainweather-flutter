@@ -34,6 +34,21 @@ class AppInitializationService {
         );
       }
 
+      // 启动智能预加载服务（每5分钟自动预加载常用数据）
+      try {
+        Logger.d('启动智能预加载服务...');
+        SmartCacheService().startPreloadService();
+        Logger.s('智能预加载服务已启动');
+      } catch (e, stackTrace) {
+        Logger.e('智能预加载服务启动失败', error: e, stackTrace: stackTrace);
+        ErrorHandler.handleError(
+          e,
+          stackTrace: stackTrace,
+          context: 'AppInitialization.SmartCachePreloadService',
+          type: AppErrorType.cache,
+        );
+      }
+
       // 启动后台缓存清理任务
       _startBackgroundCacheCleaner();
 

@@ -82,6 +82,16 @@ class CitiesProvider extends ChangeNotifier {
     }
   }
 
+  /// 获取主要城市名称列表
+  Future<List<String>> getMainCityNames() async {
+    try {
+      return await _cityService.getMainCityNames();
+    } catch (e) {
+      Logger.e('获取主要城市名称失败', tag: 'CitiesProvider', error: e);
+      return [];
+    }
+  }
+
   /// 添加城市
   Future<bool> addCity(CityModel city) async {
     try {

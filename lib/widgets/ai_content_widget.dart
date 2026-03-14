@@ -247,40 +247,38 @@ class _AIContentWidgetState extends State<AIContentWidget> {
 
   /// 骨架屏加载动画
   Widget _buildSkeletonLoading() {
-    return Column(
+    return TweenAnimationBuilder<double>(
       key: const ValueKey('loading'),
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSkeletonLine(width: double.infinity, height: 14),
-        const SizedBox(height: 8),
-        _buildSkeletonLine(width: double.infinity, height: 14),
-        const SizedBox(height: 8),
-        _buildSkeletonLine(width: 250, height: 14),
-        const SizedBox(height: 8),
-        _buildSkeletonLine(width: 180, height: 14),
-      ],
+      tween: Tween<double>(begin: 0.0, end: 1.0),
+      duration: const Duration(milliseconds: 300),
+      builder: (context, value, child) {
+        return Opacity(
+          opacity: value,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildSkeletonLine(width: double.infinity, height: 14),
+              const SizedBox(height: 8),
+              _buildSkeletonLine(width: double.infinity, height: 14),
+              const SizedBox(height: 8),
+              _buildSkeletonLine(width: 250, height: 14),
+              const SizedBox(height: 8),
+              _buildSkeletonLine(width: 180, height: 14),
+            ],
+          ),
+        );
+      },
     );
   }
 
   Widget _buildSkeletonLine({required double width, required double height}) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween<double>(begin: 0.0, end: 1.0),
-      duration: const Duration(milliseconds: 1500),
-      // ⚠️ 使用无限循环动画，避免使用 onEnd + setState 导致过多的重建
-      child: Container(
-        width: width,
-        height: height,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(4),
-          color: AppColors.textSecondary.withValues(alpha: 0.1),
-        ),
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(4),
+        color: AppColors.textSecondary.withValues(alpha: 0.1),
       ),
-      builder: (context, value, child) {
-        return Opacity(
-          opacity: 0.3 + (value * 0.7), // 0.3 -> 1.0 循环闪烁
-          child: child,
-        );
-      },
     );
   }
 
@@ -337,19 +335,17 @@ class _AIContentWidgetState extends State<AIContentWidget> {
 
   /// 错误状态（显示重试按钮）
   Widget _buildErrorState() {
-    return Builder(
-      builder: (context) {
-        final themeProvider = context.read<ThemeProvider>();
-        final errorTextColor = themeProvider.isLightTheme
-            ? AppColors.aiTextColorLight // 亮色模式：使用 AppColors 常量
-            : AppColors.aiTextColorDark; // 暗色模式：使用 AppColors 常量
-        
-        return Column(
-          key: const ValueKey('error'),
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 根据是否为超时显示不同内容
-            if (_isTimeout)
+    final themeProvider = context.read<ThemeProvider>();
+    final errorTextColor = themeProvider.isLightTheme
+        ? AppColors.aiTextColorLight // 亮色模式：使用 AppColors 常量
+        : AppColors.aiTextColorDark; // 暗色模式：使用 AppColors 常量
+
+    return Column(
+      key: const ValueKey('error'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 根据是否为超时显示不同内容
+        if (_isTimeout)
               // 超时状态：显示"暂未获取到结果"
               Text(
                 '暂未获取到结果',
@@ -395,7 +391,5 @@ class _AIContentWidgetState extends State<AIContentWidget> {
             ),
           ],
         );
-      },
-    );
   }
 }

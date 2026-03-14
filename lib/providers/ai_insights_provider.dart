@@ -40,9 +40,11 @@ class AIInsightsProvider extends ChangeNotifier {
   bool get isGeneratingCommuteAdvice => _isGeneratingCommuteAdvice;
 
   /// 生成每日天气摘要
-  Future<String?> generateDailySummary(WeatherModel? weatherData) async {
+  ///
+  /// 总是返回非空字符串。AI 生成失败时返回默认摘要。
+  Future<String> generateDailySummary(WeatherModel? weatherData) async {
     if (weatherData == null || _isGeneratingSummary) {
-      return _dailySummary;
+      return _dailySummary ?? _getDefaultDailySummary(weatherData);
     }
 
     _isGeneratingSummary = true;
@@ -51,8 +53,30 @@ class AIInsightsProvider extends ChangeNotifier {
     try {
       Logger.d('开始生成每日天气摘要', tag: 'AIInsightsProvider');
 
-      // 使用 AIService 的 generateSmartAdvice 方法
-      final prompt = '请为以下天气数据生成简短的每日摘要：${weatherData.toString()}';
+      final current = weatherData.current?.current;
+      final air = weatherData.current?.air ?? weatherData.air;
+
+      if (current == null) {
+        return _getDefaultDailySummary(weatherData);
+      }
+
+      // 构建未来天气趋势列表
+      final upcomingWeather = weatherData.forecast24h
+          ?.take(5)
+          .map((h) => h.weather ?? '')
+          .where((w) => w.isNotEmpty)
+          .toList() ?? [];
+
+      // 使用优化的prompt方法
+      final prompt = _aiService.buildWeatherSummaryPrompt(
+        currentWeather: current.weather ?? '未知',
+        temperature: current.temperature ?? '--',
+        airQuality: air?.levelIndex ?? '未知',
+        upcomingWeather: upcomingWeather,
+        humidity: current.humidity,
+        windPower: current.windpower,
+      );
+
       final summary = await _aiService.generateSmartAdvice(prompt);
 
       if (summary != null && summary.isNotEmpty) {
@@ -62,10 +86,16 @@ class AIInsightsProvider extends ChangeNotifier {
         return summary;
       }
 
-      return null;
+      // AI 生成失败，返回默认摘要
+      final defaultSummary = _getDefaultDailySummary(weatherData);
+      _dailySummary = defaultSummary;
+      return defaultSummary;
     } catch (e) {
       Logger.e('生成每日摘要失败', tag: 'AIInsightsProvider', error: e);
-      return null;
+      // 返回默认摘要
+      final defaultSummary = _getDefaultDailySummary(weatherData);
+      _dailySummary = defaultSummary;
+      return defaultSummary;
     } finally {
       _isGeneratingSummary = false;
       notifyListeners();
@@ -73,9 +103,11 @@ class AIInsightsProvider extends ChangeNotifier {
   }
 
   /// 生成15天天气趋势摘要
-  Future<String?> generate15dSummary(List<DailyWeather>? forecast15d) async {
+  ///
+  /// 总是返回非空字符串。AI 生成失败时返回默认摘要。
+  Future<String> generate15dSummary(List<DailyWeather>? forecast15d) async {
     if (forecast15d == null || forecast15d.isEmpty || _isGenerating15dSummary) {
-      return _forecast15dSummary;
+      return _forecast15dSummary ?? '未来15天天气预报数据加载中...';
     }
 
     _isGenerating15dSummary = true;
@@ -84,8 +116,21 @@ class AIInsightsProvider extends ChangeNotifier {
     try {
       Logger.d('开始生成15天天气趋势摘要', tag: 'AIInsightsProvider');
 
-      // 使用 AIService 的 generateSmartAdvice 方法
-      final prompt = '请为以下15天天气预报生成简短的趋势摘要：${forecast15d.toString()}';
+      // 构建每日预报数据
+      final dailyForecasts = forecast15d.take(15).map((day) {
+        return {
+          'weather': day.weather_am ?? day.weather_pm ?? '未知',
+          'tempMax': day.temperature_am,
+          'tempMin': day.temperature_pm,
+        };
+      }).toList();
+
+      // 使用优化的prompt方法
+      final prompt = _aiService.buildForecast15dSummaryPrompt(
+        dailyForecasts: dailyForecasts,
+        cityName: '当前位置',
+      );
+
       final summary = await _aiService.generateSmartAdvice(prompt);
 
       if (summary != null && summary.isNotEmpty) {
@@ -95,14 +140,69 @@ class AIInsightsProvider extends ChangeNotifier {
         return summary;
       }
 
-      return null;
+      // AI 生成失败，返回默认摘要
+      final defaultSummary = _getDefault15dSummary(forecast15d);
+      _forecast15dSummary = defaultSummary;
+      return defaultSummary;
     } catch (e) {
       Logger.e('生成15天摘要失败', tag: 'AIInsightsProvider', error: e);
-      return null;
+      // 返回默认摘要
+      final defaultSummary = _getDefault15dSummary(forecast15d);
+      _forecast15dSummary = defaultSummary;
+      return defaultSummary;
     } finally {
       _isGenerating15dSummary = false;
       notifyListeners();
     }
+  }
+
+  /// 生成默认每日摘要
+  String _getDefaultDailySummary(WeatherModel? weatherData) {
+    if (weatherData == null) {
+      return '天气数据加载中，请稍候...';
+    }
+
+    final current = weatherData.current?.current;
+    if (current == null) {
+      return '天气数据加载中，请稍候...';
+    }
+
+    final weather = current.weather ?? '晴';
+    final temp = current.temperature ?? '--';
+    final summary = '$weather，温度$temp℃';
+
+    // 简单建议
+    if (weather.contains('雨')) {
+      return '$summary，建议携带雨具。';
+    } else if (int.tryParse(temp) != null && (int.tryParse(temp) ?? 20) <= 10) {
+      return '$summary，天气较冷，注意保暖。';
+    } else if (int.tryParse(temp) != null && (int.tryParse(temp) ?? 20) >= 30) {
+      return '$summary，天气炎热，注意防暑。';
+    }
+
+    return summary;
+  }
+
+  /// 生成默认15天摘要
+  String _getDefault15dSummary(List<DailyWeather> forecast15d) {
+    if (forecast15d.isEmpty) {
+      return '暂无15天天气预报数据';
+    }
+
+    // 统计主要天气类型
+    final weatherTypes = <String, int>{};
+    for (final day in forecast15d) {
+      // 优先使用白天天气，如果没有则使用下午天气
+      final weather = day.weather_am ?? day.weather_pm ?? '未知';
+      weatherTypes[weather] = (weatherTypes[weather] ?? 0) + 1;
+    }
+
+    // 找出最常见的天气
+    final mostCommon = weatherTypes.entries
+        .reduce((a, b) => a.value > b.value ? a : b)
+        .key;
+
+    return '未来15天以$mostCommon天气为主';
   }
 
   /// 生成通勤建议

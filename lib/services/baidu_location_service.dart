@@ -61,6 +61,7 @@ class BaiduLocationService implements LocationProviderInterface {
   }
 
   /// 初始化百度定位服务
+  @override
   Future<void> initialize() async {
     if (_isInitialized) return;
 
@@ -343,6 +344,7 @@ class BaiduLocationService implements LocationProviderInterface {
   }
 
   /// 获取当前位置（单次定位）
+  @override
   Future<LocationModel?> getCurrentLocation() async {
     try {
       print('🚀 BaiduLocationService: 开始获取当前位置');

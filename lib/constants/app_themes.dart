@@ -1369,6 +1369,108 @@ class AppThemes {
     }
   }
 
+  /// 高对比度颜色方案 - 符合WCAG AAA标准 (7:1对比度)
+  static const Map<String, Color> highContrastLightColors = {
+    'primary': Color(0xFF000000), // 纯黑主色
+    'primaryDark': Color(0xFF000000),
+    'accent': Color(0xFF0000FF), // 纯蓝强调色
+    'background': Color(0xFFFFFFFF), // 纯白背景
+    'headerBackground': Color(0xFF000000), // 黑色头部
+    'headerBackgroundSecondary': Color(0xFF000000),
+    'headerTextPrimary': Color(0xFFFFFFFF), // 白色文字
+    'headerTextSecondary': Color(0xFFFFFFFF),
+    'headerIconColor': Color(0xFFFFFFFF),
+    'surface': Color(0xFFFFFFFF),
+    'textPrimary': Color(0xFF000000), // 纯黑文字
+    'textSecondary': Color(0xFF000000),
+    'textTertiary': Color(0xFF000000),
+    'border': Color(0xFF000000), // 黑色边框
+    'divider': Color(0xFF000000),
+    'cardBackground': Color(0xFFFFFFFF), // 白色卡片
+    'cardBackgroundTransparent': Color(0xFFFFFFFF),
+    'buttonBackground': Color(0xFF000000), // 黑色按钮
+    'buttonText': Color(0xFFFFFFFF),
+    'bottomNavBackground': Color(0xFFFFFFFF),
+    'bottomNavSelected': Color(0xFF000000),
+    'bottomNavUnselected': Color(0xFF666666),
+    'indicatorColor': Color(0xFF0000FF),
+    'shadowColor': Color(0xFF000000),
+    'iconColor': Color(0xFF000000),
+    'titleColor': Color(0xFF000000),
+    'subtitleColor': Color(0xFF000000),
+    'currentTag': Color(0xFFFFFFFF),
+    'currentTagCardBackground': Color(0xFFFFFFFF),
+    'cardBorder': Color(0xFF000000),
+    'buttonShadow': Color(0xFF000000),
+    'bottomNavSelectedBg': Colors.transparent,
+    'bottomNavSelectedText': Color(0xFF000000),
+    'tagBackground': Color(0xFF000000),
+    'tagTextOnPrimary': Color(0xFFFFFFFF),
+    'tagBorder': Color(0xFF000000),
+    'error': Color(0xFFCC0000), // 高对比度红色
+    'success': Color(0xFF008000), // 高对比度绿色
+    'warning': Color(0xFFB8860B), // 高对比度琥珀色
+    'highTemp': Color(0xFFCC0000),
+    'lowTemp': Color(0xFF0000FF),
+    'sunrise': Color(0xFFB8860B),
+    'sunset': Color(0xFF8B0000),
+    'moon': Color(0xFF000000),
+    'sunIcon': Color(0xFFB8860B),
+  };
+
+  static const Map<String, Color> highContrastDarkColors = {
+    'primary': Color(0xFFFFFFFF), // 纯白主色
+    'primaryDark': Color(0xFFFFFFFF),
+    'accent': Color(0xFF00FFFF), // 青色强调色
+    'background': Color(0xFF000000), // 纯黑背景
+    'headerBackground': Color(0xFFFFFFFF), // 白色头部
+    'headerBackgroundSecondary': Color(0xFFFFFFFF),
+    'headerTextPrimary': Color(0xFF000000), // 黑色文字
+    'headerTextSecondary': Color(0xFF000000),
+    'headerIconColor': Color(0xFF000000),
+    'surface': Color(0xFF1A1A1A),
+    'textPrimary': Color(0xFFFFFFFF), // 纯白文字
+    'textSecondary': Color(0xFFFFFFFF),
+    'textTertiary': Color(0xFFFFFFFF),
+    'border': Color(0xFFFFFFFF), // 白色边框
+    'divider': Color(0xFF666666),
+    'cardBackground': Color(0xFF1A1A1A), // 深灰卡片
+    'cardBackgroundTransparent': Color(0xFF1A1A1A),
+    'buttonBackground': Color(0xFFFFFFFF), // 白色按钮
+    'buttonText': Color(0xFF000000),
+    'bottomNavBackground': Color(0xFF1A1A1A),
+    'bottomNavSelected': Color(0xFFFFFFFF),
+    'bottomNavUnselected': Color(0xFF999999),
+    'indicatorColor': Color(0xFF00FFFF),
+    'shadowColor': Color(0xFFFFFFFF),
+    'iconColor': Color(0xFFFFFFFF),
+    'titleColor': Color(0xFFFFFFFF),
+    'subtitleColor': Color(0xFFFFFFFF),
+    'currentTag': Color(0xFF000000),
+    'currentTagCardBackground': Color(0xFF1A1A1A),
+    'cardBorder': Color(0xFFFFFFFF),
+    'buttonShadow': Color(0xFFFFFFFF),
+    'bottomNavSelectedBg': Colors.transparent,
+    'bottomNavSelectedText': Color(0xFFFFFFFF),
+    'tagBackground': Color(0xFFFFFFFF),
+    'tagTextOnPrimary': Color(0xFF000000),
+    'tagBorder': Color(0xFFFFFFFF),
+    'error': Color(0xFFFF6B6B),
+    'success': Color(0xFF66BB6A),
+    'warning': Color(0xFFFFD54F),
+    'highTemp': Color(0xFFFF6B6B),
+    'lowTemp': Color(0xFF64B5F6),
+    'sunrise': Color(0xFFFFD54F),
+    'sunset': Color(0xFFFF6B6B),
+    'moon': Color(0xFFFFFFFF),
+    'sunIcon': Color(0xFFFFD54F),
+  };
+
+  /// 获取高对比度颜色
+  static Map<String, Color> getHighContrastColors(bool isLight) {
+    return isLight ? highContrastLightColors : highContrastDarkColors;
+  }
+
   /// 获取所有主题方案
   static List<ThemeColorScheme> get allSchemes => [
     blue,

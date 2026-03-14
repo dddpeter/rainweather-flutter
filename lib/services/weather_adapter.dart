@@ -157,9 +157,10 @@ class WeatherAdapter {
       
       // 能见度（米转换为公里）- 能见度可以为0（大雾），但需要检查是否有数据
       // 如果能见度大于等于0，说明有数据（包括0值）
+      // 注意：weather_details_widget.dart 中已添加 km 后缀，此处只返回数值
       if (currentHourData.visibility >= 0) {
         final visibilityKm = currentHourData.visibility / 1000.0;
-        visibility = '${visibilityKm.toStringAsFixed(1)} km';
+        visibility = visibilityKm.toStringAsFixed(1);
       }
     }
 

@@ -223,8 +223,19 @@ class Forecast15dChart extends StatelessWidget {
 
   int _parseTemperature(String tempStr) {
     try {
-      // 温度值可能是浮点数（如 "15.3"），需要先解析为double再转int
-      return double.parse(tempStr.replaceAll('°', '')).round();
+      // 处理多种温度格式：
+      // - "25" (纯数字)
+      // - "25℃" 或 "25°"
+      // - "高温 25℃" 或 "低温 15℃"
+      String cleanStr = tempStr
+          .replaceAll('高温', '')
+          .replaceAll('低温', '')
+          .replaceAll('℃', '')
+          .replaceAll('°', '')
+          .replaceAll(' ', '')
+          .trim();
+      if (cleanStr.isEmpty) return 0;
+      return double.parse(cleanStr).round();
     } catch (e) {
       return 0;
     }

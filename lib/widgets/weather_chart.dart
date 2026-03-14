@@ -180,8 +180,8 @@ class WeatherChart extends StatelessWidget {
               : 0.5;
           final xPos = leftPadding + (availableWidth * xRatio);
 
-          // 高温点的天气图标（12点天气 - weather_am）
-          final highTemp = _parseTemperature(day.temperature_am ?? '');
+          // 高温点的天气图标（使用最高温度 temperature_pm）
+          final highTemp = _parseTemperature(day.temperature_pm ?? '');
           final highTempYRatio = (maxTemp - highTemp) / tempRange;
           final highTempYPos = availableHeight * highTempYRatio;
 
@@ -243,8 +243,8 @@ class WeatherChart extends StatelessWidget {
             ),
           );
 
-          // 低温点的天气图标（0点天气 - weather_pm）
-          final lowTemp = _parseTemperature(day.temperature_pm ?? '');
+          // 低温点的天气图标（使用最低温度 temperature_am）
+          final lowTemp = _parseTemperature(day.temperature_am ?? '');
           final lowTempYRatio = (maxTemp - lowTemp) / tempRange;
           final lowTempYPos = availableHeight * lowTempYRatio;
 

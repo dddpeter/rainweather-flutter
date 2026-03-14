@@ -1110,12 +1110,12 @@ class AppDrawer extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '• 完成全面代码优化分析报告\n'
-                      '• 提出 WeatherProvider 拆分方案\n'
-                      '• 建议添加 Repository 层提升可测试性\n'
-                      '• 分析冗余定位 SDK，建议精简\n'
-                      '• 统一日志系统和异常处理规范\n'
-                      '• 数据库索引优化建议',
+                      '• Open-Meteo免费国际天气API集成\n'
+                      '• 新增60+国际城市预设坐标\n'
+                      '• 添加城市弹窗：国内/国际城市筛选标签\n'
+                      '• 修复国外城市日期时间显示问题\n'
+                      '• 移除主要城市卡片"更新"标签\n'
+                      '• Nominatim API User-Agent优化',
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,

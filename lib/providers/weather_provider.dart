@@ -17,6 +17,8 @@ import '../services/weather_widget_service.dart';
 import '../services/city_service.dart';
 import '../services/city_data_service.dart';
 import '../services/sun_moon_index_service.dart';
+import '../services/geocoding_service.dart';
+import '../services/weather_adapter.dart';
 import '../constants/app_constants.dart';
 import '../utils/logger.dart';
 import '../utils/error_handler.dart';
@@ -1103,31 +1105,40 @@ class WeatherProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // 从CitiesProvider同步城市列表
+      if (_citiesProvider != null) {
+        _mainCities = _citiesProvider!.mainCities;
+      }
+
+      // 如果没有城市，直接返回
+      if (_mainCities.isEmpty) {
+        WeatherProviderLogger.info('没有主要城市需要刷新');
+        _isLoadingCitiesWeather = false;
+        notifyListeners();
+        return;
+      }
+
       // 并行获取所有主要城市的天气数据
       List<Future<void>> futures = [];
-
-      // 获取主要城市列表（从数据库或常量）
-      final cityNames = _mainCities.isNotEmpty
-          ? _mainCities.map((city) => city.name).toList()
-          : AppConstants.mainCities;
 
       // 获取当前位置名称
       final currentLocationName = _currentLocation?.district;
 
-      for (String cityName in cityNames) {
+      for (CityModel city in _mainCities) {
         // 如果设置了跳过当前位置，且当前城市是当前位置，则跳过
         if (skipCurrentLocation &&
             currentLocationName != null &&
-            cityName == currentLocationName) {
+            city.name == currentLocationName) {
           WeatherProviderLogger.info(
-            '🏙️ WeatherProvider: 跳过当前位置城市 $cityName 的刷新',
+            '🏙️ WeatherProvider: 跳过当前位置城市 ${city.name} 的刷新',
           );
           continue;
         }
 
         futures.add(
           _loadSingleCityWeather(
-            cityName,
+            city.name,
+            cityId: city.id,
             forceRefresh: forceRefresh,
             showExpiredCache: true, // 显示过期缓存，优化用户体验
           ),
@@ -1201,6 +1212,7 @@ class WeatherProvider extends ChangeNotifier {
   /// [showExpiredCache] - 是否显示过期缓存（默认true，优化用户体验）
   Future<void> _loadSingleCityWeather(
     String cityName, {
+    String? cityId,
     bool forceRefresh = false,
     bool checkExpiration = true,
     bool showExpiredCache = true,
@@ -1247,24 +1259,66 @@ class WeatherProvider extends ChangeNotifier {
           'Fetching fresh weather data for $cityName in main cities',
         );
 
-        // 创建城市位置
-        LocationModel cityLocation = LocationModel(
-          address: cityName,
-          country: '中国',
-          province: '未知',
-          city: cityName,
-          district: cityName,
-          street: '未知',
-          adcode: '未知',
-          town: '未知',
-          lat: 0.0,
-          lng: 0.0,
-        );
-
-        // 获取天气数据
-        WeatherModel? weather = await _weatherService.getWeatherDataForLocation(
-          cityLocation,
-        );
+        WeatherModel? weather;
+        LocationModel? cityLocation; // 用于存储城市位置信息
+        
+        // 判断是否为国际城市（ID以"INT_"开头）
+        final isInternationalCity = cityId != null && cityId.startsWith('INT_');
+        
+        if (isInternationalCity) {
+          // 国际城市：使用GeocodingService获取坐标，然后通过坐标获取天气
+          WeatherProviderLogger.info('国际城市，使用GeocodingService获取坐标: $cityName');
+          
+          final geocodingService = GeocodingService.getInstance();
+          final location = await geocodingService.geocode(cityName);
+          
+          if (location != null) {
+            WeatherProviderLogger.info(
+              '使用GeocodingService获取的国际城市坐标: $cityName (${location.lat}, ${location.lng})',
+            );
+            cityLocation = location;
+            weather = await _weatherService.getWeatherDataForLocation(location);
+          } else {
+            WeatherProviderLogger.warning(
+              '无法获取国际城市坐标: $cityName',
+            );
+            return; // 无法获取坐标，直接返回
+          }
+        } else if (cityId != null && cityId.isNotEmpty) {
+          // 国内城市：使用城市ID获取天气
+          WeatherProviderLogger.info('国内城市，使用城市ID获取天气: $cityName ($cityId)');
+          // 为国内城市创建位置信息
+          cityLocation = LocationModel(
+            address: cityName,
+            country: '中国',
+            province: '未知',
+            city: cityName,
+            district: cityName,
+            street: '',
+            adcode: '',
+            town: '',
+            lat: 0.0,
+            lng: 0.0,
+          );
+          weather = await _weatherService.getWeatherData(cityId);
+        } else {
+          // 无有效ID的国内城市：使用城市名称获取天气
+          WeatherProviderLogger.info('国内城市，使用城市名称获取天气: $cityName');
+          // 为国内城市创建位置信息
+          cityLocation = LocationModel(
+            address: cityName,
+            country: '中国',
+            province: '未知',
+            city: cityName,
+            district: cityName,
+            street: '',
+            adcode: '',
+            town: '',
+            lat: 0.0,
+            lng: 0.0,
+          );
+          weather = await _weatherService.getWeatherData(cityName);
+        }
 
         if (weather != null) {
           _mainCitiesWeather[cityName] = weather;
@@ -1424,17 +1478,18 @@ class WeatherProvider extends ChangeNotifier {
       await loadMainCities();
 
       // 只获取第一个城市（当前定位城市）的天气数据
-      final firstCity = _mainCities.isNotEmpty ? _mainCities.first.name : null;
+      final firstCity = _mainCities.isNotEmpty ? _mainCities.first : null;
       if (firstCity != null) {
-        WeatherProviderLogger.info('刷新第一个卡片: $firstCity');
+        WeatherProviderLogger.info('刷新第一个卡片: ${firstCity.name}');
         await _loadSingleCityWeather(
-          firstCity,
+          firstCity.name,
+          cityId: firstCity.id,
           forceRefresh: true,
           showExpiredCache: false, // 强制刷新时不显示过期缓存
         );
 
         // 如果这是当前定位城市，也更新主天气数据
-        if (firstCity == newLocation.district) {
+        if (firstCity.name == newLocation.district) {
           final weatherKey =
               '${newLocation.district}:${AppConstants.weatherAllKey}';
           final weather = await _databaseService.getWeatherData(weatherKey);
@@ -2263,60 +2318,101 @@ class WeatherProvider extends ChangeNotifier {
           _cityDataService.findCityIdByName(cityName) ??
           AppConstants.defaultCityId;
 
+      // 判断是否为国际城市
+      final isInternationalCity = cityId.startsWith('INT_') || 
+                                   cityId == AppConstants.defaultCityId;
+
       WeatherProviderLogger.info(
-        'Loading sun/moon index data for city: $cityName, city ID: $cityId',
+        'Loading sun/moon index data for city: $cityName, city ID: $cityId, isInternational: $isInternationalCity',
       );
 
-      // 检查缓存
-      final cacheKey = '$cityName:sun_moon_index';
-      final cachedData = await _databaseService.getSunMoonIndexData(cacheKey);
-
-      if (cachedData != null) {
-        // 使用缓存数据
-        _sunMoonIndexData = cachedData;
+      if (isInternationalCity) {
+        // 国际城市：根据天气数据生成生活指数
         WeatherProviderLogger.info(
-          'Using cached sun/moon index data for $cityName',
+          'Generating life index for international city: $cityName',
         );
-        notifyListeners(); // 通知UI更新
-      } else {
-        // 从API获取新数据
-        WeatherProviderLogger.info(
-          'No valid cache found, fetching fresh sun/moon index data for $cityName',
-        );
-        final response = await SunMoonIndexService.getSunMoonAndIndex(cityId);
-
-        if (response != null && response.code == 200 && response.data != null) {
-          _sunMoonIndexData = response.data;
-
-          // 调试信息
-          WeatherProviderLogger.info(
-            'Sun/moon index data loaded successfully for $cityName:',
-          );
-          WeatherProviderLogger.info(
-            '  - sunAndMoon: ${response.data!.sunAndMoon}',
-          );
-          WeatherProviderLogger.info(
-            '  - index count: ${response.data!.index?.length ?? 0}',
-          );
-          if (response.data!.index != null) {
-            for (var item in response.data!.index!) {
-              WeatherProviderLogger.info(
-                '  - ${item.indexTypeCh}: ${item.indexLevel}',
-              );
-            }
+        
+        final currentWeather = _currentWeather?.current?.current;
+        if (currentWeather != null) {
+          // 解析温度
+          final tempStr = currentWeather.temperature ?? '20';
+          final temperature = double.tryParse(tempStr) ?? 20.0;
+          
+          // 解析天气代码（从weatherIndex推断）
+          final weatherIndex = currentWeather.weatherIndex ?? '1';
+          final weatherCode = int.tryParse(weatherIndex) ?? 1;
+          
+          // 解析湿度（如果有的话）
+          double? humidity;
+          if (currentWeather.humidity != null && currentWeather.humidity != '未知') {
+            humidity = double.tryParse(currentWeather.humidity!.replaceAll('%', ''));
           }
-
-          // 保存到缓存
-          await _databaseService.putSunMoonIndexData(cacheKey, response.data!);
+          
+          // 生成生活指数
+          _sunMoonIndexData = WeatherAdapter.generateLifeIndex(
+            temperature: temperature,
+            weatherCode: weatherCode,
+            humidity: humidity,
+          );
+          
           WeatherProviderLogger.info(
-            'Sun/moon index data cached for $cityName',
+            'Successfully generated life index for international city: $cityName',
+          );
+          notifyListeners();
+        }
+      } else {
+        // 国内城市：从API获取日出日落和生活指数数据
+        // 检查缓存
+        final cacheKey = '$cityName:sun_moon_index';
+        final cachedData = await _databaseService.getSunMoonIndexData(cacheKey);
+
+        if (cachedData != null) {
+          // 使用缓存数据
+          _sunMoonIndexData = cachedData;
+          WeatherProviderLogger.info(
+            'Using cached sun/moon index data for $cityName',
           );
           notifyListeners(); // 通知UI更新
         } else {
+          // 从API获取新数据
           WeatherProviderLogger.info(
-            'Failed to fetch sun/moon index data for $cityName - response: $response',
+            'No valid cache found, fetching fresh sun/moon index data for $cityName',
           );
-          notifyListeners(); // 通知UI更新，即使失败也要更新状态
+          final response = await SunMoonIndexService.getSunMoonAndIndex(cityId);
+
+          if (response != null && response.code == 200 && response.data != null) {
+            _sunMoonIndexData = response.data;
+
+            // 调试信息
+            WeatherProviderLogger.info(
+              'Sun/moon index data loaded successfully for $cityName:',
+            );
+            WeatherProviderLogger.info(
+              '  - sunAndMoon: ${response.data!.sunAndMoon}',
+            );
+            WeatherProviderLogger.info(
+              '  - index count: ${response.data!.index?.length ?? 0}',
+            );
+            if (response.data!.index != null) {
+              for (var item in response.data!.index!) {
+                WeatherProviderLogger.info(
+                  '  - ${item.indexTypeCh}: ${item.indexLevel}',
+                );
+              }
+            }
+
+            // 保存到缓存
+            await _databaseService.putSunMoonIndexData(cacheKey, response.data!);
+            WeatherProviderLogger.info(
+              'Sun/moon index data cached for $cityName',
+            );
+            notifyListeners(); // 通知UI更新
+          } else {
+            WeatherProviderLogger.info(
+              'Failed to fetch sun/moon index data for $cityName - response: $response',
+            );
+            notifyListeners(); // 通知UI更新，即使失败也要更新状态
+          }
         }
       }
     } catch (e) {
@@ -3062,20 +3158,67 @@ class WeatherProvider extends ChangeNotifier {
     try {
       WeatherProviderLogger.info('后台刷新城市天气数据: $cityName');
 
+      // 从主要城市列表中查找对应的CityModel，获取cityId
+      String? cityId;
+      for (final city in _mainCities) {
+        if (city.name == cityName) {
+          cityId = city.id;
+          break;
+        }
+      }
+
       // 创建城市位置
-      LocationModel cityLocation = LocationModel(
-        address: cityName,
-        country: '中国',
-        province: '未知',
-        city: cityName,
-        district: cityName,
-        street: '',
-        adcode: '',
-        town: '',
-        lat: 0.0,
-        lng: 0.0,
-        isProxyDetected: false,
-      );
+      LocationModel cityLocation;
+      
+      // 判断是否为国际城市（ID以"INT_"开头）
+      final isInternationalCity = cityId != null && cityId.startsWith('INT_');
+      
+      if (isInternationalCity) {
+        // 国际城市：尝试从GeocodingService获取预设坐标
+        final geocodingService = GeocodingService.getInstance();
+        final location = await geocodingService.geocode(cityName);
+        
+        if (location != null) {
+          // 使用从GeocodingService获取的位置信息
+          WeatherProviderLogger.info(
+            '后台刷新：使用GeocodingService获取的国际城市坐标: $cityName (${location.lat}, ${location.lng})',
+          );
+          cityLocation = location;
+        } else {
+          // 如果GeocodingService无法提供坐标，使用通用的国际城市位置
+          WeatherProviderLogger.warning(
+            '后台刷新：无法获取国际城市坐标，使用默认位置: $cityName',
+          );
+          cityLocation = LocationModel(
+            address: cityName,
+            country: '未知',
+            province: '未知',
+            city: cityName,
+            district: cityName,
+            street: '',
+            adcode: '',
+            town: '',
+            lat: 0.0,
+            lng: 0.0,
+            isProxyDetected: false,
+          );
+        }
+      } else {
+        // 国内城市：使用默认位置信息
+        cityLocation = LocationModel(
+          address: cityName,
+          country: '中国',
+          province: '未知',
+          city: cityName,
+          district: cityName,
+          street: '',
+          adcode: '',
+          town: '',
+          lat: 0.0,
+          lng: 0.0,
+          isProxyDetected: false,
+        );
+      }
 
       // 获取天气数据
       final weatherData = await _weatherService.getWeatherDataForLocation(

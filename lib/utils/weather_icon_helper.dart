@@ -50,9 +50,10 @@ class WeatherIconHelper {
   ///
   /// [period] 时段名称，如 "上午"、"下午"
   ///
-  /// 注意：数据结构中上午使用pm数据（夜间），下午使用am数据（白天）
+  /// 注意：上午和下午都是白天，返回false
   static bool isNightByPeriod(String period) {
-    return period == '上午';
+    // 上午和下午都是白天时段
+    return false;
   }
 
   /// 构建天气图标Widget

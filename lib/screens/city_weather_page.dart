@@ -394,7 +394,7 @@ class _CityWeatherPageState extends State<CityWeatherPage>
                           textBaseline: TextBaseline.alphabetic,
                           children: [
                             Text(
-                              '${current?.temperature ?? '--'}',
+                              Formatters.formatNumber(current?.temperature),
                               style: TextStyle(
                                 color: context.read<ThemeProvider>().getColor('headerTextPrimary'),
                                 fontSize: 56,
@@ -426,7 +426,7 @@ class _CityWeatherPageState extends State<CityWeatherPage>
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  '体感 ${current?.feelstemperature}℃',
+                                  '体感 ${Formatters.formatNumber(current?.feelstemperature)}℃',
                                   style: TextStyle(
                                     color: context.read<ThemeProvider>().getColor('headerTextSecondary'),
                                     fontSize: 16,

@@ -2,7 +2,7 @@
 
 A modern intelligent weather application built with Flutter, providing real-time weather information with location services, weather forecasts, and beautiful UI components.
 
-**Current Version**: v1.13.6 | **Release Date**: 2026-03-13
+**Current Version**: v1.14.0 | **Release Date**: 2026-03-14
 
 > **中文文档**: [README.md](README.md) | **English Documentation**: This file
 

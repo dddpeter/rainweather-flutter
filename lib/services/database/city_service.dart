@@ -27,7 +27,8 @@ class CityService {
           id TEXT PRIMARY KEY,
           name TEXT NOT NULL,
           isMainCity INTEGER NOT NULL DEFAULT 0,
-          createdAt INTEGER NOT NULL
+          createdAt INTEGER NOT NULL,
+          sortOrder INTEGER NOT NULL DEFAULT 9999
         )
       ''');
     } catch (e) {
@@ -40,6 +41,10 @@ class CityService {
     final db = await _core.database;
     try {
       await _ensureCitiesTableExists();
+      
+      // 确保sortOrder字段存在（处理从旧版本升级的情况）
+      await _ensureSortOrderColumnExists();
+      
       await db.insert(
         'cities',
         city.toMap(),
@@ -48,6 +53,29 @@ class CityService {
       print('City saved: ${city.name}');
     } catch (e) {
       print('Failed to save city: $e');
+    }
+  }
+  
+  /// 确保sortOrder字段存在（处理从旧版本升级的情况）
+  Future<void> _ensureSortOrderColumnExists() async {
+    final db = await _core.database;
+    try {
+      // 检查sortOrder字段是否存在
+      final result = await db.rawQuery(
+        "PRAGMA table_info(cities)",
+      );
+      
+      final hasSortOrder = result.any((column) => column['name'] == 'sortOrder');
+      
+      if (!hasSortOrder) {
+        // 如果sortOrder字段不存在，添加它
+        await db.execute('''
+          ALTER TABLE cities ADD COLUMN sortOrder INTEGER NOT NULL DEFAULT 9999
+        ''');
+        print('Added sortOrder column to cities table');
+      }
+    } catch (e) {
+      print('Failed to ensure sortOrder column: $e');
     }
   }
 
@@ -106,7 +134,7 @@ class CityService {
           .toList();
 
       print('🔍 Database: Processing current location: $currentLocationName');
-      print('🔍 Database: Cities before processing: ${cities.length}');
+      print('🔍 Database: Cities loaded: ${cities.length}');
 
       bool hasNameConflict = false;
       if (currentLocationName != null && currentLocationName.isNotEmpty) {

@@ -2,11 +2,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/city_weather_data.dart';
 import '../models/weather_model.dart';
-import '../models/location_model.dart';
 import '../models/sun_moon_index_model.dart';
 import '../services/weather_service.dart';
 import '../services/database_service.dart';
 import '../services/sun_moon_index_service.dart';
+import '../services/geocoding_service.dart';
+import '../services/weather_adapter.dart';
 import '../providers/ai_insights_provider.dart';
 import '../constants/app_constants.dart';
 import '../utils/logger.dart';
@@ -18,6 +19,7 @@ import '../utils/logger.dart';
 class CityWeatherProvider extends ChangeNotifier {
   final WeatherService _weatherService = WeatherService.getInstance();
   final DatabaseService _databaseService = DatabaseService.getInstance();
+  final GeocodingService _geocodingService = GeocodingService.getInstance();
   
   /// AI Insights Provider 引用
   AIInsightsProvider? _aiInsightsProvider;
@@ -123,24 +125,20 @@ class CityWeatherProvider extends ChangeNotifier {
       Logger.d('从API获取城市天气数据: $cityName', tag: 'CityWeatherProvider');
       
       WeatherModel? weather;
-      if (cityId != null && cityId.isNotEmpty) {
-        // 直接使用城市ID获取
-        weather = await _weatherService.getWeatherData(cityId);
+      // 判断是否为国际城市（ID 以 INT_ 开头或 ID 为空）
+      final isInternationalCity = cityId == null || 
+                                    cityId.isEmpty || 
+                                    cityId.startsWith('INT_');
+      
+      if (isInternationalCity) {
+        // 国际城市：通过城市名称获取（使用地理编码服务查询坐标）
+        final location = await _geocodingService.geocode(cityName);
+        if (location != null) {
+          weather = await _weatherService.getWeatherDataForLocation(location);
+        }
       } else {
-        // 通过城市名称获取
-        final location = LocationModel(
-          address: cityName,
-          country: '中国',
-          province: '未知',
-          city: cityName,
-          district: cityName,
-          street: '未知',
-          adcode: '未知',
-          town: '未知',
-          lat: 0.0,
-          lng: 0.0,
-        );
-        weather = await _weatherService.getWeatherDataForLocation(location);
+        // 国内城市：直接使用城市ID获取
+        weather = await _weatherService.getWeatherData(cityId);
       }
 
       if (weather != null) {
@@ -218,19 +216,59 @@ class CityWeatherProvider extends ChangeNotifier {
       final weather = _cityWeatherMap[cityName];
       if (weather == null) return;
 
-      // 尝试从缓存的城市ID获取日出日落数据
+      // 获取城市ID
       final cityId = _cityWeatherDataMap[cityName]?.cityId;
-      if (cityId != null && cityId.isNotEmpty) {
-        final response = await SunMoonIndexService.getSunMoonAndIndex(cityId);
-        if (response != null && response.data != null) {
-          _citySunMoonIndexMap[cityName] = response.data!;
-          Logger.d('成功加载城市日出日落和生活指数数据: $cityName', tag: 'CityWeatherProvider');
+      
+      // 判断是否为国际城市
+      final isInternationalCity = cityId == null || 
+                                   cityId.isEmpty || 
+                                   cityId.startsWith('INT_');
+      
+      if (isInternationalCity) {
+        // 国际城市：根据天气数据生成生活指数
+        Logger.d('为国际城市生成生活指数: $cityName', tag: 'CityWeatherProvider');
+        
+        final currentWeather = weather.current?.current;
+        if (currentWeather != null) {
+          // 解析温度
+          final tempStr = currentWeather.temperature ?? '20';
+          final temperature = double.tryParse(tempStr) ?? 20.0;
+          
+          // 解析天气代码（从weatherIndex推断）
+          final weatherIndex = currentWeather.weatherIndex ?? '1';
+          final weatherCode = int.tryParse(weatherIndex) ?? 1;
+          
+          // 解析湿度（如果有的话）
+          double? humidity;
+          if (currentWeather.humidity != null && currentWeather.humidity != '未知') {
+            humidity = double.tryParse(currentWeather.humidity!.replaceAll('%', ''));
+          }
+          
+          // 生成生活指数
+          final lifeIndexData = WeatherAdapter.generateLifeIndex(
+            temperature: temperature,
+            weatherCode: weatherCode,
+            humidity: humidity,
+          );
+          
+          _citySunMoonIndexMap[cityName] = lifeIndexData;
+          Logger.d('成功为国际城市生成生活指数: $cityName', tag: 'CityWeatherProvider');
           notifyListeners();
-          return;
         }
+      } else {
+        // 国内城市：从API获取日出日落和生活指数数据
+        if (cityId != null && cityId.isNotEmpty) {
+          final response = await SunMoonIndexService.getSunMoonAndIndex(cityId);
+          if (response != null && response.data != null) {
+            _citySunMoonIndexMap[cityName] = response.data!;
+            Logger.d('成功加载城市日出日落和生活指数数据: $cityName', tag: 'CityWeatherProvider');
+            notifyListeners();
+            return;
+          }
+        }
+        
+        Logger.d('无法加载城市日出日落和生活指数数据: $cityName (没有有效的城市ID)', tag: 'CityWeatherProvider');
       }
-
-      Logger.d('无法加载城市日出日落和生活指数数据: $cityName (没有有效的城市ID)', tag: 'CityWeatherProvider');
     } catch (e) {
       Logger.e('加载城市日出日落和生活指数数据失败: $cityName, $e', tag: 'CityWeatherProvider');
     }

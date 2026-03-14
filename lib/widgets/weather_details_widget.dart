@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_constants.dart';
+import '../utils/formatters.dart';
 
 class WeatherDetailsWidget extends StatelessWidget {
   final dynamic weather;
@@ -62,12 +63,12 @@ class WeatherDetailsWidget extends StatelessWidget {
       _DetailItem(
         icon: Icons.water_drop,
         label: '湿度',
-        value: '${_formatNumber(current.humidity)}%',
+        value: Formatters.formatHumidity(current.humidity),
       ),
       _DetailItem(
         icon: showAirQuality ? Icons.compress : Icons.air,
         label: '气压',
-        value: '${_formatNumber(current.airpressure)}hpa',
+        value: Formatters.formatPressure(current.airpressure),
       ),
       _DetailItem(
         icon: Icons.air,

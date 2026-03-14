@@ -38,8 +38,9 @@ class WeatherPosterWidget extends StatelessWidget {
     int tempLow = 0;
     if (weather.forecast15d != null && weather.forecast15d!.isNotEmpty) {
       final today = weather.forecast15d![0];
-      final tempHighStr = today.temperature_am ?? '--';
-      final tempLowStr = today.temperature_pm ?? '--';
+      // 注意：temperature_pm 是最高温度（下午），temperature_am 是最低温度（上午）
+      final tempHighStr = today.temperature_pm ?? '--';
+      final tempLowStr = today.temperature_am ?? '--';
       tempHigh = int.tryParse(tempHighStr) ?? 0;
       tempLow = int.tryParse(tempLowStr) ?? 0;
     }

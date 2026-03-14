@@ -206,8 +206,9 @@ class Forecast15dChart extends StatelessWidget {
 
   List<Map<String, dynamic>> _prepareChartData(List<DailyWeather> forecast) {
     return forecast.take(15).map((day) {
-      final maxTemp = _parseTemperature(day.temperature_am ?? '0');
-      final minTemp = _parseTemperature(day.temperature_pm ?? '0');
+      // 注意：temperature_pm 是最高温度（下午），temperature_am 是最低温度（上午）
+      final maxTemp = _parseTemperature(day.temperature_pm ?? '0');
+      final minTemp = _parseTemperature(day.temperature_am ?? '0');
       final date = _formatDate(day.forecasttime ?? '');
 
       return {
@@ -222,7 +223,8 @@ class Forecast15dChart extends StatelessWidget {
 
   int _parseTemperature(String tempStr) {
     try {
-      return int.parse(tempStr.replaceAll('°', ''));
+      // 温度值可能是浮点数（如 "15.3"），需要先解析为double再转int
+      return double.parse(tempStr.replaceAll('°', '')).round();
     } catch (e) {
       return 0;
     }

@@ -20,8 +20,17 @@ class AppConstants {
   static const String refresh7dAction = 'refresh_7d_data';
   static const String refreshCityAction = 'refresh_city';
 
-  // Main Cities
-  static const List<String> mainCities = ['北京', '上海'];
+  // Main Cities (国内城市 + 国际城市)
+  static const List<String> mainCities = [
+    '北京', 
+    '上海',
+    // 国际城市
+    '东京',
+    '首尔',
+    '新加坡',
+    '伦敦',
+    '纽约',
+  ];
 
   // Default Location
   static const String defaultCity = '北京';

@@ -32,21 +32,45 @@ class Formatters {
 
   /// 格式化湿度
   static String formatHumidity(dynamic value, {String defaultValue = '--'}) {
-    final formatted = formatNumber(value, defaultValue: defaultValue);
+    if (value == null) return defaultValue;
+    
+    // 如果是字符串，先移除可能存在的%符号
+    String cleanValue = value.toString();
+    if (cleanValue.endsWith('%')) {
+      cleanValue = cleanValue.substring(0, cleanValue.length - 1);
+    }
+    
+    final formatted = formatNumber(cleanValue, defaultValue: defaultValue);
     if (formatted == defaultValue) return formatted;
     return '$formatted%';
   }
 
   /// 格式化气压
   static String formatPressure(dynamic value, {String defaultValue = '--'}) {
-    final formatted = formatNumber(value, defaultValue: defaultValue);
+    if (value == null) return defaultValue;
+    
+    // 如果是字符串，先移除可能存在的单位
+    String cleanValue = value.toString();
+    if (cleanValue.contains(' hPa') || cleanValue.contains('hPa')) {
+      cleanValue = cleanValue.replaceAll(' hPa', '').replaceAll('hPa', '');
+    }
+    
+    final formatted = formatNumber(cleanValue, defaultValue: defaultValue);
     if (formatted == defaultValue) return formatted;
     return '$formatted hPa';
   }
 
   /// 格式化能见度
   static String formatVisibility(dynamic value, {String defaultValue = '--'}) {
-    final formatted = formatNumber(value, defaultValue: defaultValue);
+    if (value == null) return defaultValue;
+    
+    // 如果是字符串，先移除可能存在的单位
+    String cleanValue = value.toString();
+    if (cleanValue.contains(' km') || cleanValue.contains('km')) {
+      cleanValue = cleanValue.replaceAll(' km', '').replaceAll('km', '');
+    }
+    
+    final formatted = formatNumber(cleanValue, defaultValue: defaultValue);
     if (formatted == defaultValue) return formatted;
     return '$formatted km';
   }

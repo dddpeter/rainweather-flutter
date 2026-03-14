@@ -26,6 +26,7 @@ import '../widgets/lunar_info_widget.dart';
 import '../widgets/air_quality_card.dart';
 import '../utils/error_handler.dart';
 import '../utils/logger.dart';
+import '../utils/formatters.dart';
 import '../widgets/error_dialog.dart';
 import 'hourly_screen.dart';
 
@@ -768,10 +769,7 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
                                     future: _getCacheAgeText(weatherProvider),
                                     builder: (context, snapshot) {
                                       String text;
-                                      if (weatherProvider
-                                          .isBackgroundRefreshing) {
-                                        text = '正在更新...';
-                                      } else if (snapshot.hasData) {
+                                      if (snapshot.hasData) {
                                         text = snapshot.data!;
                                       } else {
                                         text = '缓存数据';
@@ -869,7 +867,7 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
                           textBaseline: TextBaseline.alphabetic,
                           children: [
                             Text(
-                              '${current?.temperature ?? '--'}',
+                              Formatters.formatNumber(current?.temperature),
                               style: TextStyle(
                                 color: context.read<ThemeProvider>().getColor(
                                   'headerTextPrimary',

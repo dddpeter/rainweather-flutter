@@ -8,15 +8,12 @@ import 'city_data_service.dart';
 import 'request_deduplicator.dart';
 import 'request_cache_service.dart';
 import 'network_config_service.dart';
-import 'open_meteo_service.dart';
-import 'weather_adapter.dart';
 
 class WeatherService {
   static WeatherService? _instance;
   late Dio _dio; // 复用的 Dio 实例
   final CityDataService _cityDataService = CityDataService.getInstance();
   final RequestDeduplicator _deduplicator = RequestDeduplicator();
-  final OpenMeteoService _openMeteoService = OpenMeteoService.getInstance();
   final RequestCacheService _cacheService = RequestCacheService();
   final NetworkConfigService _networkConfig = NetworkConfigService();
 
@@ -120,44 +117,6 @@ class WeatherService {
   Future<WeatherModel?> getWeatherDataForLocation(
     LocationModel location,
   ) async {
-    // 判断是否为国际城市（非中国）
-    final isInternational =
-        location.country != '中国' &&
-        location.country != 'China' &&
-        location.country != '未知';
-
-    if (isInternational) {
-      // 国际城市：使用 Open-Meteo API
-      Logger.d(
-        '国际城市，使用Open-Meteo API - ${location.city} (${location.lat}, ${location.lng})',
-        tag: 'WeatherService',
-      );
-
-      final openMeteoResponse = await _openMeteoService.getWeather(
-        latitude: location.lat,
-        longitude: location.lng,
-      );
-
-      if (openMeteoResponse != null) {
-        final weatherModel = WeatherAdapter.convertToWeatherModel(
-          openMeteoResponse,
-          location.city,
-        );
-        Logger.d(
-          'Open-Meteo天气数据获取成功 - ${location.city}',
-          tag: 'WeatherService',
-        );
-        return weatherModel;
-      } else {
-        Logger.e(
-          'Open-Meteo天气数据获取失败 - ${location.city}',
-          tag: 'WeatherService',
-        );
-        return null;
-      }
-    }
-
-    // 国内城市：使用原有API
     String cityId = _getCityIdFromLocation(location);
     Logger.d(
       '获取天气数据 - 位置: ${location.district}, 城市ID: $cityId',
@@ -214,9 +173,7 @@ class WeatherService {
             }
             final forecastList = json['forecast'] as List<dynamic>;
             return forecastList
-                .map(
-                  (item) => DailyWeather.fromJson(item as Map<String, dynamic>),
-                )
+                .map((item) => DailyWeather.fromJson(item as Map<String, dynamic>))
                 .toList();
           },
         );
@@ -284,10 +241,7 @@ class WeatherService {
             }
             final forecastList = json['forecast'] as List<dynamic>;
             return forecastList
-                .map(
-                  (item) =>
-                      HourlyWeather.fromJson(item as Map<String, dynamic>),
-                )
+                .map((item) => HourlyWeather.fromJson(item as Map<String, dynamic>))
                 .toList();
           },
         );

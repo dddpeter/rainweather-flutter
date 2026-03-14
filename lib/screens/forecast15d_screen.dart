@@ -440,15 +440,15 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
                 Expanded(
                   child: Row(
                     children: [
-                      // Morning weather (使用pm数据)
+                      // 上午天气（显示最低温度）
                       Expanded(
                         child: _buildCompactWeatherPeriod(
                           '上午',
-                          day.weather_pm ?? '晴',
-                          day.temperature_pm ?? '--',
-                          day.weather_pm_pic ?? 'n00',
-                          day.winddir_pm ?? '',
-                          day.windpower_pm ?? '',
+                          day.weather_am ?? '晴',
+                          day.temperature_am ?? '--',
+                          day.weather_am_pic ?? 'd00',
+                          day.winddir_am ?? '',
+                          day.windpower_am ?? '',
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -459,15 +459,15 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
                         color: AppColors.dividerColor,
                       ),
                       const SizedBox(width: 8),
-                      // Evening weather (使用am数据)
+                      // 下午天气（显示最高温度）
                       Expanded(
                         child: _buildCompactWeatherPeriod(
                           '下午',
-                          day.weather_am ?? '晴',
-                          day.temperature_am ?? '--',
-                          day.weather_am_pic ?? 'd00',
-                          day.winddir_am ?? '',
-                          day.windpower_am ?? '',
+                          day.weather_pm ?? '晴',
+                          day.temperature_pm ?? '--',
+                          day.weather_pm_pic ?? 'n00',
+                          day.winddir_pm ?? '',
+                          day.windpower_pm ?? '',
                         ),
                       ),
                     ],
@@ -490,7 +490,7 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
     String windPower,
   ) {
     // 判断是白天还是夜间（根据时段）
-    // 注意：上午使用pm数据（夜间），下午使用am数据（白天）
+    // 注意：上午显示最低温度（am数据），下午显示最高温度（pm数据）
     final isNight = WeatherIconHelper.isNightByPeriod(period);
 
     return Column(

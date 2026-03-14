@@ -77,7 +77,7 @@ class _CityWeatherTabsScreenState extends CityWeatherScreenBase<CityWeatherTabsS
       );
     }
 
-    if (weatherProvider.error != null) {
+    if (weatherProvider.error != null && weatherProvider.currentWeather == null) {
       return Column(
         children: [
           _buildSimpleHeader(),

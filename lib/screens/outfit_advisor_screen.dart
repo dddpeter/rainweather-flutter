@@ -62,8 +62,9 @@ class _OutfitAdvisorScreenState extends State<OutfitAdvisorScreen> {
           (d) => _isToday(d.forecasttime ?? ''),
           orElse: () => forecast15d[0],
         );
-        minTemp = today.temperature_pm;
-        maxTemp = today.temperature_am;
+        // 注意：temperature_am 是最低温度（上午），temperature_pm 是最高温度（下午）
+        minTemp = today.temperature_am;
+        maxTemp = today.temperature_pm;
       }
 
       final prompt = AIService().buildOutfitAdvisorPrompt(

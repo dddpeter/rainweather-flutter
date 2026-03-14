@@ -323,7 +323,8 @@ class WeatherChart extends StatelessWidget {
   List<FlSpot> _getHighTemperatureSpots() {
     List<FlSpot> spots = [];
     for (int i = 0; i < dailyForecast!.length; i++) {
-      double temp = _parseTemperature(dailyForecast![i].temperature_am ?? '');
+      // 注意：temperature_pm 是最高温度（下午）
+      double temp = _parseTemperature(dailyForecast![i].temperature_pm ?? '');
       spots.add(FlSpot(i.toDouble(), temp));
     }
     return spots;
@@ -332,7 +333,8 @@ class WeatherChart extends StatelessWidget {
   List<FlSpot> _getLowTemperatureSpots() {
     List<FlSpot> spots = [];
     for (int i = 0; i < dailyForecast!.length; i++) {
-      double temp = _parseTemperature(dailyForecast![i].temperature_pm ?? '');
+      // 注意：temperature_am 是最低温度（上午）
+      double temp = _parseTemperature(dailyForecast![i].temperature_am ?? '');
       spots.add(FlSpot(i.toDouble(), temp));
     }
     return spots;
@@ -351,7 +353,8 @@ class WeatherChart extends StatelessWidget {
   double _getMinTemperature() {
     double min = double.infinity;
     for (var day in dailyForecast!) {
-      double low = _parseTemperature(day.temperature_pm ?? '');
+      // 注意：temperature_am 是最低温度（上午）
+      double low = _parseTemperature(day.temperature_am ?? '');
       if (low < min) min = low;
     }
     return min;
@@ -360,7 +363,8 @@ class WeatherChart extends StatelessWidget {
   double _getMaxTemperature() {
     double max = double.negativeInfinity;
     for (var day in dailyForecast!) {
-      double high = _parseTemperature(day.temperature_am ?? '');
+      // 注意：temperature_pm 是最高温度（下午）
+      double high = _parseTemperature(day.temperature_pm ?? '');
       if (high > max) max = high;
     }
     return max;

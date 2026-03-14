@@ -96,7 +96,7 @@ class _CityWeatherSwipeScreenState extends CityWeatherScreenBase<CityWeatherSwip
       );
     }
 
-    if (weatherProvider.error != null) {
+    if (weatherProvider.error != null && weatherProvider.currentWeather == null) {
       return Column(
         children: [
           _buildPageIndicator(),

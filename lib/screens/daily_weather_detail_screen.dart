@@ -367,28 +367,28 @@ class DailyWeatherDetailScreen extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // 上午
+          // 上午（显示最低温度）
           Expanded(
             child: _buildPeriodCard(
               context,
               '上午',
-              dailyWeather.weather_pm ?? '--',
-              dailyWeather.temperature_pm ?? '--',
-              dailyWeather.winddir_pm ?? '--',
-              dailyWeather.windpower_pm ?? '--',
-              AppColors.warning,
-            ),
-          ),
-          const SizedBox(width: 12),
-          // 下午
-          Expanded(
-            child: _buildPeriodCard(
-              context,
-              '下午',
               dailyWeather.weather_am ?? '--',
               dailyWeather.temperature_am ?? '--',
               dailyWeather.winddir_am ?? '--',
               dailyWeather.windpower_am ?? '--',
+              AppColors.warning,
+            ),
+          ),
+          const SizedBox(width: 12),
+          // 下午（显示最高温度）
+          Expanded(
+            child: _buildPeriodCard(
+              context,
+              '下午',
+              dailyWeather.weather_pm ?? '--',
+              dailyWeather.temperature_pm ?? '--',
+              dailyWeather.winddir_pm ?? '--',
+              dailyWeather.windpower_pm ?? '--',
               AppColors.primaryBlue,
             ),
           ),
@@ -408,7 +408,7 @@ class DailyWeatherDetailScreen extends StatelessWidget {
     Color accentColor,
   ) {
     // 判断是白天还是夜间（根据时段）
-    // 注意：上午使用pm数据（夜间），下午使用am数据（白天）
+    // 注意：上午显示最低温度（am数据），下午显示最高温度（pm数据）
     final isNight = WeatherIconHelper.isNightByPeriod(period);
 
     return Card(

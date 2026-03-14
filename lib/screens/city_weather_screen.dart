@@ -13,6 +13,7 @@ import '../widgets/sun_moon_widget.dart';
 import '../widgets/life_index_widget.dart';
 import '../widgets/weather_animation_widget.dart';
 import '../widgets/weather_details_widget.dart';
+import '../utils/formatters.dart';
 import 'hourly_screen.dart';
 
 class CityWeatherScreen extends StatefulWidget {
@@ -308,7 +309,7 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${current?.temperature ?? '--'}℃',
+                          '${Formatters.formatNumber(current?.temperature)}℃',
                           style: TextStyle(
                             color: context.read<ThemeProvider>().getColor(
                               'headerTextPrimary',

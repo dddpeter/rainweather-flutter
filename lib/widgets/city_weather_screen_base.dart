@@ -17,6 +17,7 @@ import '../models/weather_model.dart';
 import '../models/location_model.dart';
 import '../models/sun_moon_index_model.dart';
 import '../utils/weather_icon_helper.dart';
+import '../utils/formatters.dart';
 import '../screens/weather_alerts_screen.dart';
 
 /// 城市天气屏幕基类
@@ -377,7 +378,7 @@ abstract class CityWeatherScreenBase<T extends StatefulWidget> extends State<T> 
                           textBaseline: TextBaseline.alphabetic,
                           children: [
                             Text(
-                              '${current?.temperature ?? '--'}',
+                              Formatters.formatNumber(current?.temperature),
                               style: TextStyle(
                                 color: context.read<ThemeProvider>().getColor(
                                   'headerTextPrimary',
@@ -1107,7 +1108,7 @@ abstract class CityWeatherScreenBase<T extends StatefulWidget> extends State<T> 
     WeatherProvider weatherProvider,
   ) {
     // 判断是白天还是夜间（根据时段）
-    // 注意：上午使用pm数据（夜间），下午使用am数据（白天）
+    // 注意：上午显示最低温度（am数据），下午显示最高温度（pm数据）
     final isNight = WeatherIconHelper.isNightByPeriod(period);
 
     return Column(

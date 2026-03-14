@@ -466,6 +466,23 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
                                                                           .bold,
                                                                 ),
                                                               ),
+                                                              // 显示order
+                                                              SizedBox(width: 8),
+                                                              Container(
+                                                                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                                decoration: BoxDecoration(
+                                                                  color: AppColors.accentBlue.withOpacity(0.2),
+                                                                  borderRadius: BorderRadius.circular(4),
+                                                                ),
+                                                                child: Text(
+                                                                  'Order: ${city.sortOrder}',
+                                                                  style: TextStyle(
+                                                                    color: AppColors.accentBlue,
+                                                                    fontSize: 10,
+                                                                    fontWeight: FontWeight.w500,
+                                                                  ),
+                                                                ),
+                                                              ),
                                                               // 定位图标（如果是当前定位城市）
                                                               if (isCurrentLocation) ...[
                                                                 const SizedBox(
@@ -948,7 +965,7 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
           ),
           const SizedBox(width: 6),
 
-          // 第四列：AQI
+          // 第四列：AQI 或 日期时间
           if (aqi != null)
             SizedBox(
               width: 65,
@@ -1060,6 +1077,96 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
                   ),
                 ),
               ),
+            )
+          else
+            // 没有AQI时显示日期时间
+            SizedBox(
+              width: 65,
+              height: 64,
+              child: Transform.translate(
+                offset: const Offset(0, -2), // 向上偏移2px，产生浮动感
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: themeProvider.isLightTheme
+                        ? AppColors.primaryBlue
+                        : AppColors.primaryBlue.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(6),
+                    // 添加浮动阴影效果
+                    boxShadow: [
+                      BoxShadow(
+                        color: themeProvider.isLightTheme
+                            ? Colors.black.withOpacity(0.15)
+                            : Colors.black.withOpacity(0.3),
+                        offset: const Offset(0, 4),
+                        blurRadius: 8,
+                        spreadRadius: 0,
+                      ),
+                      // 添加内阴影增强立体感
+                      BoxShadow(
+                        color: themeProvider.isLightTheme
+                            ? Colors.white.withOpacity(0.2)
+                            : Colors.white.withOpacity(0.1),
+                        offset: const Offset(0, -1),
+                        blurRadius: 2,
+                        spreadRadius: 0,
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // 日期
+                      Text(
+                        _formatDate(cityWeather?.current?.current?.reporttime),
+                        style: TextStyle(
+                          color: themeProvider.isLightTheme
+                              ? Colors.white
+                              : AppColors.primaryBlue,
+                          fontSize: 8,
+                          fontWeight: FontWeight.w700,
+                          shadows: themeProvider.isLightTheme
+                              ? [
+                                  Shadow(
+                                    color: Colors.black.withOpacity(0.3),
+                                    offset: const Offset(0, 0.5),
+                                    blurRadius: 1,
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 2),
+                      // 时间
+                      Text(
+                        _formatTime(cityWeather?.current?.current?.reporttime),
+                        style: TextStyle(
+                          color: themeProvider.isLightTheme
+                              ? Colors.white
+                              : AppColors.primaryBlue,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          height: 1.0,
+                          shadows: themeProvider.isLightTheme
+                              ? [
+                                  Shadow(
+                                    color: Colors.black.withOpacity(0.3),
+                                    offset: const Offset(0, 0.5),
+                                    blurRadius: 1,
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
         ],
       ),
@@ -1119,6 +1226,59 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
           errorType: AppErrorType.location,
         );
       }
+    }
+  }
+
+  /// 格式化日期 (MM月DD日)
+  String _formatDate(String? reportTime) {
+    if (reportTime == null || reportTime.isEmpty) {
+      return '--月--日';
+    }
+    try {
+      String dateStr;
+      // 支持两种格式：
+      // 1. "2024-01-15 14:30" (国内天气API格式)
+      // 2. "2024-01-15T14:30:00.000" (ISO 8601格式，Open-Meteo)
+      if (reportTime.contains('T')) {
+        // ISO格式：取T前面的部分
+        dateStr = reportTime.split('T')[0];
+      } else {
+        // 国内格式：取空格前的部分
+        dateStr = reportTime.split(' ')[0];
+      }
+
+      final dateParts = dateStr.split('-');
+      if (dateParts.length >= 3) {
+        final month = int.parse(dateParts[1]);
+        final day = int.parse(dateParts[2]);
+        return '${month}月${day}日';
+      }
+      return '--月--日';
+    } catch (e) {
+      return '--月--日';
+    }
+  }
+
+  /// 格式化时间 (HH:mm，24小时制)
+  String _formatTime(String? reportTime) {
+    if (reportTime == null || reportTime.isEmpty) {
+      return '--:--';
+    }
+    try {
+      String timeStr;
+      // 支持两种格式：
+      // 1. "2024-01-15 14:30" (国内天气API格式)
+      // 2. "2024-01-15T14:30:00.000" (ISO 8601格式，Open-Meteo)
+      if (reportTime.contains('T')) {
+        // ISO格式：取T后面的部分，然后取前5位 HH:mm
+        timeStr = reportTime.split('T')[1].substring(0, 5);
+      } else {
+        // 国内格式：取空格后的部分
+        timeStr = reportTime.split(' ')[1];
+      }
+      return timeStr;
+    } catch (e) {
+      return '--:--';
     }
   }
 
@@ -1191,14 +1351,23 @@ class _AddCityDialogState extends State<_AddCityDialog> {
   List<CityModel> searchResults = [];
   bool isSearching = false;
   bool isInitialLoading = true;
+  bool showInternational = false; // 筛选：false=国内，true=国际
 
-  // 直辖市和省会城市列表
-  final defaultCityNames = [
+  // 直辖市、省会城市列表
+  final domesticCityNames = [
     '北京', '上海', '天津', '重庆', // 直辖市
     '哈尔滨', '长春', '沈阳', '呼和浩特', '石家庄', '太原', '西安', // 北方省会
     '济南', '郑州', '南京', '武汉', '杭州', '合肥', '福州', '南昌', // 中部省会
     '长沙', '贵阳', '成都', '广州', '昆明', '南宁', '海口', // 南方省会
     '兰州', '西宁', '银川', '乌鲁木齐', '拉萨', // 西部省会
+  ];
+
+  // 国际热门城市列表（增加更多）
+  final internationalCityNames = [
+    '东京', '首尔', '新加坡', '曼谷', '悉尼', '墨尔本', '伦敦', '巴黎', '纽约', '洛杉矶',
+    '莫斯科', '柏林', '罗马', '马德里', '巴塞罗那', '阿姆斯特丹', '东京', '大阪', '京都',
+    '香港', '台北', '澳门', '普吉岛', '巴厘岛', '马尔代夫', '迪拜', '多哈', '罗马',
+    '米兰', '维也纳', '布拉格', '哥本哈根', '斯德哥尔摩', '赫尔辛基', '东京', '大阪',
   ];
 
   @override
@@ -1213,14 +1382,16 @@ class _AddCityDialogState extends State<_AddCityDialog> {
     super.dispose();
   }
 
-  /// 预加载默认城市
+  /// 预加载默认城市（根据筛选状态）
   Future<void> _loadDefaultCities() async {
     setState(() {
       isInitialLoading = true;
     });
 
     final allDefaultCities = <CityModel>[];
-    for (final cityName in defaultCityNames) {
+    final cityNames = showInternational ? internationalCityNames : domesticCityNames;
+
+    for (final cityName in cityNames) {
       final results = await widget.weatherProvider.searchCities(cityName);
       if (results.isNotEmpty) {
         // 找到精确匹配的城市
@@ -1229,15 +1400,62 @@ class _AddCityDialogState extends State<_AddCityDialog> {
           orElse: () => results.first,
         );
         allDefaultCities.add(exactMatch);
+      } else if (showInternational) {
+        // 对于国际城市，如果数据库中没有，创建虚拟城市条目
+        final virtualCity = CityModel(
+          id: 'INT_${cityName.toUpperCase()}',
+          name: cityName,
+          isMainCity: false,
+          createdAt: DateTime.now(),
+        );
+        allDefaultCities.add(virtualCity);
       }
+    }
+
+    // 去除重复
+    final uniqueCities = <String, CityModel>{};
+    for (final city in allDefaultCities) {
+      uniqueCities[city.name] = city;
     }
 
     if (mounted) {
       setState(() {
-        searchResults = allDefaultCities;
+        searchResults = uniqueCities.values.toList();
         isInitialLoading = false;
       });
     }
+  }
+
+  /// 切换筛选国内/国际城市
+  void _toggleFilter(bool showIntl) {
+    if (showInternational != showIntl) {
+      setState(() {
+        showInternational = showIntl;
+      });
+      _loadDefaultCities();
+    }
+  }
+
+  /// 构建筛选标签
+  Widget _buildFilterTag(String label, bool isSelected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primaryBlue : AppColors.borderColor.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : AppColors.textSecondary,
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -1248,45 +1466,48 @@ class _AddCityDialogState extends State<_AddCityDialog> {
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
       elevation: 3,
-      icon: Icon(
-        Icons.add_location_alt_rounded,
-        color: AppColors.accentGreen,
-        size: 32,
-      ),
-      title: Column(
+      titlePadding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+      contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+      title: Row(
         children: [
+          Icon(
+            Icons.add_location_alt_rounded,
+            color: AppColors.accentGreen,
+            size: 24,
+          ),
+          const SizedBox(width: 8),
           Text(
             '添加城市',
             style: TextStyle(
               color: AppColors.textPrimary,
-              fontSize: 24,
+              fontSize: 20,
               fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '直辖市 · 省会',
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 13,
-              fontWeight: FontWeight.w400,
             ),
           ),
         ],
       ),
-      titlePadding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
-      contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
       content: SizedBox(
         width: double.maxFinite,
         height: 400, // 固定高度防止溢出
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // 筛选标签
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                children: [
+                  _buildFilterTag('国内城市', !showInternational, () => _toggleFilter(false)),
+                  const SizedBox(width: 8),
+                  _buildFilterTag('国际城市', showInternational, () => _toggleFilter(true)),
+                ],
+              ),
+            ),
             TextField(
               controller: searchController,
               style: TextStyle(color: AppColors.textPrimary, fontSize: 15),
               decoration: InputDecoration(
-                hintText: '搜索城市名称（如：北京、上海）',
+                hintText: '搜索城市名称（如：北京、东京、London）',
                 hintStyle: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 15,
@@ -1421,11 +1642,22 @@ class _AddCityDialogState extends State<_AddCityDialog> {
                                 final success = await widget.weatherProvider
                                     .addMainCity(city);
                                 if (success) {
-                                  // 刷新UI显示已添加状态
+                                  // 关闭弹窗
                                   if (mounted) {
-                                    setState(() {});
+                                    Navigator.of(context).pop();
                                   }
-                                  // 显示添加成功提示（在弹窗内使用轻量级提示）
+                                  // 刷新主要城市天气数据
+                                  await widget.weatherProvider.refreshMainCitiesWeather(forceRefresh: false);
+                                  // 显示添加成功提示
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('已添加城市: ${city.name}'),
+                                        backgroundColor: AppColors.success,
+                                        duration: const Duration(milliseconds: 1500),
+                                      ),
+                                    );
+                                  }
                                 } else {
                                   // 显示添加失败提示
                                   if (context.mounted) {

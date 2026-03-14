@@ -260,16 +260,10 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
                                     city.id,
                                   );
 
-                              // 调试信息
-                              print('🔍 City: ${city.name}, ID: ${city.id}');
-                              print(
-                                '🔍 Current location name: $currentLocationName',
-                              );
-                              print(
-                                '🔍 Is current location: $isCurrentLocation',
-                              );
-
-                              return Dismissible(
+                              // 使用 RepaintBoundary 隔离重绘区域，提升列表性能
+                              return RepaintBoundary(
+                                key: ValueKey('city_${city.id}_$index'),
+                                child: Dismissible(
                                 key: ValueKey(
                                   'dismissible_${city.id}_${city.name}_${index}',
                                 ),
@@ -682,7 +676,8 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
                                     ),
                                   ),
                                 ),
-                              );
+                              ),
+                            );
                             },
                           ),
                         );

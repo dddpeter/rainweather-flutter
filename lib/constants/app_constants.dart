@@ -331,15 +331,76 @@ class AppConstants {
     500: '严重污染',
   };
 
-  // Background Update Interval (5 minutes)
+  // ==================== 时间常量 ====================
+
+  /// 后台更新间隔 (5分钟)
   static const Duration backgroundUpdateInterval = Duration(minutes: 5);
 
-  // Cache Expiration (15 minutes)
+  /// 缓存过期时间 (15分钟)
   static const Duration cacheExpiration = Duration(minutes: 15);
 
-  // Cache Stale Threshold (1 hour) - 超过此时间显示加载动画
+  /// 缓存过期阈值 (1小时) - 超过此时间显示加载动画
   static const Duration cacheStaleThreshold = Duration(hours: 1);
 
-  // Sun/Moon Index Cache Expiration (6 hours)
+  /// 日出月相索引缓存过期时间 (6小时)
   static const Duration sunMoonIndexCacheExpiration = Duration(hours: 6);
+
+  /// 天气数据刷新间隔 (30分钟)
+  static const Duration refreshInterval = Duration(minutes: 30);
+
+  /// 后台超时时间 (30分钟)
+  static const Duration backgroundTimeout = Duration(minutes: 30);
+
+  /// 定位超时时间 (45秒) - 首次定位需要更长时间
+  static const Duration locationTimeout = Duration(seconds: 45);
+
+  /// 快速定位超时时间 (15秒)
+  static const Duration quickLocationTimeout = Duration(seconds: 15);
+
+  /// 网络请求超时时间 (30秒)
+  static const Duration networkTimeout = Duration(seconds: 30);
+
+  /// AI 摘要缓存时间 (5分钟)
+  static const Duration aiSummaryCacheExpiration = Duration(minutes: 5);
+
+  /// 15日预报缓存时间 (5分钟)
+  static const Duration forecast15dCacheExpiration = Duration(minutes: 5);
+
+  /// 黄历缓存时间 (10天)
+  static const Duration lunarCalendarCacheExpiration = Duration(days: 10);
+
+  /// 动画持续时间 (300ms)
+  static const Duration animationDuration = Duration(milliseconds: 300);
+
+  /// 主题切换动画时间 (300ms)
+  static const Duration themeSwitchAnimationDuration = Duration(milliseconds: 300);
+
+  /// 打字机效果每字符延迟 (30ms)
+  static const Duration typewriterCharDelay = Duration(milliseconds: 30);
+
+  /// 页面切换动画时间
+  static const Duration pageTransitionDuration = Duration(milliseconds: 300);
+
+  // ==================== 数值常量 ====================
+
+  /// 默认定位精度阈值 (米)
+  static const double defaultLocationAccuracy = 100.0;
+
+  /// 最佳定位精度阈值 (米)
+  static const double bestLocationAccuracy = 5.0;
+
+  /// 温度图表 Y 轴保留数据点数量
+  static const int chartYAxisReservedSize = 40;
+
+  /// 24小时预报显示数量
+  static const int hourlyForecastDisplayCount = 24;
+
+  /// 7日预报显示数量
+  static const int daily7ForecastDisplayCount = 7;
+
+  /// 15日预报显示数量
+  static const int daily15ForecastDisplayCount = 15;
+
+  /// 生活指数显示数量
+  static const int lifeIndexDisplayCount = 8;
 }

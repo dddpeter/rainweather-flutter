@@ -83,6 +83,9 @@ class DatabaseService {
               createdAt INTEGER NOT NULL
             )
           ''');
+
+          // 创建数据库索引以提升查询性能
+          await _createIndexes(db);
         },
         onUpgrade: (db, oldVersion, newVersion) async {
           if (oldVersion < 2) {
@@ -95,7 +98,7 @@ class DatabaseService {
                 createdAt INTEGER NOT NULL
               )
             ''');
-            print('Database upgraded to version 2: Added cities table');
+            debugPrint('Database upgraded to version 2: Added cities table');
           }
           if (oldVersion < 3) {
             // 添加city_search表
@@ -106,14 +109,14 @@ class DatabaseService {
                 createdAt INTEGER NOT NULL
               )
             ''');
-            print('Database upgraded to version 3: Added city_search table');
+            debugPrint('Database upgraded to version 3: Added city_search table');
           }
           if (oldVersion < 4) {
             // 添加sortOrder字段到cities表
             await db.execute('''
               ALTER TABLE cities ADD COLUMN sortOrder INTEGER NOT NULL DEFAULT 9999
             ''');
-            print(
+            debugPrint(
               'Database upgraded to version 4: Added sortOrder column to cities table',
             );
           }
@@ -132,7 +135,7 @@ class DatabaseService {
                 createdAt INTEGER NOT NULL
               )
             ''');
-            print(
+            debugPrint(
               'Database upgraded to version 5: Added commute_advices table',
             );
           }
@@ -141,10 +144,12 @@ class DatabaseService {
             await db.execute('''
               ALTER TABLE commute_advices ADD COLUMN level TEXT NOT NULL DEFAULT 'normal'
             ''');
-            print(
+            debugPrint(
               'Database upgraded to version 6: Added level column to commute_advices table',
             );
           }
+          // 添加数据库索引以提升查询性能
+          await _createIndexes(db);
         },
       );
     } catch (e) {
@@ -159,6 +164,49 @@ class DatabaseService {
       await initDatabase();
     }
     return _database!;
+  }
+
+  /// 创建数据库索引以提升查询性能
+  ///
+  /// 索引说明：
+  /// - idx_weather_cache_key: 加速按 key 查询天气缓存
+  /// - idx_weather_cache_expires_at: 加速清理过期缓存
+  /// - idx_cities_name: 加速按城市名查询
+  /// - idx_cities_sort_order: 加速城市排序
+  /// - idx_commute_advices_timestamp: 加速通勤建议查询
+  static Future<void> _createIndexes(Database db) async {
+    try {
+      // weather_cache 表索引
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_weather_cache_key ON weather_cache(key)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_weather_cache_expires_at ON weather_cache(expires_at)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_weather_cache_type ON weather_cache(type)',
+      );
+
+      // cities 表索引
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_cities_name ON cities(name)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_cities_sort_order ON cities(sortOrder)',
+      );
+
+      // commute_advices 表索引
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_commute_advices_timestamp ON commute_advices(timestamp)',
+      );
+      await db.execute(
+        'CREATE INDEX IF NOT EXISTS idx_commute_advices_type ON commute_advices(adviceType)',
+      );
+
+      debugPrint('Database indexes created successfully');
+    } catch (e) {
+      debugPrint('Error creating database indexes: $e');
+    }
   }
 
   /// Clear all cached data

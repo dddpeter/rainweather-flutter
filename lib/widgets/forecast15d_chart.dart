@@ -206,17 +206,20 @@ class Forecast15dChart extends StatelessWidget {
 
   List<Map<String, dynamic>> _prepareChartData(List<DailyWeather> forecast) {
     return forecast.take(15).map((day) {
-      // 注意：temperature_pm 是最高温度（下午），temperature_am 是最低温度（上午）
-      final maxTemp = _parseTemperature(day.temperature_pm ?? '0');
-      final minTemp = _parseTemperature(day.temperature_am ?? '0');
+      // 通过比较实际温度值来确定高低温度，兼容国内和国际数据格式
+      final tempAm = _parseTemperature(day.temperature_am ?? '0');
+      final tempPm = _parseTemperature(day.temperature_pm ?? '0');
+      // 取较大值作为最高温度，较小值作为最低温度
+      final maxTemp = tempAm > tempPm ? tempAm : tempPm;
+      final minTemp = tempAm < tempPm ? tempAm : tempPm;
       final date = _formatDate(day.forecasttime ?? '');
 
       return {
         'maxTemp': maxTemp.toDouble(),
         'minTemp': minTemp.toDouble(),
         'date': date,
-        'weatherAm': day.weather_am ?? '晴', // 白天天气（高温）
-        'weatherPm': day.weather_pm ?? '晴', // 夜间天气（低温）
+        'weatherAm': day.weather_am ?? '晴',
+        'weatherPm': day.weather_pm ?? '晴',
       };
     }).toList();
   }
@@ -300,14 +303,20 @@ class Forecast15dChart extends StatelessWidget {
               : 0.5;
           final xPos = leftPadding + (availableWidth * xRatio);
 
-          // 高温点的天气图标（12点天气 - weather_am）
+          // 高温点的天气图标（使用较高温度值对应的天气）
           final highTemp = day['maxTemp'] as double;
+          final tempAmHigh = _parseTemperature(forecast15d![i].temperature_am ?? '');
+          final tempPmHigh = _parseTemperature(forecast15d![i].temperature_pm ?? '');
+          // 选择较高温度对应的天气图标
+          final highWeather = tempAmHigh >= tempPmHigh
+              ? (day['weatherAm'] ?? '晴')
+              : (day['weatherPm'] ?? '晴');
           final highTempYRatio = (maxTemp - highTemp) / tempRange;
           final highTempYPos = availableHeight * highTempYRatio;
 
           // 获取白天天气图标
           final dayWeatherIcon = _getChineseWeatherIcon(
-            day['weatherAm'] ?? '晴',
+            highWeather,
             false,
           );
 
@@ -363,14 +372,18 @@ class Forecast15dChart extends StatelessWidget {
             ),
           );
 
-          // 低温点的天气图标（0点天气 - weather_pm）
+          // 低温点的天气图标（使用较低温度值对应的天气）
           final lowTemp = day['minTemp'] as double;
+          // 选择较低温度对应的天气图标
+          final lowWeather = tempAmHigh <= tempPmHigh
+              ? (day['weatherAm'] ?? '晴')
+              : (day['weatherPm'] ?? '晴');
           final lowTempYRatio = (maxTemp - lowTemp) / tempRange;
           final lowTempYPos = availableHeight * lowTempYRatio;
 
           // 获取夜间天气图标
           final nightWeatherIcon = _getChineseWeatherIcon(
-            day['weatherPm'] ?? '晴',
+            lowWeather,
             true,
           );
 

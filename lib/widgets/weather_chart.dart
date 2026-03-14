@@ -180,8 +180,11 @@ class WeatherChart extends StatelessWidget {
               : 0.5;
           final xPos = leftPadding + (availableWidth * xRatio);
 
-          // 高温点的天气图标（使用最高温度 temperature_pm）
-          final highTemp = _parseTemperature(day.temperature_pm ?? '');
+          // 高温点的天气图标（使用较高温度值）
+          final tempAm = _parseTemperature(day.temperature_am ?? '');
+          final tempPm = _parseTemperature(day.temperature_pm ?? '');
+          final highTemp = tempAm > tempPm ? tempAm : tempPm;
+          final lowTemp = tempAm < tempPm ? tempAm : tempPm;
           final highTempYRatio = (maxTemp - highTemp) / tempRange;
           final highTempYPos = availableHeight * highTempYRatio;
 
@@ -243,8 +246,7 @@ class WeatherChart extends StatelessWidget {
             ),
           );
 
-          // 低温点的天气图标（使用最低温度 temperature_am）
-          final lowTemp = _parseTemperature(day.temperature_am ?? '');
+          // 低温点的天气图标（使用较低温度值）
           final lowTempYRatio = (maxTemp - lowTemp) / tempRange;
           final lowTempYPos = availableHeight * lowTempYRatio;
 
@@ -320,11 +322,18 @@ class WeatherChart extends StatelessWidget {
     return iconMap[weatherType] ?? iconMap['晴'] ?? '晴.png';
   }
 
+  /// 获取每一天的最高温度和最低温度
+  /// 通过比较temperature_am和temperature_pm的实际值，兼容国内和国际数据格式
+  /// 国内格式：temperature_am=高温, temperature_pm=低温
+  /// 国际格式：temperature_am=低温(tempMin), temperature_pm=高温(tempMax)
   List<FlSpot> _getHighTemperatureSpots() {
     List<FlSpot> spots = [];
     for (int i = 0; i < dailyForecast!.length; i++) {
-      // 注意：temperature_pm 是最高温度（下午）
-      double temp = _parseTemperature(dailyForecast![i].temperature_pm ?? '');
+      final day = dailyForecast![i];
+      final tempAm = _parseTemperature(day.temperature_am ?? '');
+      final tempPm = _parseTemperature(day.temperature_pm ?? '');
+      // 取较大值作为高温
+      double temp = tempAm > tempPm ? tempAm : tempPm;
       spots.add(FlSpot(i.toDouble(), temp));
     }
     return spots;
@@ -333,19 +342,23 @@ class WeatherChart extends StatelessWidget {
   List<FlSpot> _getLowTemperatureSpots() {
     List<FlSpot> spots = [];
     for (int i = 0; i < dailyForecast!.length; i++) {
-      // 注意：temperature_am 是最低温度（上午）
-      double temp = _parseTemperature(dailyForecast![i].temperature_am ?? '');
+      final day = dailyForecast![i];
+      final tempAm = _parseTemperature(day.temperature_am ?? '');
+      final tempPm = _parseTemperature(day.temperature_pm ?? '');
+      // 取较小值作为低温
+      double temp = tempAm < tempPm ? tempAm : tempPm;
       spots.add(FlSpot(i.toDouble(), temp));
     }
     return spots;
   }
 
   double _parseTemperature(String tempStr) {
-    // Parse temperature string like "高温 25℃" or "低温 15℃"
+    // Parse temperature string like "高温 25℃" or "低温 15℃" or "25"
     String cleanStr = tempStr
         .replaceAll('高温', '')
         .replaceAll('低温', '')
         .replaceAll('℃', '')
+        .replaceAll('°', '')
         .replaceAll(' ', '');
     return double.tryParse(cleanStr) ?? 0.0;
   }
@@ -353,21 +366,25 @@ class WeatherChart extends StatelessWidget {
   double _getMinTemperature() {
     double min = double.infinity;
     for (var day in dailyForecast!) {
-      // 注意：temperature_am 是最低温度（上午）
-      double low = _parseTemperature(day.temperature_am ?? '');
-      if (low < min) min = low;
+      final tempAm = _parseTemperature(day.temperature_am ?? '');
+      final tempPm = _parseTemperature(day.temperature_pm ?? '');
+      // 取较小值作为全局最低温度
+      final low = tempAm < tempPm ? tempAm : tempPm;
+      if (low < min && low != 0) min = low;
     }
-    return min;
+    return min == double.infinity ? 0 : min;
   }
 
   double _getMaxTemperature() {
     double max = double.negativeInfinity;
     for (var day in dailyForecast!) {
-      // 注意：temperature_pm 是最高温度（下午）
-      double high = _parseTemperature(day.temperature_pm ?? '');
+      final tempAm = _parseTemperature(day.temperature_am ?? '');
+      final tempPm = _parseTemperature(day.temperature_pm ?? '');
+      // 取较大值作为全局最高温度
+      final high = tempAm > tempPm ? tempAm : tempPm;
       if (high > max) max = high;
     }
-    return max;
+    return max == double.negativeInfinity ? 0 : max;
   }
 
   String _formatDate(String dateStr) {

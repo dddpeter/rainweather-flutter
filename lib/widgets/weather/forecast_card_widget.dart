@@ -112,18 +112,41 @@ class ForecastCardWidget extends StatelessWidget {
     );
   }
 
+  /// 解析温度字符串为数值
+  double _parseTemperature(String tempStr) {
+    try {
+      String cleanStr = tempStr
+          .replaceAll('高温', '')
+          .replaceAll('低温', '')
+          .replaceAll('℃', '')
+          .replaceAll('°', '')
+          .replaceAll(' ', '')
+          .trim();
+      if (cleanStr.isEmpty) return 0;
+      return double.parse(cleanStr);
+    } catch (e) {
+      return 0;
+    }
+  }
+
   /// 构建天气时段
   Widget _buildWeatherPeriods() {
+    final tempAm = _parseTemperature(day.temperature_am ?? '');
+    final tempPm = _parseTemperature(day.temperature_pm ?? '');
+    // 判断哪个是低温数据
+    final amIsLower = tempAm <= tempPm;
+
     return Row(
       children: [
+        // 上午（显示低温）
         Expanded(
           child: _WeatherPeriodWidget(
             period: '上午',
-            weather: day.weather_pm ?? '晴',
-            temperature: day.temperature_pm ?? '--',
-            weatherPic: day.weather_pm_pic ?? 'n00',
-            windDir: day.winddir_pm ?? '',
-            windPower: day.windpower_pm ?? '',
+            weather: amIsLower ? (day.weather_am ?? '晴') : (day.weather_pm ?? '晴'),
+            temperature: amIsLower ? (day.temperature_am ?? '--') : (day.temperature_pm ?? '--'),
+            weatherPic: amIsLower ? (day.weather_am_pic ?? 'd00') : (day.weather_pm_pic ?? 'n00'),
+            windDir: amIsLower ? (day.winddir_am ?? '') : (day.winddir_pm ?? ''),
+            windPower: amIsLower ? (day.windpower_am ?? '') : (day.windpower_pm ?? ''),
           ),
         ),
         const SizedBox(width: 8),
@@ -133,14 +156,15 @@ class ForecastCardWidget extends StatelessWidget {
           color: AppColors.dividerColor,
         ),
         const SizedBox(width: 8),
+        // 下午（显示高温）
         Expanded(
           child: _WeatherPeriodWidget(
             period: '下午',
-            weather: day.weather_am ?? '晴',
-            temperature: day.temperature_am ?? '--',
-            weatherPic: day.weather_am_pic ?? 'd00',
-            windDir: day.winddir_am ?? '',
-            windPower: day.windpower_am ?? '',
+            weather: amIsLower ? (day.weather_pm ?? '晴') : (day.weather_am ?? '晴'),
+            temperature: amIsLower ? (day.temperature_pm ?? '--') : (day.temperature_am ?? '--'),
+            weatherPic: amIsLower ? (day.weather_pm_pic ?? 'n00') : (day.weather_am_pic ?? 'd00'),
+            windDir: amIsLower ? (day.winddir_pm ?? '') : (day.winddir_am ?? ''),
+            windPower: amIsLower ? (day.windpower_pm ?? '') : (day.windpower_am ?? ''),
           ),
         ),
       ],

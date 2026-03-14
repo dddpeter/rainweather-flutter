@@ -437,40 +437,54 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
                 ),
                 const SizedBox(width: 12),
                 // Weather info - compact horizontal layout
+                // 通过比较实际温度值判断高低温度，兼容国内和国际数据格式
+                // 国内格式：temperature_am=高温, temperature_pm=低温
+                // 国际格式：temperature_am=低温, temperature_pm=高温
                 Expanded(
-                  child: Row(
-                    children: [
-                      // 上午天气（显示最低温度）
-                      Expanded(
-                        child: _buildCompactWeatherPeriod(
-                          '上午',
-                          day.weather_am ?? '晴',
-                          day.temperature_am ?? '--',
-                          day.weather_am_pic ?? 'd00',
-                          day.winddir_am ?? '',
-                          day.windpower_am ?? '',
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Divider
-                      Container(
-                        width: 1,
-                        height: 40,
-                        color: AppColors.dividerColor,
-                      ),
-                      const SizedBox(width: 8),
-                      // 下午天气（显示最高温度）
-                      Expanded(
-                        child: _buildCompactWeatherPeriod(
-                          '下午',
-                          day.weather_pm ?? '晴',
-                          day.temperature_pm ?? '--',
-                          day.weather_pm_pic ?? 'n00',
-                          day.winddir_pm ?? '',
-                          day.windpower_pm ?? '',
-                        ),
-                      ),
-                    ],
+                  child: Builder(
+                    builder: (context) {
+                      final tempAm = _parseTemperature(day.temperature_am ?? '');
+                      final tempPm = _parseTemperature(day.temperature_pm ?? '');
+                      // 判断哪个是低温数据
+                      // am温度较低时，am是低温数据（国际城市）
+                      // pm温度较低时，pm是低温数据（国内城市）
+                      final amIsLower = tempAm <= tempPm;
+                      
+                      return Row(
+                        children: [
+                          // 上午（显示低温）
+                          Expanded(
+                            child: _buildCompactWeatherPeriod(
+                              '上午',
+                              amIsLower ? (day.weather_am ?? '晴') : (day.weather_pm ?? '晴'),
+                              amIsLower ? (day.temperature_am ?? '--') : (day.temperature_pm ?? '--'),
+                              amIsLower ? (day.weather_am_pic ?? 'd00') : (day.weather_pm_pic ?? 'n00'),
+                              amIsLower ? (day.winddir_am ?? '') : (day.winddir_pm ?? ''),
+                              amIsLower ? (day.windpower_am ?? '') : (day.windpower_pm ?? ''),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // Divider
+                          Container(
+                            width: 1,
+                            height: 40,
+                            color: AppColors.dividerColor,
+                          ),
+                          const SizedBox(width: 8),
+                          // 下午（显示高温）
+                          Expanded(
+                            child: _buildCompactWeatherPeriod(
+                              '下午',
+                              amIsLower ? (day.weather_pm ?? '晴') : (day.weather_am ?? '晴'),
+                              amIsLower ? (day.temperature_pm ?? '--') : (day.temperature_am ?? '--'),
+                              amIsLower ? (day.weather_pm_pic ?? 'n00') : (day.weather_am_pic ?? 'd00'),
+                              amIsLower ? (day.winddir_pm ?? '') : (day.winddir_am ?? ''),
+                              amIsLower ? (day.windpower_pm ?? '') : (day.windpower_am ?? ''),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
               ],
@@ -544,6 +558,23 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
           ),
       ],
     );
+  }
+
+  /// 解析温度字符串为数值
+  double _parseTemperature(String tempStr) {
+    try {
+      String cleanStr = tempStr
+          .replaceAll('高温', '')
+          .replaceAll('低温', '')
+          .replaceAll('℃', '')
+          .replaceAll('°', '')
+          .replaceAll(' ', '')
+          .trim();
+      if (cleanStr.isEmpty) return 0;
+      return double.parse(cleanStr);
+    } catch (e) {
+      return 0;
+    }
   }
 
   /// 判断是否为今天

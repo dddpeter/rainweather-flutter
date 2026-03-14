@@ -359,36 +359,58 @@ class DailyWeatherDetailScreen extends StatelessWidget {
     }
   }
 
+  /// 解析温度字符串为数值
+  double _parseTemperature(String tempStr) {
+    try {
+      String cleanStr = tempStr
+          .replaceAll('高温', '')
+          .replaceAll('低温', '')
+          .replaceAll('℃', '')
+          .replaceAll('°', '')
+          .replaceAll(' ', '')
+          .trim();
+      if (cleanStr.isEmpty) return 0;
+      return double.parse(cleanStr);
+    } catch (e) {
+      return 0;
+    }
+  }
+
   /// 构建上午/下午详细信息
   Widget _buildTimePeriodDetails(BuildContext context) {
+    final tempAm = _parseTemperature(dailyWeather.temperature_am ?? '');
+    final tempPm = _parseTemperature(dailyWeather.temperature_pm ?? '');
+    // 判断哪个是低温数据
+    final amIsLower = tempAm <= tempPm;
+
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppConstants.screenHorizontalPadding,
       ),
       child: Row(
         children: [
-          // 上午（显示最低温度）
+          // 上午（显示低温）
           Expanded(
             child: _buildPeriodCard(
               context,
               '上午',
-              dailyWeather.weather_am ?? '--',
-              dailyWeather.temperature_am ?? '--',
-              dailyWeather.winddir_am ?? '--',
-              dailyWeather.windpower_am ?? '--',
+              amIsLower ? (dailyWeather.weather_am ?? '--') : (dailyWeather.weather_pm ?? '--'),
+              amIsLower ? (dailyWeather.temperature_am ?? '--') : (dailyWeather.temperature_pm ?? '--'),
+              amIsLower ? (dailyWeather.winddir_am ?? '--') : (dailyWeather.winddir_pm ?? '--'),
+              amIsLower ? (dailyWeather.windpower_am ?? '--') : (dailyWeather.windpower_pm ?? '--'),
               AppColors.warning,
             ),
           ),
           const SizedBox(width: 12),
-          // 下午（显示最高温度）
+          // 下午（显示高温）
           Expanded(
             child: _buildPeriodCard(
               context,
               '下午',
-              dailyWeather.weather_pm ?? '--',
-              dailyWeather.temperature_pm ?? '--',
-              dailyWeather.winddir_pm ?? '--',
-              dailyWeather.windpower_pm ?? '--',
+              amIsLower ? (dailyWeather.weather_pm ?? '--') : (dailyWeather.weather_am ?? '--'),
+              amIsLower ? (dailyWeather.temperature_pm ?? '--') : (dailyWeather.temperature_am ?? '--'),
+              amIsLower ? (dailyWeather.winddir_pm ?? '--') : (dailyWeather.winddir_am ?? '--'),
+              amIsLower ? (dailyWeather.windpower_pm ?? '--') : (dailyWeather.windpower_am ?? '--'),
               AppColors.primaryBlue,
             ),
           ),

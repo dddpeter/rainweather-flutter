@@ -15,14 +15,14 @@ dependencies:
 
   # UI Components
   cupertino_icons: ^1.0.8
-  
+
   # State Management
   provider: ^6.1.2
-  
+
   # HTTP Requests
   http: ^1.2.2
   dio: ^5.7.0
-  
+
   # Location Services
   geolocator: ^14.0.2
   geocoding: ^4.0.0
@@ -30,48 +30,48 @@ dependencies:
   flutter_bmflocation: ^3.8.3+2  # 百度定位
   fl_amap: ^3.4.3  # 高德地图定位
   flutter_tencent_lbs_plugin: ^0.1.0  # 腾讯定位
-  
+
   # Local Storage
   sqflite: ^2.3.3+1
   shared_preferences: ^2.3.2
   path_provider: ^2.1.4
-  
+
   # Charts
   fl_chart: ^1.1.1
-  
+
   # Image Loading
   cached_network_image: ^3.4.1
-  
+
   # JSON Serialization
   json_annotation: ^4.9.0
-  
+
   # Date/Time
   intl: ^0.20.2
-  
+
   # Background Tasks
   workmanager:
     git:
       url: https://github.com/fluttercommunity/flutter_workmanager.git
       path: workmanager
       ref: main
-  
+
   # Local Notifications
   flutter_local_notifications: ^17.2.3
-  
+
   # UI Enhancements
   flutter_svg: ^2.0.10+1
   lottie: ^3.1.2
   flutter_markdown: ^0.7.4+1
-  
+
   # Path utilities
   path: ^1.9.0
-  
+
   # Home Widget
   home_widget: ^0.6.0
-  
+
   # Lunar Calendar (农历/黄历)
   lunar: ^1.7.4
-  
+
   # Screenshot & Share
   screenshot: ^3.0.0
   gal: ^2.3.0
@@ -95,6 +95,19 @@ dev_dependencies:
 # The following section is specific to Flutter packages.
 flutter:
   uses-material-design: true
+
+  # 思源黑体配置
+  fonts:
+    - family: NotoSansSC
+      fonts:
+        - asset: assets/fonts/NotoSansSC-Light.otf
+          weight: 300
+        - asset: assets/fonts/NotoSansSC-Regular.otf
+          weight: 400
+        - asset: assets/fonts/NotoSansSC-Medium.otf
+          weight: 500
+        - asset: assets/fonts/NotoSansSC-Bold.otf
+          weight: 700
 
   assets:
     - assets/images/

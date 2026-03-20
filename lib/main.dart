@@ -30,6 +30,7 @@ import 'utils/global_exception_handler.dart';
 import 'utils/logger.dart';
 import 'constants/app_colors.dart';
 import 'constants/theme_extensions.dart';
+import 'constants/app_text_styles.dart';
 
 // 全局路由观察者
 final PageActivationObserver _pageActivationObserver = PageActivationObserver();
@@ -272,23 +273,7 @@ class _RainWeatherAppState extends State<RainWeatherApp>
         elevation: 0,
         systemOverlayStyle: SystemUiOverlayStyle.dark,
       ),
-      textTheme: const TextTheme(
-        displayLarge: TextStyle(decoration: TextDecoration.none),
-        displayMedium: TextStyle(decoration: TextDecoration.none),
-        displaySmall: TextStyle(decoration: TextDecoration.none),
-        headlineLarge: TextStyle(decoration: TextDecoration.none),
-        headlineMedium: TextStyle(decoration: TextDecoration.none),
-        headlineSmall: TextStyle(decoration: TextDecoration.none),
-        titleLarge: TextStyle(decoration: TextDecoration.none),
-        titleMedium: TextStyle(decoration: TextDecoration.none),
-        titleSmall: TextStyle(decoration: TextDecoration.none),
-        bodyLarge: TextStyle(decoration: TextDecoration.none),
-        bodyMedium: TextStyle(decoration: TextDecoration.none),
-        bodySmall: TextStyle(decoration: TextDecoration.none),
-        labelLarge: TextStyle(decoration: TextDecoration.none),
-        labelMedium: TextStyle(decoration: TextDecoration.none),
-        labelSmall: TextStyle(decoration: TextDecoration.none),
-      ),
+      textTheme: AppTextStyles.textTheme,
       colorScheme: const ColorScheme.light(
         primary: Color(0xFF012d78), // 深蓝色主色
         secondary: Color(0xFF8edafc), // 亮蓝色
@@ -327,23 +312,7 @@ class _RainWeatherAppState extends State<RainWeatherApp>
         elevation: 0,
         systemOverlayStyle: SystemUiOverlayStyle.light,
       ),
-      textTheme: const TextTheme(
-        displayLarge: TextStyle(decoration: TextDecoration.none),
-        displayMedium: TextStyle(decoration: TextDecoration.none),
-        displaySmall: TextStyle(decoration: TextDecoration.none),
-        headlineLarge: TextStyle(decoration: TextDecoration.none),
-        headlineMedium: TextStyle(decoration: TextDecoration.none),
-        headlineSmall: TextStyle(decoration: TextDecoration.none),
-        titleLarge: TextStyle(decoration: TextDecoration.none),
-        titleMedium: TextStyle(decoration: TextDecoration.none),
-        titleSmall: TextStyle(decoration: TextDecoration.none),
-        bodyLarge: TextStyle(decoration: TextDecoration.none),
-        bodyMedium: TextStyle(decoration: TextDecoration.none),
-        bodySmall: TextStyle(decoration: TextDecoration.none),
-        labelLarge: TextStyle(decoration: TextDecoration.none),
-        labelMedium: TextStyle(decoration: TextDecoration.none),
-        labelSmall: TextStyle(decoration: TextDecoration.none),
-      ),
+      textTheme: AppTextStyles.textTheme,
       colorScheme: const ColorScheme.dark(
         primary: Color(0xFF4A90E2), // 基于#012d78的亮蓝色
         secondary: Color(0xFF8edafc), // 指定的亮蓝色

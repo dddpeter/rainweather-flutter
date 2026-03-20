@@ -466,23 +466,6 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
                                                                           .bold,
                                                                 ),
                                                               ),
-                                                              // 显示order
-                                                              SizedBox(width: 8),
-                                                              Container(
-                                                                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                                                decoration: BoxDecoration(
-                                                                  color: AppColors.accentBlue.withOpacity(0.2),
-                                                                  borderRadius: BorderRadius.circular(4),
-                                                                ),
-                                                                child: Text(
-                                                                  'Order: ${city.sortOrder}',
-                                                                  style: TextStyle(
-                                                                    color: AppColors.accentBlue,
-                                                                    fontSize: 10,
-                                                                    fontWeight: FontWeight.w500,
-                                                                  ),
-                                                                ),
-                                                              ),
                                                               // 定位图标（如果是当前定位城市）
                                                               if (isCurrentLocation) ...[
                                                                 const SizedBox(

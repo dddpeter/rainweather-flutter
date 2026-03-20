@@ -191,6 +191,15 @@ class LocationProvider extends ChangeNotifier {
     }
   }
 
+  /// 设置缓存位置（用于快速启动时恢复缓存）
+  void setCachedLocation(LocationModel location) {
+    _currentLocation = location;
+    _originalLocation = location;
+    _hasPerformedInitialLocation = true;
+    Logger.d('设置缓存位置: ${location.district}', tag: 'LocationProvider');
+    notifyListeners();
+  }
+
   /// 获取默认位置
   LocationModel _getDefaultLocation() {
     return LocationModel(

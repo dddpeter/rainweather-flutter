@@ -1,19 +1,33 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../models/commute_advice_model.dart';
 import '../models/weather_model.dart';
-import '../models/sun_moon_index_model.dart';
 import '../services/ai_service.dart';
+import '../services/commute_advice_service.dart';
+import '../services/database_service.dart';
+import '../services/notification_service.dart';
 import '../utils/logger.dart';
+import '../utils/error_handler.dart';
 
 /// AIInsightsProvider - AI 智能摘要 Provider
 ///
 /// 职责：
 /// - 管理 AI 生成的每日天气摘要
 /// - 管理 AI 生成的15天天气趋势摘要
-/// - 管理通勤建议
+/// - 管理通勤建议（完整功能）
 /// - AI 生成状态管理
+/// - 通勤建议定时清理和智能重试
 class AIInsightsProvider extends ChangeNotifier {
   final AIService _aiService = AIService();
+  final DatabaseService _databaseService = DatabaseService.getInstance();
+
+  // ===== 通勤建议 Timer =====
+  Timer? _commuteCleanupTimer;
+  Timer? _weatherDataWatcher;
+  bool _isWeatherDataWatcherActive = false;
+
+  // ===== 天气数据引用（用于通勤建议生成） =====
+  WeatherModel? _currentWeather;
 
   // ===== AI 摘要数据 =====
   String? _dailySummary;
@@ -38,6 +52,11 @@ class AIInsightsProvider extends ChangeNotifier {
   bool get isGeneratingSummary => _isGeneratingSummary;
   bool get isGenerating15dSummary => _isGenerating15dSummary;
   bool get isGeneratingCommuteAdvice => _isGeneratingCommuteAdvice;
+
+  /// 设置当前天气数据（用于通勤建议生成）
+  void setWeatherData(WeatherModel? weatherData) {
+    _currentWeather = weatherData;
+  }
 
   /// 生成每日天气摘要
   ///
@@ -65,7 +84,8 @@ class AIInsightsProvider extends ChangeNotifier {
           ?.take(5)
           .map((h) => h.weather ?? '')
           .where((w) => w.isNotEmpty)
-          .toList() ?? [];
+          .toList() ??
+          [];
 
       // 使用优化的prompt方法
       final prompt = _aiService.buildWeatherSummaryPrompt(
@@ -205,64 +225,365 @@ class AIInsightsProvider extends ChangeNotifier {
     return '未来15天以$mostCommon天气为主';
   }
 
-  /// 生成通勤建议
-  Future<List<CommuteAdviceModel>> generateCommuteAdvice(
-    WeatherModel? weatherData,
-    SunMoonIndexData? sunMoonData,
-  ) async {
-    if (weatherData == null || _isGeneratingCommuteAdvice) {
-      return _commuteAdvices;
+  // ==================== 通勤建议完整功能 ====================
+
+  /// 检查并生成通勤建议
+  Future<void> checkAndGenerateCommuteAdvices() async {
+    // 防止重复生成
+    if (_isGeneratingCommuteAdvice) {
+      Logger.d('通勤建议正在生成中，跳过重复调用', tag: 'AIInsightsProvider');
+      return;
     }
 
-    _isGeneratingCommuteAdvice = true;
-    notifyListeners();
+    // 检查是否在通勤时段
+    if (!CommuteAdviceService.isInCommuteTime()) {
+      Logger.d('不在通勤时段，加载历史通勤建议', tag: 'AIInsightsProvider');
+      await loadCommuteAdvices();
+      return;
+    }
+
+    // 检查今日当前时段是否已生成过建议
+    final currentTimeSlot = CommuteAdviceService.getCurrentCommuteTimeSlot();
+    if (currentTimeSlot == null) {
+      Logger.d('无法获取当前时段，加载历史建议', tag: 'AIInsightsProvider');
+      await loadCommuteAdvices();
+      return;
+    }
+
+    // 检查数据库中是否已有当前时段的建议
+    final existingAdvices = await _databaseService.getTodayCommuteAdvices();
+    final hasCurrentSlotAdvices =
+        existingAdvices.any((a) => a.timeSlot == currentTimeSlot);
+
+    if (hasCurrentSlotAdvices) {
+      Logger.d('当前时段已有通勤建议，加载到界面', tag: 'AIInsightsProvider');
+      _hasShownCommuteAdviceToday = true;
+      await loadCommuteAdvices();
+      return;
+    }
+
+    // 检查是否有天气数据
+    if (_currentWeather == null) {
+      Logger.d('无天气数据，无法生成通勤建议，加载历史建议', tag: 'AIInsightsProvider');
+      await loadCommuteAdvices();
+      return;
+    }
 
     try {
+      _isGeneratingCommuteAdvice = true;
+
       Logger.d('开始生成通勤建议', tag: 'AIInsightsProvider');
 
-      // 使用 AIService 的 generateSmartAdvice 方法生成通勤建议
-      final prompt = '请根据以下天气数据生成通勤建议，返回JSON数组格式：${weatherData.toString()}';
-      final result = await _aiService.generateSmartAdvice(prompt);
+      // 生成通勤建议（使用AI或规则引擎）
+      final commuteService = CommuteAdviceService();
+      final advices = await commuteService.generateAdvices(_currentWeather!);
 
-      // 解析结果并创建 CommuteAdviceModel 列表
-      // 这里暂时返回空列表，实际实现需要解析 AI 返回的结果
-      if (result != null && result.isNotEmpty) {
-        // TODO: 解析 AI 返回的结果
-        _commuteAdvices = [];
-        _hasShownCommuteAdviceToday = false;
-        Logger.d('通勤建议生成成功: ${result.length} 条', tag: 'AIInsightsProvider');
-        notifyListeners();
-        return _commuteAdvices;
+      if (advices.isEmpty) {
+        Logger.d('当前天气条件无需特别提醒', tag: 'AIInsightsProvider');
+        _hasShownCommuteAdviceToday = true;
+        _isGeneratingCommuteAdvice = false;
+        return;
       }
 
-      return [];
-    } catch (e) {
-      Logger.e('生成通勤建议失败', tag: 'AIInsightsProvider', error: e);
-      return [];
-    } finally {
+      // 保存到数据库
+      await _databaseService.saveCommuteAdvices(advices);
+      Logger.d('通勤建议已保存到数据库', tag: 'AIInsightsProvider');
+
+      // 加载通勤建议
+      await loadCommuteAdvices(notifyUI: false);
+      Logger.d('通勤建议加载完成，当前建议数: ${_commuteAdvices.length}', tag: 'AIInsightsProvider');
+
+      // 标记今日已显示
+      _hasShownCommuteAdviceToday = true;
       _isGeneratingCommuteAdvice = false;
+
       notifyListeners();
+    } catch (e, stackTrace) {
+      Logger.e('通勤建议生成失败', tag: 'AIInsightsProvider', error: e, stackTrace: stackTrace);
+      ErrorHandler.handleError(
+        e,
+        stackTrace: stackTrace,
+        context: 'AIInsightsProvider.CheckAndGenerateCommuteAdvices',
+        type: AppErrorType.unknown,
+      );
+      // 生成失败时，至少加载历史建议
+      await loadCommuteAdvices();
+    } finally {
+      // 确保状态被重置
+      _isGeneratingCommuteAdvice = false;
     }
   }
 
-  /// 标记通勤建议为已读
-  void markCommuteAdvicesAsRead() {
-    bool changed = false;
-    final newAdvices = <CommuteAdviceModel>[];
-    
-    for (final advice in _commuteAdvices) {
-      if (!advice.isRead) {
-        newAdvices.add(advice.copyWith(isRead: true));
-        changed = true;
+  /// 加载通勤建议
+  Future<void> loadCommuteAdvices({bool notifyUI = true}) async {
+    try {
+      Logger.d('开始加载通勤建议', tag: 'AIInsightsProvider');
+
+      // 先尝试从内存缓存快速恢复
+      if (_commuteAdvices.isNotEmpty) {
+        final currentTimeSlot = CommuteAdviceService.getCurrentCommuteTimeSlot();
+
+        // 先过滤掉已结束的建议
+        final validAdvices = _commuteAdvices.where((advice) {
+          final isToday = advice.timestamp.day == DateTime.now().day;
+          final isNotExpired = !CommuteAdviceService.isTimeSlotEnded(advice.timeSlot);
+          return isToday && isNotExpired;
+        }).toList();
+
+        if (validAdvices.length != _commuteAdvices.length) {
+          Logger.d('内存缓存中有已结束的建议，已过滤', tag: 'AIInsightsProvider');
+          _commuteAdvices = validAdvices;
+        }
+
+        final hasValidCache = _commuteAdvices.any((advice) {
+          final isToday = advice.timestamp.day == DateTime.now().day;
+          final isCurrentSlot = currentTimeSlot == null || advice.timeSlot == currentTimeSlot;
+          final isNotExpired = !CommuteAdviceService.isTimeSlotEnded(advice.timeSlot);
+          return isToday && (isCurrentSlot || !CommuteAdviceService.isInCommuteTime()) && isNotExpired;
+        });
+
+        if (hasValidCache) {
+          Logger.d('使用内存缓存通勤建议: ${_commuteAdvices.length}条', tag: 'AIInsightsProvider');
+          if (notifyUI) notifyListeners();
+          return;
+        } else {
+          Logger.d('内存缓存已过期，从数据库重新加载', tag: 'AIInsightsProvider');
+          _commuteAdvices = [];
+        }
+      }
+
+      // 先清理数据库中的重复数据
+      await _databaseService.cleanDuplicateCommuteAdvices();
+
+      final advices = await _databaseService.getTodayCommuteAdvices();
+      Logger.d('数据库中今日建议: ${advices.length}条', tag: 'AIInsightsProvider');
+
+      if (advices.isEmpty) {
+        Logger.d('数据库中没有今日通勤建议', tag: 'AIInsightsProvider');
+        _commuteAdvices = [];
+        if (notifyUI) notifyListeners();
+        return;
+      }
+
+      // 获取当前通勤时段
+      final currentTimeSlot = CommuteAdviceService.getCurrentCommuteTimeSlot();
+
+      // 过滤逻辑：
+      // 1. 如果当前在通勤时段，只显示当前时段的建议
+      // 2. 如果不在通勤时段，只显示未结束的建议
+      final filteredAdvices = advices.where((advice) {
+        if (currentTimeSlot != null) {
+          return advice.timeSlot == currentTimeSlot;
+        } else {
+          return !CommuteAdviceService.isTimeSlotEnded(advice.timeSlot);
+        }
+      }).toList();
+
+      Logger.d('过滤后剩余: ${filteredAdvices.length}条', tag: 'AIInsightsProvider');
+
+      // 二次去重：按 adviceType + timeSlot 去重
+      final uniqueAdvices = <String, CommuteAdviceModel>{};
+      for (var advice in filteredAdvices) {
+        final key = '${advice.adviceType}_${advice.timeSlot}';
+        if (!uniqueAdvices.containsKey(key) ||
+            advice.timestamp.isAfter(uniqueAdvices[key]!.timestamp)) {
+          uniqueAdvices[key] = advice;
+        }
+      }
+
+      _commuteAdvices = uniqueAdvices.values.toList();
+      _commuteAdvices.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+
+      Logger.d('加载通勤建议: ${_commuteAdvices.length}条（去重后）', tag: 'AIInsightsProvider');
+
+      // 更新灵动岛显示
+      if (_commuteAdvices.isNotEmpty) {
+        NotificationService.instance.showCommuteIslandNotification(_commuteAdvices);
+        Logger.d('灵动岛已更新（${_commuteAdvices.length}条建议）', tag: 'AIInsightsProvider');
       } else {
-        newAdvices.add(advice);
+        NotificationService.instance.hideCommuteIslandNotification();
+        Logger.d('灵动岛已隐藏', tag: 'AIInsightsProvider');
+      }
+
+      if (notifyUI) notifyListeners();
+    } catch (e, stackTrace) {
+      Logger.e('加载通勤建议失败', tag: 'AIInsightsProvider', error: e, stackTrace: stackTrace);
+      ErrorHandler.handleError(
+        e,
+        stackTrace: stackTrace,
+        context: 'AIInsightsProvider.LoadCommuteAdvices',
+        type: AppErrorType.cache,
+      );
+    }
+  }
+
+  /// 标记单个通勤建议为已读
+  Future<void> markCommuteAdviceAsRead(String adviceId) async {
+    try {
+      await _databaseService.markCommuteAdviceAsRead(adviceId);
+      // 更新本地状态
+      final index = _commuteAdvices.indexWhere((a) => a.id == adviceId);
+      if (index != -1) {
+        _commuteAdvices[index] = _commuteAdvices[index].copyWith(isRead: true);
+        notifyListeners();
+      }
+    } catch (e, stackTrace) {
+      Logger.e('标记通勤建议失败', tag: 'AIInsightsProvider', error: e, stackTrace: stackTrace);
+      ErrorHandler.handleError(
+        e,
+        stackTrace: stackTrace,
+        context: 'AIInsightsProvider.MarkCommuteAdviceAsRead',
+        type: AppErrorType.cache,
+      );
+    }
+  }
+
+  /// 标记所有通勤建议为已读
+  Future<void> markAllCommuteAdvicesAsRead() async {
+    try {
+      await _databaseService.markAllCommuteAdvicesAsRead();
+      // 更新本地状态
+      _commuteAdvices = _commuteAdvices.map((a) => a.copyWith(isRead: true)).toList();
+      notifyListeners();
+    } catch (e) {
+      Logger.e('批量标记通勤建议失败', tag: 'AIInsightsProvider', error: e);
+    }
+  }
+
+  /// 启动通勤建议清理定时器
+  void startCommuteCleanupTimer() {
+    stopCommuteCleanupTimer();
+
+    // 每2分钟检查一次是否需要清理和新时段
+    _commuteCleanupTimer = Timer.periodic(const Duration(minutes: 2), (timer) {
+      _checkAndCleanupCommuteAdvices();
+      checkAndGenerateCommuteAdvices();
+    });
+
+    Logger.d('通勤建议清理定时器已启动', tag: 'AIInsightsProvider');
+  }
+
+  /// 停止通勤建议清理定时器
+  void stopCommuteCleanupTimer() {
+    _commuteCleanupTimer?.cancel();
+    _commuteCleanupTimer = null;
+  }
+
+  /// 启动天气数据变化监听器
+  void startWeatherDataWatcher() {
+    if (_isWeatherDataWatcherActive) {
+      Logger.d('天气数据监听器已在运行中', tag: 'AIInsightsProvider');
+      return;
+    }
+
+    stopWeatherDataWatcher();
+
+    // 每30秒检查一次天气数据是否更新
+    _weatherDataWatcher = Timer.periodic(const Duration(seconds: 30), (timer) {
+      _checkAndRegenerateCommuteIfNeeded();
+    });
+
+    _isWeatherDataWatcherActive = true;
+    Logger.d('天气数据变化监听器已启动', tag: 'AIInsightsProvider');
+  }
+
+  /// 停止天气数据变化监听器
+  void stopWeatherDataWatcher() {
+    _weatherDataWatcher?.cancel();
+    _weatherDataWatcher = null;
+    _isWeatherDataWatcherActive = false;
+  }
+
+  /// 检查并智能重新生成通勤建议
+  void _checkAndRegenerateCommuteIfNeeded() {
+    // 检查是否在通勤时段
+    if (!CommuteAdviceService.isInCommuteTime()) {
+      return; // 不在通勤时段，跳过
+    }
+
+    // 检查天气数据是否可用
+    if (_currentWeather == null ||
+        _currentWeather!.current?.current == null ||
+        _currentWeather!.forecast24h == null ||
+        _currentWeather!.forecast24h!.isEmpty) {
+      return; // 天气数据不可用，跳过
+    }
+
+    // 检查通勤建议是否为空或已过期
+    bool shouldRegenerate = false;
+
+    if (_commuteAdvices.isEmpty) {
+      shouldRegenerate = true;
+      Logger.d('监听器检测到通勤建议为空，尝试重新生成', tag: 'AIInsightsProvider');
+    } else {
+      // 检查是否有已结束时段的建议需要清理
+      final currentTimeSlot = CommuteAdviceService.getCurrentCommuteTimeSlot();
+      if (currentTimeSlot != null) {
+        final hasExpiredAdvices = _commuteAdvices.any((advice) {
+          return advice.timeSlot != currentTimeSlot;
+        });
+
+        if (hasExpiredAdvices) {
+          shouldRegenerate = true;
+          Logger.d('监听器检测到有过期建议，尝试重新生成', tag: 'AIInsightsProvider');
+        }
       }
     }
 
-    if (changed) {
-      _commuteAdvices = newAdvices;
-      _hasShownCommuteAdviceToday = true;
-      notifyListeners();
+    if (shouldRegenerate) {
+      Logger.d('监听器触发通勤建议重新生成', tag: 'AIInsightsProvider');
+      checkAndGenerateCommuteAdvices();
+    }
+  }
+
+  /// 检查并清理通勤建议
+  Future<void> _checkAndCleanupCommuteAdvices() async {
+    try {
+      // 1. 清理15天前的旧记录
+      await _databaseService.cleanExpiredCommuteAdvices();
+
+      // 2. 检查当前时段是否结束，清理当前时段的建议
+      final timeSlot = CommuteAdviceService.getCurrentCommuteTimeSlot();
+      if (timeSlot != null) {
+        // 还在通勤时段，不清理
+        return;
+      }
+
+      // 不在通勤时段，检查是否需要清理
+      if (_commuteAdvices.isNotEmpty) {
+        // 收集所有已结束时段的建议
+        final endedTimeSlots = <String>{};
+        for (final advice in _commuteAdvices) {
+          if (CommuteAdviceService.isTimeSlotEnded(advice.timeSlot)) {
+            endedTimeSlots.add(advice.timeSlot.toString().split('.').last);
+          }
+        }
+
+        // 清理所有已结束时段的建议
+        if (endedTimeSlots.isNotEmpty) {
+          int totalDeleted = 0;
+          for (final timeSlotStr in endedTimeSlots) {
+            final deletedCount = await _databaseService.cleanEndedTimeSlotAdvices(timeSlotStr);
+            totalDeleted += deletedCount;
+            Logger.d('清理$timeSlotStr时段的通勤建议: $deletedCount条', tag: 'AIInsightsProvider');
+          }
+
+          if (totalDeleted > 0) {
+            // 清空内存缓存，强制从数据库重新加载
+            _commuteAdvices = [];
+
+            // 重新加载建议
+            await loadCommuteAdvices(notifyUI: true);
+
+            // 重置今日显示标记
+            _hasShownCommuteAdviceToday = false;
+
+            Logger.d('通勤时段结束，已清理$totalDeleted条建议', tag: 'AIInsightsProvider');
+          }
+        }
+      }
+    } catch (e) {
+      Logger.e('清理通勤建议失败', tag: 'AIInsightsProvider', error: e);
     }
   }
 
@@ -316,6 +637,8 @@ class AIInsightsProvider extends ChangeNotifier {
   /// 释放资源
   @override
   void dispose() {
+    stopCommuteCleanupTimer();
+    stopWeatherDataWatcher();
     _dailySummary = null;
     _forecast15dSummary = null;
     _commuteAdvices.clear();

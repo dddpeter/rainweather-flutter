@@ -61,32 +61,25 @@ class WeatherDataProvider extends ChangeNotifier {
     List<DailyWeather>? forecast15d,
     SunMoonIndexData? sunMoonIndexData,
   }) {
-    bool changed = false;
-
-    if (currentWeather != null && currentWeather != _currentWeather) {
+    // 直接设置数据并通知，不做条件检查
+    if (currentWeather != null) {
       _currentWeather = currentWeather;
-      changed = true;
     }
-    if (hourlyForecast != null && hourlyForecast != _hourlyForecast) {
+    if (hourlyForecast != null) {
       _hourlyForecast = hourlyForecast;
-      changed = true;
     }
-    if (dailyForecast != null && dailyForecast != _dailyForecast) {
+    if (dailyForecast != null) {
       _dailyForecast = dailyForecast;
-      changed = true;
     }
-    if (forecast15d != null && forecast15d != _forecast15d) {
+    if (forecast15d != null) {
       _forecast15d = forecast15d;
-      changed = true;
     }
-    if (sunMoonIndexData != null && sunMoonIndexData != _sunMoonIndexData) {
+    if (sunMoonIndexData != null) {
       _sunMoonIndexData = sunMoonIndexData;
-      changed = true;
     }
 
-    if (changed) {
-      notifyListeners();
-    }
+    // 总是通知监听器
+    notifyListeners();
   }
 
   /// 设置加载状态
@@ -159,7 +152,7 @@ class WeatherDataProvider extends ChangeNotifier {
     try {
       Logger.d('开始刷新天气数据: ${location.city}', tag: 'WeatherDataProvider');
 
-      final weatherData = await _weatherService.getWeatherData(location.city);
+      final weatherData = await _weatherService.getWeatherDataForLocation(location);
 
       if (weatherData != null) {
         // 从 forecast15d 获取前7天作为7日预报
@@ -191,7 +184,7 @@ class WeatherDataProvider extends ChangeNotifier {
   /// 刷新24小时预报
   Future<bool> refreshHourlyForecast(LocationModel location) async {
     try {
-      final weatherData = await _weatherService.getWeatherData(location.city);
+      final weatherData = await _weatherService.getWeatherDataForLocation(location);
 
       if (weatherData != null) {
         updateWeatherData(
@@ -210,7 +203,7 @@ class WeatherDataProvider extends ChangeNotifier {
   /// 刷新7日预报
   Future<bool> refreshDailyForecast(LocationModel location) async {
     try {
-      final weatherData = await _weatherService.getWeatherData(location.city);
+      final weatherData = await _weatherService.getWeatherDataForLocation(location);
 
       if (weatherData != null) {
         // 从 forecast15d 获取前7天作为7日预报
@@ -231,7 +224,7 @@ class WeatherDataProvider extends ChangeNotifier {
   /// 刷新15日预报
   Future<bool> refresh15DayForecast(LocationModel location) async {
     try {
-      final weatherData = await _weatherService.getWeatherData(location.city);
+      final weatherData = await _weatherService.getWeatherDataForLocation(location);
 
       if (weatherData != null) {
         updateWeatherData(

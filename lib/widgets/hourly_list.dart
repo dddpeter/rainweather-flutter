@@ -50,22 +50,16 @@ class HourlyList extends StatelessWidget {
           shadowColor: AppColors.cardShadowColor,
           color: AppColors.materialCardColor,
           shape: AppColors.cardShape,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 使用 Column 和 List.generate 替代 ListView，避免在 TabBarView 中的 widget 树问题
-              ...filteredForecast.asMap().entries.map((entry) {
-                final index = entry.key;
-                final hour = entry.value;
-                return Column(
-                  children: [
-                    _buildHourlyItem(hour, index),
-                    if (index < filteredForecast.length - 1)
-                      Divider(color: AppColors.cardBorder, height: 1),
-                  ],
-                );
-              }),
-            ],
+          child: ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: filteredForecast.length,
+            itemBuilder: (context, index) {
+              return _buildHourlyItem(filteredForecast[index], index);
+            },
+            separatorBuilder: (context, index) {
+              return Divider(color: AppColors.cardBorder, height: 1);
+            },
           ),
         );
       },

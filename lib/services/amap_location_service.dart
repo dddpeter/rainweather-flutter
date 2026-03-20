@@ -4,6 +4,7 @@ import 'package:fl_amap/fl_amap.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../models/location_model.dart';
 import 'location_provider_interface.dart';
+import '../utils/logger.dart';
 
 enum AMapLocationPermissionResult { granted, denied, deniedForever, error }
 
@@ -35,7 +36,7 @@ class AMapLocationService implements LocationProviderInterface {
   /// 全局设置高德地图API Key（在应用启动时调用）
   Future<void> setGlobalAPIKey() async {
     try {
-      print('🔧 AMapLocationService: 全局设置高德地图API Key');
+      Logger.log('🔧 AMapLocationService: 全局设置高德地图API Key');
 
       // 设置高德地图API Key
       final bool keySet = await FlAMap().setAMapKey(
@@ -44,12 +45,12 @@ class AMapLocationService implements LocationProviderInterface {
       );
 
       if (keySet) {
-        print('✅ AMapLocationService: 高德地图API Key设置成功');
+        Logger.log('✅ AMapLocationService: 高德地图API Key设置成功');
       } else {
         throw AMapLocationException('高德地图API Key设置失败');
       }
     } catch (e) {
-      print('❌ AMapLocationService: 高德地图API Key设置失败: $e');
+      Logger.log('❌ AMapLocationService: 高德地图API Key设置失败: $e');
       throw AMapLocationException('高德地图API Key设置失败: $e');
     }
   }
@@ -60,26 +61,26 @@ class AMapLocationService implements LocationProviderInterface {
     if (_isInitialized) return;
 
     try {
-      print('🔧 AMapLocationService: 开始初始化');
+      Logger.log('🔧 AMapLocationService: 开始初始化');
 
       // iOS平台跳过权限检查，直接初始化
       if (!Platform.isIOS) {
         // Android检查权限
         if (await _getPermissions()) return;
       } else {
-        print('📱 AMapLocationService: iOS平台，跳过初始化时的权限检查');
+        Logger.log('📱 AMapLocationService: iOS平台，跳过初始化时的权限检查');
       }
 
       // 初始化AMap定位
       final bool data = await _location.initialize();
       if (data) {
         _isInitialized = true;
-        print('✅ 高德地图定位服务初始化成功');
+        Logger.log('✅ 高德地图定位服务初始化成功');
       } else {
         throw AMapLocationException('高德地图定位服务初始化失败');
       }
     } catch (e) {
-      print('❌ 高德地图定位服务初始化失败: $e');
+      Logger.log('❌ 高德地图定位服务初始化失败: $e');
       throw AMapLocationException('高德地图定位服务初始化失败: $e');
     }
   }
@@ -87,7 +88,7 @@ class AMapLocationService implements LocationProviderInterface {
   /// 获取权限
   Future<bool> _getPermissions() async {
     try {
-      print('🔍 AMapLocationService: 检查定位权限');
+      Logger.log('🔍 AMapLocationService: 检查定位权限');
 
       // iOS上使用locationWhenInUse，Android上使用location
       final permission = Platform.isIOS
@@ -96,28 +97,28 @@ class AMapLocationService implements LocationProviderInterface {
 
       final status = await permission.status;
       if (status.isGranted) {
-        print('✅ AMapLocationService: 权限已获取');
+        Logger.log('✅ AMapLocationService: 权限已获取');
         return false;
       }
 
-      print('🔍 AMapLocationService: 请求定位权限');
+      Logger.log('🔍 AMapLocationService: 请求定位权限');
       final requestStatus = await permission.request();
 
       if (requestStatus.isGranted) {
-        print('✅ AMapLocationService: 权限获取成功');
+        Logger.log('✅ AMapLocationService: 权限获取成功');
         return false;
       } else if (requestStatus.isDenied) {
-        print('❌ AMapLocationService: 权限被拒绝');
+        Logger.log('❌ AMapLocationService: 权限被拒绝');
         throw AMapLocationException('定位权限被拒绝');
       } else if (requestStatus.isPermanentlyDenied) {
-        print('❌ AMapLocationService: 权限被永久拒绝');
+        Logger.log('❌ AMapLocationService: 权限被永久拒绝');
         throw AMapLocationException('定位权限被永久拒绝，请在设置中手动开启');
       } else {
-        print('❌ AMapLocationService: 权限获取失败');
+        Logger.log('❌ AMapLocationService: 权限获取失败');
         throw AMapLocationException('定位权限获取失败');
       }
     } catch (e) {
-      print('❌ AMapLocationService: 权限检查失败: $e');
+      Logger.log('❌ AMapLocationService: 权限检查失败: $e');
       return true; // 返回true表示有错误，应该停止执行
     }
   }
@@ -126,45 +127,45 @@ class AMapLocationService implements LocationProviderInterface {
   @override
   Future<LocationModel?> getCurrentLocation() async {
     try {
-      print('🚀 AMapLocationService: 开始获取当前位置');
+      Logger.log('🚀 AMapLocationService: 开始获取当前位置');
 
       if (!_isInitialized) {
-        print('🔧 AMapLocationService: 初始化服务');
+        Logger.log('🔧 AMapLocationService: 初始化服务');
         await initialize();
       }
 
       // iOS暂时跳过权限检查，直接尝试定位
       if (Platform.isIOS) {
-        print('📱 AMapLocationService: iOS平台，跳过权限检查，直接定位');
+        Logger.log('📱 AMapLocationService: iOS平台，跳过权限检查，直接定位');
       } else {
         // Android继续检查权限
         if (await _getPermissions()) {
-          print('❌ AMapLocationService: 权限未授予');
+          Logger.log('❌ AMapLocationService: 权限未授予');
           throw AMapLocationException('定位权限未授予');
         }
       }
 
-      print('✅ AMapLocationService: 准备开始定位');
+      Logger.log('✅ AMapLocationService: 准备开始定位');
 
       // 获取单次定位
-      print('🚀 开始高德地图定位...');
+      Logger.log('🚀 开始高德地图定位...');
       final AMapLocation? location = await _location.getLocation();
 
       if (location == null) {
-        print('❌ 高德地图定位失败：返回结果为空');
+        Logger.log('❌ 高德地图定位失败：返回结果为空');
         return null;
       }
 
       // 解析定位结果
       final locationModel = _parseAMapLocation(location);
       if (locationModel != null) {
-        print('✅ 高德地图定位成功: ${locationModel.district}');
+        Logger.log('✅ 高德地图定位成功: ${locationModel.district}');
         _cachedLocation = locationModel;
       }
 
       return locationModel;
     } catch (e) {
-      print('❌ 获取当前位置失败: $e');
+      Logger.log('❌ 获取当前位置失败: $e');
       return null;
     }
   }
@@ -181,7 +182,7 @@ class AMapLocationService implements LocationProviderInterface {
         return _parseIOSLocation(iosLocation);
       }
     } catch (e) {
-      print('❌ 解析高德地图定位结果失败: $e');
+      Logger.log('❌ 解析高德地图定位结果失败: $e');
     }
     return null;
   }
@@ -226,7 +227,7 @@ class AMapLocationService implements LocationProviderInterface {
     Function(String)? onError,
   }) async {
     try {
-      print('🔧 AMapLocationService: 开启连续定位监听');
+      Logger.log('🔧 AMapLocationService: 开启连续定位监听');
 
       if (!_isInitialized) {
         await initialize();
@@ -250,14 +251,14 @@ class AMapLocationService implements LocationProviderInterface {
         },
         onLocationFailed: (AMapLocationError? error) {
           final errorMsg = '高德地图定位错误: ${error?.toMap()}';
-          print('❌ $errorMsg');
+          Logger.log('❌ $errorMsg');
           onError?.call(errorMsg);
         },
       );
 
-      print('✅ AMapLocationService: 连续定位监听已开启');
+      Logger.log('✅ AMapLocationService: 连续定位监听已开启');
     } catch (e) {
-      print('❌ 开启连续定位监听失败: $e');
+      Logger.log('❌ 开启连续定位监听失败: $e');
       onError?.call('开启连续定位监听失败: $e');
     }
   }
@@ -265,11 +266,11 @@ class AMapLocationService implements LocationProviderInterface {
   /// 停止连续定位监听
   void stopLocationChange() {
     try {
-      print('🔧 AMapLocationService: 停止连续定位监听');
+      Logger.log('🔧 AMapLocationService: 停止连续定位监听');
       _location.stopLocation();
-      print('✅ AMapLocationService: 连续定位监听已停止');
+      Logger.log('✅ AMapLocationService: 连续定位监听已停止');
     } catch (e) {
-      print('❌ 停止连续定位监听失败: $e');
+      Logger.log('❌ 停止连续定位监听失败: $e');
     }
   }
 
@@ -291,7 +292,7 @@ class AMapLocationService implements LocationProviderInterface {
       }
       return true;
     } catch (e) {
-      print('❌ 高德地图定位服务不可用: $e');
+      Logger.log('❌ 高德地图定位服务不可用: $e');
       return false;
     }
   }
@@ -300,12 +301,12 @@ class AMapLocationService implements LocationProviderInterface {
   @override
   Future<void> dispose() async {
     try {
-      print('🔧 AMapLocationService: 释放资源');
+      Logger.log('🔧 AMapLocationService: 释放资源');
       _location.dispose();
       _isInitialized = false;
-      print('✅ AMapLocationService: 资源已释放');
+      Logger.log('✅ AMapLocationService: 资源已释放');
     } catch (e) {
-      print('❌ 释放资源失败: $e');
+      Logger.log('❌ 释放资源失败: $e');
     }
   }
 

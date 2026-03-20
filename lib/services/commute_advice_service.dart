@@ -2,6 +2,7 @@ import '../models/commute_advice_model.dart';
 import '../models/weather_model.dart';
 import 'weather_alert_service.dart';
 import 'ai_service.dart';
+import '../utils/logger.dart';
 
 /// 通勤建议服务
 class CommuteAdviceService {
@@ -26,41 +27,41 @@ class CommuteAdviceService {
     // 从天气提醒设置中读取通勤时间配置
     final settings = WeatherAlertService.instance.settings;
 
-    print('\n🔍 检查通勤时段:');
-    print(
+    Logger.log('\n🔍 检查通勤时段:');
+    Logger.log(
       '   当前时间: ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
     );
-    print('   星期: ${_getWeekdayName(now.weekday)}');
+    Logger.log('   星期: ${_getWeekdayName(now.weekday)}');
 
     // 检查是否启用通勤提醒
     if (!settings.enableCommuteAlerts) {
-      print('   ❌ 通勤提醒未启用（请在"天气提醒设置"中启用）');
+      Logger.log('   ❌ 通勤提醒未启用（请在"天气提醒设置"中启用）');
       return false;
     }
-    print('   ✅ 通勤提醒已启用');
+    Logger.log('   ✅ 通勤提醒已启用');
 
     // 使用用户配置的通勤时间判断
     final isInTime = settings.commuteTime.isCommuteTime(now);
 
     if (isInTime) {
-      print('   ✅ 在通勤时段内');
+      Logger.log('   ✅ 在通勤时段内');
     } else {
       final morningStart = settings.commuteTime.morningStart;
       final morningEnd = settings.commuteTime.morningEnd;
       final eveningStart = settings.commuteTime.eveningStart;
       final eveningEnd = settings.commuteTime.eveningEnd;
 
-      print('   ❌ 不在通勤时段');
-      print(
+      Logger.log('   ❌ 不在通勤时段');
+      Logger.log(
         '   早高峰: ${morningStart.hour.toString().padLeft(2, '0')}:${morningStart.minute.toString().padLeft(2, '0')} - ${morningEnd.hour.toString().padLeft(2, '0')}:${morningEnd.minute.toString().padLeft(2, '0')}',
       );
-      print(
+      Logger.log(
         '   晚高峰: ${eveningStart.hour.toString().padLeft(2, '0')}:${eveningStart.minute.toString().padLeft(2, '0')} - ${eveningEnd.hour.toString().padLeft(2, '0')}:${eveningEnd.minute.toString().padLeft(2, '0')}',
       );
 
       // 检查是否为工作日
       if (!settings.commuteTime.workDays.contains(now.weekday)) {
-        print('   ℹ️ 当前不是工作日');
+        Logger.log('   ℹ️ 当前不是工作日');
       }
     }
 
@@ -81,7 +82,7 @@ class CommuteAdviceService {
 
     // 检查是否启用通勤提醒
     if (!settings.enableCommuteAlerts) {
-      print('   ⚠️ getCurrentCommuteTimeSlot: 通勤提醒未启用');
+      Logger.log('   ⚠️ getCurrentCommuteTimeSlot: 通勤提醒未启用');
       return null;
     }
 
@@ -90,7 +91,7 @@ class CommuteAdviceService {
 
     // 检查是否为工作日
     if (!commuteTime.workDays.contains(weekday)) {
-      print('   ⚠️ getCurrentCommuteTimeSlot: 当前不是工作日');
+      Logger.log('   ⚠️ getCurrentCommuteTimeSlot: 当前不是工作日');
       return null;
     }
 
@@ -152,16 +153,16 @@ class CommuteAdviceService {
     final futureWeatherTypes =
         commuteWeatherInfo['futureWeatherTypes'] as Set<String>;
 
-    print('\n🔄 CommuteAdviceService: 开始生成通勤建议');
-    print('⏰ 时段: ${timeSlot == CommuteTimeSlot.morning ? '早高峰' : '晚高峰'}');
-    print('🌦️ 当前天气: ${current.weather}');
-    print('🌡️ 当前温度: ${current.temperature}℃');
-    print('💨 风力: ${current.windpower}');
-    print('😷 空气质量: ${air?.levelIndex ?? '未知'}');
-    print('📊 未来天气类型: ${futureWeatherTypes.length}种\n');
+    Logger.log('\n🔄 CommuteAdviceService: 开始生成通勤建议');
+    Logger.log('⏰ 时段: ${timeSlot == CommuteTimeSlot.morning ? '早高峰' : '晚高峰'}');
+    Logger.log('🌦️ 当前天气: ${current.weather}');
+    Logger.log('🌡️ 当前温度: ${current.temperature}℃');
+    Logger.log('💨 风力: ${current.windpower}');
+    Logger.log('😷 空气质量: ${air?.levelIndex ?? '未知'}');
+    Logger.log('📊 未来天气类型: ${futureWeatherTypes.length}种\n');
 
     // 尝试使用AI生成智能建议
-    print('🎯 策略: 优先使用AI智能生成，失败则降级到规则引擎\n');
+    Logger.log('🎯 策略: 优先使用AI智能生成，失败则降级到规则引擎\n');
 
     final aiAdvice = await _tryGenerateAIAdvice(
       weather: weather,
@@ -172,15 +173,15 @@ class CommuteAdviceService {
 
     // 如果AI生成成功，优先使用AI建议
     if (aiAdvice != null) {
-      print('🎉 使用AI生成的建议');
+      Logger.log('🎉 使用AI生成的建议');
       advices.add(aiAdvice);
       return advices;
     }
 
     // AI失败或不可用，使用规则引擎生成建议
-    print('\n╔════════════════════════════════════════╗');
-    print('║   ⚠️ AI建议失败，降级到规则引擎  ║');
-    print('╚════════════════════════════════════════╝\n');
+    Logger.log('\n╔════════════════════════════════════════╗');
+    Logger.log('║   ⚠️ AI建议失败，降级到规则引擎  ║');
+    Logger.log('╚════════════════════════════════════════╝\n');
 
     final ruleAdvices = _generateRuleBasedAdvices(
       weather: weather,
@@ -189,13 +190,13 @@ class CommuteAdviceService {
       futureWeatherTypes: futureWeatherTypes,
     );
 
-    print('📋 规则引擎生成 ${ruleAdvices.length} 条建议');
+    Logger.log('📋 规则引擎生成 ${ruleAdvices.length} 条建议');
     for (var advice in ruleAdvices) {
-      print(
+      Logger.log(
         '   - ${advice.title} (级别: ${advice.level.toString().split('.').last})',
       );
     }
-    print('');
+    Logger.log('');
 
     return ruleAdvices;
   }
@@ -207,29 +208,29 @@ class CommuteAdviceService {
     required settings,
     required Set<String> futureWeatherTypes,
   }) async {
-    print('\n╔════════════════════════════════════════╗');
-    print('║   🤖 AI通勤建议生成流程           ║');
-    print('╚════════════════════════════════════════╝');
+    Logger.log('\n╔════════════════════════════════════════╗');
+    Logger.log('║   🤖 AI通勤建议生成流程           ║');
+    Logger.log('╚════════════════════════════════════════╝');
 
     try {
       final current = weather.current?.current;
       final air = weather.current?.air ?? weather.air;
 
       if (current == null) {
-        print('❌ 步骤1: 天气数据为空');
+        Logger.log('❌ 步骤1: 天气数据为空');
         return null;
       }
 
-      print('✅ 步骤1: 获取天气数据');
-      print('   - 天气: ${current.weather}');
-      print('   - 温度: ${current.temperature}℃');
-      print('   - 风力: ${current.windpower}');
-      print('   - 空气: ${air?.levelIndex ?? '未知'}');
-      print('   - 时段: ${timeSlot == CommuteTimeSlot.morning ? '早高峰' : '晚高峰'}');
-      print('   - 未来天气数: ${futureWeatherTypes.length}条');
+      Logger.log('✅ 步骤1: 获取天气数据');
+      Logger.log('   - 天气: ${current.weather}');
+      Logger.log('   - 温度: ${current.temperature}℃');
+      Logger.log('   - 风力: ${current.windpower}');
+      Logger.log('   - 空气: ${air?.levelIndex ?? '未知'}');
+      Logger.log('   - 时段: ${timeSlot == CommuteTimeSlot.morning ? '早高峰' : '晚高峰'}');
+      Logger.log('   - 未来天气数: ${futureWeatherTypes.length}条');
 
       // 构建Prompt
-      print('\n✅ 步骤2: 构建AI Prompt');
+      Logger.log('\n✅ 步骤2: 构建AI Prompt');
       final prompt = _aiService.buildCommutePrompt(
         weatherType: current.weather ?? '未知',
         temperature: current.temperature ?? '--',
@@ -240,27 +241,27 @@ class CommuteAdviceService {
       );
 
       // 调用AI
-      print('\n✅ 步骤3: 调用智谱AI API');
+      Logger.log('\n✅ 步骤3: 调用智谱AI API');
       final aiResponse = await _aiService.generateSmartAdvice(prompt);
 
       if (aiResponse == null || aiResponse.isEmpty) {
-        print('❌ 步骤4: AI响应为空');
+        Logger.log('❌ 步骤4: AI响应为空');
         return null;
       }
 
-      print('✅ 步骤4: AI响应接收成功');
-      print('   响应长度: ${aiResponse.length}字符');
+      Logger.log('✅ 步骤4: AI响应接收成功');
+      Logger.log('   响应长度: ${aiResponse.length}字符');
 
       // 解析AI建议
-      print('\n✅ 步骤5: 解析AI建议');
+      Logger.log('\n✅ 步骤5: 解析AI建议');
       final adviceList = _aiService.parseAdviceText(aiResponse);
-      print('   解析出建议条数: ${adviceList.length}');
+      Logger.log('   解析出建议条数: ${adviceList.length}');
       for (int i = 0; i < adviceList.length; i++) {
-        print('   建议${i + 1}: ${adviceList[i]}');
+        Logger.log('   建议${i + 1}: ${adviceList[i]}');
       }
 
       if (adviceList.isEmpty) {
-        print('❌ 解析结果为空');
+        Logger.log('❌ 解析结果为空');
         return null;
       }
 
@@ -270,14 +271,14 @@ class CommuteAdviceService {
           : adviceList.join('\n\n');
 
       // 根据天气情况确定级别
-      print('\n✅ 步骤6: 确定建议级别');
+      Logger.log('\n✅ 步骤6: 确定建议级别');
       final level = _determineLevel(
         weatherType: current.weather ?? '',
         temperature: current.temperature ?? '0',
         airQuality: air?.AQI ?? '0',
         futureWeatherTypes: futureWeatherTypes,
       );
-      print('   级别: ${level.toString().split('.').last}');
+      Logger.log('   级别: ${level.toString().split('.').last}');
 
       // 生成标题和图标
       final titleAndIcon = _generateTitleAndIcon(
@@ -286,9 +287,9 @@ class CommuteAdviceService {
         timeSlot: timeSlot,
       );
 
-      print('\n╔════════════════════════════════════════╗');
-      print('║   ✅ AI建议生成成功！              ║');
-      print('╚════════════════════════════════════════╝\n');
+      Logger.log('\n╔════════════════════════════════════════╗');
+      Logger.log('║   ✅ AI建议生成成功！              ║');
+      Logger.log('╚════════════════════════════════════════╝\n');
 
       return CommuteAdviceModel(
         id: _generateId(),
@@ -302,11 +303,11 @@ class CommuteAdviceService {
         level: level,
       );
     } catch (e, stackTrace) {
-      print('\n╔════════════════════════════════════════╗');
-      print('║   ❌ AI建议生成失败                ║');
-      print('╚════════════════════════════════════════╝');
-      print('错误: $e');
-      print('堆栈: $stackTrace\n');
+      Logger.log('\n╔════════════════════════════════════════╗');
+      Logger.log('║   ❌ AI建议生成失败                ║');
+      Logger.log('╚════════════════════════════════════════╝');
+      Logger.log('错误: $e');
+      Logger.log('堆栈: $stackTrace\n');
       return null;
     }
   }

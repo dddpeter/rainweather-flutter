@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'database_service.dart';
+import '../utils/logger.dart';
 
 /// 缓存数据类型
 enum CacheDataType {
@@ -131,11 +132,11 @@ class SmartCacheService extends WidgetsBindingObserver {
       await _putToDatabase(key, entry);
 
       if (kDebugMode) {
-        print('💾 缓存已存储: $key (${dataBytes} bytes, ${type.name})');
+        Logger.log('💾 缓存已存储: $key (${dataBytes} bytes, ${type.name})');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('❌ 缓存存储失败: $key, 错误: $e');
+        Logger.log('❌ 缓存存储失败: $key, 错误: $e');
       }
     }
   }
@@ -153,7 +154,7 @@ class SmartCacheService extends WidgetsBindingObserver {
       if (memoryEntry != null && !_isExpired(memoryEntry)) {
         _hitCount++;
         if (kDebugMode) {
-          print('💾 从内存缓存获取: $key (命中率: ${_getHitRate()}%)');
+          Logger.log('💾 从内存缓存获取: $key (命中率: ${_getHitRate()}%)');
         }
         return memoryEntry.data;
       }
@@ -163,7 +164,7 @@ class SmartCacheService extends WidgetsBindingObserver {
       if (dbEntry != null && !_isExpired(dbEntry)) {
         _hitCount++;
         if (kDebugMode) {
-          print('💾 从SQLite缓存获取: $key (命中率: ${_getHitRate()}%)');
+          Logger.log('💾 从SQLite缓存获取: $key (命中率: ${_getHitRate()}%)');
         }
         // 更新到内存缓存
         final dataBytes = utf8.encode(dbEntry.data).length;
@@ -173,13 +174,13 @@ class SmartCacheService extends WidgetsBindingObserver {
 
       _missCount++;
       if (kDebugMode) {
-        print('🔄 缓存未命中: $key (命中率: ${_getHitRate()}%)');
+        Logger.log('🔄 缓存未命中: $key (命中率: ${_getHitRate()}%)');
       }
       return null;
     } catch (e) {
       _missCount++;
       if (kDebugMode) {
-        print('❌ 缓存读取失败: $key, 错误: $e');
+        Logger.log('❌ 缓存读取失败: $key, 错误: $e');
       }
       return null;
     }
@@ -205,7 +206,7 @@ class SmartCacheService extends WidgetsBindingObserver {
 
       return false;
     } catch (e) {
-      print('❌ 缓存检查失败: $key, 错误: $e');
+      Logger.log('❌ 缓存检查失败: $key, 错误: $e');
       return false;
     }
   }
@@ -227,7 +228,7 @@ class SmartCacheService extends WidgetsBindingObserver {
 
       return null;
     } catch (e) {
-      print('❌ 获取缓存年龄失败: $key, 错误: $e');
+      Logger.log('❌ 获取缓存年龄失败: $key, 错误: $e');
       return null;
     }
   }
@@ -235,20 +236,20 @@ class SmartCacheService extends WidgetsBindingObserver {
   /// 清除过期缓存
   Future<void> clearExpiredCache() async {
     try {
-      print('🧹 清理过期缓存...');
+      Logger.log('🧹 清理过期缓存...');
 
       // 清理内存缓存
       final beforeCount = _memoryCache.length;
       _memoryCache.removeWhere((key, entry) => _isExpired(entry));
       final afterCount = _memoryCache.length;
-      print('   内存缓存: 清理 ${beforeCount - afterCount} 条');
+      Logger.log('   内存缓存: 清理 ${beforeCount - afterCount} 条');
 
       // 清理SQLite缓存（异步）
       await _clearExpiredDatabaseCache();
 
-      print('✅ 过期缓存清理完成');
+      Logger.log('✅ 过期缓存清理完成');
     } catch (e) {
-      print('❌ 清理缓存失败: $e');
+      Logger.log('❌ 清理缓存失败: $e');
     }
   }
 
@@ -259,7 +260,7 @@ class SmartCacheService extends WidgetsBindingObserver {
       _performSmartPreload();
     });
     if (kDebugMode) {
-      print('🚀 智能预加载服务已启动 (间隔: ${_preloadInterval.inMinutes}分钟)');
+      Logger.log('🚀 智能预加载服务已启动 (间隔: ${_preloadInterval.inMinutes}分钟)');
     }
   }
 
@@ -268,7 +269,7 @@ class SmartCacheService extends WidgetsBindingObserver {
     _preloadTimer?.cancel();
     _preloadTimer = null;
     if (kDebugMode) {
-      print('🛑 智能预加载服务已停止');
+      Logger.log('🛑 智能预加载服务已停止');
     }
   }
 
@@ -276,7 +277,7 @@ class SmartCacheService extends WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (kDebugMode) {
-      print('📱 SmartCacheService: 应用状态变化 - $state');
+      Logger.log('📱 SmartCacheService: 应用状态变化 - $state');
     }
 
     switch (state) {
@@ -302,7 +303,7 @@ class SmartCacheService extends WidgetsBindingObserver {
     stopPreloadService();
     WidgetsBinding.instance.removeObserver(this);
     if (kDebugMode) {
-      print('🗑️ SmartCacheService: 服务已销毁');
+      Logger.log('🗑️ SmartCacheService: 服务已销毁');
     }
   }
 
@@ -310,7 +311,7 @@ class SmartCacheService extends WidgetsBindingObserver {
   Future<void> _performSmartPreload() async {
     try {
       if (kDebugMode) {
-        print('🚀 执行智能预加载...');
+        Logger.log('🚀 执行智能预加载...');
       }
 
       // 预加载策略：根据使用频率和重要性
@@ -326,11 +327,11 @@ class SmartCacheService extends WidgetsBindingObserver {
       final successCount = results.where((success) => success).length;
 
       if (kDebugMode) {
-        print('✅ 智能预加载完成: $successCount/${preloadTasks.length} 个任务成功');
+        Logger.log('✅ 智能预加载完成: $successCount/${preloadTasks.length} 个任务成功');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('❌ 智能预加载失败: $e');
+        Logger.log('❌ 智能预加载失败: $e');
       }
     }
   }
@@ -412,7 +413,7 @@ class SmartCacheService extends WidgetsBindingObserver {
   Future<void> clearAllCache() async {
     try {
       if (kDebugMode) {
-        print('🗑️ 清空所有缓存...');
+        Logger.log('🗑️ 清空所有缓存...');
       }
 
       // 清空内存缓存
@@ -429,11 +430,11 @@ class SmartCacheService extends WidgetsBindingObserver {
       await _clearAllDatabaseCache();
 
       if (kDebugMode) {
-        print('✅ 所有缓存已清空');
+        Logger.log('✅ 所有缓存已清空');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('❌ 清空缓存失败: $e');
+        Logger.log('❌ 清空缓存失败: $e');
       }
     }
   }
@@ -444,11 +445,11 @@ class SmartCacheService extends WidgetsBindingObserver {
       // 这里需要DatabaseService支持批量删除缓存数据
       // 暂时只打印日志
       if (kDebugMode) {
-        print('   SQLite缓存: 清空所有数据（需要DatabaseService支持）');
+        Logger.log('   SQLite缓存: 清空所有数据（需要DatabaseService支持）');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('❌ SQLite清空失败: $e');
+        Logger.log('❌ SQLite清空失败: $e');
       }
     }
   }
@@ -484,7 +485,7 @@ class SmartCacheService extends WidgetsBindingObserver {
     _missCount = 0;
     _totalRequests = 0;
     if (kDebugMode) {
-      print('📊 缓存统计信息已重置');
+      Logger.log('📊 缓存统计信息已重置');
     }
   }
 
@@ -561,7 +562,7 @@ class SmartCacheService extends WidgetsBindingObserver {
       if (removedEntry != null) {
         _totalBytes -= utf8.encode(removedEntry.data).length;
         if (kDebugMode) {
-          print('🗑️ 内存缓存已满，移除最旧条目: $oldestKey');
+          Logger.log('🗑️ 内存缓存已满，移除最旧条目: $oldestKey');
         }
       }
     }
@@ -573,7 +574,7 @@ class SmartCacheService extends WidgetsBindingObserver {
   /// 内存缓存清理（当接近内存限制时）
   Future<void> _evictMemoryCache(int requiredBytes) async {
     if (kDebugMode) {
-      print('🧹 内存使用接近上限，开始清理缓存...');
+      Logger.log('🧹 内存使用接近上限，开始清理缓存...');
     }
 
     // 按创建时间排序，移除最旧的条目
@@ -591,7 +592,7 @@ class SmartCacheService extends WidgetsBindingObserver {
     }
 
     if (kDebugMode) {
-      print('✅ 内存缓存清理完成，释放 ${freedBytes} bytes');
+      Logger.log('✅ 内存缓存清理完成，释放 ${freedBytes} bytes');
     }
   }
 
@@ -615,7 +616,7 @@ class SmartCacheService extends WidgetsBindingObserver {
         jsonEncode(entry.toJson()),
       );
     } catch (e) {
-      print('❌ SQLite存储失败: $key, 错误: $e');
+      Logger.log('❌ SQLite存储失败: $key, 错误: $e');
     }
   }
 
@@ -631,7 +632,7 @@ class SmartCacheService extends WidgetsBindingObserver {
       final json = jsonDecode(jsonString) as Map<String, dynamic>;
       return CacheEntry.fromJson(json);
     } catch (e) {
-      print('❌ SQLite读取失败: $key, 错误: $e');
+      Logger.log('❌ SQLite读取失败: $key, 错误: $e');
       return null;
     }
   }
@@ -641,9 +642,9 @@ class SmartCacheService extends WidgetsBindingObserver {
     try {
       // 这里需要DatabaseService支持批量删除过期数据
       // 暂时只打印日志
-      print('   SQLite缓存: 清理过期数据（需要DatabaseService支持）');
+      Logger.log('   SQLite缓存: 清理过期数据（需要DatabaseService支持）');
     } catch (e) {
-      print('❌ SQLite清理失败: $e');
+      Logger.log('❌ SQLite清理失败: $e');
     }
   }
 }

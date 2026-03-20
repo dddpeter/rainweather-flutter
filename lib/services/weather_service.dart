@@ -120,60 +120,65 @@ class WeatherService {
   Future<WeatherModel?> getWeatherDataForLocation(
     LocationModel location,
   ) async {
-    // 判断是否为国际城市（非中国）
-    final isInternational =
-        location.country != '中国' &&
-        location.country != 'China' &&
-        location.country != '未知';
+    // 构建去重键
+    final dedupKey = 'weather_${location.city}_${location.lat}_${location.lng}';
 
-    if (isInternational) {
-      // 国际城市：使用 Open-Meteo API
+    return await _deduplicator.execute(dedupKey, () async {
+      // 判断是否为国际城市（非中国）
+      final isInternational =
+          location.country != '中国' &&
+          location.country != 'China' &&
+          location.country != '未知';
+
+      if (isInternational) {
+        // 国际城市：使用 Open-Meteo API
+        Logger.d(
+          '国际城市，使用Open-Meteo API - ${location.city} (${location.lat}, ${location.lng})',
+          tag: 'WeatherService',
+        );
+
+        final openMeteoResponse = await _openMeteoService.getWeather(
+          latitude: location.lat,
+          longitude: location.lng,
+        );
+
+        if (openMeteoResponse != null) {
+          final weatherModel = WeatherAdapter.convertToWeatherModel(
+            openMeteoResponse,
+            location.city,
+          );
+          Logger.d(
+            'Open-Meteo天气数据获取成功 - ${location.city}',
+            tag: 'WeatherService',
+          );
+          return weatherModel;
+        } else {
+          Logger.e(
+            'Open-Meteo天气数据获取失败 - ${location.city}',
+            tag: 'WeatherService',
+          );
+          return null;
+        }
+      }
+
+      // 国内城市：使用原有API
+      String cityId = _getCityIdFromLocation(location);
       Logger.d(
-        '国际城市，使用Open-Meteo API - ${location.city} (${location.lat}, ${location.lng})',
+        '获取天气数据 - 位置: ${location.district}, 城市ID: $cityId',
         tag: 'WeatherService',
       );
 
-      final openMeteoResponse = await _openMeteoService.getWeather(
-        latitude: location.lat,
-        longitude: location.lng,
-      );
-
-      if (openMeteoResponse != null) {
-        final weatherModel = WeatherAdapter.convertToWeatherModel(
-          openMeteoResponse,
-          location.city,
-        );
-        Logger.d(
-          'Open-Meteo天气数据获取成功 - ${location.city}',
-          tag: 'WeatherService',
-        );
-        return weatherModel;
+      if (cityId.isNotEmpty) {
+        final result = await getWeatherData(cityId);
+        if (result == null) {
+          Logger.e('获取城市ID的天气数据失败: $cityId', tag: 'WeatherService');
+        }
+        return result;
       } else {
-        Logger.e(
-          'Open-Meteo天气数据获取失败 - ${location.city}',
-          tag: 'WeatherService',
-        );
-        return null;
+        Logger.w('无法找到位置对应的城市ID: ${location.district}', tag: 'WeatherService');
       }
-    }
-
-    // 国内城市：使用原有API
-    String cityId = _getCityIdFromLocation(location);
-    Logger.d(
-      '获取天气数据 - 位置: ${location.district}, 城市ID: $cityId',
-      tag: 'WeatherService',
-    );
-
-    if (cityId.isNotEmpty) {
-      final result = await getWeatherData(cityId);
-      if (result == null) {
-        Logger.e('获取城市ID的天气数据失败: $cityId', tag: 'WeatherService');
-      }
-      return result;
-    } else {
-      Logger.w('无法找到位置对应的城市ID: ${location.district}', tag: 'WeatherService');
-    }
-    return null;
+      return null;
+    });
   }
 
   /// Get city ID from location

@@ -8,6 +8,10 @@ import '../services/tencent_location_service.dart';
 import '../utils/logger.dart';
 import '../utils/error_handler.dart';
 
+/// Helper function to explicitly ignore futures
+// ignore: unused_element
+void _unawaited(Future<void>? future) {}
+
 /// 应用初始化服务
 class AppInitializationService {
   static final AppInitializationService _instance =
@@ -65,12 +69,14 @@ class AppInitializationService {
     Logger.d('启动后台缓存清理任务（每30分钟）');
 
     // 每30分钟清理一次过期缓存
-    Timer.periodic(const Duration(minutes: 30), (timer) async {
-      try {
-        await SmartCacheService().clearExpiredCache();
-      } catch (e) {
-        Logger.e('后台缓存清理失败: $e');
-      }
+    Timer.periodic(const Duration(minutes: 30), (timer) {
+      _unawaited(() async {
+        try {
+          await SmartCacheService().clearExpiredCache();
+        } catch (e) {
+          Logger.e('后台缓存清理失败: $e');
+        }
+      }());
     });
   }
 

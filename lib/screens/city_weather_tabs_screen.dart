@@ -14,6 +14,7 @@ import '../widgets/life_index_widget.dart';
 import '../widgets/sun_moon_widget.dart';
 import '../widgets/ai_content_widget.dart';
 import '../widgets/city_weather_screen_base.dart';
+import '../utils/logger.dart';
 
 /// 城市天气标签屏幕 - 使用TabBar实现页面切换
 /// 继承自CityWeatherScreenBase基类，复用公共逻辑
@@ -436,7 +437,7 @@ class _CityWeatherTabsScreenState extends CityWeatherScreenBase<CityWeatherTabsS
 
                   // 如果正在生成中，等待一下再检查
                   if (weatherProvider.isGeneratingSummary) {
-                    print('⏳ AI摘要正在生成中，等待完成...');
+                    Logger.log('⏳ AI摘要正在生成中，等待完成...');
                     // 等待最多5秒
                     for (int i = 0; i < 50; i++) {
                       await Future.delayed(const Duration(milliseconds: 100));
@@ -454,7 +455,7 @@ class _CityWeatherTabsScreenState extends CityWeatherScreenBase<CityWeatherTabsS
                   if ((weatherProvider.weatherSummary == null ||
                           weatherProvider.weatherSummary!.isEmpty) &&
                       !weatherProvider.isGeneratingSummary) {
-                    print('🔄 开始生成城市天气AI摘要: $cityName');
+                    Logger.log('🔄 开始生成城市天气AI摘要: $cityName');
                     await weatherProvider.generateWeatherSummary(
                       cityName: cityName, // 传入城市名称
                     );
@@ -467,10 +468,10 @@ class _CityWeatherTabsScreenState extends CityWeatherScreenBase<CityWeatherTabsS
                   }
 
                   // 如果仍然没有内容，返回默认内容而不是抛出异常
-                  print('⚠️ 无法获取AI摘要，使用默认内容');
+                  Logger.log('⚠️ 无法获取AI摘要，使用默认内容');
                   return '今日天气舒适，适合出行。注意温差变化，合理增减衣物。';
                 } catch (e) {
-                  print('❌ 加载AI智能助手失败: $e');
+                  Logger.log('❌ 加载AI智能助手失败: $e');
                   // 返回默认内容而不是抛出异常，避免无限重试
                   return '今日天气舒适，适合出行。注意温差变化，合理增减衣物。';
                 }
@@ -499,7 +500,7 @@ class _CityWeatherTabsScreenState extends CityWeatherScreenBase<CityWeatherTabsS
 
                   // 如果正在生成中，等待一下再检查
                   if (weatherProvider.isGenerating15dSummary) {
-                    print('⏳ 15日AI总结正在生成中，等待完成...');
+                    Logger.log('⏳ 15日AI总结正在生成中，等待完成...');
                     // 等待最多5秒
                     for (int i = 0; i < 50; i++) {
                       await Future.delayed(const Duration(milliseconds: 100));
@@ -517,7 +518,7 @@ class _CityWeatherTabsScreenState extends CityWeatherScreenBase<CityWeatherTabsS
                   if ((weatherProvider.forecast15dSummary == null ||
                           weatherProvider.forecast15dSummary!.isEmpty) &&
                       !weatherProvider.isGenerating15dSummary) {
-                    print('🔄 开始生成城市15日天气AI总结: $cityName');
+                    Logger.log('🔄 开始生成城市15日天气AI总结: $cityName');
                     await weatherProvider.generateForecast15dSummary(
                       cityName: cityName, // 传入城市名称
                     );
@@ -530,10 +531,10 @@ class _CityWeatherTabsScreenState extends CityWeatherScreenBase<CityWeatherTabsS
                   }
 
                   // 如果仍然没有内容，返回默认内容而不是抛出异常
-                  print('⚠️ 无法获取15日AI总结，使用默认内容');
+                  Logger.log('⚠️ 无法获取15日AI总结，使用默认内容');
                   return '未来半月天气平稳，温度变化不大，适合安排户外活动。';
                 } catch (e) {
-                  print('❌ 加载15日天气趋势失败: $e');
+                  Logger.log('❌ 加载15日天气趋势失败: $e');
                   // 返回默认内容而不是抛出异常，避免无限重试
                   return '未来半月天气平稳，温度变化不大，适合安排户外活动。';
                 }

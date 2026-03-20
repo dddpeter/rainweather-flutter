@@ -15,6 +15,7 @@ import '../widgets/city_card_skeleton.dart';
 import '../widgets/error_dialog.dart';
 import 'city_weather_page.dart';
 import 'weather_alerts_screen.dart';
+import '../utils/logger.dart';
 
 class MainCitiesScreen extends StatefulWidget {
   const MainCitiesScreen({super.key});
@@ -47,16 +48,16 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
   /// 定位成功回调（主要城市页面不响应今日天气页面的定位）
   @override
   void onLocationSuccess(LocationModel newLocation) {
-    print('📍 MainCitiesScreen: 收到定位成功通知 ${newLocation.district}');
-    print('📍 MainCitiesScreen: 主要城市页面只响应自己的定位图标，忽略此通知');
+    Logger.log('📍 MainCitiesScreen: 收到定位成功通知 ${newLocation.district}');
+    Logger.log('📍 MainCitiesScreen: 主要城市页面只响应自己的定位图标，忽略此通知');
     // 主要城市页面只有点击定位图标才会更新第一个卡片
   }
 
   /// 定位失败回调（主要城市页面不响应今日天气页面的定位失败）
   @override
   void onLocationFailed(String error) {
-    print('❌ MainCitiesScreen: 收到定位失败通知 $error');
-    print('❌ MainCitiesScreen: 主要城市页面只响应自己的定位图标，忽略此通知');
+    Logger.log('❌ MainCitiesScreen: 收到定位失败通知 $error');
+    Logger.log('❌ MainCitiesScreen: 主要城市页面只响应自己的定位图标，忽略此通知');
     // 主要城市页面只有点击定位图标失败时才提示
   }
 
@@ -772,11 +773,11 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
         if (now.isBefore(expiryTime)) {
           validAlerts.add(alert);
         } else {
-          print('🗑️ 过滤过期预警: ${alert.type} (发布时间: ${alert.publishTime})');
+          Logger.log('🗑️ 过滤过期预警: ${alert.type} (发布时间: ${alert.publishTime})');
         }
       } catch (e) {
         // 解析失败，保留该预警
-        print('⚠️ 无法解析预警时间: ${alert.publishTime}，保留该预警');
+        Logger.log('⚠️ 无法解析预警时间: ${alert.publishTime}，保留该预警');
         validAlerts.add(alert);
       }
     }
@@ -1173,7 +1174,7 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
     WeatherProvider weatherProvider,
   ) async {
     try {
-      print('📍 点击定位图标，开始定位并更新第一个卡片');
+      Logger.log('📍 点击定位图标，开始定位并更新第一个卡片');
 
       // 只定位并更新第一个卡片（当前定位城市）
       final success = await weatherProvider
@@ -1201,7 +1202,7 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
         }
       }
     } catch (e) {
-      print('❌ 更新位置失败: $e');
+      Logger.log('❌ 更新位置失败: $e');
       if (mounted) {
         ErrorToast.show(
           context: context,

@@ -442,18 +442,20 @@ class _WeatherAnimationWidgetState extends State<WeatherAnimationWidget>
         ? animations.first
         : Listenable.merge(animations);
 
-    return AnimatedBuilder(
-      animation: animation,
-      builder: (context, child) {
-        return CustomPaint(
-          painter: config.createPainter(
-            _mainAnimation.value,
-            _particleAnimation.value,
-            _cloudAnimation.value,
-          ),
-          size: Size(widget.size, widget.size),
-        );
-      },
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: animation,
+        builder: (context, child) {
+          return CustomPaint(
+            painter: config.createPainter(
+              _mainAnimation.value,
+              _particleAnimation.value,
+              _cloudAnimation.value,
+            ),
+            size: Size(widget.size, widget.size),
+          );
+        },
+      ),
     );
  }
 }

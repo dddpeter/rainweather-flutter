@@ -115,7 +115,7 @@ class WeatherProvider extends ChangeNotifier {
 
   // ==================== 向后兼容的 Getters - 城市相关 ====================
   Map<String, WeatherModel> get mainCitiesWeather {
-    if (_citiesProvider == null) return {};
+    if (_citiesProvider == null) return const {};
 
     final result = <String, WeatherModel>{};
     for (final city in _citiesProvider!.mainCities) {
@@ -124,7 +124,7 @@ class WeatherProvider extends ChangeNotifier {
         result[city.id] = weather;
       }
     }
-    return result;
+    return Map.unmodifiable(result);
   }
   List<CityModel> get mainCities => _citiesProvider?.mainCities ?? [];
   bool get isLoadingCitiesWeather => _citiesProvider?.isLoadingCitiesWeather ?? false;
@@ -291,18 +291,32 @@ class WeatherProvider extends ChangeNotifier {
 
   /// 获取城市天气数据
   Future<void> getWeatherForCity(
-    LocationModel city, {
+    String cityName, {
+    String? cityId,
     bool forceRefresh = true,
+    bool forceRefreshAI = false,
   }) async {
     // 委托给 CitiesProvider (通过 CityModel)
     final cityModel = CityModel(
-      id: city.adcode ?? city.city,
-      name: city.district ?? city.city,
+      id: cityId ?? cityName,
+      name: cityName,
       isMainCity: true,
       sortOrder: 0,
       createdAt: DateTime.now(),
     );
     await _citiesProvider?.refreshCityWeather(cityModel);
+
+    // 如果需要刷新AI摘要
+    if (forceRefreshAI) {
+      final weatherData = _weatherDataProvider?.currentWeather;
+      if (weatherData != null) {
+        await _aiInsightsProvider?.generateDailySummary(weatherData);
+        final forecast15d = _weatherDataProvider?.forecast15d;
+        if (forecast15d != null && forecast15d.isNotEmpty) {
+          await _aiInsightsProvider?.generate15dSummary(forecast15d);
+        }
+      }
+    }
   }
 
   /// 刷新15日预报
@@ -392,7 +406,7 @@ class WeatherProvider extends ChangeNotifier {
   }
 
   /// 生成15日天气总结
-  Future<void> generateForecast15dSummary() async {
+  Future<void> generateForecast15dSummary({String? cityName}) async {
     final forecast15d = _weatherDataProvider?.forecast15d;
     if (forecast15d != null && forecast15d.isNotEmpty) {
       await _aiInsightsProvider?.generate15dSummary(forecast15d);

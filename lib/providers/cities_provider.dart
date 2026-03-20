@@ -30,6 +30,10 @@ class CitiesProvider extends ChangeNotifier {
   bool _isLoadingCitiesWeather = false;
   bool _hasPerformedInitialMainCitiesRefresh = false;
 
+  // ===== 刷新保护 =====
+  final Map<String, bool> _refreshingCities = {}; // 防止同一城市并发刷新
+  bool _isRefreshingAll = false; // 防止并发全量刷新
+
   // ===== Getters =====
   List<CityModel> get mainCities => List.unmodifiable(_mainCities);
   bool get isLoadingCities => _isLoadingCities;
@@ -188,6 +192,13 @@ class CitiesProvider extends ChangeNotifier {
       return true;
     }
 
+    // 防止并发全量刷新
+    if (_isRefreshingAll) {
+      Logger.d('全量刷新正在进行中，跳过重复调用', tag: 'CitiesProvider');
+      return true;
+    }
+
+    _isRefreshingAll = true;
     setLoadingCitiesWeather(true);
 
     try {
@@ -202,21 +213,29 @@ class CitiesProvider extends ChangeNotifier {
       Logger.e('刷新城市天气失败', tag: 'CitiesProvider', error: e);
       return false;
     } finally {
+      _isRefreshingAll = false;
       setLoadingCitiesWeather(false);
     }
   }
 
   /// 刷新单个城市天气
   Future<bool> refreshCityWeather(CityModel city) async {
+    // 防止同一城市并发刷新
+    if (_refreshingCities.containsKey(city.id)) {
+      Logger.d('城市 ${city.name} 正在刷新中，跳过重复调用', tag: 'CitiesProvider');
+      return false;
+    }
+
+    _refreshingCities[city.id] = true;
     try {
       // 判断是否为国际城市（ID 以 INT_ 开头）
       final isInternational = city.id.startsWith('INT_');
-      
+
       WeatherModel? weatherData;
       if (isInternational) {
         // 国际城市：使用地理编码服务获取坐标，然后通过坐标获取天气
         Logger.d('国际城市，使用GeocodingService获取坐标: ${city.name}', tag: 'CitiesProvider');
-        
+
         final location = await _geocodingService.geocode(city.name);
         if (location != null) {
           Logger.d('获取到国际城市坐标: ${city.name} (${location.lat}, ${location.lng})', tag: 'CitiesProvider');
@@ -245,6 +264,8 @@ class CitiesProvider extends ChangeNotifier {
     } catch (e) {
       Logger.e('刷新城市天气失败: ${city.name}', tag: 'CitiesProvider', error: e);
       return false;
+    } finally {
+      _refreshingCities.remove(city.id);
     }
   }
 

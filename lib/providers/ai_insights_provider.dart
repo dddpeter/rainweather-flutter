@@ -21,10 +21,10 @@ class AIInsightsProvider extends ChangeNotifier {
   final AIService _aiService = AIService();
   final DatabaseService _databaseService = DatabaseService.getInstance();
 
-  // ===== 通勤建议 Timer =====
-  Timer? _commuteCleanupTimer;
-  Timer? _weatherDataWatcher;
-  bool _isWeatherDataWatcherActive = false;
+  // ===== 通勤建议 Timer（统一定时器） =====
+  Timer? _unifiedCommuteTimer;
+  int _cleanupCounter = 0; // 用于追踪清理周期（每4次=2分钟）
+  bool _isUnifiedTimerActive = false;
 
   // ===== 天气数据引用（用于通勤建议生成） =====
   WeatherModel? _currentWeather;
@@ -450,48 +450,49 @@ class AIInsightsProvider extends ChangeNotifier {
     }
   }
 
-  /// 启动通勤建议清理定时器
+  /// 启动通勤建议清理定时器（统一定时器）
   void startCommuteCleanupTimer() {
     stopCommuteCleanupTimer();
 
-    // 每2分钟检查一次是否需要清理和新时段
-    _commuteCleanupTimer = Timer.periodic(const Duration(minutes: 2), (timer) {
-      _checkAndCleanupCommuteAdvices();
-      checkAndGenerateCommuteAdvices();
+    // 每30秒执行一次检查，每4次（2分钟）执行清理
+    _unifiedCommuteTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      // 始终检查是否需要重新生成
+      _checkAndRegenerateCommuteIfNeeded();
+
+      // 每4次迭代执行一次清理（2分钟）
+      _cleanupCounter++;
+      if (_cleanupCounter >= 4) {
+        _cleanupCounter = 0;
+        _checkAndCleanupCommuteAdvices();
+        checkAndGenerateCommuteAdvices();
+      }
     });
 
-    Logger.d('通勤建议清理定时器已启动', tag: 'AIInsightsProvider');
+    _isUnifiedTimerActive = true;
+    Logger.d('通勤建议统一定时器已启动（30秒检查，2分钟清理）', tag: 'AIInsightsProvider');
   }
 
   /// 停止通勤建议清理定时器
   void stopCommuteCleanupTimer() {
-    _commuteCleanupTimer?.cancel();
-    _commuteCleanupTimer = null;
+    _unifiedCommuteTimer?.cancel();
+    _unifiedCommuteTimer = null;
+    _isUnifiedTimerActive = false;
+    _cleanupCounter = 0;
   }
 
-  /// 启动天气数据变化监听器
+  /// 启动天气数据变化监听器（已合并到统一定时器）
   void startWeatherDataWatcher() {
-    if (_isWeatherDataWatcherActive) {
-      Logger.d('天气数据监听器已在运行中', tag: 'AIInsightsProvider');
+    if (_isUnifiedTimerActive) {
+      Logger.d('统一定时器已在运行中', tag: 'AIInsightsProvider');
       return;
     }
-
-    stopWeatherDataWatcher();
-
-    // 每30秒检查一次天气数据是否更新
-    _weatherDataWatcher = Timer.periodic(const Duration(seconds: 30), (timer) {
-      _checkAndRegenerateCommuteIfNeeded();
-    });
-
-    _isWeatherDataWatcherActive = true;
-    Logger.d('天气数据变化监听器已启动', tag: 'AIInsightsProvider');
+    // 统一定时器由 startCommuteCleanupTimer 管理
+    startCommuteCleanupTimer();
   }
 
-  /// 停止天气数据变化监听器
+  /// 停止天气数据变化监听器（已合并到统一定时器）
   void stopWeatherDataWatcher() {
-    _weatherDataWatcher?.cancel();
-    _weatherDataWatcher = null;
-    _isWeatherDataWatcherActive = false;
+    stopCommuteCleanupTimer();
   }
 
   /// 检查并智能重新生成通勤建议

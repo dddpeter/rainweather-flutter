@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:geolocator/geolocator.dart';
 import '../models/location_model.dart';
 import '../utils/app_logger.dart';
+import '../utils/logger.dart';
 import 'geocoding_service.dart';
 import 'enhanced_geocoding_service.dart';
 import 'ip_location_service.dart';
@@ -329,7 +330,7 @@ class LocationService {
 
       return false;
     } catch (e) {
-      print('代理检测错误: $e');
+      Logger.log('代理检测错误: $e');
       return false;
     }
   }
@@ -392,11 +393,11 @@ class LocationService {
       if (!serviceEnabled) {
         // Request to enable location service
         serviceEnabled = await Geolocator.openLocationSettings();
-        print('位置服务开启请求结果: $serviceEnabled');
+        Logger.log('位置服务开启请求结果: $serviceEnabled');
       }
       return serviceEnabled;
     } catch (e) {
-      print('请求开启位置服务失败: $e');
+      Logger.log('请求开启位置服务失败: $e');
       return false;
     }
   }
@@ -412,14 +413,14 @@ class LocationService {
       if (permission == LocationPermission.deniedForever) {
         // Open app settings for user to manually enable permission
         bool opened = await Geolocator.openAppSettings();
-        print('打开应用设置结果: $opened');
+        Logger.log('打开应用设置结果: $opened');
         return false;
       }
 
       return permission == LocationPermission.whileInUse ||
           permission == LocationPermission.always;
     } catch (e) {
-      print('请求应用定位设置失败: $e');
+      Logger.log('请求应用定位设置失败: $e');
       return false;
     }
   }
@@ -429,11 +430,11 @@ class LocationService {
     try {
       // First check capabilities
       Map<String, dynamic> capabilities = await checkLocationCapabilities();
-      print('设备定位能力: $capabilities');
+      Logger.log('设备定位能力: $capabilities');
 
       // Check location service
       if (!capabilities['serviceEnabled']) {
-        print('位置服务未开启，尝试请求开启');
+        Logger.log('位置服务未开启，尝试请求开启');
         bool serviceEnabled = await requestLocationService();
         if (!serviceEnabled) {
           throw LocationException('位置服务未开启，请在设备设置中开启位置服务');
@@ -444,7 +445,7 @@ class LocationService {
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
-        print('定位权限未授予，尝试请求权限');
+        Logger.log('定位权限未授予，尝试请求权限');
         bool permissionGranted = await requestAppLocationSettings();
         if (!permissionGranted) {
           throw LocationException('定位权限未授予，请在应用设置中授予定位权限');
@@ -455,13 +456,13 @@ class LocationService {
       LocationModel? location = await getCurrentLocation();
 
       if (location == null) {
-        print('所有定位方式都失败，建议用户检查网络和权限设置');
+        Logger.log('所有定位方式都失败，建议用户检查网络和权限设置');
         throw LocationException('定位失败，请检查网络连接和位置权限');
       }
 
       return location;
     } catch (e) {
-      print('定位服务错误: $e');
+      Logger.log('定位服务错误: $e');
       rethrow;
     }
   }
@@ -487,7 +488,7 @@ class LocationService {
         accuracy: LocationAccuracy.high, // 精度≈10m
       );
     } catch (e) {
-      print('简化定位失败: $e');
+      Logger.log('简化定位失败: $e');
       return null;
     }
   }
@@ -506,13 +507,13 @@ class LocationService {
 
     try {
       // 1. 检查权限
-      print('🔍 验证GPS定位 - 步骤1: 检查权限');
+      Logger.log('🔍 验证GPS定位 - 步骤1: 检查权限');
       LocationPermission permission = await Geolocator.checkPermission();
       bool hasPermission =
           permission == LocationPermission.always ||
           permission == LocationPermission.whileInUse;
       result['permission_check'] = hasPermission;
-      print('权限状态: $permission, 有效权限: $hasPermission');
+      Logger.log('权限状态: $permission, 有效权限: $hasPermission');
 
       if (!hasPermission) {
         result['errors'].add('无GPS定位权限');
@@ -520,13 +521,13 @@ class LocationService {
       }
 
       // 2. 跳过不可靠的位置服务检测，直接尝试定位
-      print('🔍 验证GPS定位 - 步骤2: 跳过位置服务检测，直接尝试定位');
+      Logger.log('🔍 验证GPS定位 - 步骤2: 跳过位置服务检测，直接尝试定位');
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       result['service_enabled'] = serviceEnabled;
-      print('位置服务检测结果: $serviceEnabled (可能不准确，将通过实际定位验证)');
+      Logger.log('位置服务检测结果: $serviceEnabled (可能不准确，将通过实际定位验证)');
 
       // 3. 多层级定位策略
-      print('🔍 验证GPS定位 - 步骤3: 开始多层级定位尝试');
+      Logger.log('🔍 验证GPS定位 - 步骤3: 开始多层级定位尝试');
       LocationModel? finalLocation = await _tryMultipleLocationMethods();
 
       if (finalLocation != null) {
@@ -537,7 +538,7 @@ class LocationService {
 
         // 如果成功定位，更新位置服务状态
         result['service_enabled'] = true;
-        print('✅ 定位成功，使用方式: ${result['location_method']}');
+        Logger.log('✅ 定位成功，使用方式: ${result['location_method']}');
 
         // 尝试获取GPS坐标（如果可用）
         if (finalLocation.lat != 0 && finalLocation.lng != 0) {
@@ -568,7 +569,7 @@ class LocationService {
       return result;
     } catch (e) {
       result['errors'].add('定位验证过程出错: $e');
-      print('GPS验证错误: $e');
+      Logger.log('GPS验证错误: $e');
       return result;
     }
   }
@@ -576,13 +577,13 @@ class LocationService {
   /// 尝试多种定位方法
   Future<LocationModel?> _tryMultipleLocationMethods() async {
     // 方法1: 尝试高精度GPS定位
-    print('📍 尝试方法1: 高精度GPS定位');
+    Logger.log('📍 尝试方法1: 高精度GPS定位');
     try {
       // 先请求权限
       LocationPermission permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
-        print('❌ GPS定位权限被拒绝');
+        Logger.log('❌ GPS定位权限被拒绝');
         throw Exception('GPS定位权限被拒绝');
       }
 
@@ -591,7 +592,7 @@ class LocationService {
         timeLimit: const Duration(seconds: 10), // 10秒超时
       );
 
-      print('✅ GPS定位成功: ${position.latitude}, ${position.longitude}');
+      Logger.log('✅ GPS定位成功: ${position.latitude}, ${position.longitude}');
 
       // 使用增强地理编码服务（geocoding 插件）优先
       LocationModel? location = await _enhancedGeocodingService.reverseGeocode(
@@ -600,7 +601,7 @@ class LocationService {
       );
 
       if (location == null) {
-        print('🔄 增强地理编码失败，尝试备用方法...');
+        Logger.log('🔄 增强地理编码失败，尝试备用方法...');
         location = await _geocodingService.reverseGeocode(
           position.latitude,
           position.longitude,
@@ -608,7 +609,7 @@ class LocationService {
       }
 
       if (location == null) {
-        print('🔄 备用地理编码失败，尝试最终备用方法...');
+        Logger.log('🔄 备用地理编码失败，尝试最终备用方法...');
         location = await _geocodingService.fallbackReverseGeocode(
           position.latitude,
           position.longitude,
@@ -618,28 +619,28 @@ class LocationService {
       if (location != null) {
         // 检查GPS定位的位置信息是否为"未知"
         if (_isLocationUnknown(location)) {
-          print('⚠️ GPS定位成功但位置信息为"未知"，尝试IP定位作为备用');
+          Logger.log('⚠️ GPS定位成功但位置信息为"未知"，尝试IP定位作为备用');
           // 继续执行IP定位逻辑
         } else {
-          print('✅ GPS定位完整流程成功');
+          Logger.log('✅ GPS定位完整流程成功');
           return location;
         }
       } else {
-        print('❌ GPS定位成功但地理编码失败');
+        Logger.log('❌ GPS定位成功但地理编码失败');
       }
     } catch (e) {
-      print('❌ 高精度GPS定位失败: $e');
+      Logger.log('❌ 高精度GPS定位失败: $e');
     }
 
     // 方法1.5: 尝试中等精度GPS定位（备用）
-    print('📍 尝试方法1.5: 中等精度GPS定位');
+    Logger.log('📍 尝试方法1.5: 中等精度GPS定位');
     try {
       Position position = await getCurrentPositionChinaOptimized(
         accuracy: LocationAccuracy.medium, // 中等精度，约100米
         timeLimit: const Duration(seconds: 8), // 8秒超时
       );
 
-      print('✅ 中等精度GPS定位成功: ${position.latitude}, ${position.longitude}');
+      Logger.log('✅ 中等精度GPS定位成功: ${position.latitude}, ${position.longitude}');
 
       // 使用增强地理编码服务（geocoding 插件）优先
       LocationModel? location = await _enhancedGeocodingService.reverseGeocode(
@@ -648,7 +649,7 @@ class LocationService {
       );
 
       if (location == null) {
-        print('🔄 增强地理编码失败，尝试备用方法...');
+        Logger.log('🔄 增强地理编码失败，尝试备用方法...');
         location = await _geocodingService.reverseGeocode(
           position.latitude,
           position.longitude,
@@ -656,7 +657,7 @@ class LocationService {
       }
 
       if (location == null) {
-        print('🔄 备用地理编码失败，尝试最终备用方法...');
+        Logger.log('🔄 备用地理编码失败，尝试最终备用方法...');
         location = await _geocodingService.fallbackReverseGeocode(
           position.latitude,
           position.longitude,
@@ -666,42 +667,42 @@ class LocationService {
       if (location != null) {
         // 检查GPS定位的位置信息是否为"未知"
         if (_isLocationUnknown(location)) {
-          print('⚠️ 中等精度GPS定位成功但位置信息为"未知"，尝试IP定位作为备用');
+          Logger.log('⚠️ 中等精度GPS定位成功但位置信息为"未知"，尝试IP定位作为备用');
           // 继续执行IP定位逻辑
         } else {
-          print('✅ 中等精度GPS定位完整流程成功');
+          Logger.log('✅ 中等精度GPS定位完整流程成功');
           return location;
         }
       } else {
-        print('❌ 中等精度GPS定位成功但地理编码失败');
+        Logger.log('❌ 中等精度GPS定位成功但地理编码失败');
       }
     } catch (e) {
-      print('❌ 中等精度GPS定位失败: $e');
-      print('🔄 开始尝试IP定位...');
+      Logger.log('❌ 中等精度GPS定位失败: $e');
+      Logger.log('🔄 开始尝试IP定位...');
     }
 
     // 方法2: 尝试IP定位
-    print('📍 尝试方法2: IP定位');
-    print('📡 正在初始化IP定位服务...');
+    Logger.log('📍 尝试方法2: IP定位');
+    Logger.log('📡 正在初始化IP定位服务...');
     try {
       final ipLocationService = IpLocationService.getInstance();
-      print('📡 开始调用IP定位接口...');
+      Logger.log('📡 开始调用IP定位接口...');
       final location = await ipLocationService.getLocationByIp();
-      print('📡 IP定位接口调用完成，结果: ${location != null ? '成功' : '失败'}');
+      Logger.log('📡 IP定位接口调用完成，结果: ${location != null ? '成功' : '失败'}');
 
       if (location != null) {
-        print('✅ IP定位成功: ${location.district}');
+        Logger.log('✅ IP定位成功: ${location.district}');
         location.isProxyDetected = await _isLikelyProxyLocation(location);
         return location;
       } else {
-        print('❌ IP定位失败');
+        Logger.log('❌ IP定位失败');
       }
     } catch (e) {
-      print('❌ IP定位错误: $e');
+      Logger.log('❌ IP定位错误: $e');
     }
 
     // 所有方法都失败
-    print('❌ 所有定位方法都失败');
+    Logger.log('❌ 所有定位方法都失败');
     return null;
   }
 
@@ -710,7 +711,7 @@ class LocationService {
     try {
       await Geolocator.openLocationSettings();
     } catch (e) {
-      print('无法打开位置设置页面: $e');
+      Logger.log('无法打开位置设置页面: $e');
     }
   }
 
@@ -719,26 +720,26 @@ class LocationService {
     try {
       await Geolocator.openAppSettings();
     } catch (e) {
-      print('无法打开应用设置页面: $e');
+      Logger.log('无法打开应用设置页面: $e');
     }
   }
 
   /// 使用百度定位获取当前位置
   Future<LocationModel?> getCurrentLocationWithBaidu() async {
     try {
-      print('📍 使用百度定位获取当前位置...');
+      Logger.log('📍 使用百度定位获取当前位置...');
       LocationModel? location = await _baiduLocationService
           .getCurrentLocation();
       if (location != null) {
-        print('✅ 百度定位成功: ${location.district}');
+        Logger.log('✅ 百度定位成功: ${location.district}');
         _cachedLocation = location;
         return location;
       } else {
-        print('❌ 百度定位失败');
+        Logger.log('❌ 百度定位失败');
         return null;
       }
     } catch (e) {
-      print('❌ 百度定位错误: $e');
+      Logger.log('❌ 百度定位错误: $e');
       return null;
     }
   }

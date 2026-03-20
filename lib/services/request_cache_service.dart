@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../utils/logger.dart';
 
 /// 缓存条目
 class CacheEntry {
@@ -51,7 +52,7 @@ class RequestCacheService {
 
       if (cacheData == null) {
         if (kDebugMode) {
-          print('📭 缓存未命中 - $key');
+          Logger.log('📭 缓存未命中 - $key');
         }
         return null;
       }
@@ -60,20 +61,20 @@ class RequestCacheService {
 
       if (entry.isExpired) {
         if (kDebugMode) {
-          print('⏰ 缓存已过期 - $key');
+          Logger.log('⏰ 缓存已过期 - $key');
         }
         await _removeCache(key);
         return null;
       }
 
       if (kDebugMode) {
-        print('💾 缓存命中 - $key');
+        Logger.log('💾 缓存命中 - $key');
       }
 
       return fromJson(jsonDecode(entry.data));
     } catch (e) {
       if (kDebugMode) {
-        print('❌ 缓存读取失败 - $key: $e');
+        Logger.log('❌ 缓存读取失败 - $key: $e');
       }
       return null;
     }
@@ -99,14 +100,14 @@ class RequestCacheService {
       await prefs.setString(cacheKey, jsonEncode(entry.toJson()));
 
       if (kDebugMode) {
-        print('💾 缓存已设置 - $key (${duration.inMinutes}分钟)');
+        Logger.log('💾 缓存已设置 - $key (${duration.inMinutes}分钟)');
       }
 
       // 清理过期缓存
       await _cleanExpiredCache();
     } catch (e) {
       if (kDebugMode) {
-        print('❌ 缓存设置失败 - $key: $e');
+        Logger.log('❌ 缓存设置失败 - $key: $e');
       }
     }
   }
@@ -119,7 +120,7 @@ class RequestCacheService {
       await prefs.remove(cacheKey);
     } catch (e) {
       if (kDebugMode) {
-        print('❌ 缓存移除失败 - $key: $e');
+        Logger.log('❌ 缓存移除失败 - $key: $e');
       }
     }
   }
@@ -149,11 +150,11 @@ class RequestCacheService {
       }
 
       if (kDebugMode && removedCount > 0) {
-        print('🧹 清理过期缓存: $removedCount 条');
+        Logger.log('🧹 清理过期缓存: $removedCount 条');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('❌ 清理过期缓存失败: $e');
+        Logger.log('❌ 清理过期缓存失败: $e');
       }
     }
   }
@@ -169,11 +170,11 @@ class RequestCacheService {
       }
 
       if (kDebugMode) {
-        print('🗑️ 所有缓存已清理');
+        Logger.log('🗑️ 所有缓存已清理');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('❌ 清理所有缓存失败: $e');
+        Logger.log('❌ 清理所有缓存失败: $e');
       }
     }
   }
@@ -213,7 +214,7 @@ class RequestCacheService {
       };
     } catch (e) {
       if (kDebugMode) {
-        print('❌ 获取缓存统计失败: $e');
+        Logger.log('❌ 获取缓存统计失败: $e');
       }
       return {'total': 0, 'valid': 0, 'expired': 0, 'maxSize': _maxCacheSize};
     }
@@ -222,16 +223,16 @@ class RequestCacheService {
 
 /// 缓存配置
 class CacheConfig {
-  /// 天气数据缓存时间
-  static const Duration weatherData = Duration(minutes: 10);
+  /// 天气数据缓存时间（5分钟，数据变化快需要更频繁更新）
+  static const Duration weatherData = Duration(minutes: 5);
 
-  /// AI请求缓存时间（5分钟，避免频繁重复生成）
-  static const Duration aiRequest = Duration(minutes: 5);
+  /// AI请求缓存时间（10分钟，生成成本高适当延长）
+  static const Duration aiRequest = Duration(minutes: 10);
 
   /// 定位数据缓存时间
   static const Duration locationData = Duration(minutes: 30);
 
-  /// 城市数据缓存时间
+  /// 城市数据缓存时间（24小时，包含通勤建议一天只需一次）
   static const Duration cityData = Duration(hours: 24);
 
   /// 配置数据缓存时间

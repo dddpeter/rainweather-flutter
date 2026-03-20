@@ -29,6 +29,7 @@ import '../utils/logger.dart';
 import '../utils/formatters.dart';
 import '../widgets/error_dialog.dart';
 import 'hourly_screen.dart';
+import '../utils/logger.dart';
 
 class TodayScreen extends StatefulWidget {
   const TodayScreen({super.key});
@@ -279,9 +280,9 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
 
     WidgetsBinding.instance.removeObserver(this);
     // 移除定位变化监听器
-    print('📍 TodayScreen: 开始移除定位变化监听器');
+    Logger.log('📍 TodayScreen: 开始移除定位变化监听器');
     LocationChangeNotifier().removeListener(this);
-    print('📍 TodayScreen: 定位变化监听器移除完成');
+    Logger.log('📍 TodayScreen: 定位变化监听器移除完成');
 
     // 移除页面激活监听器
     PageActivationObserver().removeListener(this);
@@ -294,7 +295,7 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
 
     switch (state) {
       case AppLifecycleState.resumed:
-        print('📍 TodayScreen: 应用从后台恢复');
+        Logger.log('📍 TodayScreen: 应用从后台恢复');
         _isAppInBackground = false;
         // 恢复定时刷新
         _startPeriodicRefresh();
@@ -303,23 +304,23 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
         // 从后台恢复时只刷新数据，不分析提醒（由定时刷新处理）
         Future.delayed(const Duration(milliseconds: 500), () {
           if (_isVisible && !_isRefreshing && mounted) {
-            print('📍 TodayScreen: 准备刷新天气数据（不分析提醒）');
+            Logger.log('📍 TodayScreen: 准备刷新天气数据（不分析提醒）');
             _refreshWeatherDataOnly();
           } else {
-            print('📍 TodayScreen: 页面不可见或正在刷新，跳过后台恢复刷新');
+            Logger.log('📍 TodayScreen: 页面不可见或正在刷新，跳过后台恢复刷新');
           }
         });
         break;
 
       case AppLifecycleState.paused:
-        print('📍 TodayScreen: 应用进入后台');
+        Logger.log('📍 TodayScreen: 应用进入后台');
         _isAppInBackground = true;
         // 暂停定时刷新以节省资源
         _stopPeriodicRefresh();
         break;
 
       case AppLifecycleState.detached:
-        print('📍 TodayScreen: 应用被分离');
+        Logger.log('📍 TodayScreen: 应用被分离');
         _isAppInBackground = true;
         _stopPeriodicRefresh();
         break;
@@ -334,23 +335,23 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
   Future<void> _refreshWeatherDataOnly() async {
     // 后台恢复时不立即刷新，避免重复
     // 定时刷新机制会在30分钟后自动刷新
-    print('🔄 TodayScreen: 后台恢复，跳过立即刷新（由定时器处理）');
+    Logger.log('🔄 TodayScreen: 后台恢复，跳过立即刷新（由定时器处理）');
     return;
   }
 
   /// 定位成功回调
   @override
   void onLocationSuccess(LocationModel newLocation) {
-    print('📍 TodayScreen: 收到定位成功通知 ${newLocation.district}');
-    print(
+    Logger.log('📍 TodayScreen: 收到定位成功通知 ${newLocation.district}');
+    Logger.log(
       '📍 TodayScreen: 定位详情 - 城市: ${newLocation.city}, 区县: ${newLocation.district}, 省份: ${newLocation.province}',
     );
-    print('📍 TodayScreen: 页面可见状态: $_isVisible');
+    Logger.log('📍 TodayScreen: 页面可见状态: $_isVisible');
 
     // 如果页面可见且不在刷新中，刷新天气数据
     // 注意：不在此处分析提醒，避免重复通知
     if (_isVisible && !_isRefreshing) {
-      print('📍 TodayScreen: 页面可见，准备刷新天气数据');
+      Logger.log('📍 TodayScreen: 页面可见，准备刷新天气数据');
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         await _refreshWeatherData();
         // 刷新UI以显示更新的数据
@@ -359,19 +360,19 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
         }
       });
     } else {
-      print('📍 TodayScreen: 页面不可见或正在刷新中，跳过刷新');
+      Logger.log('📍 TodayScreen: 页面不可见或正在刷新中，跳过刷新');
     }
   }
 
   /// 定位失败回调
   @override
   void onLocationFailed(String error) {
-    print('❌ TodayScreen: 收到定位失败通知 $error');
-    print('❌ TodayScreen: 页面可见状态: $_isVisible');
+    Logger.log('❌ TodayScreen: 收到定位失败通知 $error');
+    Logger.log('❌ TodayScreen: 页面可见状态: $_isVisible');
 
     // 如果页面可见，可以显示错误信息
     if (_isVisible) {
-      print('❌ TodayScreen: 页面可见，显示错误信息');
+      Logger.log('❌ TodayScreen: 页面可见，显示错误信息');
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           ErrorToast.show(
@@ -382,7 +383,7 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
         }
       });
     } else {
-      print('❌ TodayScreen: 页面不可见，跳过显示错误信息');
+      Logger.log('❌ TodayScreen: 页面不可见，跳过显示错误信息');
     }
   }
 
@@ -396,14 +397,14 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
 
     try {
       _isRefreshing = true;
-      print('🔄 TodayScreen: 开始刷新天气数据');
+      Logger.log('🔄 TodayScreen: 开始刷新天气数据');
       final weatherProvider = context.read<WeatherProvider>();
-      print('🔄 TodayScreen: 调用 WeatherProvider.refreshWeatherData()');
+      Logger.log('🔄 TodayScreen: 调用 WeatherProvider.refreshWeatherData()');
       await weatherProvider.refreshWeatherData();
-      print('✅ TodayScreen: 天气数据刷新完成');
+      Logger.log('✅ TodayScreen: 天气数据刷新完成');
     } catch (e) {
-      print('❌ TodayScreen: 刷新天气数据失败: $e');
-      print('❌ TodayScreen: 错误堆栈: ${StackTrace.current}');
+      Logger.log('❌ TodayScreen: 刷新天气数据失败: $e');
+      Logger.log('❌ TodayScreen: 错误堆栈: ${StackTrace.current}');
     } finally {
       _isRefreshing = false;
     }
@@ -412,14 +413,14 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
   @override
   void didUpdateWidget(TodayScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    print('=== TodayScreen didUpdateWidget called ===');
+    Logger.log('=== TodayScreen didUpdateWidget called ===');
 
     // 触发页面激活通知
     triggerPageActivation();
 
     // 简化逻辑：直接尝试恢复，由WeatherProvider内部判断是否需要恢复
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      print(
+      Logger.log(
         'TodayScreen didUpdateWidget - calling restoreCurrentLocationWeather',
       );
       final weatherProvider = context.read<WeatherProvider>();
@@ -433,7 +434,7 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
     }
 
     // 调试信息
-    print(
+    Logger.log(
       'Location debug: district=${location.district}, city=${location.city}, province=${location.province}',
     );
 
@@ -557,7 +558,7 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
                       await weatherProvider.refreshWeatherData();
 
                       // 手动刷新时强制重新生成AI摘要
-                      print('🔄 TodayScreen: 手动刷新，触发AI摘要生成');
+                      Logger.log('🔄 TodayScreen: 手动刷新，触发AI摘要生成');
                       weatherProvider.generateWeatherSummary(
                         forceRefresh: true,
                       );
@@ -570,12 +571,12 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
                       // 手动刷新时分析提醒（但不发送重复通知）
                       if (data.currentWeather != null &&
                           data.currentLocation != null) {
-                        print('🔄 TodayScreen: 手动刷新天气提醒');
+                        Logger.log('🔄 TodayScreen: 手动刷新天气提醒');
                         final newAlerts = await _alertService.analyzeWeather(
                           data.currentWeather!,
                           data.currentLocation!,
                         );
-                        print(
+                        Logger.log(
                           '🔄 TodayScreen: 手动刷新天气提醒完成，新增提醒数量: ${newAlerts.length}',
                         );
 
@@ -1216,7 +1217,7 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
         children: tags,
       );
     } catch (e) {
-      print('❌ 构建农历节气信息失败: $e');
+      Logger.log('❌ 构建农历节气信息失败: $e');
       // 如果失败，显示基础农历信息
       final nongLi = weather?.current?.nongLi;
       if (nongLi != null) {
@@ -1320,7 +1321,7 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
     final totalCount = smartAlerts.length + commuteAdvices.length;
 
     // 调试信息
-    print(
+    Logger.log(
       'TodayScreen _buildAlertButton: 天气提醒数量=${smartAlerts.length}, 通勤提醒数量=${commuteAdvices.length}',
     );
 
@@ -1355,7 +1356,7 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
       await weatherProvider.forceRefreshWithLocation();
     } catch (e) {
       // 静默处理错误，不显示Toast
-      print('刷新失败: ${e.toString()}');
+      Logger.log('刷新失败: ${e.toString()}');
     }
   }
 
@@ -1378,7 +1379,7 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
         ),
       );
     } catch (e) {
-      print('❌ 获取农历信息失败: $e');
+      Logger.log('❌ 获取农历信息失败: $e');
       return const SizedBox.shrink();
     }
   }
@@ -1402,7 +1403,7 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
         ),
       );
     } catch (e) {
-      print('❌ 获取宜忌信息失败: $e');
+      Logger.log('❌ 获取宜忌信息失败: $e');
       return const SizedBox.shrink();
     }
   }
@@ -1431,7 +1432,7 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
         ),
       );
     } catch (e) {
-      print('❌ 获取节气信息失败: $e');
+      Logger.log('❌ 获取节气信息失败: $e');
       return const SizedBox.shrink();
     }
   }

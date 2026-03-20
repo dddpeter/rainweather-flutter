@@ -86,6 +86,16 @@ class Logger {
     }
   }
 
+  /// 通用日志方法（用于替换 print()）
+  /// 在 Debug 模式下显示，Release 模式下过滤
+  static void log(dynamic message, {String? tag}) {
+    if (_isDebugMode) {
+      final timestamp = DateTime.now().toString().substring(11, 19);
+      final finalTag = tag ?? _tag;
+      print('[$timestamp] 📝 $finalTag: $message');
+    }
+  }
+
   /// 内部打印方法
   static void _print(
     String prefix,

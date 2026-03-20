@@ -19,6 +19,7 @@ import '../models/sun_moon_index_model.dart';
 import '../utils/weather_icon_helper.dart';
 import '../utils/formatters.dart';
 import '../screens/weather_alerts_screen.dart';
+import '../utils/logger.dart';
 
 /// 城市天气屏幕基类
 /// 提取 CityWeatherSwipeScreen 和 CityWeatherTabsScreen 的公共逻辑
@@ -59,7 +60,7 @@ abstract class CityWeatherScreenBase<T extends StatefulWidget> extends State<T> 
           );
         }
       } catch (e) {
-        print('❌ 获取城市天气失败: $e');
+        Logger.log('❌ 获取城市天气失败: $e');
         // 显示错误提示
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -79,7 +80,7 @@ abstract class CityWeatherScreenBase<T extends StatefulWidget> extends State<T> 
     super.didUpdateWidget(oldWidget);
     // 如果城市名称发生变化，重新获取天气数据
     if (getOldCityName(oldWidget) != cityName) {
-      print(
+      Logger.log(
         '🏙️ ${widget.runtimeType}: City changed from ${getOldCityName(oldWidget)} to $cityName',
       );
       WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -272,7 +273,7 @@ abstract class CityWeatherScreenBase<T extends StatefulWidget> extends State<T> 
     try {
       sunMoonIndexData = weatherProvider.sunMoonIndexData;
     } catch (e) {
-      print('获取日出日落和生活指数数据失败: $e');
+      Logger.log('获取日出日落和生活指数数据失败: $e');
     }
 
     // 使用WeatherShareService生成并预览海报
@@ -297,7 +298,7 @@ abstract class CityWeatherScreenBase<T extends StatefulWidget> extends State<T> 
         }
       }
     } catch (e) {
-      print('分享天气海报失败: $e');
+      Logger.log('分享天气海报失败: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -546,7 +547,7 @@ abstract class CityWeatherScreenBase<T extends StatefulWidget> extends State<T> 
 
             // 如果正在生成中，等待一下再检查
             if (weatherProvider.isGeneratingSummary) {
-              print('⏳ AI摘要正在生成中，等待完成...');
+              Logger.log('⏳ AI摘要正在生成中，等待完成...');
               // 等待最多5秒
               for (int i = 0; i < 50; i++) {
                 await Future.delayed(const Duration(milliseconds: 100));
@@ -564,7 +565,7 @@ abstract class CityWeatherScreenBase<T extends StatefulWidget> extends State<T> 
             if ((weatherProvider.weatherSummary == null ||
                     weatherProvider.weatherSummary!.isEmpty) &&
                 !weatherProvider.isGeneratingSummary) {
-              print('🔄 开始生成城市天气AI摘要: $cityName');
+              Logger.log('🔄 开始生成城市天气AI摘要: $cityName');
               await weatherProvider.generateWeatherSummary(
                 cityName: cityName, // 传入城市名称
               );
@@ -577,10 +578,10 @@ abstract class CityWeatherScreenBase<T extends StatefulWidget> extends State<T> 
             }
 
             // 如果仍然没有内容，返回默认内容而不是抛出异常
-            print('⚠️ 无法获取AI摘要，使用默认内容');
+            Logger.log('⚠️ 无法获取AI摘要，使用默认内容');
             return '今日天气舒适，适合出行。注意温差变化，合理增减衣物。';
           } catch (e) {
-            print('❌ 加载AI智能助手失败: $e');
+            Logger.log('❌ 加载AI智能助手失败: $e');
             // 返回默认内容而不是抛出异常，避免无限重试
             return '今日天气舒适，适合出行。注意温差变化，合理增减衣物。';
           }
@@ -924,7 +925,7 @@ abstract class CityWeatherScreenBase<T extends StatefulWidget> extends State<T> 
 
             // 如果正在生成中，等待一下再检查
             if (weatherProvider.isGenerating15dSummary) {
-              print('⏳ 15日AI总结正在生成中，等待完成...');
+              Logger.log('⏳ 15日AI总结正在生成中，等待完成...');
               // 等待最多5秒
               for (int i = 0; i < 50; i++) {
                 await Future.delayed(const Duration(milliseconds: 100));
@@ -942,7 +943,7 @@ abstract class CityWeatherScreenBase<T extends StatefulWidget> extends State<T> 
             if ((weatherProvider.forecast15dSummary == null ||
                     weatherProvider.forecast15dSummary!.isEmpty) &&
                 !weatherProvider.isGenerating15dSummary) {
-              print('🔄 开始生成城市15日天气AI总结: $cityName');
+              Logger.log('🔄 开始生成城市15日天气AI总结: $cityName');
               await weatherProvider.generateForecast15dSummary(
                 cityName: cityName, // 传入城市名称
               );
@@ -955,10 +956,10 @@ abstract class CityWeatherScreenBase<T extends StatefulWidget> extends State<T> 
             }
 
             // 如果仍然没有内容，返回默认内容而不是抛出异常
-            print('⚠️ 无法获取15日AI总结，使用默认内容');
+            Logger.log('⚠️ 无法获取15日AI总结，使用默认内容');
             return '未来半月天气平稳，温度变化不大，适合安排户外活动。';
           } catch (e) {
-            print('❌ 加载15日天气趋势失败: $e');
+            Logger.log('❌ 加载15日天气趋势失败: $e');
             // 返回默认内容而不是抛出异常，避免无限重试
             return '未来半月天气平稳，温度变化不大，适合安排户外活动。';
           }
@@ -1437,11 +1438,11 @@ abstract class CityWeatherScreenBase<T extends StatefulWidget> extends State<T> 
         if (now.isBefore(expiryTime)) {
           validAlerts.add(alert);
         } else {
-          print('🗑️ 过滤过期预警: ${alert.type} (发布时间: ${alert.publishTime})');
+          Logger.log('🗑️ 过滤过期预警: ${alert.type} (发布时间: ${alert.publishTime})');
         }
       } catch (e) {
         // 解析失败，保留该预警
-        print('⚠️ 无法解析预警时间: ${alert.publishTime}，保留该预警');
+        Logger.log('⚠️ 无法解析预警时间: ${alert.publishTime}，保留该预警');
         validAlerts.add(alert);
       }
     }

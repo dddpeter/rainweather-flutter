@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import '../utils/logger.dart';
 
 /// 请求去重服务
 /// 防止相同请求并发执行，提高性能和稳定性
@@ -22,7 +23,7 @@ class RequestDeduplicator {
     // 如果相同请求正在进行，等待其完成
     if (_pendingRequests.containsKey(key)) {
       if (kDebugMode) {
-        print('🔄 请求去重：等待相同请求完成 - $key');
+        Logger.log('🔄 请求去重：等待相同请求完成 - $key');
       }
       return await _pendingRequests[key]!.future as T;
     }
@@ -33,7 +34,7 @@ class RequestDeduplicator {
 
     try {
       if (kDebugMode) {
-        print('🚀 开始执行请求 - $key');
+        Logger.log('🚀 开始执行请求 - $key');
       }
 
       // 执行实际请求，设置超时
@@ -62,7 +63,7 @@ class RequestDeduplicator {
       // 清理请求记录
       _pendingRequests.remove(key);
       if (kDebugMode) {
-        print('✅ 请求完成并清理 - $key');
+        Logger.log('✅ 请求完成并清理 - $key');
       }
     }
   }
@@ -73,7 +74,7 @@ class RequestDeduplicator {
     if (completer != null && !completer.isCompleted) {
       completer.completeError(Exception('请求被取消'));
       if (kDebugMode) {
-        print('❌ 请求已取消 - $key');
+        Logger.log('❌ 请求已取消 - $key');
       }
     }
   }
@@ -84,7 +85,7 @@ class RequestDeduplicator {
       cancel(key);
     }
     if (kDebugMode) {
-      print('🛑 所有请求已取消');
+      Logger.log('🛑 所有请求已取消');
     }
   }
 

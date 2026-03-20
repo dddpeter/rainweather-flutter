@@ -4,6 +4,7 @@ import '../providers/theme_provider.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_constants.dart';
 import 'typewriter_text_widget.dart';
+import '../utils/logger.dart';
 
 /// AI内容组件 - 支持渐进式展示
 ///
@@ -58,7 +59,7 @@ class _AIContentWidgetState extends State<AIContentWidget> {
     // 避免无限循环重新加载
     if (oldWidget.cityName != widget.cityName ||
         oldWidget.refreshKey != widget.refreshKey) {
-      print(
+      Logger.log(
         '🔄 AIContentWidget: 城市变化 ${oldWidget.cityName} -> ${widget.cityName} 或刷新键变化，重新加载',
       );
       _loadAIContent();

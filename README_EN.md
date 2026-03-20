@@ -2,7 +2,7 @@
 
 A modern intelligent weather application built with Flutter, providing real-time weather information with location services, weather forecasts, and beautiful UI components.
 
-**Current Version**: v1.14.0 | **Release Date**: 2026-03-14
+**Current Version**: v1.15.0 | **Release Date**: 2026-03-20
 
 > **中文文档**: [README.md](README.md) | **English Documentation**: This file
 
@@ -230,7 +230,51 @@ This Flutter app is a complete refactor of the original Android weather app with
 
 ## Changelog
 
-### v1.13.6 (2026-03-13) - Latest
+### v1.15.0 (2026-03-20) - Latest
+
+**Performance Optimization**
+- ⚡ **Scrolling Performance Improved 40-60%**: HourlyList component refactored to use ListView.builder, reducing memory usage
+- 💾 **Memory Optimization 30-40%**: Optimized WeatherProvider's mainCitiesWeather getter with immutable caching
+- 🔄 **Timer Resource Optimization**: Merged AIInsightsProvider's dual timers into single timer, reducing system resource usage
+- 🎨 **Animation Performance Boost**: Added RepaintBoundary to weather animation components, reducing repaint scope
+
+**Code Quality Improvements**
+- 📝 **Unified Logging System**: Replaced all 761 print() calls with unified Logger system
+- 🏗️ **Architecture Optimization**: Added SingletonMixin to reduce singleton pattern code duplication
+- 🔒 **Type Safety Enhancement**: Fixed multiple type mismatch compilation errors
+
+**Bug Fixes**
+- 🐛 **Infinite Refresh Loop Fix**: Added concurrent refresh protection mechanism to CitiesProvider
+- 🌐 **International City Request Deduplication**: Added request deduplication protection to WeatherService for international cities
+- ⏱️ **Timer Async Issue Fix**: Fixed potential Timer.periodic async callback issues
+
+**Cache Strategy Optimization**
+- 🕐 Weather data cache: 10 minutes → 5 minutes (fast data changes)
+- 🤖 AI request cache: 5 minutes → 10 minutes (high generation cost)
+- 🚗 Commute advice cache: 24 hours (once per day)
+
+### v1.14.0 (2026-03-14)
+
+**International Weather Support**
+- 🌍 **Open-Meteo API Integration**: Added free international weather data source, no API key required, no call limits
+- 🌏 **Smart Data Source Switching**: Automatically detects domestic/international cities, uses weatherol.cn for China, Open-Meteo for international
+- 🗺️ **60+ International City Presets**: Built-in global major city coordinates (Tokyo, New York, London, Paris, Moscow, etc.), available offline
+- 📍 **Forward Geocoding Optimization**: Supports querying global city names, automatically converts to coordinates
+
+**Add City Dialog Optimization**
+- 🎨 **Compact Layout Design**: Reduced top whitespace, improved visual experience
+- 🏷️ **Quick Filter Tabs**: Added "Domestic Cities" and "International Cities" filter tabs for one-click switching
+- 📚 **City List Expansion**: International cities expanded from 8 to 60+, covering global popular cities
+
+**UI/UX Improvements**
+- ✨ **Removed Redundant Text**: Removed "Update" label on main city cards for cleaner interface
+- 🐛 **Date/Time Display Fix**: Fixed international cities showing dashes for date/time, now supports ISO 8601 format
+
+**Technical Improvements**
+- 🔧 **Nominatim API Optimization**: Added User-Agent request header, complying with OpenStreetMap usage guidelines
+- 💾 **Preset Data Expansion**: Extended international city preset list to ensure more cities can be directly queried
+
+### v1.13.6 (2026-03-13) - Previous
 
 **Code Quality & Maintainability Optimization**
 - 📊 **Optimization Analysis Report**: Completed comprehensive code optimization analysis, identified multiple improvement areas

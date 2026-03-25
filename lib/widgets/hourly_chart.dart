@@ -162,7 +162,8 @@ class HourlyChart extends StatelessWidget {
                                               ),
                                             ),
                                           ),
-                                          borderData: ChartStyles.getBorderData(),
+                                          borderData:
+                                              ChartStyles.getBorderData(),
                                           lineBarsData: lineBarsData,
                                           minY:
                                               _getMinTemperature(
@@ -245,14 +246,14 @@ class HourlyChart extends StatelessWidget {
           final yRatio = (maxTemp - temp) / tempRange;
           final yPos = availableHeight * yRatio;
 
+          final topPos = (yPos - 48).clamp(0.0, availableHeight - 50);
           labels.add(
             Positioned(
-              left: xPos - 12, // 图标宽度的一半
-              top: yPos - 48, // 在数据点上方（图标24px + 温度20px + 间距4px）
+              left: xPos - 12,
+              top: topPos,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // 天气图标
                   Image.asset(
                     'assets/images/$weatherIcon',
                     width: 24,
@@ -262,7 +263,6 @@ class HourlyChart extends StatelessWidget {
                     },
                   ),
                   const SizedBox(height: 2),
-                  // 温度值
                   Text(
                     '${temp.toInt()}',
                     style: TextStyle(
@@ -270,7 +270,6 @@ class HourlyChart extends StatelessWidget {
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
                       shadows: [
-                        // 白色描边效果（四个方向）
                         Shadow(
                           color: AppColors.cardBackground,
                           offset: const Offset(-0.8, -0.8),

@@ -29,7 +29,6 @@ import '../utils/logger.dart';
 import '../utils/formatters.dart';
 import '../widgets/error_dialog.dart';
 import 'hourly_screen.dart';
-import '../utils/logger.dart';
 
 class TodayScreen extends StatefulWidget {
   const TodayScreen({super.key});
@@ -1002,7 +1001,7 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
 
     final current = weather.current.current;
 
-    String _formatNumber(dynamic value) {
+    String formatNumber(dynamic value) {
       if (value == null) return '--';
       if (value is String) return value;
       return value.toString();
@@ -1015,7 +1014,7 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
           child: _buildSimpleInfoChip(
             Icons.water_drop,
             '湿度',
-            '${_formatNumber(current.humidity)}%',
+            '${formatNumber(current.humidity)}%',
           ),
         ),
         const SizedBox(width: 8),
@@ -1033,7 +1032,7 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
           child: _buildSimpleInfoChip(
             Icons.compress,
             '气压',
-            '${_formatNumber(current.airpressure)}hpa',
+            '${formatNumber(current.airpressure)}hpa',
           ),
         ),
         const SizedBox(width: 8),
@@ -1042,7 +1041,7 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
           child: _buildSimpleInfoChip(
             Icons.visibility,
             '能见度',
-            '${_formatNumber(current.visibility)}km',
+            '${formatNumber(current.visibility)}km',
           ),
         ),
       ],

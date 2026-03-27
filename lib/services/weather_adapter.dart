@@ -416,8 +416,9 @@ class WeatherAdapter {
     int riskScore = 0;
 
     // 温度影响
-    if (temp < 5) riskScore += 3;
-    else if (temp < 15) riskScore += 2;
+    if (temp < 5) {
+      riskScore += 3;
+    } else if (temp < 15) riskScore += 2;
     else if (temp < 25) riskScore += 1;
 
     // 天气影响
@@ -523,13 +524,15 @@ class WeatherAdapter {
     int suitabilityScore = 10;
 
     // 温度影响
-    if (temp < -10 || temp > 38) suitabilityScore -= 5;
-    else if (temp < 0 || temp > 35) suitabilityScore -= 3;
+    if (temp < -10 || temp > 38) {
+      suitabilityScore -= 5;
+    } else if (temp < 0 || temp > 35) suitabilityScore -= 3;
     else if (temp < 10 || temp > 30) suitabilityScore -= 1;
 
     // 天气影响
-    if (isStormy) suitabilityScore -= 5;
-    else if (isRainy || isSnowy) suitabilityScore -= 3;
+    if (isStormy) {
+      suitabilityScore -= 5;
+    } else if (isRainy || isSnowy) suitabilityScore -= 3;
 
     // 风力影响
     if (isWindy) suitabilityScore -= 2;

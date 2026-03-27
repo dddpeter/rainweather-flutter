@@ -257,7 +257,7 @@ class CityWeatherProvider extends ChangeNotifier {
         }
       } else {
         // 国内城市：从API获取日出日落和生活指数数据
-        if (cityId != null && cityId.isNotEmpty) {
+        if (cityId.isNotEmpty) {
           final response = await SunMoonIndexService.getSunMoonAndIndex(cityId);
           if (response != null && response.data != null) {
             _citySunMoonIndexMap[cityName] = response.data!;
@@ -300,7 +300,7 @@ class CityWeatherProvider extends ChangeNotifier {
       if (_aiInsightsProvider != null) {
         Logger.d('委托给AIInsightsProvider生成每日摘要: $cityName', tag: 'CityWeatherProvider');
         final summary = await _aiInsightsProvider!.generateDailySummary(weather);
-        if (summary != null && summary.isNotEmpty) {
+        if (summary.isNotEmpty) {
           _cityWeatherSummaryMap[cityName] = summary;
           Logger.d('成功生成城市天气AI摘要: $cityName', tag: 'CityWeatherProvider');
           notifyListeners();
@@ -342,7 +342,7 @@ class CityWeatherProvider extends ChangeNotifier {
       if (_aiInsightsProvider != null) {
         Logger.d('委托给AIInsightsProvider生成15日总结: $cityName', tag: 'CityWeatherProvider');
         final summary = await _aiInsightsProvider!.generate15dSummary(weather.forecast15d!);
-        if (summary != null && summary.isNotEmpty) {
+        if (summary.isNotEmpty) {
           _cityForecast15dSummaryMap[cityName] = summary;
           Logger.d('成功生成城市15日预报AI摘要: $cityName', tag: 'CityWeatherProvider');
           notifyListeners();

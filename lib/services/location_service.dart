@@ -1,13 +1,14 @@
 import 'dart:async';
+
 import 'package:geolocator/geolocator.dart';
+
 import '../models/location_model.dart';
 import '../utils/app_logger.dart';
 import '../utils/logger.dart';
-import 'geocoding_service.dart';
-import 'enhanced_geocoding_service.dart';
-import 'ip_location_service.dart';
 import 'baidu_location_service.dart';
-import 'amap_location_service.dart';
+import 'enhanced_geocoding_service.dart';
+import 'geocoding_service.dart';
+import 'ip_location_service.dart';
 import 'tencent_location_service.dart';
 
 /// 定位权限结果枚举
@@ -27,14 +28,9 @@ class LocationService {
   LocationModel? _cachedLocation;
   bool _isLocating = false; // 防止并发定位
   final GeocodingService _geocodingService = GeocodingService.getInstance();
-  final EnhancedGeocodingService _enhancedGeocodingService =
-      EnhancedGeocodingService.getInstance();
-  final BaiduLocationService _baiduLocationService =
-      BaiduLocationService.getInstance();
-  final AMapLocationService _amapLocationService =
-      AMapLocationService.getInstance();
-  final TencentLocationService _tencentLocationService =
-      TencentLocationService.getInstance();
+  final EnhancedGeocodingService _enhancedGeocodingService = EnhancedGeocodingService.getInstance();
+  final BaiduLocationService _baiduLocationService = BaiduLocationService.getInstance();
+  final TencentLocationService _tencentLocationService = TencentLocationService.getInstance();
 
   LocationService._();
 
@@ -56,17 +52,13 @@ class LocationService {
         return LocationPermissionResult.deniedForever;
       }
 
-      if (permission == LocationPermission.whileInUse ||
-          permission == LocationPermission.always) {
+      if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
         return LocationPermissionResult.granted;
       }
 
       return LocationPermissionResult.denied;
     } catch (e, stackTrace) {
-      AppLogger.e('检查定位权限错误',
-        error: e,
-        stackTrace: stackTrace,
-        tag: 'LocationService');
+      AppLogger.e('检查定位权限错误', error: e, stackTrace: stackTrace, tag: 'LocationService');
       return LocationPermissionResult.error;
     }
   }
@@ -122,20 +114,14 @@ class LocationService {
         return LocationPermissionResult.deniedForever;
       }
 
-      if (permission == LocationPermission.whileInUse ||
-          permission == LocationPermission.always) {
+      if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
         AppLogger.d('定位权限已授予: $permission', tag: 'LocationService');
         return LocationPermissionResult.granted;
       }
 
       return LocationPermissionResult.denied;
     } catch (e, stackTrace) {
-      AppLogger.e(
-        '请求定位权限错误',
-        tag: 'LocationService',
-        error: e,
-        stackTrace: stackTrace,
-      );
+      AppLogger.e('请求定位权限错误', tag: 'LocationService', error: e, stackTrace: stackTrace);
       return LocationPermissionResult.error;
     }
   }
@@ -155,22 +141,15 @@ class LocationService {
       AppLogger.d('尝试腾讯定位...', tag: 'LocationService');
       LocationModel? tencentLocation;
       try {
-        tencentLocation = await _tencentLocationService
-            .getCurrentLocation()
-            .timeout(
-              const Duration(seconds: 8),
-              onTimeout: () {
-                AppLogger.w('腾讯定位超时，切换到高德地图定位', tag: 'LocationService');
-                return null;
-              },
-            );
-      } catch (e, stackTrace) {
-        AppLogger.e(
-          '腾讯定位失败',
-          tag: 'LocationService',
-          error: e,
-          stackTrace: stackTrace,
+        tencentLocation = await _tencentLocationService.getCurrentLocation().timeout(
+          const Duration(seconds: 8),
+          onTimeout: () {
+            AppLogger.w('腾讯定位超时，切换到高德地图定位', tag: 'LocationService');
+            return null;
+          },
         );
+      } catch (e, stackTrace) {
+        AppLogger.e('腾讯定位失败', tag: 'LocationService', error: e, stackTrace: stackTrace);
       }
 
       if (tencentLocation != null) {
@@ -182,12 +161,7 @@ class LocationService {
       // 继续尝试其他定位方式...
       return null;
     } catch (e, stackTrace) {
-      AppLogger.e(
-        '定位服务错误',
-        tag: 'LocationService',
-        error: e,
-        stackTrace: stackTrace,
-      );
+      AppLogger.e('定位服务错误', tag: 'LocationService', error: e, stackTrace: stackTrace);
 
       if (e is LocationException) {
         rethrow;
@@ -207,56 +181,17 @@ class LocationService {
     return _cachedLocation;
   }
 
-  /// Try IP location with proxy detection
-  Future<LocationModel?> _tryIpLocationWithProxyDetection() async {
-    try {
-      AppLogger.d('尝试IP定位...', tag: 'LocationService');
-      final ipLocationService = IpLocationService.getInstance();
-      final location = await ipLocationService.getLocationByIp();
-
-      if (location != null) {
-        AppLogger.i('IP定位成功: ${location.district}', tag: 'LocationService');
-
-        // Check if the location might be from a proxy/VPN
-        if (await _isLikelyProxyLocation(location)) {
-          AppLogger.w('检测到可能的代理/VPN位置，建议使用GPS定位', tag: 'LocationService');
-          // Still return the location but with a warning
-          location.isProxyDetected = true;
-        }
-
-        // Cache the IP location
-        _cachedLocation = location;
-        return location;
-      } else {
-        AppLogger.w('IP定位失败', tag: 'LocationService');
-        return null;
-      }
-    } catch (e, stackTrace) {
-      AppLogger.e(
-        'IP定位错误',
-        tag: 'LocationService',
-        error: e,
-        stackTrace: stackTrace,
-      );
-      return null;
-    }
-  }
-
   /// 检查位置信息是否为"未知"
   bool _isLocationUnknown(LocationModel location) {
     // 检查关键字段是否为"未知"或空值
     final unknownValues = ['未知', 'unknown', '', 'null', 'None', 'N/A'];
 
     // 检查城市、区县、省份是否包含未知值
-    bool cityUnknown =
-        unknownValues.contains(location.city.toLowerCase()) ||
-        location.city.isEmpty;
+    bool cityUnknown = unknownValues.contains(location.city.toLowerCase()) || location.city.isEmpty;
     bool districtUnknown =
-        unknownValues.contains(location.district.toLowerCase()) ||
-        location.district.isEmpty;
+        unknownValues.contains(location.district.toLowerCase()) || location.district.isEmpty;
     bool provinceUnknown =
-        unknownValues.contains(location.province.toLowerCase()) ||
-        location.province.isEmpty;
+        unknownValues.contains(location.province.toLowerCase()) || location.province.isEmpty;
 
     // 如果城市、区县、省份都是未知，则认为位置未知
     if (cityUnknown && districtUnknown && provinceUnknown) {
@@ -417,8 +352,7 @@ class LocationService {
         return false;
       }
 
-      return permission == LocationPermission.whileInUse ||
-          permission == LocationPermission.always;
+      return permission == LocationPermission.whileInUse || permission == LocationPermission.always;
     } catch (e) {
       Logger.log('请求应用定位设置失败: $e');
       return false;
@@ -473,13 +407,10 @@ class LocationService {
       // ① 检查权限
       LocationPermission permission = await Geolocator.checkPermission();
       bool ok =
-          permission == LocationPermission.always ||
-          permission == LocationPermission.whileInUse;
+          permission == LocationPermission.always || permission == LocationPermission.whileInUse;
       if (!ok) {
         permission = await Geolocator.requestPermission();
-        ok =
-            permission == LocationPermission.whileInUse ||
-            permission == LocationPermission.always;
+        ok = permission == LocationPermission.whileInUse || permission == LocationPermission.always;
       }
       if (!ok) throw '无定位权限';
 
@@ -510,8 +441,7 @@ class LocationService {
       Logger.log('🔍 验证GPS定位 - 步骤1: 检查权限');
       LocationPermission permission = await Geolocator.checkPermission();
       bool hasPermission =
-          permission == LocationPermission.always ||
-          permission == LocationPermission.whileInUse;
+          permission == LocationPermission.always || permission == LocationPermission.whileInUse;
       result['permission_check'] = hasPermission;
       Logger.log('权限状态: $permission, 有效权限: $hasPermission');
 
@@ -532,9 +462,7 @@ class LocationService {
 
       if (finalLocation != null) {
         result['final_location'] = finalLocation;
-        result['location_method'] = finalLocation.isProxyDetected
-            ? 'IP定位'
-            : 'GPS定位';
+        result['location_method'] = finalLocation.isProxyDetected ? 'IP定位' : 'GPS定位';
 
         // 如果成功定位，更新位置服务状态
         result['service_enabled'] = true;
@@ -602,10 +530,7 @@ class LocationService {
 
       if (location == null) {
         Logger.log('🔄 增强地理编码失败，尝试备用方法...');
-        location = await _geocodingService.reverseGeocode(
-          position.latitude,
-          position.longitude,
-        );
+        location = await _geocodingService.reverseGeocode(position.latitude, position.longitude);
       }
 
       if (location == null) {
@@ -650,10 +575,7 @@ class LocationService {
 
       if (location == null) {
         Logger.log('🔄 增强地理编码失败，尝试备用方法...');
-        location = await _geocodingService.reverseGeocode(
-          position.latitude,
-          position.longitude,
-        );
+        location = await _geocodingService.reverseGeocode(position.latitude, position.longitude);
       }
 
       if (location == null) {
@@ -728,8 +650,7 @@ class LocationService {
   Future<LocationModel?> getCurrentLocationWithBaidu() async {
     try {
       Logger.log('📍 使用百度定位获取当前位置...');
-      LocationModel? location = await _baiduLocationService
-          .getCurrentLocation();
+      LocationModel? location = await _baiduLocationService.getCurrentLocation();
       if (location != null) {
         Logger.log('✅ 百度定位成功: ${location.district}');
         _cachedLocation = location;

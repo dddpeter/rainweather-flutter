@@ -187,7 +187,7 @@ class WeatherWidgetService {
       result.add(
         HourlyForecast(
           time: timeStr,
-          temperature: '${hour.temperature?.replaceAll('℃', '°') ?? '--°'}',
+          temperature: hour.temperature?.replaceAll('℃', '°') ?? '--°',
           weatherIcon: hour.weatherPic ?? '',
           weatherText: hour.weather ?? '',
         ),
@@ -202,7 +202,7 @@ class WeatherWidgetService {
     try {
       // 解析时间字符串，如 "21:00"
       final timeParts = timeStr.split(':');
-      if (timeParts.length >= 1) {
+      if (timeParts.isNotEmpty) {
         final hour = int.parse(timeParts[0]);
         return '${hour}时';
       }

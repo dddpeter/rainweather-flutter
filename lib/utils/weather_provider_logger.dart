@@ -5,8 +5,8 @@ import 'package:flutter/foundation.dart';
 class WeatherProviderLogger {
   // 日志级别开关
   static bool _enableDebugLogs = kDebugMode; // Debug模式默认开启
-  static bool _enableInfoLogs = true;
-  static bool _enableErrorLogs = true;
+  static final bool _enableInfoLogs = true;
+  static final bool _enableErrorLogs = true;
 
   /// 启用/禁用Debug日志
   static void setEnableDebugLogs(bool enable) {

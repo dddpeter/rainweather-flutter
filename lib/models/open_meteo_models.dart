@@ -1,4 +1,5 @@
 /// Open-Meteo API 响应数据模型
+library;
 
 /// Open-Meteo 当前天气数据
 class OpenMeteoCurrentWeather {

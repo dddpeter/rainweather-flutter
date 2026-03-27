@@ -185,7 +185,7 @@ class WeatherShareService {
       // 3. 生成海报
       if (!context.mounted) return false;
 
-      final Uint8List? imageBytes = await _screenshotController
+      final Uint8List imageBytes = await _screenshotController
           .captureFromWidget(
             WeatherPosterWidget(
               weather: weather,
@@ -197,13 +197,6 @@ class WeatherShareService {
             context: context,
             pixelRatio: 2.0, // 高清图片
           );
-
-      if (imageBytes == null) {
-        if (context.mounted) {
-          _showMessage(context, '生成海报失败');
-        }
-        return false;
-      }
 
       // 4. 保存到相册
       try {

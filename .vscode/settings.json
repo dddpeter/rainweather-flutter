@@ -1,7 +1,5 @@
 {
   // Flutter 配置
-  "dart.flutterSdkPath": "flutter",
-  "dart.sdkPath": "dart",
 
   // 启用 Flutter LSP 功能
   "dart.enableLsp": true,
@@ -9,14 +7,8 @@
   "dart.lineLength": 100,
 
   // 分析选项
-  "dart.analyzeAdditionalFiles": [
-    "lib/**/*.dart"
-  ],
-  "dart.excludeFolders": [
-    "build/**",
-    ".dart_tool/**",
-    "ios/Pods/**"
-  ],
+  "dart.analyzeAdditionalFiles": ["lib/**/*.dart"],
+  "dart.excludeFolders": ["build/**", ".dart_tool/**", "ios/Pods/**"],
 
   // 自动完成
   "dart.completeFunctionCalls": true,
@@ -28,23 +20,16 @@
   "dart.debugSdkLibraries": false,
 
   // 测试配置
-  "dart.testAdditionalArgs": [
-    "--no-sound-null-safety"
-  ],
+  "dart.testAdditionalArgs": ["--no-sound-null-safety"],
 
   // 代码检查
-  "dart.analyzerAdditionalArgs": [
-    "--enable-experiment",
-    "null-safety"
-  ],
+  "dart.analyzerAdditionalArgs": ["--enable-experiment", "null-safety"],
 
   // Flutter 特定配置
   "flutter.flutterSdkPath": "flutter",
 
   // 构建
-  "dart.buildRunnerAdditionalArgs": [
-    "--delete-conflicting-outputs"
-  ],
+  "dart.buildRunnerAdditionalArgs": ["--delete-conflicting-outputs"],
 
   // 编辑器配置
   "editor.formatOnSave": true,
@@ -72,5 +57,6 @@
   },
 
   // CMake 相关（项目中可能有）
-  "cmake.ignoreCMakeListsMissing": true
+  "cmake.ignoreCMakeListsMissing": true,
+  "cSpell.words": ["prefs"]
 }

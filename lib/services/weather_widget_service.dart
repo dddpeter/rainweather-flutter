@@ -1,12 +1,14 @@
 import 'dart:convert';
 import 'dart:math' as math;
-import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:home_widget/home_widget.dart';
 import 'package:lunar/lunar.dart';
-import '../models/weather_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../models/location_model.dart';
-import '../widgets/weather_widget_config.dart';
+import '../models/weather_model.dart';
 import '../utils/logger.dart';
+import '../widgets/weather_widget_config.dart';
 
 /// 天气小组件服务
 class WeatherWidgetService {
@@ -28,11 +30,7 @@ class WeatherWidgetService {
       final now = DateTime.now();
 
       // 准备小组件数据
-      final widgetData = _prepareWidgetData(
-        weatherData: weatherData,
-        location: location,
-        now: now,
-      );
+      final widgetData = _prepareWidgetData(weatherData: weatherData, location: location, now: now);
 
       // 使用 SharedPreferences 和 home_widget 插件更新小组件
       final prefs = await SharedPreferences.getInstance();
@@ -44,8 +42,7 @@ class WeatherWidgetService {
       );
       await prefs.setString(
         'gregorian_date',
-        widgetData[WeatherWidgetConfig.keyGregorianDate] as String? ??
-            '--月--日 星期--',
+        widgetData[WeatherWidgetConfig.keyGregorianDate] as String? ?? '--月--日 星期--',
       );
       await prefs.setString(
         'current_temp',
@@ -93,8 +90,7 @@ class WeatherWidgetService {
       // 生活提示数据
       await prefs.setString(
         'life_tips',
-        widgetData[WeatherWidgetConfig.keyLifeTips] as String? ??
-            '生活提示：建议穿薄外套，无需带伞',
+        widgetData[WeatherWidgetConfig.keyLifeTips] as String? ?? '生活提示：建议穿薄外套，无需带伞',
       );
 
       // 通知Widget更新
@@ -158,12 +154,8 @@ class WeatherWidgetService {
       WeatherWidgetConfig.keyLunarDate: lunarDate,
       WeatherWidgetConfig.keyAirQuality: airQuality,
       WeatherWidgetConfig.keyLifeTips: lifeTips,
-      WeatherWidgetConfig.keyHourlyForecast: hourlyForecast
-          .map((h) => h.toMap())
-          .toList(),
-      WeatherWidgetConfig.keyForecast5d: forecast5d
-          .map((f) => f.toMap())
-          .toList(),
+      WeatherWidgetConfig.keyHourlyForecast: hourlyForecast.map((h) => h.toMap()).toList(),
+      WeatherWidgetConfig.keyForecast5d: forecast5d.map((f) => f.toMap()).toList(),
     };
   }
 
@@ -266,10 +258,7 @@ class WeatherWidgetService {
     final scaleMax = globalMaxTemp + offset + 3;
 
     // 调试输出全局范围
-    Logger.d(
-      '全局温度范围: ${globalMinTemp}° 到 ${globalMaxTemp}°',
-      tag: 'WeatherWidgetService',
-    );
+    Logger.d('全局温度范围: ${globalMinTemp}° 到 ${globalMaxTemp}°', tag: 'WeatherWidgetService');
     Logger.d('五天最大温差: ${maxTempDiff}°', tag: 'WeatherWidgetService');
     Logger.d('映射偏移: $offset, 标尺最大值: $scaleMax', tag: 'WeatherWidgetService');
 
@@ -301,9 +290,7 @@ class WeatherWidgetService {
       final lowProgress = ((mappedLow / scaleMax) * 100).round();
 
       // 确保低温进度至少为1%（如果温度范围不为0）
-      final finalLowProgress = tempHigh > tempLow
-          ? math.max(1, lowProgress)
-          : lowProgress;
+      final finalLowProgress = tempHigh > tempLow ? math.max(1, lowProgress) : lowProgress;
 
       // 调试输出
       Logger.d(
@@ -398,8 +385,7 @@ class WeatherWidgetService {
   /// 获取生活提示（穿衣+带伞）
   String _getLifeTips(WeatherModel weatherData) {
     final currentWeather = weatherData.current?.current?.weather ?? '';
-    final currentTemp =
-        int.tryParse(weatherData.current?.current?.temperature ?? '') ?? 0;
+    final currentTemp = int.tryParse(weatherData.current?.current?.temperature ?? '') ?? 0;
 
     // 穿衣建议
     String dressAdvice = '';

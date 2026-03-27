@@ -1,26 +1,28 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
-import '../models/city_weather_data.dart';
-import '../models/weather_model.dart';
-import '../models/sun_moon_index_model.dart';
-import '../services/weather_service.dart';
-import '../services/database_service.dart';
-import '../services/sun_moon_index_service.dart';
-import '../services/geocoding_service.dart';
-import '../services/weather_adapter.dart';
-import '../providers/ai_insights_provider.dart';
+
 import '../constants/app_constants.dart';
+import '../models/city_weather_data.dart';
+import '../models/sun_moon_index_model.dart';
+import '../models/weather_model.dart';
+import '../providers/ai_insights_provider.dart';
+import '../services/database_service.dart';
+import '../services/geocoding_service.dart';
+import '../services/sun_moon_index_service.dart';
+import '../services/weather_adapter.dart';
+import '../services/weather_service.dart';
 import '../utils/logger.dart';
 
 /// 城市天气数据Provider
-/// 
+///
 /// 专门用于管理城市天气页面的数据加载、缓存和状态管理
 /// 不干扰当前定位城市的天气数据
 class CityWeatherProvider extends ChangeNotifier {
   final WeatherService _weatherService = WeatherService.getInstance();
   final DatabaseService _databaseService = DatabaseService.getInstance();
   final GeocodingService _geocodingService = GeocodingService.getInstance();
-  
+
   /// AI Insights Provider 引用
   AIInsightsProvider? _aiInsightsProvider;
 
@@ -82,20 +84,13 @@ class CityWeatherProvider extends ChangeNotifier {
   }
 
   /// 加载城市天气数据
-  /// 
+  ///
   /// [cityName] 城市名称
   /// [cityId] 城市ID（可选，如果提供则直接使用）
   /// [forceRefresh] 是否强制刷新，忽略缓存
-  Future<void> loadCityWeather(
-    String cityName, {
-    String? cityId,
-    bool forceRefresh = false,
-  }) async {
+  Future<void> loadCityWeather(String cityName, {String? cityId, bool forceRefresh = false}) async {
     // 标记为加载中
-    _cityWeatherDataMap[cityName] = CityWeatherData.loading(
-      cityName,
-      cityId: cityId,
-    );
+    _cityWeatherDataMap[cityName] = CityWeatherData.loading(cityName, cityId: cityId);
     notifyListeners();
 
     try {
@@ -104,7 +99,7 @@ class CityWeatherProvider extends ChangeNotifier {
         final cachedWeather = await _loadFromCache(cityName);
         if (cachedWeather != null) {
           Logger.d('使用缓存的城市天气数据: $cityName', tag: 'CityWeatherProvider');
-          
+
           _cityWeatherMap[cityName] = cachedWeather;
           _cityWeatherDataMap[cityName] = CityWeatherData(
             cityName: cityName,
@@ -112,10 +107,10 @@ class CityWeatherProvider extends ChangeNotifier {
             cacheTime: DateTime.now(),
             hasCachedData: true,
           );
-          
+
           // 异步加载日出日落和生活指数数据
           _loadSunMoonIndexData(cityName);
-          
+
           notifyListeners();
           return;
         }
@@ -123,13 +118,11 @@ class CityWeatherProvider extends ChangeNotifier {
 
       // 从API获取数据
       Logger.d('从API获取城市天气数据: $cityName', tag: 'CityWeatherProvider');
-      
+
       WeatherModel? weather;
       // 判断是否为国际城市（ID 以 INT_ 开头或 ID 为空）
-      final isInternationalCity = cityId == null || 
-                                    cityId.isEmpty || 
-                                    cityId.startsWith('INT_');
-      
+      final isInternationalCity = cityId == null || cityId.isEmpty || cityId.startsWith('INT_');
+
       if (isInternationalCity) {
         // 国际城市：通过城市名称获取（使用地理编码服务查询坐标）
         final location = await _geocodingService.geocode(cityName);
@@ -144,10 +137,10 @@ class CityWeatherProvider extends ChangeNotifier {
       if (weather != null) {
         // 保存到内存缓存
         _cityWeatherMap[cityName] = weather;
-        
+
         // 保存到数据库缓存
         await _saveToCache(cityName, weather);
-        
+
         // 更新状态
         _cityWeatherDataMap[cityName] = CityWeatherData(
           cityName: cityName,
@@ -155,10 +148,10 @@ class CityWeatherProvider extends ChangeNotifier {
           cacheTime: DateTime.now(),
           hasCachedData: true,
         );
-        
+
         // 异步加载日出日落和生活指数数据
         _loadSunMoonIndexData(cityName);
-        
+
         Logger.d('成功加载城市天气数据: $cityName', tag: 'CityWeatherProvider');
       } else {
         // 获取失败
@@ -187,7 +180,7 @@ class CityWeatherProvider extends ChangeNotifier {
     try {
       final weatherKey = '$cityName:${AppConstants.weatherAllKey}';
       final cachedWeather = await _databaseService.getWeatherData(weatherKey);
-      
+
       if (cachedWeather != null) {
         // 检查缓存时间（简单检查，实际可能需要更精确的过期判断）
         // 这里暂时不做时间检查，因为 DatabaseService 内部应该已经处理了
@@ -218,39 +211,37 @@ class CityWeatherProvider extends ChangeNotifier {
 
       // 获取城市ID
       final cityId = _cityWeatherDataMap[cityName]?.cityId;
-      
+
       // 判断是否为国际城市
-      final isInternationalCity = cityId == null || 
-                                   cityId.isEmpty || 
-                                   cityId.startsWith('INT_');
-      
+      final isInternationalCity = cityId == null || cityId.isEmpty || cityId.startsWith('INT_');
+
       if (isInternationalCity) {
         // 国际城市：根据天气数据生成生活指数
         Logger.d('为国际城市生成生活指数: $cityName', tag: 'CityWeatherProvider');
-        
+
         final currentWeather = weather.current?.current;
         if (currentWeather != null) {
           // 解析温度
           final tempStr = currentWeather.temperature ?? '20';
           final temperature = double.tryParse(tempStr) ?? 20.0;
-          
+
           // 解析天气代码（从weatherIndex推断）
           final weatherIndex = currentWeather.weatherIndex ?? '1';
           final weatherCode = int.tryParse(weatherIndex) ?? 1;
-          
+
           // 解析湿度（如果有的话）
           double? humidity;
           if (currentWeather.humidity != null && currentWeather.humidity != '未知') {
             humidity = double.tryParse(currentWeather.humidity!.replaceAll('%', ''));
           }
-          
+
           // 生成生活指数
           final lifeIndexData = WeatherAdapter.generateLifeIndex(
             temperature: temperature,
             weatherCode: weatherCode,
             humidity: humidity,
           );
-          
+
           _citySunMoonIndexMap[cityName] = lifeIndexData;
           Logger.d('成功为国际城市生成生活指数: $cityName', tag: 'CityWeatherProvider');
           notifyListeners();
@@ -266,7 +257,7 @@ class CityWeatherProvider extends ChangeNotifier {
             return;
           }
         }
-        
+
         Logger.d('无法加载城市日出日落和生活指数数据: $cityName (没有有效的城市ID)', tag: 'CityWeatherProvider');
       }
     } catch (e) {

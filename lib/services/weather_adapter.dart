@@ -1,11 +1,11 @@
-import '../models/open_meteo_models.dart';
-import '../models/weather_model.dart';
-import '../models/sun_moon_index_model.dart';
 import '../constants/app_constants.dart';
+import '../models/open_meteo_models.dart';
+import '../models/sun_moon_index_model.dart';
+import '../models/weather_model.dart';
 import '../utils/logger.dart';
 
 /// 天气适配器
-/// 
+///
 /// 将Open-Meteo API的响应数据转换为项目使用的WeatherModel格式
 class WeatherAdapter {
   /// WMO天气代码映射表
@@ -59,8 +59,8 @@ class WeatherAdapter {
   static String getNightWeatherImage(int weatherCode) {
     final description = getWeatherDescription(weatherCode);
     return AppConstants.nightWeatherImages[description] ??
-           AppConstants.dayWeatherImages[description] ??
-           'q0.png';
+        AppConstants.dayWeatherImages[description] ??
+        'q0.png';
   }
 
   /// 根据WMO天气代码获取中文天气图片
@@ -68,23 +68,20 @@ class WeatherAdapter {
     final description = getWeatherDescription(weatherCode);
     if (isNight) {
       return AppConstants.chineseNightWeatherImages[description] ??
-             AppConstants.chineseWeatherImages[description] ??
-             '晴.png';
+          AppConstants.chineseWeatherImages[description] ??
+          '晴.png';
     } else {
       return AppConstants.chineseWeatherImages[description] ?? '晴.png';
     }
   }
 
   /// 将Open-Meteo响应转换为WeatherModel
-  /// 
+  ///
   /// [openMeteoResponse] Open-Meteo API响应数据
   /// [cityName] 城市名称
-  /// 
+  ///
   /// 返回 WeatherModel 对象
-  static WeatherModel convertToWeatherModel(
-    OpenMeteoResponse openMeteoResponse,
-    String cityName,
-  ) {
+  static WeatherModel convertToWeatherModel(OpenMeteoResponse openMeteoResponse, String cityName) {
     try {
       // 转换当前天气（传递hourly数据以获取湿度、气压、能见度）
       final currentWeatherData = _convertCurrentWeather(
@@ -94,23 +91,16 @@ class WeatherAdapter {
       );
 
       // 转换24小时预报
-      final forecast24h = _convertHourlyForecast(
-        openMeteoResponse.hourly,
-      );
+      final forecast24h = _convertHourlyForecast(openMeteoResponse.hourly);
 
       // 转换15日预报
-      final forecast15d = _convertDailyForecast(
-        openMeteoResponse.daily,
-      );
+      final forecast15d = _convertDailyForecast(openMeteoResponse.daily);
 
       return WeatherModel(
         current: currentWeatherData,
         forecast24h: forecast24h,
         forecast15d: forecast15d,
-        air: AirQuality(
-          AQI: '未知',
-          levelIndex: '未知',
-        ),
+        air: AirQuality(AQI: '未知', levelIndex: '未知'),
         tips: '数据来源：Open-Meteo',
       );
     } catch (e, stackTrace) {
@@ -144,17 +134,17 @@ class WeatherAdapter {
     if (hourlyWeather != null && hourlyWeather.hourCount > 0) {
       // 获取第一个小时的数据（当前小时）
       final currentHourData = hourlyWeather.getHourData(0);
-      
+
       // 湿度（百分比）- 湿度范围 0-100，大于等于0都有效
       if (currentHourData.humidity >= 0) {
         humidity = '${currentHourData.humidity.round()}';
       }
-      
+
       // 气压（hPa）- 正常气压范围 900-1100，大于0都有效
       if (currentHourData.pressure > 0) {
         airpressure = '${currentHourData.pressure.round()} hPa';
       }
-      
+
       // 能见度（米转换为公里）- 能见度可以为0（大雾），但需要检查是否有数据
       // 如果能见度大于等于0，说明有数据（包括0值）
       // 注意：weather_details_widget.dart 中已添加 km 后缀，此处只返回数值
@@ -180,18 +170,13 @@ class WeatherAdapter {
       ),
       alerts: [], // Open-Meteo不提供天气预警
       nongLi: null, // 国外城市不显示农历
-      air: AirQuality(
-        AQI: '未知',
-        levelIndex: '未知',
-      ),
+      air: AirQuality(AQI: '未知', levelIndex: '未知'),
       tips: '国际天气数据',
     );
   }
 
   /// 转换24小时预报
-  static List<HourlyWeather>? _convertHourlyForecast(
-    OpenMeteoHourlyWeather? hourlyWeather,
-  ) {
+  static List<HourlyWeather>? _convertHourlyForecast(OpenMeteoHourlyWeather? hourlyWeather) {
     if (hourlyWeather == null || hourlyWeather.hourCount == 0) return null;
 
     final result = <HourlyWeather>[];
@@ -202,25 +187,25 @@ class WeatherAdapter {
       final weatherDesc = getWeatherDescription(hourData.weatherCode);
       final weatherIcon = getWeatherIcon(hourData.weatherCode);
 
-      result.add(HourlyWeather(
-        forecasttime: _formatForecastTime(hourData.time),
-        temperature: hourData.temperature.round().toString(),
-        weather: weatherDesc,
-        weatherCode: hourData.weatherCode.toString(),
-        weatherPic: weatherIcon,
-        windPower: _convertWindSpeed(hourData.windSpeed),
-        windDir: _convertWindDirection(0), // Open-Meteo每小时不包含风向
-        windDirectionDegree: '0',
-      ));
+      result.add(
+        HourlyWeather(
+          forecasttime: _formatForecastTime(hourData.time),
+          temperature: hourData.temperature.round().toString(),
+          weather: weatherDesc,
+          weatherCode: hourData.weatherCode.toString(),
+          weatherPic: weatherIcon,
+          windPower: _convertWindSpeed(hourData.windSpeed),
+          windDir: _convertWindDirection(0), // Open-Meteo每小时不包含风向
+          windDirectionDegree: '0',
+        ),
+      );
     }
 
     return result;
   }
 
   /// 转换15日预报
-  static List<DailyWeather>? _convertDailyForecast(
-    OpenMeteoDailyWeather? dailyWeather,
-  ) {
+  static List<DailyWeather>? _convertDailyForecast(OpenMeteoDailyWeather? dailyWeather) {
     if (dailyWeather == null || dailyWeather.dayCount == 0) return null;
 
     final result = <DailyWeather>[];
@@ -231,24 +216,26 @@ class WeatherAdapter {
       final weatherDesc = getWeatherDescription(dayData.weatherCode);
       final weatherIcon = getWeatherIcon(dayData.weatherCode);
 
-      result.add(DailyWeather(
-        forecasttime: _formatForecastDate(dayData.date),
-        week: _getWeekday(dayData.date),
-        temperature_am: dayData.tempMin.round().toString(),
-        temperature_pm: dayData.tempMax.round().toString(),
-        weather_am: weatherDesc,
-        weather_pm: weatherDesc,
-        weather_am_pic: weatherIcon,
-        weather_pm_pic: weatherIcon,
-        windpower_am: _convertWindSpeed(dayData.windSpeed),
-        windpower_pm: _convertWindSpeed(dayData.windSpeed),
-        winddir_am: _convertWindDirection(dayData.windDirection),
-        winddir_pm: _convertWindDirection(dayData.windDirection),
-        weather_index_am: _getWeatherIndex(dayData.weatherCode),
-        weather_index_pm: _getWeatherIndex(dayData.weatherCode),
-        sunrise_sunset: null, // Open-Meteo需要单独查询日出日落
-        reporttime: dayData.date.toIso8601String(),
-      ));
+      result.add(
+        DailyWeather(
+          forecasttime: _formatForecastDate(dayData.date),
+          week: _getWeekday(dayData.date),
+          temperature_am: dayData.tempMin.round().toString(),
+          temperature_pm: dayData.tempMax.round().toString(),
+          weather_am: weatherDesc,
+          weather_pm: weatherDesc,
+          weather_am_pic: weatherIcon,
+          weather_pm_pic: weatherIcon,
+          windpower_am: _convertWindSpeed(dayData.windSpeed),
+          windpower_pm: _convertWindSpeed(dayData.windSpeed),
+          winddir_am: _convertWindDirection(dayData.windDirection),
+          winddir_pm: _convertWindDirection(dayData.windDirection),
+          weather_index_am: _getWeatherIndex(dayData.weatherCode),
+          weather_index_pm: _getWeatherIndex(dayData.weatherCode),
+          sunrise_sunset: null, // Open-Meteo需要单独查询日出日落
+          reporttime: dayData.date.toIso8601String(),
+        ),
+      );
     }
 
     return result;
@@ -308,7 +295,7 @@ class WeatherAdapter {
   /// 根据天气代码获取建议
   static String getWeatherTips(int weatherCode) {
     final weatherDesc = getWeatherDescription(weatherCode);
-    
+
     if (weatherDesc.contains('晴')) {
       return '天气晴朗，适合户外活动';
     } else if (weatherDesc.contains('多云')) {
@@ -322,19 +309,19 @@ class WeatherAdapter {
     } else if (weatherDesc.contains('雾') || weatherDesc.contains('霾')) {
       return '雾霾天气，请佩戴口罩，减少外出';
     }
-    
+
     return '请注意天气变化';
   }
 
   /// 为国外城市生成生活指数
-  /// 
+  ///
   /// 根据天气数据（温度、天气代码等）生成基本的生活指数建议
-  /// 
+  ///
   /// [temperature] 当前温度（摄氏度）
   /// [weatherCode] WMO天气代码
   /// [humidity] 湿度（百分比，可选）
   /// [windSpeed] 风速（km/h，可选）
-  /// 
+  ///
   /// 返回 SunMoonIndexData 对象，包含生活指数列表
   static SunMoonIndexData generateLifeIndex({
     required double temperature,
@@ -396,11 +383,7 @@ class WeatherAdapter {
       content = '天气极冷，建议穿着厚羽绒服、棉衣等保暖服装';
     }
 
-    return LifeIndex(
-      indexTypeCh: '穿衣指数',
-      indexLevel: level,
-      indexContent: content,
-    );
+    return LifeIndex(indexTypeCh: '穿衣指数', indexLevel: level, indexContent: content);
   }
 
   /// 生成感冒指数
@@ -418,8 +401,10 @@ class WeatherAdapter {
     // 温度影响
     if (temp < 5) {
       riskScore += 3;
-    } else if (temp < 15) riskScore += 2;
-    else if (temp < 25) riskScore += 1;
+    } else if (temp < 15)
+      riskScore += 2;
+    else if (temp < 25)
+      riskScore += 1;
 
     // 天气影响
     if (isRainy || isSnowy) riskScore += 2;
@@ -441,11 +426,7 @@ class WeatherAdapter {
       content = '天气条件良好，感冒几率较低';
     }
 
-    return LifeIndex(
-      indexTypeCh: '感冒指数',
-      indexLevel: level,
-      indexContent: content,
-    );
+    return LifeIndex(indexTypeCh: '感冒指数', indexLevel: level, indexContent: content);
   }
 
   /// 生成紫外线强度指数
@@ -472,11 +453,7 @@ class WeatherAdapter {
       content = '紫外线很弱，无需防护';
     }
 
-    return LifeIndex(
-      indexTypeCh: '紫外线强度指数',
-      indexLevel: level,
-      indexContent: content,
-    );
+    return LifeIndex(indexTypeCh: '紫外线强度指数', indexLevel: level, indexContent: content);
   }
 
   /// 生成洗车指数
@@ -503,11 +480,7 @@ class WeatherAdapter {
       content = '天气尚可，可以洗车';
     }
 
-    return LifeIndex(
-      indexTypeCh: '洗车指数',
-      indexLevel: level,
-      indexContent: content,
-    );
+    return LifeIndex(indexTypeCh: '洗车指数', indexLevel: level, indexContent: content);
   }
 
   /// 生成运动指数
@@ -526,13 +499,16 @@ class WeatherAdapter {
     // 温度影响
     if (temp < -10 || temp > 38) {
       suitabilityScore -= 5;
-    } else if (temp < 0 || temp > 35) suitabilityScore -= 3;
-    else if (temp < 10 || temp > 30) suitabilityScore -= 1;
+    } else if (temp < 0 || temp > 35)
+      suitabilityScore -= 3;
+    else if (temp < 10 || temp > 30)
+      suitabilityScore -= 1;
 
     // 天气影响
     if (isStormy) {
       suitabilityScore -= 5;
-    } else if (isRainy || isSnowy) suitabilityScore -= 3;
+    } else if (isRainy || isSnowy)
+      suitabilityScore -= 3;
 
     // 风力影响
     if (isWindy) suitabilityScore -= 2;
@@ -551,11 +527,7 @@ class WeatherAdapter {
       content = '天气恶劣，不宜户外运动';
     }
 
-    return LifeIndex(
-      indexTypeCh: '运动指数',
-      indexLevel: level,
-      indexContent: content,
-    );
+    return LifeIndex(indexTypeCh: '运动指数', indexLevel: level, indexContent: content);
   }
 
   /// 生成化妆指数
@@ -591,10 +563,6 @@ class WeatherAdapter {
       content = '天气寒冷干燥，建议使用滋润保湿护肤品';
     }
 
-    return LifeIndex(
-      indexTypeCh: '化妆指数',
-      indexLevel: level,
-      indexContent: content,
-    );
+    return LifeIndex(indexTypeCh: '化妆指数', indexLevel: level, indexContent: content);
   }
 }

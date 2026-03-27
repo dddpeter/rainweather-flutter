@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter_bmflocation/flutter_bmflocation.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../models/location_model.dart';
-import 'location_provider_interface.dart';
 
 enum BaiduLocationPermissionResult { granted, denied, deniedForever, error }
 
@@ -15,7 +14,7 @@ class BaiduLocationException implements Exception {
   String toString() => 'BaiduLocationException: $message';
 }
 
-class BaiduLocationService implements LocationProviderInterface {
+class BaiduLocationService {
   static BaiduLocationService? _instance;
   final LocationFlutterPlugin _loc = LocationFlutterPlugin();
   LocationModel? _cachedLocation;
@@ -61,7 +60,6 @@ class BaiduLocationService implements LocationProviderInterface {
   }
 
   /// 初始化百度定位服务
-  @override
   Future<void> initialize() async {
     if (_isInitialized) return;
 
@@ -344,7 +342,6 @@ class BaiduLocationService implements LocationProviderInterface {
   }
 
   /// 获取当前位置（单次定位）
-  @override
   Future<LocationModel?> getCurrentLocation() async {
     try {
       print('🚀 BaiduLocationService: 开始获取当前位置');
@@ -512,17 +509,14 @@ class BaiduLocationService implements LocationProviderInterface {
   }
 
   /// 销毁实例
-  @override
   Future<void> dispose() async {
     cleanup();
     _instance = null;
   }
 
   /// 服务名称
-  @override
   String get serviceName => '百度定位';
 
   /// 是否可用
-  @override
   bool get isAvailable => _isInitialized;
 }

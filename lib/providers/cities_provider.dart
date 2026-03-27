@@ -202,10 +202,10 @@ class CitiesProvider extends ChangeNotifier {
     setLoadingCitiesWeather(true);
 
     try {
-      // 并行刷新所有城市天气，避免串行等待
-      await Future.wait(
-        _mainCities.map((city) => refreshCityWeather(city)),
-      );
+      // 逐个刷新城市天气（串行更稳定，避免并行请求导致的竞态问题）
+      for (final city in _mainCities) {
+        await refreshCityWeather(city);
+      }
 
       Logger.d('刷新所有城市天气完成', tag: 'CitiesProvider');
       return true;

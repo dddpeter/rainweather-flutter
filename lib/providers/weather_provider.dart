@@ -231,10 +231,14 @@ class WeatherProvider extends ChangeNotifier {
 
     try {
       // 并行刷新：定位天气和城市天气同时进行，互不阻塞
-      await Future.wait([
-        refreshLocation(),
-        _citiesProvider?.refreshAllCitiesWeather() ?? Future.value(),
-      ]);
+      // eagerError: false 确保一个失败不影响另一个
+      await Future.wait(
+        [
+          refreshLocation(),
+          _citiesProvider?.refreshAllCitiesWeather() ?? Future.value(),
+        ],
+        eagerError: false,
+      );
 
       Logger.d('后台刷新完成', tag: 'WeatherProvider');
     } catch (e) {

@@ -177,13 +177,6 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
                           );
                         }
 
-                        // 刷新中（有数据）：显示骨架屏，避免页面抖动
-                        if ((isLoading ||
-                                weatherProvider.isLoadingCitiesWeather) &&
-                            cities.isNotEmpty) {
-                          return CityCardSkeletonList(itemCount: cities.length);
-                        }
-
                         // 没有数据且不在加载：显示空状态
                         if (cities.isEmpty) {
                           return Center(

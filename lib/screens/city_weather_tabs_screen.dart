@@ -12,7 +12,7 @@ import '../widgets/air_quality_card.dart';
 import '../widgets/weather_details_widget.dart';
 import '../widgets/life_index_widget.dart';
 import '../widgets/sun_moon_widget.dart';
-import '../widgets/ai_content_widget.dart';
+import '../widgets/ai_content_icon_widget.dart';
 import '../widgets/city_weather_screen_base.dart';
 import '../utils/logger.dart';
 
@@ -417,129 +417,145 @@ class _CityWeatherTabsScreenState extends CityWeatherScreenBase<CityWeatherTabsS
         ),
         child: Column(
           children: [
-            // AI智能助手（24小时天气总结） - 使用渐进式展示
-            AIContentWidget(
-              title: 'AI智能助手',
-              icon: Icons.auto_awesome,
-              cityName: cityName, // 传入城市名称
-              refreshKey: weatherProvider
-                  .currentWeather
-                  ?.current
-                  ?.current
-                  ?.reporttime, // 使用报告时间作为刷新键
-              fetchAIContent: () async {
-                try {
-                  // 如果已有内容，直接返回
-                  if (weatherProvider.weatherSummary != null &&
-                      weatherProvider.weatherSummary!.isNotEmpty) {
-                    return weatherProvider.weatherSummary!;
-                  }
+            // AI智能助手（24小时天气总结） - 使用图标弹窗展示
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  AIContentIconWidget(
+                    title: 'AI智能助手',
+                    icon: Icons.auto_awesome,
+                    cityName: cityName, // 传入城市名称
+                    refreshKey: weatherProvider
+                        .currentWeather
+                        ?.current
+                        ?.current
+                        ?.reporttime, // 使用报告时间作为刷新键
+                    fetchAIContent: () async {
+                      try {
+                        // 如果已有内容，直接返回
+                        if (weatherProvider.weatherSummary != null &&
+                            weatherProvider.weatherSummary!.isNotEmpty) {
+                          return weatherProvider.weatherSummary!;
+                        }
 
-                  // 如果正在生成中，等待一下再检查
-                  if (weatherProvider.isGeneratingSummary) {
-                    Logger.log('⏳ AI摘要正在生成中，等待完成...');
-                    // 等待最多5秒
-                    for (int i = 0; i < 50; i++) {
-                      await Future.delayed(const Duration(milliseconds: 100));
-                      if (weatherProvider.weatherSummary != null &&
-                          weatherProvider.weatherSummary!.isNotEmpty) {
-                        return weatherProvider.weatherSummary!;
+                        // 如果正在生成中，等待一下再检查
+                        if (weatherProvider.isGeneratingSummary) {
+                          Logger.log('⏳ AI摘要正在生成中，等待完成...');
+                          // 等待最多5秒
+                          for (int i = 0; i < 50; i++) {
+                            await Future.delayed(const Duration(milliseconds: 100));
+                            if (weatherProvider.weatherSummary != null &&
+                                weatherProvider.weatherSummary!.isNotEmpty) {
+                              return weatherProvider.weatherSummary!;
+                            }
+                            if (!weatherProvider.isGeneratingSummary) {
+                              break; // 生成完成，跳出循环
+                            }
+                          }
+                        }
+
+                        // 如果仍然没有内容且不在生成中，尝试生成一次
+                        if ((weatherProvider.weatherSummary == null ||
+                                weatherProvider.weatherSummary!.isEmpty) &&
+                            !weatherProvider.isGeneratingSummary) {
+                          Logger.log('🔄 开始生成城市天气AI摘要: $cityName');
+                          await weatherProvider.generateWeatherSummary(
+                            cityName: cityName, // 传入城市名称
+                          );
+                        }
+
+                        // 最终检查
+                        if (weatherProvider.weatherSummary != null &&
+                            weatherProvider.weatherSummary!.isNotEmpty) {
+                          return weatherProvider.weatherSummary!;
+                        }
+
+                        // 如果仍然没有内容，返回默认内容而不是抛出异常
+                        Logger.log('⚠️ 无法获取AI摘要，使用默认内容');
+                        return '今日天气舒适，适合出行。注意温差变化，合理增减衣物。';
+                      } catch (e) {
+                        Logger.log('❌ 加载AI智能助手失败: $e');
+                        // 返回默认内容而不是抛出异常，避免无限重试
+                        return '今日天气舒适，适合出行。注意温差变化，合理增减衣物。';
                       }
-                      if (!weatherProvider.isGeneratingSummary) {
-                        break; // 生成完成，跳出循环
-                      }
-                    }
-                  }
-
-                  // 如果仍然没有内容且不在生成中，尝试生成一次
-                  if ((weatherProvider.weatherSummary == null ||
-                          weatherProvider.weatherSummary!.isEmpty) &&
-                      !weatherProvider.isGeneratingSummary) {
-                    Logger.log('🔄 开始生成城市天气AI摘要: $cityName');
-                    await weatherProvider.generateWeatherSummary(
-                      cityName: cityName, // 传入城市名称
-                    );
-                  }
-
-                  // 最终检查
-                  if (weatherProvider.weatherSummary != null &&
-                      weatherProvider.weatherSummary!.isNotEmpty) {
-                    return weatherProvider.weatherSummary!;
-                  }
-
-                  // 如果仍然没有内容，返回默认内容而不是抛出异常
-                  Logger.log('⚠️ 无法获取AI摘要，使用默认内容');
-                  return '今日天气舒适，适合出行。注意温差变化，合理增减衣物。';
-                } catch (e) {
-                  Logger.log('❌ 加载AI智能助手失败: $e');
-                  // 返回默认内容而不是抛出异常，避免无限重试
-                  return '今日天气舒适，适合出行。注意温差变化，合理增减衣物。';
-                }
-              },
-              defaultContent: '今日天气舒适，适合出行。注意温差变化，合理增减衣物。',
+                    },
+                    defaultContent: '今日天气舒适，适合出行。注意温差变化，合理增减衣物。',
+                  ),
+                ],
+              ),
             ),
             AppColors.cardSpacingWidget,
 
-            // 15日天气AI总结 - 使用渐进式展示
-            AIContentWidget(
-              title: '15日天气趋势',
-              icon: Icons.trending_up,
-              cityName: cityName, // 传入城市名称
-              refreshKey: weatherProvider
-                  .currentWeather
-                  ?.current
-                  ?.current
-                  ?.reporttime, // 使用报告时间作为刷新键
-              fetchAIContent: () async {
-                try {
-                  // 如果已有内容，直接返回
-                  if (weatherProvider.forecast15dSummary != null &&
-                      weatherProvider.forecast15dSummary!.isNotEmpty) {
-                    return weatherProvider.forecast15dSummary!;
-                  }
+            // 15日天气AI总结 - 使用图标弹窗展示
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  AIContentIconWidget(
+                    title: '15日天气趋势',
+                    icon: Icons.trending_up,
+                    cityName: cityName, // 传入城市名称
+                    refreshKey: weatherProvider
+                        .currentWeather
+                        ?.current
+                        ?.current
+                        ?.reporttime, // 使用报告时间作为刷新键
+                    fetchAIContent: () async {
+                      try {
+                        // 如果已有内容，直接返回
+                        if (weatherProvider.forecast15dSummary != null &&
+                            weatherProvider.forecast15dSummary!.isNotEmpty) {
+                          return weatherProvider.forecast15dSummary!;
+                        }
 
-                  // 如果正在生成中，等待一下再检查
-                  if (weatherProvider.isGenerating15dSummary) {
-                    Logger.log('⏳ 15日AI总结正在生成中，等待完成...');
-                    // 等待最多5秒
-                    for (int i = 0; i < 50; i++) {
-                      await Future.delayed(const Duration(milliseconds: 100));
-                      if (weatherProvider.forecast15dSummary != null &&
-                          weatherProvider.forecast15dSummary!.isNotEmpty) {
-                        return weatherProvider.forecast15dSummary!;
+                        // 如果正在生成中，等待一下再检查
+                        if (weatherProvider.isGenerating15dSummary) {
+                          Logger.log('⏳ 15日AI总结正在生成中，等待完成...');
+                          // 等待最多5秒
+                          for (int i = 0; i < 50; i++) {
+                            await Future.delayed(const Duration(milliseconds: 100));
+                            if (weatherProvider.forecast15dSummary != null &&
+                                weatherProvider.forecast15dSummary!.isNotEmpty) {
+                              return weatherProvider.forecast15dSummary!;
+                            }
+                            if (!weatherProvider.isGenerating15dSummary) {
+                              break; // 生成完成，跳出循环
+                            }
+                          }
+                        }
+
+                        // 如果仍然没有内容且不在生成中，尝试生成一次
+                        if ((weatherProvider.forecast15dSummary == null ||
+                                weatherProvider.forecast15dSummary!.isEmpty) &&
+                            !weatherProvider.isGenerating15dSummary) {
+                          Logger.log('🔄 开始生成城市15日天气AI总结: $cityName');
+                          await weatherProvider.generateForecast15dSummary(
+                            cityName: cityName, // 传入城市名称
+                          );
+                        }
+
+                        // 最终检查
+                        if (weatherProvider.forecast15dSummary != null &&
+                            weatherProvider.forecast15dSummary!.isNotEmpty) {
+                          return weatherProvider.forecast15dSummary!;
+                        }
+
+                        // 如果仍然没有内容，返回默认内容而不是抛出异常
+                        Logger.log('⚠️ 无法获取15日AI总结，使用默认内容');
+                        return '未来半月天气平稳，温度变化不大，适合安排户外活动。';
+                      } catch (e) {
+                        Logger.log('❌ 加载15日天气趋势失败: $e');
+                        // 返回默认内容而不是抛出异常，避免无限重试
+                        return '未来半月天气平稳，温度变化不大，适合安排户外活动。';
                       }
-                      if (!weatherProvider.isGenerating15dSummary) {
-                        break; // 生成完成，跳出循环
-                      }
-                    }
-                  }
-
-                  // 如果仍然没有内容且不在生成中，尝试生成一次
-                  if ((weatherProvider.forecast15dSummary == null ||
-                          weatherProvider.forecast15dSummary!.isEmpty) &&
-                      !weatherProvider.isGenerating15dSummary) {
-                    Logger.log('🔄 开始生成城市15日天气AI总结: $cityName');
-                    await weatherProvider.generateForecast15dSummary(
-                      cityName: cityName, // 传入城市名称
-                    );
-                  }
-
-                  // 最终检查
-                  if (weatherProvider.forecast15dSummary != null &&
-                      weatherProvider.forecast15dSummary!.isNotEmpty) {
-                    return weatherProvider.forecast15dSummary!;
-                  }
-
-                  // 如果仍然没有内容，返回默认内容而不是抛出异常
-                  Logger.log('⚠️ 无法获取15日AI总结，使用默认内容');
-                  return '未来半月天气平稳，温度变化不大，适合安排户外活动。';
-                } catch (e) {
-                  Logger.log('❌ 加载15日天气趋势失败: $e');
-                  // 返回默认内容而不是抛出异常，避免无限重试
-                  return '未来半月天气平稳，温度变化不大，适合安排户外活动。';
-                }
-              },
-              defaultContent: '未来半月天气平稳，温度变化不大，适合安排户外活动。',
+                    },
+                    defaultContent: '未来半月天气平稳，温度变化不大，适合安排户外活动。',
+                  ),
+                ],
+              ),
             ),
           ],
         ),

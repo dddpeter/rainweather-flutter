@@ -42,7 +42,7 @@ class AppConstants {
 
   // UI Constants - Spacing (Material Design 3)
   /// 屏幕边距 - 符合Material Design 3推荐标准（12dp更符合MD3紧凑布局）
-  static const double screenHorizontalPadding = 12.0;
+  static const double screenHorizontalPadding = 8.0;
 
   /// 大卡片之间的最小间距（12dp符合M3最小推荐值）
   static const double cardSpacing = 12.0;

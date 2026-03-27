@@ -2,7 +2,7 @@
 
 A modern intelligent weather application built with Flutter, providing real-time weather information with location services, weather forecasts, and beautiful UI components.
 
-**Current Version**: v1.15.0 | **Release Date**: 2026-03-20
+**Current Version**: v1.16.0 | **Release Date**: 2026-03-27
 
 > **中文文档**: [README.md](README.md) | **English Documentation**: This file
 
@@ -230,7 +230,23 @@ This Flutter app is a complete refactor of the original Android weather app with
 
 ## Changelog
 
-### v1.15.0 (2026-03-20) - Latest
+### v1.16.0 (2026-03-27) - Latest
+
+**Bug Fixes**
+- 🐛 **Life Index Display Fix**: Fixed life index data not showing on today's weather page, correctly loading city ID and fetching life index data
+- 🐛 **24-Hour Forecast Overflow Fix**: Fixed bottom overflow issue on 24-hour forecast temperature labels, adjusted container height
+
+**AI Summary Experience Optimization**
+- 🤖 **AI Summary Tag Style**: AI summary redesigned as compact tag displayed next to region name, replacing the original icon button
+- 🚀 **AI Summary Pre-fetch & Cache**: AI summaries are pre-fetched and cached when pages load, instant display on tap without waiting
+- 📱 **Multi-page Sync**: AI summary tags available on today's weather, 15-day forecast, and city weather pages
+
+**UI Compactness Optimization**
+- 📐 **Top Section Compact**: Reduced weather icon size, temperature font size and spacing for a more compact layout
+- 📏 **Card Spacing Optimization**: Reduced vertical spacing between cards and horizontal screen padding
+- 🎯 **City Weather Sync**: All UI compactness improvements applied to city weather page
+
+### v1.15.0 (2026-03-20)
 
 **Performance Optimization**
 - ⚡ **Scrolling Performance Improved 40-60%**: HourlyList component refactored to use ListView.builder, reducing memory usage

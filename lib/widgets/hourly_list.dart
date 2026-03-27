@@ -118,7 +118,7 @@ class HourlyList extends StatelessWidget {
 
           // 温度
           SizedBox(
-            width: 60,
+            width: 50,
             child: Text(
               '${temperature.toInt()}℃',
               style: TextStyle(
@@ -126,6 +126,8 @@ class HourlyList extends StatelessWidget {
                 fontSize: 16,
                 fontWeight: FontWeight.normal,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
 
@@ -138,16 +140,20 @@ class HourlyList extends StatelessWidget {
                 fontSize: 14,
                 fontWeight: FontWeight.normal,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
 
           // 风向风力
           SizedBox(
-            width: 80,
+            width: 70,
             child: Text(
               '${hour.windDir ?? '--'}${hour.windPower ?? ''}',
               style: TextStyle(color: AppColors.textTertiary, fontSize: 12),
               textAlign: TextAlign.right,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

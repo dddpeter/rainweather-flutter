@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_constants.dart';
 import '../models/location_model.dart';
+import '../models/sun_moon_index_model.dart';
 import '../models/weather_model.dart';
 import '../providers/theme_provider.dart';
 import '../providers/weather_provider.dart';
@@ -20,7 +21,6 @@ import '../services/weather_service.dart';
 import '../utils/error_handler.dart';
 import '../utils/formatters.dart';
 import '../utils/logger.dart';
-import '../widgets/ai_smart_assistant_widget.dart';
 import '../widgets/air_quality_card.dart';
 import '../widgets/error_dialog.dart';
 import '../widgets/hourly_weather_widget.dart';
@@ -195,6 +195,11 @@ class _TodayScreenState extends State<TodayScreen>
       }
 
       Logger.s('当前定位和天气数据刷新完成', tag: 'TodayScreen');
+
+      // 预取AI摘要（有缓存直接用，没有则后台生成）
+      if (weatherProvider.weatherSummary == null || weatherProvider.weatherSummary!.isEmpty) {
+        weatherProvider.generateWeatherSummary();
+      }
     } catch (e) {
       Logger.e('刷新当前定位和天气数据失败', tag: 'TodayScreen', error: e);
     } finally {
@@ -566,11 +571,6 @@ class _TodayScreenState extends State<TodayScreen>
                             children: [
                               _buildTopWeatherSection(weatherProvider),
                               AppColors.cardSpacingWidget,
-                              // AI智能助手卡片（整合天气摘要和通勤提醒）
-                              AISmartAssistantWidget(
-                                key: const ValueKey('today_ai_smart_assistant'),
-                              ),
-                              AppColors.cardSpacingWidget,
                               // 空气质量卡片
                               AirQualityCard(weather: data.currentWeather),
                               AppColors.cardSpacingWidget,
@@ -578,9 +578,41 @@ class _TodayScreenState extends State<TodayScreen>
                               _buildHourlyWeather(weatherProvider),
                               AppColors.cardSpacingWidget,
                               // 生活指数
-                              LifeIndexWidget(weatherProvider: weatherProvider),
-                              AppColors.cardSpacingWidget,
-                              const SunMoonWidget(),
+                              Selector<WeatherProvider, SunMoonIndexData?>(
+                                selector: (_, provider) => provider.sunMoonIndexData,
+                                builder: (context, sunMoonIndexData, _) {
+                                  if (sunMoonIndexData != null && sunMoonIndexData.index != null && sunMoonIndexData.index!.isNotEmpty) {
+                                    return Column(
+                                      children: [
+                                        LifeIndexWidget.custom(sunMoonIndexData: sunMoonIndexData),
+                                        AppColors.cardSpacingWidget,
+                                      ],
+                                    );
+                                  }
+                                  return const SizedBox.shrink();
+                                },
+                              ),
+                              // 日出日落
+                              Selector<WeatherProvider, SunMoonIndexData?>(
+                                selector: (_, provider) => provider.sunMoonIndexData,
+                                builder: (context, sunMoonIndexData, _) {
+                                  if (sunMoonIndexData != null && sunMoonIndexData.sunAndMoon != null) {
+                                    return Column(
+                                      children: [
+                                        SunMoonWidget.custom(sunMoonIndexData: sunMoonIndexData),
+                                        AppColors.cardSpacingWidget,
+                                      ],
+                                    );
+                                  }
+                                  // 回退到使用15天预报数据
+                                  return Column(
+                                    children: [
+                                      const SunMoonWidget(),
+                                      AppColors.cardSpacingWidget,
+                                    ],
+                                  );
+                                },
+                              ),
                               AppColors.cardSpacingWidget,
                               _buildTemperatureChart(weatherProvider),
                               AppColors.cardSpacingWidget,
@@ -665,6 +697,36 @@ class _TodayScreenState extends State<TodayScreen>
                                   ),
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              GestureDetector(
+                                onTap: () => _showAISummaryDialog(context, weatherProvider),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: Colors.white.withOpacity(0.4),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.auto_awesome, color: Colors.white, size: 11),
+                                      const SizedBox(width: 3),
+                                      Text(
+                                        'AI解读',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ],
@@ -778,7 +840,7 @@ class _TodayScreenState extends State<TodayScreen>
                   _buildAlertButton(weatherProvider),
                 ],
               ),
-              const SizedBox(height: 24), // 减小间距
+              const SizedBox(height: 16),
               // Weather animation, weather text and temperature
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -793,13 +855,13 @@ class _TodayScreenState extends State<TodayScreen>
                       children: [
                         WeatherAnimationWidget(
                           weatherType: current?.weather ?? '晴',
-                          size: 100, // 适中的动画尺寸
+                          size: 80,
                           isPlaying: true,
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 10),
                   // 右侧温度和天气汉字区域 - 紧凑布局
                   Flexible(
                     flex: 50,
@@ -814,7 +876,7 @@ class _TodayScreenState extends State<TodayScreen>
                               Formatters.formatNumber(current?.temperature),
                               style: TextStyle(
                                 color: context.read<ThemeProvider>().getColor('headerTextPrimary'),
-                                fontSize: 56, // 增大温度字体
+                                fontSize: 48,
                                 fontWeight: FontWeight.bold,
                                 height: 1.0, // 紧凑行高
                               ),
@@ -823,7 +885,7 @@ class _TodayScreenState extends State<TodayScreen>
                               '℃',
                               style: TextStyle(
                                 color: context.read<ThemeProvider>().getColor('headerTextPrimary'),
-                                fontSize: 40,
+                                fontSize: 34,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -858,7 +920,7 @@ class _TodayScreenState extends State<TodayScreen>
                               ],
                             ),
                           ),
-                        const SizedBox(height: 6), // 减小间距
+                        const SizedBox(height: 2),
                         Text(
                           current?.weather ?? '晴',
                           style: TextStyle(
@@ -1214,6 +1276,95 @@ class _TodayScreenState extends State<TodayScreen>
   // 构建主题切换按钮 - 已移除
   // 现在使用顶部AppBar的主题切换按钮
 
+  Future<void> _showAISummaryDialog(BuildContext context, WeatherProvider weatherProvider) async {
+    final content = weatherProvider.weatherSummary;
+    if (!context.mounted) return;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(16),
+          child: Container(
+            constraints: const BoxConstraints(maxHeight: 500),
+            decoration: BoxDecoration(
+              gradient: AppColors.screenBackgroundGradient,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.cardBackground.withOpacity(0.5),
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.auto_awesome, color: AppColors.accentBlue, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'AI智能助手',
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.close, color: AppColors.textSecondary, size: 20),
+                        onPressed: () => Navigator.of(context).pop(),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(
+                      (content != null && content.isNotEmpty) ? content : '今日天气舒适，适合出行。注意温差变化，合理增减衣物。',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 14,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.cardBackground.withOpacity(0.5),
+                    borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
+                  ),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryBlue,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: const Text('关闭'),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildAlertButton(WeatherProvider weatherProvider) {
     // 获取天气提醒（智能提醒，仅当前定位城市）
     final currentCity = _getDisplayCity(weatherProvider.currentLocation);
@@ -1233,23 +1384,29 @@ class _TodayScreenState extends State<TodayScreen>
       'TodayScreen _buildAlertButton: 天气提醒数量=${smartAlerts.length}, 通勤提醒数量=${commuteAdvices.length}',
     );
 
-    if (totalCount > 0) {
-      return CompactWeatherAlertWidget(
-        alerts: smartAlerts,
-        commuteCount: commuteAdvices.length,
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) =>
-                  WeatherAlertDetailScreen(alerts: smartAlerts, commuteAdvices: commuteAdvices),
-            ),
-          );
-        },
-      );
-    }
-
-    return const SizedBox(width: 40); // 占位保持对称
+    // 构建右侧操作区域：通知图标
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // 通知图标（如果有提醒）
+        if (totalCount > 0)
+          CompactWeatherAlertWidget(
+            alerts: smartAlerts,
+            commuteCount: commuteAdvices.length,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      WeatherAlertDetailScreen(alerts: smartAlerts, commuteAdvices: commuteAdvices),
+                ),
+              );
+            },
+          )
+        else
+          const SizedBox(width: 40), // 占位保持对称
+      ],
+    );
   }
 
   /// 处理刷新按钮点击，显示反馈信息

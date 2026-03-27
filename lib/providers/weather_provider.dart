@@ -186,6 +186,9 @@ class WeatherProvider extends ChangeNotifier {
         // 5. 启动定时刷新
         _refreshCoordinator?.start();
 
+        // 6. 后台异步刷新最新数据（新增：确保城市天气被加载）
+        _backgroundRefresh();
+
         Logger.d('快速启动完成（全新安装）', tag: 'WeatherProvider');
         return;
       }
@@ -227,11 +230,11 @@ class WeatherProvider extends ChangeNotifier {
     Logger.d('后台刷新开始', tag: 'WeatherProvider');
 
     try {
-      // 刷新定位和天气
-      await refreshLocation();
-
-      // 刷新主要城市天气
-      await _citiesProvider?.refreshAllCitiesWeather();
+      // 并行刷新：定位天气和城市天气同时进行，互不阻塞
+      await Future.wait([
+        refreshLocation(),
+        _citiesProvider?.refreshAllCitiesWeather() ?? Future.value(),
+      ]);
 
       Logger.d('后台刷新完成', tag: 'WeatherProvider');
     } catch (e) {

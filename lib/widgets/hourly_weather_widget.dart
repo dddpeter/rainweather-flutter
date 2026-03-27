@@ -85,7 +85,7 @@ class HourlyWeatherWidget extends StatelessWidget {
                     ),
                   ),
                   SizedBox(
-                    height: 90,
+                    height: 100,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 2),

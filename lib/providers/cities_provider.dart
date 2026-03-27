@@ -202,11 +202,11 @@ class CitiesProvider extends ChangeNotifier {
     setLoadingCitiesWeather(true);
 
     try {
-      for (final city in _mainCities) {
-        await refreshCityWeather(city);
-      }
+      // 并行刷新所有城市天气，避免串行等待
+      await Future.wait(
+        _mainCities.map((city) => refreshCityWeather(city)),
+      );
 
-      _hasPerformedInitialMainCitiesRefresh = true;
       Logger.d('刷新所有城市天气完成', tag: 'CitiesProvider');
       return true;
     } catch (e) {
@@ -214,6 +214,7 @@ class CitiesProvider extends ChangeNotifier {
       return false;
     } finally {
       _isRefreshingAll = false;
+      _hasPerformedInitialMainCitiesRefresh = true;
       setLoadingCitiesWeather(false);
     }
   }

@@ -8,7 +8,6 @@ import '../models/weather_model.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_constants.dart';
 import '../widgets/forecast15d_chart.dart';
-import '../widgets/ai_content_widget.dart';
 import '../utils/weather_icon_helper.dart';
 import 'daily_weather_detail_screen.dart';
 
@@ -100,6 +99,12 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
 
         // 刷新15日预报数据
         context.read<WeatherProvider>().refresh15DayForecast();
+
+        // 预加载AI摘要（有缓存则直接用，没有则后台生成）
+        final provider = context.read<WeatherProvider>();
+        if (provider.forecast15dSummary == null || provider.forecast15dSummary!.isEmpty) {
+          provider.generateForecast15dSummary();
+        }
       }
     });
   }
@@ -239,55 +244,55 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
                                     ),
                                   ),
                                   const SizedBox(height: 8),
-                                  Text(
-                                    '${data.districtName ?? '未知地区'} 未来15天天气预报',
-                                    style: TextStyle(
-                                      color: AppColors.textSecondary
-                                          .withOpacity(0.8),
-                                      fontSize:
-                                          AppConstants.sectionTitleFontSize,
-                                    ),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        '${data.districtName ?? '未知地区'} 未来15天天气预报',
+                                        style: TextStyle(
+                                          color: AppColors.textSecondary
+                                              .withOpacity(0.8),
+                                          fontSize:
+                                              AppConstants.sectionTitleFontSize,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      GestureDetector(
+                                        onTap: () => _showAISummaryDialog(context, data),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.accentBlue.withOpacity(0.15),
+                                            borderRadius: BorderRadius.circular(10),
+                                            border: Border.all(
+                                              color: AppColors.accentBlue.withOpacity(0.4),
+                                              width: 1,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons.auto_awesome,
+                                                color: AppColors.accentBlue,
+                                                size: 12,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                'AI解读',
+                                                style: TextStyle(
+                                                  color: AppColors.accentBlue,
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
-                            ),
-                          ),
-                          // AI Weather Summary - 使用渐进式展示
-                          SliverToBoxAdapter(
-                            child: AIContentWidget(
-                              title: '15日天气趋势',
-                              icon: Icons.trending_up,
-                              refreshKey: data.reportTime, // 使用报告时间作为刷新键
-                              fetchAIContent: () async {
-                                final provider = context.read<WeatherProvider>();
-                                // 如果已经有内容，直接返回
-                                if (provider.forecast15dSummary != null &&
-                                    provider.forecast15dSummary!.isNotEmpty) {
-                                  return provider.forecast15dSummary!;
-                                }
-
-                                // 触发生成（如果已在生成中不会重复）
-                                await provider.generateForecast15dSummary();
-
-                                // 等待生成完成（最多等待10秒）
-                                int attempts = 0;
-                                const maxAttempts = 20; // 20 * 500ms = 10秒
-                                while (attempts < maxAttempts) {
-                                  await Future.delayed(const Duration(milliseconds: 500));
-
-                                  // 检查是否生成成功
-                                  if (provider.forecast15dSummary != null &&
-                                      provider.forecast15dSummary!.isNotEmpty) {
-                                    return provider.forecast15dSummary!;
-                                  }
-
-                                  attempts++;
-                                }
-
-                                // 如果等待后还是没有获取到内容，抛出异常让AIContentWidget处理
-                                throw Exception('未获取到AI内容');
-                              },
-                              defaultContent: '未来半月天气平稳，温度变化不大，适合安排户外活动。',
                             ),
                           ),
                           // Temperature Trend Chart
@@ -699,5 +704,96 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
     } catch (e) {
       return false;
     }
+  }
+
+  Future<void> _showAISummaryDialog(BuildContext context, _Forecast15dScreenData data) async {
+    final provider = context.read<WeatherProvider>();
+    final content = provider.forecast15dSummary;
+
+    if (!context.mounted) return;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(16),
+          child: Container(
+            constraints: const BoxConstraints(maxHeight: 500),
+            decoration: BoxDecoration(
+              gradient: AppColors.screenBackgroundGradient,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.cardBackground.withOpacity(0.5),
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.auto_awesome, color: AppColors.accentBlue, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '15日天气趋势',
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.close, color: AppColors.textSecondary, size: 20),
+                        onPressed: () => Navigator.of(context).pop(),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(
+                      (content != null && content.isNotEmpty) ? content : '未来半月天气平稳，温度变化不大，适合安排户外活动。',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 14,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.cardBackground.withOpacity(0.5),
+                    borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
+                  ),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryBlue,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: const Text('关闭'),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 }

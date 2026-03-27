@@ -3,7 +3,11 @@ import '../models/weather_model.dart';
 import '../models/location_model.dart';
 import '../models/sun_moon_index_model.dart';
 import '../services/weather_service.dart';
+import '../services/sun_moon_index_service.dart';
+import '../services/weather_adapter.dart';
+import '../services/city_data_service.dart';
 import '../services/database_service.dart';
+import '../constants/app_constants.dart';
 import '../utils/logger.dart';
 
 /// WeatherDataProvider - 核心天气数据 Provider
@@ -135,6 +139,21 @@ class WeatherDataProvider extends ChangeNotifier {
         );
         setUsingCachedData(true);
         Logger.d('从缓存加载天气数据', tag: 'WeatherDataProvider');
+
+        // 尝试从缓存加载生活指数数据
+        final cityDataService = CityDataService.getInstance();
+        cityDataService.loadCityData();
+        String? cityId = cityDataService.findCityIdByName(location.district);
+        cityId ??= cityDataService.findCityIdByName(location.city);
+        cityId ??= cityDataService.findCityIdByName(location.province);
+        final cacheKey = cityId ?? location.adcode;
+        final sunMoonKey = '${AppConstants.sunMoonIndexKey}:$cacheKey';
+        final cachedSunMoon = await _databaseService.getSunMoonIndexData(sunMoonKey);
+        if (cachedSunMoon != null) {
+          updateWeatherData(sunMoonIndexData: cachedSunMoon);
+          Logger.d('从缓存加载生活指数数据', tag: 'WeatherDataProvider');
+        }
+
         return true;
       }
       return false;
@@ -165,6 +184,10 @@ class WeatherDataProvider extends ChangeNotifier {
         );
         setUsingCachedData(false);
         Logger.d('天气数据刷新成功', tag: 'WeatherDataProvider');
+
+        // 异步加载生活指数数据（不阻塞主流程）
+        _loadSunMoonIndexData(location, weatherData);
+
         return true;
       } else {
         _error = '获取天气数据失败';
@@ -236,6 +259,64 @@ class WeatherDataProvider extends ChangeNotifier {
     } catch (e) {
       Logger.e('刷新15日预报失败', tag: 'WeatherDataProvider', error: e);
       return false;
+    }
+  }
+
+  /// 加载生活指数数据（异步，不阻塞主流程）
+  Future<void> _loadSunMoonIndexData(LocationModel location, WeatherModel weatherData) async {
+    try {
+      final isInternational = location.country != '中国' && location.country != 'China' && location.country != '未知';
+
+      SunMoonIndexData? indexData;
+      String cacheKey = location.adcode;
+
+      if (isInternational) {
+        // 国际城市：根据天气数据生成生活指数
+        final currentWeather = weatherData.current?.current;
+        if (currentWeather != null) {
+          final tempStr = currentWeather.temperature ?? '20';
+          final temperature = double.tryParse(tempStr) ?? 20.0;
+          final weatherIndex = currentWeather.weatherIndex ?? '1';
+          final weatherCode = int.tryParse(weatherIndex) ?? 1;
+          double? humidity;
+          if (currentWeather.humidity != null && currentWeather.humidity != '未知') {
+            humidity = double.tryParse(currentWeather.humidity!.replaceAll('%', ''));
+          }
+          indexData = WeatherAdapter.generateLifeIndex(
+            temperature: temperature,
+            weatherCode: weatherCode,
+            humidity: humidity,
+          );
+          Logger.d('为国际城市生成生活指数', tag: 'WeatherDataProvider');
+        }
+      } else {
+        // 国内城市：通过城市名匹配获取cityId，再从API获取
+        final cityDataService = CityDataService.getInstance();
+        cityDataService.loadCityData();
+        String? cityId = cityDataService.findCityIdByName(location.district);
+        cityId ??= cityDataService.findCityIdByName(location.city);
+        cityId ??= cityDataService.findCityIdByName(location.province);
+
+        if (cityId != null && cityId.isNotEmpty) {
+          cacheKey = cityId;
+          final response = await SunMoonIndexService.getSunMoonAndIndex(cityId);
+          if (response != null && response.data != null) {
+            indexData = response.data!;
+            Logger.d('从API加载生活指数数据成功, cityId: $cityId', tag: 'WeatherDataProvider');
+          }
+        } else {
+          Logger.w('无法获取城市ID: ${location.district}/${location.city}', tag: 'WeatherDataProvider');
+        }
+      }
+
+      if (indexData != null) {
+        updateWeatherData(sunMoonIndexData: indexData);
+        // 缓存生活指数数据
+        final sunMoonKey = '${AppConstants.sunMoonIndexKey}:$cacheKey';
+        await _databaseService.putSunMoonIndexData(sunMoonKey, indexData);
+      }
+    } catch (e) {
+      Logger.e('加载生活指数数据失败', tag: 'WeatherDataProvider', error: e);
     }
   }
 

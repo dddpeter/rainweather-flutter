@@ -14,7 +14,6 @@ import '../widgets/life_index_widget.dart';
 import '../widgets/weather_animation_widget.dart';
 import '../widgets/forecast15d_chart.dart';
 import '../widgets/weather_details_widget.dart';
-import '../widgets/ai_content_widget.dart';
 import '../widgets/air_quality_card.dart';
 import '../widgets/hourly_chart.dart';
 import '../widgets/hourly_list.dart';
@@ -73,6 +72,16 @@ class _CityWeatherPageState extends State<CityWeatherPage>
       cityId: widget.cityId,
       forceRefresh: forceRefresh,
     );
+
+    // 预取AI摘要
+    if (provider.getCityWeatherSummary(widget.cityName) == null ||
+        provider.getCityWeatherSummary(widget.cityName)!.isEmpty) {
+      provider.generateWeatherSummary(widget.cityName);
+    }
+    if (provider.getCityForecast15dSummary(widget.cityName) == null ||
+        provider.getCityForecast15dSummary(widget.cityName)!.isEmpty) {
+      provider.generateForecast15dSummary(widget.cityName);
+    }
   }
 
   @override
@@ -161,6 +170,36 @@ class _CityWeatherPageState extends State<CityWeatherPage>
                   : AppColors.accentBlue,
               fontSize: 18,
               fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: () => _showAISummaryDialog(context, cityWeatherProvider),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: (themeProvider.isLightTheme ? AppColors.primaryBlue : AppColors.accentBlue).withOpacity(0.12),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: (themeProvider.isLightTheme ? AppColors.primaryBlue : AppColors.accentBlue).withOpacity(0.4),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.auto_awesome, color: themeProvider.isLightTheme ? AppColors.primaryBlue : AppColors.accentBlue, size: 11),
+                  const SizedBox(width: 3),
+                  Text(
+                    'AI解读',
+                    style: TextStyle(
+                      color: themeProvider.isLightTheme ? AppColors.primaryBlue : AppColors.accentBlue,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -310,9 +349,6 @@ class _CityWeatherPageState extends State<CityWeatherPage>
             // 头部天气信息
             _buildTopWeatherSection(weather),
             const SizedBox(height: 16),
-            // AI智能助手
-            _buildAISummary(cityWeatherProvider, weather),
-            AppColors.cardSpacingWidget,
             // 空气质量
             AirQualityCard(weather: weather),
             AppColors.cardSpacingWidget,
@@ -379,11 +415,11 @@ class _CityWeatherPageState extends State<CityWeatherPage>
                     flex: 50,
                     child: WeatherAnimationWidget(
                       weatherType: current?.weather ?? '晴',
-                      size: 100,
+                      size: 80,
                       isPlaying: true,
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 10),
                   Flexible(
                     flex: 50,
                     child: Column(
@@ -397,7 +433,7 @@ class _CityWeatherPageState extends State<CityWeatherPage>
                               Formatters.formatNumber(current?.temperature),
                               style: TextStyle(
                                 color: context.read<ThemeProvider>().getColor('headerTextPrimary'),
-                                fontSize: 56,
+                                fontSize: 48,
                                 fontWeight: FontWeight.bold,
                                 height: 1.0,
                               ),
@@ -406,7 +442,7 @@ class _CityWeatherPageState extends State<CityWeatherPage>
                               '℃',
                               style: TextStyle(
                                 color: context.read<ThemeProvider>().getColor('headerTextPrimary'),
-                                fontSize: 40,
+                                fontSize: 34,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -436,7 +472,7 @@ class _CityWeatherPageState extends State<CityWeatherPage>
                               ],
                             ),
                           ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 2),
                         Text(
                           current?.weather ?? '晴',
                           style: TextStyle(
@@ -486,56 +522,81 @@ class _CityWeatherPageState extends State<CityWeatherPage>
     );
   }
 
-  /// 构建AI智能助手
-  Widget _buildAISummary(CityWeatherProvider provider, WeatherModel weather) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppConstants.screenHorizontalPadding,
-      ),
-      child: AIContentWidget(
-        title: 'AI智能助手',
-        icon: Icons.auto_awesome,
-        cityName: widget.cityName,
-        refreshKey: weather.current?.current?.reporttime,
-        fetchAIContent: () async {
-          try {
-            // 如果已有内容，直接返回
-            final cached = provider.getCityWeatherSummary(widget.cityName);
-            if (cached != null && cached.isNotEmpty) {
-              return cached;
-            }
+  Future<void> _showAISummaryDialog(BuildContext context, CityWeatherProvider provider) async {
+    final content = provider.getCityWeatherSummary(widget.cityName);
+    if (!context.mounted) return;
 
-            // 如果正在生成中，等待
-            if (provider.isGeneratingSummary(widget.cityName)) {
-              for (int i = 0; i < 50; i++) {
-                await Future.delayed(const Duration(milliseconds: 100));
-                final summary = provider.getCityWeatherSummary(widget.cityName);
-                if (summary != null && summary.isNotEmpty) {
-                  return summary;
-                }
-                if (!provider.isGeneratingSummary(widget.cityName)) {
-                  break;
-                }
-              }
-            }
-
-            // 生成新的摘要
-            if (!provider.isGeneratingSummary(widget.cityName)) {
-              await provider.generateWeatherSummary(widget.cityName);
-            }
-
-            final summary = provider.getCityWeatherSummary(widget.cityName);
-            if (summary != null && summary.isNotEmpty) {
-              return summary;
-            }
-
-            return '今日天气舒适，适合出行。注意温差变化，合理增减衣物。';
-          } catch (e) {
-            return '今日天气舒适，适合出行。注意温差变化，合理增减衣物。';
-          }
-        },
-        defaultContent: '今日天气舒适，适合出行。注意温差变化，合理增减衣物。',
-      ),
+    await showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext ctx) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(16),
+          child: Container(
+            constraints: const BoxConstraints(maxHeight: 500),
+            decoration: BoxDecoration(
+              gradient: AppColors.screenBackgroundGradient,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.cardBackground.withOpacity(0.5),
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.auto_awesome, color: AppColors.accentBlue, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text('AI智能助手', style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold)),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.close, color: AppColors.textSecondary, size: 20),
+                        onPressed: () => Navigator.of(ctx).pop(),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(
+                      (content != null && content.isNotEmpty) ? content : '今日天气舒适，适合出行。注意温差变化，合理增减衣物。',
+                      style: TextStyle(color: AppColors.textPrimary, fontSize: 14, height: 1.5),
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.cardBackground.withOpacity(0.5),
+                    borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
+                  ),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryBlue,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: const Text('关闭'),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -781,9 +842,52 @@ class _CityWeatherPageState extends State<CityWeatherPage>
         child: Column(
           children: [
             const SizedBox(height: 16),
-            // 15日天气AI总结
-            _buildAISummaryFor15Day(cityWeatherProvider, weather),
-            AppColors.cardSpacingWidget,
+            // 15日天气AI解读tag
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppConstants.screenHorizontalPadding),
+              child: Row(
+                children: [
+                  Icon(Icons.calendar_today, color: AppColors.accentBlue, size: AppConstants.sectionTitleIconSize),
+                  const SizedBox(width: 8),
+                  Text(
+                    '15日详细预报',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: AppConstants.sectionTitleFontSize,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: () => _showAI15dSummaryDialog(context, cityWeatherProvider),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.accentBlue.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppColors.accentBlue.withOpacity(0.4), width: 1),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.auto_awesome, color: AppColors.accentBlue, size: 11),
+                          const SizedBox(width: 3),
+                          Text(
+                            'AI解读',
+                            style: TextStyle(
+                              color: AppColors.accentBlue,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
             // 15日预报图表
             if (forecast15d.isNotEmpty) ...[
               Padding(
@@ -803,24 +907,6 @@ class _CityWeatherPageState extends State<CityWeatherPage>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.calendar_today,
-                          color: AppColors.accentBlue,
-                          size: AppConstants.sectionTitleIconSize,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '15日详细预报',
-                          style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: AppConstants.sectionTitleFontSize,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
                     const SizedBox(height: 12),
                     ...forecast15d.skip(1).toList().asMap().entries.map((entry) {
                       final index = entry.key + 1;
@@ -839,56 +925,81 @@ class _CityWeatherPageState extends State<CityWeatherPage>
     );
   }
 
-  /// 构建15日天气页面的AI总结
-  Widget _buildAISummaryFor15Day(
-    CityWeatherProvider provider,
-    WeatherModel weather,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppConstants.screenHorizontalPadding,
-      ),
-      child: AIContentWidget(
-        title: '15日天气趋势',
-        icon: Icons.trending_up,
-        cityName: widget.cityName,
-        refreshKey: weather.current?.current?.reporttime,
-        fetchAIContent: () async {
-          try {
-            final cached = provider.getCityForecast15dSummary(widget.cityName);
-            if (cached != null && cached.isNotEmpty) {
-              return cached;
-            }
+  Future<void> _showAI15dSummaryDialog(BuildContext context, CityWeatherProvider provider) async {
+    final content = provider.getCityForecast15dSummary(widget.cityName);
+    if (!context.mounted) return;
 
-            if (provider.isGenerating15dSummary(widget.cityName)) {
-              for (int i = 0; i < 50; i++) {
-                await Future.delayed(const Duration(milliseconds: 100));
-                final summary = provider.getCityForecast15dSummary(widget.cityName);
-                if (summary != null && summary.isNotEmpty) {
-                  return summary;
-                }
-                if (!provider.isGenerating15dSummary(widget.cityName)) {
-                  break;
-                }
-              }
-            }
-
-            if (!provider.isGenerating15dSummary(widget.cityName)) {
-              await provider.generateForecast15dSummary(widget.cityName);
-            }
-
-            final summary = provider.getCityForecast15dSummary(widget.cityName);
-            if (summary != null && summary.isNotEmpty) {
-              return summary;
-            }
-
-            return '未来半月天气平稳，温度变化不大，适合安排户外活动。';
-          } catch (e) {
-            return '未来半月天气平稳，温度变化不大，适合安排户外活动。';
-          }
-        },
-        defaultContent: '未来半月天气平稳，温度变化不大，适合安排户外活动。',
-      ),
+    await showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext ctx) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(16),
+          child: Container(
+            constraints: const BoxConstraints(maxHeight: 500),
+            decoration: BoxDecoration(
+              gradient: AppColors.screenBackgroundGradient,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.cardBackground.withOpacity(0.5),
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.auto_awesome, color: AppColors.accentBlue, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text('15日天气趋势', style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold)),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.close, color: AppColors.textSecondary, size: 20),
+                        onPressed: () => Navigator.of(ctx).pop(),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(
+                      (content != null && content.isNotEmpty) ? content : '未来半月天气平稳，温度变化不大，适合安排户外活动。',
+                      style: TextStyle(color: AppColors.textPrimary, fontSize: 14, height: 1.5),
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.cardBackground.withOpacity(0.5),
+                    borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
+                  ),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryBlue,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: const Text('关闭'),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

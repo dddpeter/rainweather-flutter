@@ -1,11 +1,13 @@
 import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
-import 'package:screenshot/screenshot.dart';
 import 'package:gal/gal.dart';
 import 'package:permission_handler/permission_handler.dart';
-import '../models/weather_model.dart';
+import 'package:screenshot/screenshot.dart';
+
 import '../models/location_model.dart';
 import '../models/sun_moon_index_model.dart';
+import '../models/weather_model.dart';
 import '../providers/theme_provider.dart';
 import '../widgets/weather_poster_widget.dart';
 
@@ -105,9 +107,7 @@ class WeatherShareService {
                           backgroundColor: Colors.white.withOpacity(0.9),
                           foregroundColor: const Color(0xFF012d78),
                           padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                       ),
                     ),
@@ -127,9 +127,7 @@ class WeatherShareService {
                           backgroundColor: const Color(0xFF4CAF50),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                       ),
                     ),
@@ -185,18 +183,17 @@ class WeatherShareService {
       // 3. 生成海报
       if (!context.mounted) return false;
 
-      final Uint8List imageBytes = await _screenshotController
-          .captureFromWidget(
-            WeatherPosterWidget(
-              weather: weather,
-              location: location,
-              themeProvider: themeProvider,
-              sunMoonIndexData: sunMoonIndexData,
-            ),
-            delay: const Duration(milliseconds: 100),
-            context: context,
-            pixelRatio: 2.0, // 高清图片
-          );
+      final Uint8List imageBytes = await _screenshotController.captureFromWidget(
+        WeatherPosterWidget(
+          weather: weather,
+          location: location,
+          themeProvider: themeProvider,
+          sunMoonIndexData: sunMoonIndexData,
+        ),
+        delay: const Duration(milliseconds: 100),
+        context: context,
+        pixelRatio: 2.0, // 高清图片
+      );
 
       // 4. 保存到相册
       try {

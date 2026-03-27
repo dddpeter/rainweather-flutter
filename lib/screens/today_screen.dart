@@ -1,33 +1,35 @@
 import 'dart:async';
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import '../providers/weather_provider.dart';
-import '../providers/theme_provider.dart';
-import '../widgets/weather_chart.dart';
-import '../widgets/hourly_weather_widget.dart';
-import '../services/weather_service.dart';
-import '../constants/app_constants.dart';
+
 import '../constants/app_colors.dart';
+import '../constants/app_constants.dart';
 import '../models/location_model.dart';
 import '../models/weather_model.dart';
-import '../widgets/sun_moon_widget.dart';
-import '../widgets/life_index_widget.dart';
-import '../widgets/weather_animation_widget.dart';
-import '../widgets/weather_alert_widget.dart';
-import '../widgets/ai_smart_assistant_widget.dart';
-import '../services/weather_alert_service.dart';
+import '../providers/theme_provider.dart';
+import '../providers/weather_provider.dart';
 import '../services/database_service.dart';
 import '../services/location_change_notifier.dart';
-import '../services/page_activation_observer.dart';
 import '../services/lunar_service.dart';
-import '../widgets/lunar_info_widget.dart';
-import '../widgets/air_quality_card.dart';
+import '../services/page_activation_observer.dart';
+import '../services/weather_alert_service.dart';
+import '../services/weather_service.dart';
 import '../utils/error_handler.dart';
-import '../utils/logger.dart';
 import '../utils/formatters.dart';
+import '../utils/logger.dart';
+import '../widgets/ai_smart_assistant_widget.dart';
+import '../widgets/air_quality_card.dart';
 import '../widgets/error_dialog.dart';
+import '../widgets/hourly_weather_widget.dart';
+import '../widgets/life_index_widget.dart';
+import '../widgets/lunar_info_widget.dart';
+import '../widgets/sun_moon_widget.dart';
+import '../widgets/weather_alert_widget.dart';
+import '../widgets/weather_animation_widget.dart';
+import '../widgets/weather_chart.dart';
 import 'hourly_screen.dart';
 
 class TodayScreen extends StatefulWidget {
@@ -157,9 +159,7 @@ class _TodayScreenState extends State<TodayScreen>
   }
 
   /// 刷新当前定位和天气数据
-  Future<void> _refreshCurrentLocationAndWeather({
-    bool skipAlertAnalysis = false,
-  }) async {
+  Future<void> _refreshCurrentLocationAndWeather({bool skipAlertAnalysis = false}) async {
     // 防止重复刷新
     if (_isRefreshing) {
       Logger.d('正在刷新中，跳过重复请求', tag: 'TodayScreen');
@@ -187,10 +187,7 @@ class _TodayScreenState extends State<TodayScreen>
         Logger.s('天气提醒刷新完成，新增提醒数量: ${newAlerts.length}', tag: 'TodayScreen');
         for (int i = 0; i < newAlerts.length; i++) {
           final alert = newAlerts[i];
-          Logger.d(
-            '新增提醒 $i: ${alert.title} - ${alert.cityName}',
-            tag: 'TodayScreen',
-          );
+          Logger.d('新增提醒 $i: ${alert.title} - ${alert.cityName}', tag: 'TodayScreen');
         }
         if (mounted) {
           setState(() {}); // 刷新UI显示提醒
@@ -228,19 +225,19 @@ class _TodayScreenState extends State<TodayScreen>
   Future<void> _performPeriodicRefresh() async {
     // 如果应用在后台或正在刷新中，跳过定时刷新
     if (_isAppInBackground || _isRefreshing) {
-Logger.d('应用在后台或正在刷新中，跳过定时刷新', tag: 'TodayScreen');
+      Logger.d('应用在后台或正在刷新中，跳过定时刷新', tag: 'TodayScreen');
       return;
     }
 
     // 如果页面不可见，跳过定时刷新
     if (!_isVisible) {
-Logger.d('页面不可见，跳过定时刷新', tag: 'TodayScreen');
+      Logger.d('页面不可见，跳过定时刷新', tag: 'TodayScreen');
       return;
     }
 
     try {
       _isRefreshing = true;
-Logger.d('开始执行定时刷新', tag: 'TodayScreen');
+      Logger.d('开始执行定时刷新', tag: 'TodayScreen');
 
       final weatherProvider = context.read<WeatherProvider>();
 
@@ -248,8 +245,7 @@ Logger.d('开始执行定时刷新', tag: 'TodayScreen');
       await weatherProvider.refreshWeatherData();
 
       // 定时刷新时分析天气提醒（30分钟一次）
-      if (weatherProvider.currentWeather != null &&
-          weatherProvider.currentLocation != null) {
+      if (weatherProvider.currentWeather != null && weatherProvider.currentLocation != null) {
         Logger.d('定时刷新天气提醒', tag: 'TodayScreen');
         final newAlerts = await _alertService.analyzeWeather(
           weatherProvider.currentWeather!,
@@ -261,7 +257,7 @@ Logger.d('开始执行定时刷新', tag: 'TodayScreen');
         }
       }
 
-Logger.d('定时刷新完成', tag: 'TodayScreen');
+      Logger.d('定时刷新完成', tag: 'TodayScreen');
     } catch (e) {
       Logger.e('定时刷新失败', tag: 'TodayScreen', error: e);
     } finally {
@@ -419,9 +415,7 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
 
     // 简化逻辑：直接尝试恢复，由WeatherProvider内部判断是否需要恢复
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      Logger.log(
-        'TodayScreen didUpdateWidget - calling restoreCurrentLocationWeather',
-      );
+      Logger.log('TodayScreen didUpdateWidget - calling restoreCurrentLocationWeather');
       final weatherProvider = context.read<WeatherProvider>();
       weatherProvider.restoreCurrentLocationWeather();
     });
@@ -482,46 +476,29 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
           ),
           builder: (context, data, child) {
             return Container(
-              decoration: BoxDecoration(
-                gradient: AppColors.screenBackgroundGradient,
-              ),
+              decoration: BoxDecoration(gradient: AppColors.screenBackgroundGradient),
               child: Builder(
                 builder: (context) {
                   if (data.currentWeather == null) {
-                    return Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.accentBlue,
-                      ),
-                    );
+                    return Center(child: CircularProgressIndicator(color: AppColors.accentBlue));
                   }
 
                   final weatherProvider = context.read<WeatherProvider>();
-                  if (weatherProvider.error != null &&
-                      data.currentWeather == null) {
+                  if (weatherProvider.error != null && data.currentWeather == null) {
                     return Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            Icons.error_outline,
-                            size: 64,
-                            color: AppColors.error,
-                          ),
+                          Icon(Icons.error_outline, size: 64, color: AppColors.error),
                           const SizedBox(height: 16),
                           Text(
                             weatherProvider.error!,
-                            style: TextStyle(
-                              color: AppColors.textPrimary,
-                              fontSize: 16,
-                            ),
+                            style: TextStyle(color: AppColors.textPrimary, fontSize: 16),
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 16),
                           ElevatedButton(
-                            onPressed: () => _handleRefreshWithFeedback(
-                              context,
-                              weatherProvider,
-                            ),
+                            onPressed: () => _handleRefreshWithFeedback(context, weatherProvider),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.accentBlue,
                               foregroundColor: AppColors.textPrimary,
@@ -530,16 +507,10 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
                           ),
                           const SizedBox(height: 16),
                           TextButton(
-                            onPressed: () => _showErrorDialog(
-                              context,
-                              weatherProvider.error!,
-                            ),
+                            onPressed: () => _showErrorDialog(context, weatherProvider.error!),
                             child: Text(
                               '查看详细错误信息',
-                              style: TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 14,
-                              ),
+                              style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
                             ),
                           ),
                         ],
@@ -558,9 +529,7 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
 
                       // 手动刷新时强制重新生成AI摘要
                       Logger.log('🔄 TodayScreen: 手动刷新，触发AI摘要生成');
-                      weatherProvider.generateWeatherSummary(
-                        forceRefresh: true,
-                      );
+                      weatherProvider.generateWeatherSummary(forceRefresh: true);
 
                       // iOS触觉反馈 - 刷新完成
                       if (Platform.isIOS) {
@@ -568,16 +537,13 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
                       }
 
                       // 手动刷新时分析提醒（但不发送重复通知）
-                      if (data.currentWeather != null &&
-                          data.currentLocation != null) {
+                      if (data.currentWeather != null && data.currentLocation != null) {
                         Logger.log('🔄 TodayScreen: 手动刷新天气提醒');
                         final newAlerts = await _alertService.analyzeWeather(
                           data.currentWeather!,
                           data.currentLocation!,
                         );
-                        Logger.log(
-                          '🔄 TodayScreen: 手动刷新天气提醒完成，新增提醒数量: ${newAlerts.length}',
-                        );
+                        Logger.log('🔄 TodayScreen: 手动刷新天气提醒完成，新增提醒数量: ${newAlerts.length}');
 
                         // iOS触觉反馈 - 有新提醒
                         if (Platform.isIOS && newAlerts.isNotEmpty) {
@@ -626,9 +592,7 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
                               AppColors.cardSpacingWidget,
                               // 即将到来的节气
                               _buildUpcomingSolarTerms(),
-                              const SizedBox(
-                                height: 80,
-                              ), // Space for bottom buttons
+                              const SizedBox(height: 80), // Space for bottom buttons
                             ],
                           ),
                         ),
@@ -689,9 +653,7 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
                             children: [
                               Icon(
                                 Icons.location_on_rounded,
-                                color: context.read<ThemeProvider>().getColor(
-                                  'headerTextPrimary',
-                                ),
+                                color: context.read<ThemeProvider>().getColor('headerTextPrimary'),
                                 size: 20,
                               ),
                               const SizedBox(width: 6),
@@ -718,11 +680,7 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
                                 children: [
                                   // 离线提示
                                   if (weatherProvider.isOffline) ...[
-                                    Icon(
-                                      Icons.wifi_off,
-                                      size: 10,
-                                      color: Colors.orange.shade400,
-                                    ),
+                                    Icon(Icons.wifi_off, size: 10, color: Colors.orange.shade400),
                                     const SizedBox(width: 4),
                                     Text(
                                       '离线模式',
@@ -735,21 +693,17 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
                                     const SizedBox(width: 8),
                                   ],
                                   // 刷新指示器
-                                  if (weatherProvider
-                                      .isBackgroundRefreshing) ...[
+                                  if (weatherProvider.isBackgroundRefreshing) ...[
                                     SizedBox(
                                       width: 10,
                                       height: 10,
                                       child: CircularProgressIndicator(
                                         strokeWidth: 1.5,
-                                        valueColor:
-                                            AlwaysStoppedAnimation<Color>(
-                                              context
-                                                  .read<ThemeProvider>()
-                                                  .getColor(
-                                                    'headerTextSecondary',
-                                                  ),
-                                            ),
+                                        valueColor: AlwaysStoppedAnimation<Color>(
+                                          context.read<ThemeProvider>().getColor(
+                                            'headerTextSecondary',
+                                          ),
+                                        ),
                                       ),
                                     ),
                                     const SizedBox(width: 6),
@@ -759,9 +713,9 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
                                     Icon(
                                       Icons.history,
                                       size: 10,
-                                      color: context
-                                          .read<ThemeProvider>()
-                                          .getColor('headerTextSecondary'),
+                                      color: context.read<ThemeProvider>().getColor(
+                                        'headerTextSecondary',
+                                      ),
                                     ),
                                   const SizedBox(width: 4),
                                   // 缓存时间文本
@@ -778,9 +732,9 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
                                       return Text(
                                         text,
                                         style: TextStyle(
-                                          color: context
-                                              .read<ThemeProvider>()
-                                              .getColor('headerTextSecondary'),
+                                          color: context.read<ThemeProvider>().getColor(
+                                            'headerTextSecondary',
+                                          ),
                                           fontSize: 10,
                                           fontWeight: FontWeight.w400,
                                         ),
@@ -793,26 +747,16 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
                           if (location?.isProxyDetected == true) ...[
                             const SizedBox(height: 4),
                             Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
-                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
                                 color: Colors.orange.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: Colors.orange.withOpacity(0.5),
-                                  width: 1,
-                                ),
+                                border: Border.all(color: Colors.orange.withOpacity(0.5), width: 1),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(
-                                    Icons.warning_amber_rounded,
-                                    color: Colors.orange,
-                                    size: 12,
-                                  ),
+                                  Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 12),
                                   const SizedBox(width: 4),
                                   Text(
                                     '可能使用代理',
@@ -869,9 +813,7 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
                             Text(
                               Formatters.formatNumber(current?.temperature),
                               style: TextStyle(
-                                color: context.read<ThemeProvider>().getColor(
-                                  'headerTextPrimary',
-                                ),
+                                color: context.read<ThemeProvider>().getColor('headerTextPrimary'),
                                 fontSize: 56, // 增大温度字体
                                 fontWeight: FontWeight.bold,
                                 height: 1.0, // 紧凑行高
@@ -880,9 +822,7 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
                             Text(
                               '℃',
                               style: TextStyle(
-                                color: context.read<ThemeProvider>().getColor(
-                                  'headerTextPrimary',
-                                ),
+                                color: context.read<ThemeProvider>().getColor('headerTextPrimary'),
                                 fontSize: 40,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -908,9 +848,9 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
                                 Text(
                                   '体感 ${current?.feelstemperature}℃',
                                   style: TextStyle(
-                                    color: context
-                                        .read<ThemeProvider>()
-                                        .getColor('headerTextSecondary'),
+                                    color: context.read<ThemeProvider>().getColor(
+                                      'headerTextSecondary',
+                                    ),
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -922,9 +862,7 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
                         Text(
                           current?.weather ?? '晴',
                           style: TextStyle(
-                            color: context.read<ThemeProvider>().getColor(
-                              'headerTextSecondary',
-                            ),
+                            color: context.read<ThemeProvider>().getColor('headerTextSecondary'),
                             fontSize: 20, // 减小天气文字
                             fontWeight: FontWeight.w600,
                             letterSpacing: 0.5,
@@ -1011,11 +949,7 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
       children: [
         // 湿度
         Expanded(
-          child: _buildSimpleInfoChip(
-            Icons.water_drop,
-            '湿度',
-            '${formatNumber(current.humidity)}%',
-          ),
+          child: _buildSimpleInfoChip(Icons.water_drop, '湿度', '${formatNumber(current.humidity)}%'),
         ),
         const SizedBox(width: 8),
         // 风力
@@ -1067,11 +1001,7 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                icon,
-                color: themeProvider.getColor('headerTextSecondary'),
-                size: 14,
-              ),
+              Icon(icon, color: themeProvider.getColor('headerTextSecondary'), size: 14),
               const SizedBox(width: 4),
               Text(
                 label,
@@ -1117,9 +1047,7 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
         String formattedNongLi = nongLi;
         // 如果格式是"八十八"这种，需要添加"月"字变成"八月十八"
         // 正则匹配：数字+数字的格式
-        final match = RegExp(
-          r'^(正|二|三|四|五|六|七|八|九|十|冬|腊)(初|十|廿|卅)',
-        ).hasMatch(nongLi);
+        final match = RegExp(r'^(正|二|三|四|五|六|七|八|九|十|冬|腊)(初|十|廿|卅)').hasMatch(nongLi);
         if (match && !nongLi.contains('月')) {
           // 在第一个汉字后面添加"月"
           if (nongLi.length >= 2) {
@@ -1135,18 +1063,14 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
             children: [
               Icon(
                 Icons.calendar_today,
-                color: context.read<ThemeProvider>().getColor(
-                  'headerTextSecondary',
-                ),
+                color: context.read<ThemeProvider>().getColor('headerTextSecondary'),
                 size: 14,
               ),
               const SizedBox(width: 6),
               Text(
                 formattedNongLi,
                 style: TextStyle(
-                  color: context.read<ThemeProvider>().getColor(
-                    'headerTextSecondary',
-                  ),
+                  color: context.read<ThemeProvider>().getColor('headerTextSecondary'),
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                   letterSpacing: 0.5,
@@ -1169,9 +1093,7 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
             child: Text(
               lunarInfo.solarTerm!,
               style: TextStyle(
-                color: context.read<ThemeProvider>().getColor(
-                  'headerTextSecondary',
-                ),
+                color: context.read<ThemeProvider>().getColor('headerTextSecondary'),
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 0.3,
@@ -1194,9 +1116,7 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
               child: Text(
                 festival,
                 style: TextStyle(
-                  color: context.read<ThemeProvider>().getColor(
-                    'headerTextSecondary',
-                  ),
+                  color: context.read<ThemeProvider>().getColor('headerTextSecondary'),
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.3,
@@ -1223,9 +1143,7 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
         return Text(
           nongLi,
           style: TextStyle(
-            color: context.read<ThemeProvider>().getColor(
-              'headerTextSecondary',
-            ),
+            color: context.read<ThemeProvider>().getColor('headerTextSecondary'),
             fontSize: 13,
             fontWeight: FontWeight.w400,
             letterSpacing: 0.5,
@@ -1238,9 +1156,7 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
 
   Widget _buildTemperatureChart(WeatherProvider weatherProvider) {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppConstants.screenHorizontalPadding,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: AppConstants.screenHorizontalPadding),
       child: Card(
         elevation: AppColors.cardElevation,
         shadowColor: AppColors.cardShadowColor,
@@ -1272,9 +1188,7 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
               const SizedBox(height: 8),
               SizedBox(
                 height: 220,
-                child: WeatherChart(
-                  dailyForecast: weatherProvider.dailyForecast,
-                ),
+                child: WeatherChart(dailyForecast: weatherProvider.dailyForecast),
               ),
             ],
           ),
@@ -1286,17 +1200,12 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
   Widget _buildHourlyWeather(WeatherProvider weatherProvider) {
     final weatherService = WeatherService.getInstance();
     return Container(
-      margin: const EdgeInsets.symmetric(
-        horizontal: AppConstants.screenHorizontalPadding,
-      ),
+      margin: const EdgeInsets.symmetric(horizontal: AppConstants.screenHorizontalPadding),
       child: HourlyWeatherWidget(
         hourlyForecast: weatherProvider.currentWeather?.forecast24h,
         weatherService: weatherService,
         onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const HourlyScreen()),
-          );
+          Navigator.push(context, MaterialPageRoute(builder: (context) => const HourlyScreen()));
         },
       ),
     );
@@ -1332,10 +1241,8 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => WeatherAlertDetailScreen(
-                alerts: smartAlerts,
-                commuteAdvices: commuteAdvices,
-              ),
+              builder: (context) =>
+                  WeatherAlertDetailScreen(alerts: smartAlerts, commuteAdvices: commuteAdvices),
             ),
           );
         },
@@ -1365,9 +1272,7 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
       final lunarService = LunarService.getInstance();
       final lunarInfo = lunarService.getLunarInfo(DateTime.now());
       return Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppConstants.screenHorizontalPadding,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: AppConstants.screenHorizontalPadding),
         child: Card(
           elevation: AppColors.cardElevation,
           shadowColor: AppColors.cardShadowColor,
@@ -1389,9 +1294,7 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
       final lunarService = LunarService.getInstance();
       final lunarInfo = lunarService.getLunarInfo(DateTime.now());
       return Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppConstants.screenHorizontalPadding,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: AppConstants.screenHorizontalPadding),
         child: Card(
           elevation: AppColors.cardElevation,
           shadowColor: AppColors.cardShadowColor,
@@ -1418,9 +1321,7 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
       }
 
       return Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppConstants.screenHorizontalPadding,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: AppConstants.screenHorizontalPadding),
         child: Card(
           elevation: AppColors.cardElevation,
           shadowColor: AppColors.cardShadowColor,
@@ -1444,8 +1345,7 @@ Logger.d('定时刷新完成', tag: 'TodayScreen');
         error.toLowerCase().contains('connection') ||
         error.toLowerCase().contains('timeout')) {
       errorType = AppErrorType.network;
-    } else if (error.toLowerCase().contains('location') ||
-        error.toLowerCase().contains('gps')) {
+    } else if (error.toLowerCase().contains('location') || error.toLowerCase().contains('gps')) {
       errorType = AppErrorType.location;
     } else if (error.toLowerCase().contains('permission')) {
       errorType = AppErrorType.permission;

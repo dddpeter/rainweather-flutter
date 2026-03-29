@@ -408,20 +408,17 @@ class _CityWeatherPageState extends State<CityWeatherPage>
               // 天气动画和温度 - 与今日天气页面布局一致
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center, // 垂直居中
                 children: [
-                  // 左侧天气动画 - 居中
+                  // 左侧天气动画 - 居中显示
                   Flexible(
                     flex: 50,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        WeatherAnimationWidget(
-                          weatherType: current?.weather ?? '晴',
-                          size: 80,
-                          isPlaying: true,
-                        ),
-                      ],
+                    child: Center(
+                      child: WeatherAnimationWidget(
+                        weatherType: current?.weather ?? '晴',
+                        size: 80,
+                        isPlaying: true,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 10),

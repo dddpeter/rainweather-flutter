@@ -844,21 +844,17 @@ class _TodayScreenState extends State<TodayScreen>
               // Weather animation, weather text and temperature
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start, // 顶部对齐
+                crossAxisAlignment: CrossAxisAlignment.center, // 垂直居中
                 children: [
-                  // 左侧天气动画区域 - 主要视觉焦点
+                  // 左侧天气动画区域 - 居中显示
                   Flexible(
                     flex: 50,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center, // 居中显示
-                      mainAxisAlignment: MainAxisAlignment.start, // 顶部对齐
-                      children: [
-                        WeatherAnimationWidget(
-                          weatherType: current?.weather ?? '晴',
-                          size: 80,
-                          isPlaying: true,
-                        ),
-                      ],
+                    child: Center(
+                      child: WeatherAnimationWidget(
+                        weatherType: current?.weather ?? '晴',
+                        size: 80,
+                        isPlaying: true,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 10),

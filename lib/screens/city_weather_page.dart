@@ -405,19 +405,29 @@ class _CityWeatherPageState extends State<CityWeatherPage>
           padding: const EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 12.0),
           child: Column(
             children: [
-              // 天气动画和温度 - 紧凑布局
+              // 天气动画和温度 - 等分布局，与今日天气页面一致
               Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // 左侧天气动画
-                  WeatherAnimationWidget(
-                    weatherType: current?.weather ?? '晴',
-                    size: 80,
-                    isPlaying: true,
+                  // 左侧天气动画 - 右对齐
+                  Flexible(
+                    flex: 50,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        WeatherAnimationWidget(
+                          weatherType: current?.weather ?? '晴',
+                          size: 80,
+                          isPlaying: true,
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(width: 16),
-                  // 右侧温度和天气信息
-                  Expanded(
+                  const SizedBox(width: 10),
+                  // 右侧温度和天气信息 - 左对齐
+                  Flexible(
+                    flex: 50,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

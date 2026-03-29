@@ -425,11 +425,11 @@ class _CityWeatherPageState extends State<CityWeatherPage>
                     ),
                   ),
                   const SizedBox(width: 16),
-                  // 右侧温度和天气信息 - 左对齐
+                  // 右侧温度和天气信息 - 居中对齐
                   Flexible(
                     flex: 50,
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         // 温度行
                         Row(

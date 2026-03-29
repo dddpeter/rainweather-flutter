@@ -1064,15 +1064,12 @@ class _CityWeatherPageState extends State<CityWeatherPage>
     }
   }
 
-  /// 构建农历和节气节日信息（头部区域）- Tag样式，与今日天气页面一致
+  /// 构建农历信息 - 简单文本样式
   Widget _buildLunarAndSolarTerm(WeatherModel weather) {
     final nongLi = weather.current?.nongLi;
     if (nongLi == null) return const SizedBox.shrink();
 
-    // 收集所有要显示的标签
-    final tags = <Widget>[];
-
-    // 农历日期
+    // 格式化农历日期
     String formattedNongLi = nongLi;
     final match = RegExp(r'^(正|二|三|四|五|六|七|八|九|十|冬|腊)(初|十|廿|卅)').hasMatch(nongLi);
     if (match && !nongLi.contains('月')) {
@@ -1083,52 +1080,16 @@ class _CityWeatherPageState extends State<CityWeatherPage>
       }
     }
 
-    tags.add(_buildTag(formattedNongLi, Icons.calendar_today));
-
-    return Wrap(
-      spacing: 8,
-      runSpacing: 4,
-      alignment: WrapAlignment.center,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: tags,
-    );
-  }
-
-  Widget _buildTag(String text, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: context.read<ThemeProvider>().isLightTheme
-            ? Colors.black.withOpacity(0.05)
-            : Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: context.read<ThemeProvider>().isLightTheme
-              ? Colors.black.withOpacity(0.08)
-              : Colors.white.withOpacity(0.15),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 14,
-            color: context.read<ThemeProvider>().getColor('headerTextSecondary'),
-          ),
-          const SizedBox(width: 6),
-          Text(
-            text,
-            style: TextStyle(
-              color: context.read<ThemeProvider>().getColor('headerTextSecondary'),
-              fontSize: 13,
-              fontWeight: FontWeight.w400,
-              letterSpacing: 0.3,
-            ),
-          ),
-        ],
+    return Text(
+      formattedNongLi,
+      style: TextStyle(
+        color: context.read<ThemeProvider>().getColor('headerTextSecondary'),
+        fontSize: 13,
+        fontWeight: FontWeight.w400,
+        letterSpacing: 0.5,
       ),
     );
   }
-}
+
+  }
+

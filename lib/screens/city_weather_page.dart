@@ -424,7 +424,7 @@ class _CityWeatherPageState extends State<CityWeatherPage>
                       ],
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 16),
                   // 右侧温度和天气信息 - 左对齐
                   Flexible(
                     flex: 50,

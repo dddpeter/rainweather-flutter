@@ -844,21 +844,17 @@ class _TodayScreenState extends State<TodayScreen>
               // Weather animation, weather text and temperature
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start, // 顶部对齐
+                crossAxisAlignment: CrossAxisAlignment.center, // 垂直居中
                 children: [
-                  // 左侧天气动画区域 - 主要视觉焦点
+                  // 左侧天气动画区域 - 居中显示
                   Flexible(
                     flex: 50,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center, // 居中显示
-                      mainAxisAlignment: MainAxisAlignment.start, // 顶部对齐
-                      children: [
-                        WeatherAnimationWidget(
-                          weatherType: current?.weather ?? '晴',
-                          size: 80,
-                          isPlaying: true,
-                        ),
-                      ],
+                    child: Center(
+                      child: WeatherAnimationWidget(
+                        weatherType: current?.weather ?? '晴',
+                        size: 80,
+                        isPlaying: true,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -1093,127 +1089,31 @@ class _TodayScreenState extends State<TodayScreen>
     );
   }
 
-  /// 构建农历和节气节日信息（头部区域）- Tag样式
+  /// 构建农历信息 - 简单文本样式
   Widget _buildLunarAndSolarTerm(dynamic weather) {
-    try {
-      final lunarService = LunarService.getInstance();
-      final lunarInfo = lunarService.getLunarInfo(DateTime.now());
-      final nongLi = weather?.current?.nongLi;
+    final nongLi = weather?.current?.nongLi;
+    if (nongLi == null) return const SizedBox.shrink();
 
-      // 收集所有要显示的标签
-      final tags = <Widget>[];
-
-      // 农历日期
-      if (nongLi != null) {
-        // 格式化农历日期，确保月份有"月"字
-        String formattedNongLi = nongLi;
-        // 如果格式是"八十八"这种，需要添加"月"字变成"八月十八"
-        // 正则匹配：数字+数字的格式
-        final match = RegExp(r'^(正|二|三|四|五|六|七|八|九|十|冬|腊)(初|十|廿|卅)').hasMatch(nongLi);
-        if (match && !nongLi.contains('月')) {
-          // 在第一个汉字后面添加"月"
-          if (nongLi.length >= 2) {
-            final firstChar = nongLi[0];
-            final rest = nongLi.substring(1);
-            formattedNongLi = '$firstChar月$rest';
-          }
-        }
-
-        tags.add(
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.calendar_today,
-                color: context.read<ThemeProvider>().getColor('headerTextSecondary'),
-                size: 14,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                formattedNongLi,
-                style: TextStyle(
-                  color: context.read<ThemeProvider>().getColor('headerTextSecondary'),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ],
-          ),
-        );
+    // 格式化农历日期
+    String formattedNongLi = nongLi;
+    final match = RegExp(r'^(正|二|三|四|五|六|七|八|九|十|冬|腊)(初|十|廿|卅)').hasMatch(nongLi);
+    if (match && !nongLi.contains('月')) {
+      if (nongLi.length >= 2) {
+        final firstChar = nongLi[0];
+        final rest = nongLi.substring(1);
+        formattedNongLi = '$firstChar月$rest';
       }
-
-      // 节气（如果有）- 不要图标
-      if (lunarInfo.solarTerm != null && lunarInfo.solarTerm!.isNotEmpty) {
-        tags.add(
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              lunarInfo.solarTerm!,
-              style: TextStyle(
-                color: context.read<ThemeProvider>().getColor('headerTextSecondary'),
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.3,
-              ),
-            ),
-          ),
-        );
-      }
-
-      // 传统节日（如果有）- 显示所有节日
-      if (lunarInfo.festivals.isNotEmpty) {
-        for (final festival in lunarInfo.festivals) {
-          tags.add(
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                festival,
-                style: TextStyle(
-                  color: context.read<ThemeProvider>().getColor('headerTextSecondary'),
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.3,
-                ),
-              ),
-            ),
-          );
-        }
-      }
-
-      // 使用Wrap布局，支持自动换行
-      return Wrap(
-        spacing: 8, // 标签间距
-        runSpacing: 6, // 行间距
-        alignment: WrapAlignment.center,
-        crossAxisAlignment: WrapCrossAlignment.center, // 垂直居中对齐
-        children: tags,
-      );
-    } catch (e) {
-      Logger.log('❌ 构建农历节气信息失败: $e');
-      // 如果失败，显示基础农历信息
-      final nongLi = weather?.current?.nongLi;
-      if (nongLi != null) {
-        return Text(
-          nongLi,
-          style: TextStyle(
-            color: context.read<ThemeProvider>().getColor('headerTextSecondary'),
-            fontSize: 13,
-            fontWeight: FontWeight.w400,
-            letterSpacing: 0.5,
-          ),
-        );
-      }
-      return const SizedBox.shrink();
     }
+
+    return Text(
+      formattedNongLi,
+      style: TextStyle(
+        color: context.read<ThemeProvider>().getColor('headerTextSecondary'),
+        fontSize: 13,
+        fontWeight: FontWeight.w400,
+        letterSpacing: 0.5,
+      ),
+    );
   }
 
   Widget _buildTemperatureChart(WeatherProvider weatherProvider) {

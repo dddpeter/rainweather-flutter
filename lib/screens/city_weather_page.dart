@@ -455,7 +455,7 @@ class _CityWeatherPageState extends State<CityWeatherPage>
                             ),
                           ],
                         ),
-                        // 体感温度和农历
+                        // 体感温度
                         const SizedBox(height: 4),
                         Row(
                           children: [
@@ -476,28 +476,6 @@ class _CityWeatherPageState extends State<CityWeatherPage>
                                 ),
                               ),
                             ],
-                            // 农历
-                            if (weather.current?.nongLi != null) ...[
-                              if (current?.feelstemperature != null &&
-                                  current?.feelstemperature != current?.temperature)
-                                const SizedBox(width: 12),
-                              Text(
-                                '·',
-                                style: TextStyle(
-                                  color: context.read<ThemeProvider>().getColor('headerTextSecondary'),
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                weather.current!.nongLi!,
-                                style: TextStyle(
-                                  color: context.read<ThemeProvider>().getColor('headerTextSecondary'),
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w400,
-                                ),
-                              ),
-                            ],
                           ],
                         ),
                       ],
@@ -507,6 +485,11 @@ class _CityWeatherPageState extends State<CityWeatherPage>
               ),
               const SizedBox(height: 12),
               _buildSimplifiedDetails(current),
+              // 农历日期和节气 - 与今日天气页面一致
+              if (weather.current?.nongLi != null) ...[
+                const SizedBox(height: 16),
+                _buildLunarAndSolarTerm(weather),
+              ],
             ],
           ),
         ),
@@ -1069,5 +1052,73 @@ class _CityWeatherPageState extends State<CityWeatherPage>
         );
       }
     }
+  }
+
+  /// 构建农历和节气节日信息（头部区域）- Tag样式，与今日天气页面一致
+  Widget _buildLunarAndSolarTerm(WeatherModel weather) {
+    final nongLi = weather.current?.nongLi;
+    if (nongLi == null) return const SizedBox.shrink();
+
+    // 收集所有要显示的标签
+    final tags = <Widget>[];
+
+    // 农历日期
+    String formattedNongLi = nongLi;
+    final match = RegExp(r'^(正|二|三|四|五|六|七|八|九|十|冬|腊)(初|十|廿|卅)').hasMatch(nongLi);
+    if (match && !nongLi.contains('月')) {
+      if (nongLi.length >= 2) {
+        final firstChar = nongLi[0];
+        final rest = nongLi.substring(1);
+        formattedNongLi = '$firstChar月$rest';
+      }
+    }
+
+    tags.add(_buildTag(formattedNongLi, Icons.calendar_today));
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 4,
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: tags,
+    );
+  }
+
+  Widget _buildTag(String text, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: context.read<ThemeProvider>().isLightTheme
+            ? Colors.black.withOpacity(0.05)
+            : Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: context.read<ThemeProvider>().isLightTheme
+              ? Colors.black.withOpacity(0.08)
+              : Colors.white.withOpacity(0.15),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 14,
+            color: context.read<ThemeProvider>().getColor('headerTextSecondary'),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: TextStyle(
+              color: context.read<ThemeProvider>().getColor('headerTextSecondary'),
+              fontSize: 13,
+              fontWeight: FontWeight.w400,
+              letterSpacing: 0.3,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

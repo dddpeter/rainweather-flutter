@@ -87,29 +87,27 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
     BuildContext context,
     ThemeProvider themeProvider,
   ) {
-    return Consumer<WeatherProvider>(
-      builder: (context, weatherProvider, _) => IconButton(
-        icon: Icon(
-          Icons.refresh_rounded,
-          color: themeProvider.isLightTheme
-              ? AppColors.primaryBlue
-              : AppColors.accentBlue, // 暗色模式使用更亮的强调色
-          size: 24,
-        ),
-        onPressed: () async {
-          await weatherProvider.forceRefreshWithLocation();
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('刷新成功'),
-                duration: const Duration(seconds: 1),
-                backgroundColor: AppColors.primaryBlue,
-              ),
-            );
-          }
-        },
-        tooltip: '刷新',
+    return IconButton(
+      icon: Icon(
+        Icons.refresh_rounded,
+        color: themeProvider.isLightTheme
+            ? AppColors.primaryBlue
+            : AppColors.accentBlue, // 暗色模式使用更亮的强调色
+        size: 24,
       ),
+      onPressed: () async {
+        await context.read<WeatherProvider>().forceRefreshWithLocation();
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('刷新成功'),
+              duration: const Duration(seconds: 1),
+              backgroundColor: AppColors.primaryBlue,
+            ),
+          );
+        }
+      },
+      tooltip: '刷新',
     );
   }
 

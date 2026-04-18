@@ -202,9 +202,11 @@ class CitiesProvider extends ChangeNotifier {
     setLoadingCitiesWeather(true);
 
     try {
-      // 逐个刷新城市天气（串行更稳定，避免并行请求导致的竞态问题）
-      for (final city in _mainCities) {
-        await refreshCityWeather(city);
+      // 小批量并行（每批 3 个）：在单城市串行锁内仍安全，整体耗时低于全串行
+      const batchSize = 3;
+      for (var i = 0; i < _mainCities.length; i += batchSize) {
+        final batch = _mainCities.skip(i).take(batchSize).toList();
+        await Future.wait(batch.map((city) => refreshCityWeather(city)));
       }
 
       Logger.d('刷新所有城市天气完成', tag: 'CitiesProvider');

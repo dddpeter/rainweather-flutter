@@ -107,7 +107,7 @@ class _RainWeatherAppState extends State<RainWeatherApp>
       case AppLifecycleState.paused:
         // 应用进入后台
         _appInBackgroundSince = DateTime.now();
-        print('📱 App entered background at: $_appInBackgroundSince');
+        Logger.d('App entered background at: $_appInBackgroundSince', tag: 'RainWeatherApp');
         break;
 
       case AppLifecycleState.resumed:
@@ -115,14 +115,16 @@ class _RainWeatherAppState extends State<RainWeatherApp>
         final now = DateTime.now();
         if (_appInBackgroundSince != null) {
           final backgroundDuration = now.difference(_appInBackgroundSince!);
-          print(
-            '📱 App resumed after being in background for: $backgroundDuration',
+          Logger.d(
+            'App resumed after background: $backgroundDuration',
+            tag: 'RainWeatherApp',
           );
 
           // 如果在后台时间超过设定的超时时间，则重启应用
           if (backgroundDuration > _backgroundTimeout) {
-            print(
-              '⏰ App was in background for more than $_backgroundTimeout, restarting...',
+            Logger.d(
+              'Background exceeded $_backgroundTimeout, restarting',
+              tag: 'RainWeatherApp',
             );
             _restartApp();
           }

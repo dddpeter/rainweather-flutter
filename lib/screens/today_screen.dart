@@ -39,6 +39,49 @@ class TodayScreen extends StatefulWidget {
   State<TodayScreen> createState() => _TodayScreenState();
 }
 
+/// 在 [build] 子树内用 [Selector] 监听「恢复定位」所需字段（Provider 要求 select/Selector 仅在 build 阶段）。
+/// 使用上升沿触发，避免在条件持续为 true 时重复调用 [WeatherProvider.restoreCurrentLocationWeather]。
+class _TodayLocationRestoreBinder extends StatefulWidget {
+  const _TodayLocationRestoreBinder();
+
+  @override
+  State<_TodayLocationRestoreBinder> createState() => _TodayLocationRestoreBinderState();
+}
+
+class _TodayLocationRestoreBinderState extends State<_TodayLocationRestoreBinder> {
+  bool _lastShouldRestore = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Selector<WeatherProvider, ({int tab, bool showCity, bool hasLocWeather, bool hasOrig})>(
+      selector: (_, p) => (
+        tab: p.currentTabIndex,
+        showCity: p.isShowingCityWeather,
+        hasLocWeather: p.currentLocationWeather != null,
+        hasOrig: p.originalLocation != null,
+      ),
+      builder: (context, signal, _) {
+        final shouldRestore = signal.tab == 0 &&
+            signal.hasLocWeather &&
+            signal.hasOrig &&
+            signal.showCity;
+
+        final risingEdge = shouldRestore && !_lastShouldRestore;
+        _lastShouldRestore = shouldRestore;
+
+        if (risingEdge) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!context.mounted) return;
+            context.read<WeatherProvider>().restoreCurrentLocationWeather();
+          });
+        }
+
+        return const SizedBox.shrink();
+      },
+    );
+  }
+}
+
 class _TodayScreenState extends State<TodayScreen>
     with
         WidgetsBindingObserver,
@@ -46,7 +89,6 @@ class _TodayScreenState extends State<TodayScreen>
         PageActivationMixin,
         AutomaticKeepAliveClientMixin {
   bool _isVisible = false;
-  bool _needsRestore = false; // 是否需要恢复定位数据
   final WeatherAlertService _alertService = WeatherAlertService.instance;
   bool _isRefreshing = false; // 防止重复刷新
 
@@ -90,38 +132,13 @@ class _TodayScreenState extends State<TodayScreen>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // 检查是否需要恢复定位数据（移出 build 方法，避免递归重建）
-    final data = context.watch<WeatherProvider>();
+    // 「恢复定位」已移至 [_TodayLocationRestoreBinder]（build 内 Selector），此处仅处理路由可见性。
     final navigator = Navigator.of(context);
     final canPop = navigator.canPop();
-
-    // 更新可见性状态
     final newIsVisible = !canPop;
     if (_isVisible != newIsVisible) {
       _isVisible = newIsVisible;
     }
-
-    // 检查是否需要恢复定位数据
-    _needsRestore = _shouldRestore(data);
-
-    if (_needsRestore) {
-      // 使用 post frame callback 避免在 build 期间调用 setState
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && _needsRestore) {
-          context.read<WeatherProvider>().restoreCurrentLocationWeather();
-          _needsRestore = false;
-        }
-      });
-    }
-  }
-
-  /// 检查是否需要恢复定位数据
-  bool _shouldRestore(WeatherProvider data) {
-    final isTodayTab = data.currentTabIndex == 0;
-    return isTodayTab &&
-        data.currentLocationWeather != null &&
-        data.originalLocation != null &&
-        data.isShowingCityWeather;
   }
 
   /// 页面被激活时调用（类似Vue的activated）
@@ -482,8 +499,12 @@ class _TodayScreenState extends State<TodayScreen>
           builder: (context, data, child) {
             return Container(
               decoration: BoxDecoration(gradient: AppColors.screenBackgroundGradient),
-              child: Builder(
-                builder: (context) {
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  // 主内容必须作为非定位子项以撑开 Stack；勿用「仅 Positioned.fill + shrink」否则高度塌为 0
+                  Builder(
+                    builder: (context) {
                   if (data.currentWeather == null) {
                     return Center(child: CircularProgressIndicator(color: AppColors.accentBlue));
                   }
@@ -632,6 +653,15 @@ class _TodayScreenState extends State<TodayScreen>
                     ),
                   );
                 },
+                  ),
+                  const Positioned(
+                    left: 0,
+                    top: 0,
+                    width: 0,
+                    height: 0,
+                    child: _TodayLocationRestoreBinder(),
+                  ),
+                ],
               ),
             );
           },

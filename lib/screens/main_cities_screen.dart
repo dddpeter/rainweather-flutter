@@ -11,11 +11,30 @@ import '../services/location_change_notifier.dart';
 import '../utils/city_name_matcher.dart';
 import '../utils/error_handler.dart';
 import '../utils/weather_icon_helper.dart';
-import '../widgets/city_card_skeleton.dart';
 import '../widgets/error_dialog.dart';
 import 'city_weather_page.dart';
 import 'weather_alerts_screen.dart';
 import '../utils/logger.dart';
+
+/// 供 [Selector] 使用：仅在列表结构、加载态或各卡片关键展示字段变化时触发重建
+int mainCitiesListRebuildToken(WeatherProvider p) {
+  var h = Object.hash(
+    p.mainCities.length,
+    p.isLoadingCities,
+    p.hasPerformedInitialMainCitiesRefresh,
+    p.isLoadingCitiesWeather,
+  );
+  for (final c in p.mainCities) {
+    final w = p.getCityWeather(c.name);
+    h = Object.hash(
+      h,
+      c.id,
+      w?.current?.current?.temperature ?? '',
+      w?.current?.current?.weather ?? '',
+    );
+  }
+  return h;
+}
 
 class MainCitiesScreen extends StatefulWidget {
   const MainCitiesScreen({super.key});
@@ -95,49 +114,44 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
                               ),
                             ),
                             const Spacer(),
-                            Consumer<WeatherProvider>(
-                              builder: (context, weatherProvider, child) {
-                                return Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    TextButton(
-                                      onPressed: () => _showAddCityDialog(
-                                        context,
-                                        weatherProvider,
-                                      ),
-                                      style: TextButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 8,
-                                        ),
-                                        minimumSize: Size.zero,
-                                        tapTargetSize:
-                                            MaterialTapTargetSize.shrinkWrap,
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            Icons.add_location_alt_rounded,
-                                            size: 18,
-                                            color: AppColors.titleBarIconColor,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            '添加城市',
-                                            style: TextStyle(
-                                              color:
-                                                  AppColors.titleBarIconColor,
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                TextButton(
+                                  onPressed: () => _showAddCityDialog(
+                                    context,
+                                    context.read<WeatherProvider>(),
+                                  ),
+                                  style: TextButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
                                     ),
-                                  ],
-                                );
-                              },
+                                    minimumSize: Size.zero,
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.add_location_alt_rounded,
+                                        size: 18,
+                                        color: AppColors.titleBarIconColor,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '添加城市',
+                                        style: TextStyle(
+                                          color: AppColors.titleBarIconColor,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -154,8 +168,10 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
                   ),
                   // Cities List
                   Expanded(
-                    child: Consumer<WeatherProvider>(
-                      builder: (context, weatherProvider, child) {
+                    child: Selector<WeatherProvider, int>(
+                      selector: (_, p) => mainCitiesListRebuildToken(p),
+                      builder: (context, _, child) {
+                        final weatherProvider = context.read<WeatherProvider>();
                         final cities = weatherProvider.mainCities;
                         final isLoading = weatherProvider.isLoadingCities;
 

@@ -42,6 +42,17 @@ class WeatherProvider extends ChangeNotifier {
   // 网络状态服务
   final NetworkStatusService _networkStatus = NetworkStatusService();
 
+  /// 网络恢复后刷新防抖，避免信号抖动导致连续请求
+  static const Duration _networkReconnectDebounce = Duration(milliseconds: 450);
+  Timer? _networkReconnectTimer;
+
+  // 子 Provider 监听（需成对 removeListener，避免泄漏与重复通知）
+  VoidCallback? _onLocationChanged;
+  VoidCallback? _onCitiesChanged;
+  VoidCallback? _onWeatherDataChanged;
+  VoidCallback? _onAiInsightsChanged;
+  VoidCallback? _onWeatherDataForAiSync;
+
   // ==================== 本地状态 ====================
   int _currentTabIndex = 0;
 
@@ -53,45 +64,58 @@ class WeatherProvider extends ChangeNotifier {
     required WeatherDataProvider weatherDataProvider,
     required RefreshCoordinator refreshCoordinator,
   }) {
+    _removeChildListeners();
+
     _locationProvider = locationProvider;
     _citiesProvider = citiesProvider;
     _aiInsightsProvider = aiInsightsProvider;
     _weatherDataProvider = weatherDataProvider;
     _refreshCoordinator = refreshCoordinator;
 
-    // 监听所有子 Provider 的变化，转发到 UI
-    if (_locationProvider != null) {
-      _locationProvider!.addListener(() {
-        notifyListeners();
-      });
-    }
+    _onLocationChanged = () => notifyListeners();
+    _locationProvider!.addListener(_onLocationChanged!);
 
-    if (_citiesProvider != null) {
-      _citiesProvider!.addListener(() {
-        notifyListeners();
-      });
-    }
+    _onCitiesChanged = () => notifyListeners();
+    _citiesProvider!.addListener(_onCitiesChanged!);
 
-    if (_weatherDataProvider != null) {
-      _weatherDataProvider!.addListener(() {
-        notifyListeners();
-      });
-    }
+    _onWeatherDataChanged = () => notifyListeners();
+    _weatherDataProvider!.addListener(_onWeatherDataChanged!);
 
-    if (_aiInsightsProvider != null) {
-      _aiInsightsProvider!.addListener(() {
-        notifyListeners();
-      });
-    }
+    _onAiInsightsChanged = () => notifyListeners();
+    _aiInsightsProvider!.addListener(_onAiInsightsChanged!);
 
-    // 同步天气数据到 AIInsightsProvider
-    if (_weatherDataProvider != null && _aiInsightsProvider != null) {
-      _weatherDataProvider!.addListener(() {
-        _aiInsightsProvider!.setWeatherData(_weatherDataProvider!.currentWeather);
-      });
-    }
+    _onWeatherDataForAiSync = () {
+      _aiInsightsProvider?.setWeatherData(_weatherDataProvider?.currentWeather);
+    };
+    _weatherDataProvider!.addListener(_onWeatherDataForAiSync!);
 
     Logger.d('WeatherProvider: 子Provider已设置', tag: 'WeatherProvider');
+  }
+
+  void _removeChildListeners() {
+    if (_locationProvider != null && _onLocationChanged != null) {
+      _locationProvider!.removeListener(_onLocationChanged!);
+    }
+    if (_citiesProvider != null && _onCitiesChanged != null) {
+      _citiesProvider!.removeListener(_onCitiesChanged!);
+    }
+    if (_weatherDataProvider != null) {
+      if (_onWeatherDataChanged != null) {
+        _weatherDataProvider!.removeListener(_onWeatherDataChanged!);
+      }
+      if (_onWeatherDataForAiSync != null) {
+        _weatherDataProvider!.removeListener(_onWeatherDataForAiSync!);
+      }
+    }
+    if (_aiInsightsProvider != null && _onAiInsightsChanged != null) {
+      _aiInsightsProvider!.removeListener(_onAiInsightsChanged!);
+    }
+
+    _onLocationChanged = null;
+    _onCitiesChanged = null;
+    _onWeatherDataChanged = null;
+    _onAiInsightsChanged = null;
+    _onWeatherDataForAiSync = null;
   }
 
   // ==================== 向后兼容的 Getters - 定位相关 ====================
@@ -529,19 +553,30 @@ class WeatherProvider extends ChangeNotifier {
 
   void _onNetworkStatusChanged() {
     Logger.d('网络状态变化: ${_networkStatus.isConnected ? "已连接" : "已断开"}', tag: 'WeatherProvider');
-    // 网络状态变化时，可以触发数据刷新
-    if (_networkStatus.isConnected) {
-      // 网络恢复，可以刷新数据
-      refreshWeatherData();
+    _networkReconnectTimer?.cancel();
+    _networkReconnectTimer = null;
+
+    if (!_networkStatus.isConnected) {
+      return;
     }
+
+    _networkReconnectTimer = Timer(_networkReconnectDebounce, () {
+      _networkReconnectTimer = null;
+      unawaited(refreshWeatherData());
+    });
   }
 
   // ==================== 资源释放 ====================
 
   @override
   void dispose() {
+    _networkReconnectTimer?.cancel();
+    _networkReconnectTimer = null;
+
     // 移除网络状态监听
     _networkStatus.removeListener(_onNetworkStatusChanged);
+
+    _removeChildListeners();
 
     // 停止定时刷新
     _refreshCoordinator?.stop();

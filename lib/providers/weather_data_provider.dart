@@ -65,25 +65,32 @@ class WeatherDataProvider extends ChangeNotifier {
     List<DailyWeather>? forecast15d,
     SunMoonIndexData? sunMoonIndexData,
   }) {
-    // 直接设置数据并通知，不做条件检查
-    if (currentWeather != null) {
+    var changed = false;
+
+    if (currentWeather != null && !identical(_currentWeather, currentWeather)) {
       _currentWeather = currentWeather;
+      changed = true;
     }
-    if (hourlyForecast != null) {
+    if (hourlyForecast != null && !identical(_hourlyForecast, hourlyForecast)) {
       _hourlyForecast = hourlyForecast;
+      changed = true;
     }
-    if (dailyForecast != null) {
+    if (dailyForecast != null && !identical(_dailyForecast, dailyForecast)) {
       _dailyForecast = dailyForecast;
+      changed = true;
     }
-    if (forecast15d != null) {
+    if (forecast15d != null && !identical(_forecast15d, forecast15d)) {
       _forecast15d = forecast15d;
+      changed = true;
     }
-    if (sunMoonIndexData != null) {
+    if (sunMoonIndexData != null && !identical(_sunMoonIndexData, sunMoonIndexData)) {
       _sunMoonIndexData = sunMoonIndexData;
+      changed = true;
     }
 
-    // 总是通知监听器
-    notifyListeners();
+    if (changed) {
+      notifyListeners();
+    }
   }
 
   /// 设置加载状态

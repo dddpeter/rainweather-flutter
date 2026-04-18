@@ -217,19 +217,17 @@ abstract class CityWeatherScreenBase<T extends StatefulWidget> extends State<T> 
       ),
       centerTitle: true,
       actions: [
-        // 分享按钮
-        Consumer<WeatherProvider>(
-          builder: (context, weatherProvider, _) => IconButton(
-            icon: Icon(
-              Icons.share_rounded,
-              color: themeProvider.isLightTheme
-                  ? AppColors.primaryBlue
-                  : AppColors.accentBlue,
-              size: 24,
-            ),
-            onPressed: () => _shareWeather(context, weatherProvider),
-            tooltip: '分享天气',
+        // 分享按钮（不在此处订阅整表，避免无关状态触发 AppBar 重建）
+        IconButton(
+          icon: Icon(
+            Icons.share_rounded,
+            color: themeProvider.isLightTheme
+                ? AppColors.primaryBlue
+                : AppColors.accentBlue,
+            size: 24,
           ),
+          onPressed: () => _shareWeather(context, context.read<WeatherProvider>()),
+          tooltip: '分享天气',
         ),
         const SizedBox(width: 8),
       ],

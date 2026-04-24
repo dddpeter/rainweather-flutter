@@ -99,18 +99,20 @@ class LifeIndexWidget extends StatelessWidget {
   final WeatherProvider? weatherProvider;
   final SunMoonIndexData? sunMoonIndexData;
   final bool showContainer;
+  final bool showTitle;
 
   const LifeIndexWidget({
     super.key,
     required this.weatherProvider,
     this.showContainer = true,
+    this.showTitle = true,
   }) : sunMoonIndexData = null;
 
-  /// 自定义构造函数，用于直接传入数据
   const LifeIndexWidget.custom({
     super.key,
     required this.sunMoonIndexData,
     this.showContainer = true,
+    this.showTitle = true,
   }) : weatherProvider = null;
 
   @override
@@ -138,25 +140,26 @@ class LifeIndexWidget extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.eco,
-                        color: AppColors.accentGreen,
-                        size: AppConstants.sectionTitleIconSize,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '生活指数',
-                        style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: AppConstants.sectionTitleFontSize,
-                          fontWeight: FontWeight.bold,
+                  if (showTitle)
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.eco,
+                          color: AppColors.accentGreen,
+                          size: AppConstants.sectionTitleIconSize,
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
+                        const SizedBox(width: 8),
+                        Text(
+                          '生活指数',
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: AppConstants.sectionTitleFontSize,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  if (showTitle) const SizedBox(height: 12),
                   lifeIndexContent,
                 ],
               ),

@@ -44,8 +44,11 @@ class AppConstants {
   /// 屏幕边距 - 符合Material Design 3推荐标准（12dp更符合MD3紧凑布局）
   static const double screenHorizontalPadding = 8.0;
 
-  /// 大卡片之间的最小间距（12dp符合M3最小推荐值）
-  static const double cardSpacing = 12.0;
+  /// 头部区域水平边距（header区域需要更大呼吸感）
+  static const double headerHorizontalPadding = 16.0;
+
+  /// 大卡片之间的最小间距
+  static const double cardSpacing = 6.0;
 
   /// 卡片内部元素之间的间距
   static const double cardInnerSpacing = 16.0;

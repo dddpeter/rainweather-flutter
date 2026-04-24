@@ -233,15 +233,23 @@ This Flutter app is a complete refactor of the original Android weather app with
 ### v1.18.0 (2026-04-24) - Latest
 
 **Header Layout Optimization**
-- 🎨 **Unified Header Layout**: Today and city weather pages now share a consistent header structure with centered animation, temperature, and inline info
-- 🎨 **Simplified Status Row**: Today page status indicators changed to icon-only, removing redundant text labels for a cleaner look
+- 🎨 **Unified Header Layout**: Today and city weather pages share consistent header structure - centered temperature (72px font) + weather animation (right side 64px), info in single row
+- 🎨 **City Name in AppBar**: City name displayed in AppBar title bar, always visible when scrolling, consistent with mainstream weather apps
+- 🎨 **Status Row Optimization**: Fixed 20px height, AI summary left-aligned, alert icon right-aligned, cleaner layout
 - 🎨 **Info Chip Height Optimization**: Humidity/wind/pressure/visibility chip height reduced from 60px to 48px for a more compact layout
-- 🎨 **Standalone Lunar Date**: Lunar date separated from weather text row, displayed on its own line
+
+**Theme System Optimization**
+- ✨ **Smooth Transition Animation**: Fixed AnimatedTheme nesting issue, switched to MaterialApp built-in themeAnimationDuration parameter, 300ms easeInOut curve
+- 🎨 **Borderless Cards**: Removed BaseCard borderSide, unified to pure background color cards for cleaner visuals
+
+**Card Layout Unification**
+- 📐 **Card Order Unification**: Today and city weather pages now have unified card order: 24h weather → Air Quality → Details → Life Index → Sunrise/Sunset → Temperature Trend
+- 🗂️ **City Weather Cleanup**: Deleted unused CityWeatherScreen, CityWeatherSwipeScreen, CityWeatherTabsScreen, CityWeatherScreenBase files
 
 **Bug Fixes**
 - 🐛 **Dark Mode Background Fix**: Fixed scaffoldBackgroundColor and colorScheme hardcoded to blue theme in dark mode, now correctly switches with user-selected theme scheme
-- 🐛 **City Weather Alert Optimization**: City weather alert button moved from header to AppBar for a cleaner header area
-- 🧹 **Code Cleanup**: Removed unused _buildLunarAndSolarTerm, _buildAlertIcon, _getCacheAgeText methods, reducing compilation warnings
+- 🐛 **City Weather Alert Optimization**: City weather alert button moved from header to AppBar
+- 🧹 **Code Cleanup**: Removed unused methods, reducing compilation warnings
 
 ### v1.16.0 (2026-03-27)
 

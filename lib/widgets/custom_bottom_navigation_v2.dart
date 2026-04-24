@@ -19,9 +19,12 @@ class CustomBottomNavigationV2 extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
+        final activeColor = themeProvider.isLightTheme
+            ? AppColors.primaryBlue
+            : const Color(0xFF8edafc);
+
         return Container(
           decoration: BoxDecoration(
-            // 亮色模式使用浅蓝色，暗色模式使用深色
             color: AppColors.appBarBackground,
             boxShadow: [
               BoxShadow(
@@ -32,97 +35,56 @@ class CustomBottomNavigationV2 extends StatelessWidget {
             ],
           ),
           child: SafeArea(
-            child: Container(
-              height: 80, // Material Design 3 推荐高度
-              padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: items.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final item = entry.value;
-                  final isSelected = currentIndex == index;
+            top: false,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: items.asMap().entries.map((entry) {
+                final index = entry.key;
+                final item = entry.value;
+                final isSelected = currentIndex == index;
 
-                  return Expanded(
-                    child: Material(
-                      color: Colors.transparent,
-                      child: Semantics(
-                        label: item.label,
-                        selected: isSelected,
-                        button: true,
-                        hint: isSelected ? '当前选中${item.label}' : '切换到${item.label}',
-                        child: InkWell(
-                          onTap: () => onTap(index),
-                          borderRadius: BorderRadius.circular(16),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 8,
-                              horizontal: 12,
+                return Expanded(
+                  child: Semantics(
+                    label: item.label,
+                    selected: isSelected,
+                    button: true,
+                    hint: isSelected ? '当前选中${item.label}' : '切换到${item.label}',
+                    child: InkWell(
+                      onTap: () => onTap(index),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: isSelected ? activeColor.withOpacity(0.15) : Colors.transparent,
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 150),
+                              child: Icon(
+                                item.icon,
+                                key: ValueKey(isSelected),
+                                color: isSelected ? activeColor : AppColors.textTertiary,
+                                size: 24,
+                              ),
                             ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                // 图标容器，选中时有背景
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 4,
-                                  ),
-                                  decoration: isSelected
-                                      ? BoxDecoration(
-                                          color:
-                                              (themeProvider.isLightTheme
-                                                      ? AppColors.primaryBlue
-                                                      : AppColors
-                                                            .accentBlue) // 暗色模式使用更亮的强调色
-                                                  .withOpacity(
-                                                    themeProvider.isLightTheme
-                                                        ? 0.12
-                                                        : 0.24,
-                                                  ),
-                                          borderRadius: BorderRadius.circular(16),
-                                        )
-                                      : null,
-                                  child: Icon(
-                                    item.icon,
-                                    color: isSelected
-                                        ? (themeProvider.isLightTheme
-                                              ? AppColors.primaryBlue
-                                              : AppColors
-                                                    .accentBlue) // 暗色模式使用更亮的强调色
-                                        : AppColors.textTertiary,
-                                    size: 24, // Material Design 3 标准图标大小
-                                  ),
+                            const SizedBox(height: 2),
+                            AnimatedDefaultTextStyle(
+                              duration: const Duration(milliseconds: 150),
+                              style: TextStyle(
+                                color: isSelected ? activeColor : AppColors.textTertiary,
+                                fontSize: 11,
+                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  item.label,
-                                  style: TextStyle(
-                                    color: isSelected
-                                        ? (themeProvider.isLightTheme
-                                              ? AppColors.primaryBlue
-                                              : AppColors
-                                                    .accentBlue) // 暗色模式使用更亮的强调色
-                                        : AppColors.textTertiary,
-                                    fontSize: 12, // Material Design 3 标准字号
-                                    fontWeight: isSelected
-                                        ? FontWeight.w600
-                                        : FontWeight.w500,
-                                    letterSpacing: 0.1,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
-                            ),
+                                child: Text(item.label),
+                              ),
+                            ],
                           ),
                         ),
                       ),
                     ),
                   );
-                }).toList(),
-              ),
+              }).toList(),
             ),
           ),
         );

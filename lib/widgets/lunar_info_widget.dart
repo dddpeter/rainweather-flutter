@@ -9,8 +9,9 @@ import '../providers/theme_provider.dart';
 /// 农历信息卡片组件
 class LunarInfoWidget extends StatelessWidget {
   final LunarInfo lunarInfo;
+  final bool showTitle;
 
-  const LunarInfoWidget({super.key, required this.lunarInfo});
+  const LunarInfoWidget({super.key, required this.lunarInfo, this.showTitle = true});
 
   @override
   Widget build(BuildContext context) {
@@ -19,26 +20,27 @@ class LunarInfoWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 标题 - 与详细信息卡片样式一致
-          Row(
-            children: [
-              Icon(
-                Icons.calendar_month_rounded,
-                color: AppColors.accentBlue,
-                size: AppConstants.sectionTitleIconSize,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '农历信息',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: AppConstants.sectionTitleFontSize,
-                  fontWeight: FontWeight.bold,
+          // 标题（可选）
+          if (showTitle)
+            Row(
+              children: [
+                Icon(
+                  Icons.calendar_month_rounded,
+                  color: AppColors.accentBlue,
+                  size: AppConstants.sectionTitleIconSize,
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
+                const SizedBox(width: 8),
+                Text(
+                  '农历信息',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: AppConstants.sectionTitleFontSize,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          if (showTitle) const SizedBox(height: 16),
 
           // 农历日期和干支（只使用橙色和绿色两种颜色）
           Row(
@@ -215,8 +217,9 @@ class LunarInfoWidget extends StatelessWidget {
 /// 宜忌卡片组件 - 美化版
 class YiJiWidget extends StatelessWidget {
   final LunarInfo lunarInfo;
+  final bool showTitle;
 
-  const YiJiWidget({super.key, required this.lunarInfo});
+  const YiJiWidget({super.key, required this.lunarInfo, this.showTitle = true});
 
   @override
   Widget build(BuildContext context) {
@@ -236,102 +239,103 @@ class YiJiWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 标题行
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: isLight
-                        ? [
-                            AppColors.accentBlue.withOpacity(0.15),
-                            AppColors.accentBlue.withOpacity(0.08),
-                          ]
-                        : [
-                            AppColors.accentBlue.withOpacity(0.25),
-                            AppColors.accentBlue.withOpacity(0.15),
-                          ],
-                  ),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  Icons.event_available_rounded,
-                  color: AppColors.accentBlue,
-                  size: 18,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                '宜忌提醒',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: AppConstants.sectionTitleFontSize,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const Spacer(),
-              // 黄历详情入口 - 优化样式
-              InkWell(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const LaoHuangLiScreen(),
-                    ),
-                  );
-                },
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
+          // 标题行（可选）
+          if (showTitle)
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: isLight
                           ? [
-                              AppColors.accentBlue.withOpacity(0.12),
-                              AppColors.accentBlue.withOpacity(0.06),
+                              AppColors.accentBlue.withOpacity(0.15),
+                              AppColors.accentBlue.withOpacity(0.08),
                             ]
                           : [
-                              AppColors.accentBlue.withOpacity(0.2),
-                              AppColors.accentBlue.withOpacity(0.1),
+                              AppColors.accentBlue.withOpacity(0.25),
+                              AppColors.accentBlue.withOpacity(0.15),
                             ],
                     ),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: AppColors.accentBlue.withOpacity(
-                        isLight ? 0.3 : 0.4,
-                      ),
-                      width: 1,
-                    ),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.event_note,
-                        color: AppColors.accentBlue,
-                        size: 14,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '黄历详情',
-                        style: TextStyle(
-                          color: AppColors.accentBlue,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                    ],
+                  child: Icon(
+                    Icons.event_available_rounded,
+                    color: AppColors.accentBlue,
+                    size: 18,
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
+                const SizedBox(width: 10),
+                Text(
+                  '宜忌提醒',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: AppConstants.sectionTitleFontSize,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Spacer(),
+                // 黄历详情入口 - 优化样式
+                InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const LaoHuangLiScreen(),
+                      ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: isLight
+                            ? [
+                                AppColors.accentBlue.withOpacity(0.12),
+                                AppColors.accentBlue.withOpacity(0.06),
+                              ]
+                            : [
+                                AppColors.accentBlue.withOpacity(0.2),
+                                AppColors.accentBlue.withOpacity(0.1),
+                              ],
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: AppColors.accentBlue.withOpacity(
+                          isLight ? 0.3 : 0.4,
+                        ),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.event_note,
+                          color: AppColors.accentBlue,
+                          size: 14,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '黄历详情',
+                          style: TextStyle(
+                            color: AppColors.accentBlue,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          if (showTitle) const SizedBox(height: 16),
 
           // 宜忌卡片 - 使用渐变卡片设计，固定高度
           IntrinsicHeight(
@@ -550,11 +554,13 @@ class YiJiWidget extends StatelessWidget {
 class SolarTermListWidget extends StatelessWidget {
   final List<SolarTermInfo> solarTerms;
   final String title;
+  final bool showTitle;
 
   const SolarTermListWidget({
     super.key,
     required this.solarTerms,
     this.title = '即将到来的节气',
+    this.showTitle = true,
   });
 
   @override
@@ -568,26 +574,27 @@ class SolarTermListWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 标题 - 与详细信息卡片样式一致
-          Row(
-            children: [
-              Icon(
-                Icons.wb_sunny_rounded,
-                color: AppColors.accentBlue,
-                size: AppConstants.sectionTitleIconSize,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: AppConstants.sectionTitleFontSize,
-                  fontWeight: FontWeight.bold,
+          // 标题（可选）
+          if (showTitle)
+            Row(
+              children: [
+                Icon(
+                  Icons.wb_sunny_rounded,
+                  color: AppColors.accentBlue,
+                  size: AppConstants.sectionTitleIconSize,
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: AppConstants.sectionTitleFontSize,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          if (showTitle) const SizedBox(height: 12),
           // 节气列表
           ...solarTerms.map((term) => _buildSolarTermItem(term)),
         ],

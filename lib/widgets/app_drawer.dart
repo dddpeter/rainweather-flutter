@@ -820,9 +820,11 @@ class AppDrawer extends StatelessWidget {
                             themeProvider.themeScheme ==
                             AppThemeScheme.values[index];
 
-                        final activeColor = themeProvider.isLightTheme
-                            ? AppColors.primaryBlue
-                            : AppColors.accentBlue;
+                        // 计算预览色的反色
+                        final inverseColor = Color(
+                          (0xFFFFFF ^ scheme.previewColor.value & 0xFFFFFF) |
+                          (scheme.previewColor.value & 0xFF000000),
+                        );
 
                         return GestureDetector(
                           onTap: () {
@@ -836,17 +838,17 @@ class AppDrawer extends StatelessWidget {
                             height: 70,
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(12),
-                              // 选中时添加明显的边框和阴影
+                              // 所有主题都添加边框，选中的边框颜色使用内部颜色的反色
                               border: Border.all(
                                 color: isSelected
-                                    ? activeColor
-                                    : Colors.transparent,
-                                width: isSelected ? 3 : 0,
+                                    ? inverseColor
+                                    : Colors.grey.shade400,
+                                width: isSelected ? 2 : 1,
                               ),
                               boxShadow: isSelected
                                   ? [
                                       BoxShadow(
-                                        color: activeColor.withOpacity(0.3),
+                                        color: inverseColor.withOpacity(0.3),
                                         blurRadius: 8,
                                         spreadRadius: 2,
                                       ),

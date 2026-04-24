@@ -9,8 +9,9 @@ import 'base_card.dart';
 /// 显示AQI数值、等级、标尺和等级说明
 class AirQualityCard extends StatelessWidget {
   final WeatherModel? weather;
+  final bool showTitle;
 
-  const AirQualityCard({super.key, required this.weather});
+  const AirQualityCard({super.key, required this.weather, this.showTitle = true});
 
   @override
   Widget build(BuildContext context) {
@@ -38,26 +39,27 @@ class AirQualityCard extends StatelessWidget {
       child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 标题行
-              Row(
-                children: [
-                  Icon(
-                    Icons.air,
-                    color: color,
-                    size: AppConstants.sectionTitleIconSize,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '空气质量',
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: AppConstants.sectionTitleFontSize,
-                      fontWeight: FontWeight.bold,
+              // 标题行（可选）
+              if (showTitle)
+                Row(
+                  children: [
+                    Icon(
+                      Icons.air,
+                      color: color,
+                      size: AppConstants.sectionTitleIconSize,
                     ),
-                  ),
-                  const Spacer(),
-                  // AQI数值（缩小尺寸，与后面文字高度一致）
-                  Container(
+                    const SizedBox(width: 8),
+                    Text(
+                      '空气质量',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: AppConstants.sectionTitleFontSize,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Spacer(),
+                    // AQI数值（缩小尺寸，与后面文字高度一致）
+                    Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
                       vertical: 2,

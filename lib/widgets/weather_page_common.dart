@@ -182,7 +182,7 @@ class WeatherPageCommon {
                     temperature,
                     style: TextStyle(
                       color: AppColors.textPrimary,
-                      fontSize: 64,
+                      fontSize: 48,
                       fontWeight: FontWeight.w300,
                     ),
                   ),
@@ -190,7 +190,7 @@ class WeatherPageCommon {
                     '℃',
                     style: TextStyle(
                       color: AppColors.textSecondary,
-                      fontSize: 24,
+                      fontSize: 32,
                       fontWeight: FontWeight.w300,
                     ),
                   ),

@@ -384,7 +384,7 @@ class _WeatherAlertWidgetState extends State<WeatherAlertWidget> {
       case WeatherAlertLevel.yellow:
         return Colors.orange;
       case WeatherAlertLevel.blue:
-        return Colors.blue;
+        return const Color(0xFF64B5F6);
       case WeatherAlertLevel.info:
         return Colors.green;
     }
@@ -398,7 +398,7 @@ class _WeatherAlertWidgetState extends State<WeatherAlertWidget> {
       case WeatherAlertLevel.yellow:
         return Colors.orange;
       case WeatherAlertLevel.blue:
-        return Colors.blue;
+        return const Color(0xFF64B5F6);
       case WeatherAlertLevel.info:
         return Colors.green;
     }
@@ -458,40 +458,42 @@ class CompactWeatherAlertWidget extends StatelessWidget {
         ? _getAlertColor(topAlert.level)
         : const Color(0xFFFFB300); // 琥珀色（通勤提醒默认颜色）
 
-    return IconButton(
-      onPressed: onTap,
-      padding: EdgeInsets.zero,
-      constraints: const BoxConstraints(),
-      icon: Stack(
-        children: [
-          Icon(
-            Icons.warning_rounded,
-            color: iconColor,
-            size: AppColors.titleBarIconSize,
-          ),
-          if (totalCount > 1)
-            Positioned(
-              right: 0,
-              top: 0,
-              child: Container(
-                padding: const EdgeInsets.all(2),
-                decoration: BoxDecoration(
-                  color: Colors.red,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                child: Text(
-                  '$totalCount',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Stack(
+          children: [
+            Icon(
+              Icons.warning_rounded,
+              color: iconColor,
+              size: AppColors.titleBarIconSize,
+            ),
+            if (totalCount > 1)
+              Positioned(
+                right: 0,
+                top: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  textAlign: TextAlign.center,
+                  constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                  child: Text(
+                    '$totalCount',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -503,7 +505,7 @@ class CompactWeatherAlertWidget extends StatelessWidget {
       case WeatherAlertLevel.yellow:
         return Colors.orange;
       case WeatherAlertLevel.blue:
-        return Colors.blue;
+        return const Color(0xFF64B5F6);
       case WeatherAlertLevel.info:
         return Colors.green;
     }
@@ -766,26 +768,19 @@ class WeatherAlertDetailScreen extends StatelessWidget {
             const SizedBox(height: 12),
 
             // 详细信息
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.backgroundSecondary.withOpacity(0.5),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildInfoRow('天气词条', alert.weatherTerm),
-                  _buildInfoRow('提醒原因', alert.reason),
-                  _buildInfoRow('建议阈值', alert.threshold),
-                  _buildInfoRow('城市', alert.cityName),
-                  if (alert.isScenarioBased && alert.scenario != null)
-                    _buildInfoRow('触发场景', alert.scenario!),
-                  _buildInfoRow('创建时间', _formatDateTime(alert.createdAt)),
-                  if (alert.expiresAt != null)
-                    _buildInfoRow('过期时间', _formatDateTime(alert.expiresAt!)),
-                ],
-              ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildInfoRow('天气词条', alert.weatherTerm),
+                _buildInfoRow('提醒原因', alert.reason),
+                _buildInfoRow('建议阈值', alert.threshold),
+                _buildInfoRow('城市', alert.cityName),
+                if (alert.isScenarioBased && alert.scenario != null)
+                  _buildInfoRow('触发场景', alert.scenario!),
+                _buildInfoRow('创建时间', _formatDateTime(alert.createdAt)),
+                if (alert.expiresAt != null)
+                  _buildInfoRow('过期时间', _formatDateTime(alert.expiresAt!)),
+              ],
             ),
           ],
         ),
@@ -824,7 +819,7 @@ class WeatherAlertDetailScreen extends StatelessWidget {
       case WeatherAlertLevel.yellow:
         return Colors.orange;
       case WeatherAlertLevel.blue:
-        return Colors.blue;
+        return const Color(0xFF64B5F6);
       case WeatherAlertLevel.info:
         return Colors.green;
     }
@@ -994,20 +989,13 @@ class WeatherAlertDetailScreen extends StatelessWidget {
             const SizedBox(height: 12),
 
             // 详细信息
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.backgroundSecondary.withOpacity(0.5),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildInfoRow('时段', advice.timeSlot.name),
-                  _buildInfoRow('创建时间', _formatDateTime(advice.timestamp)),
-                  _buildInfoRow('建议类型', advice.adviceType),
-                ],
-              ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildInfoRow('时段', advice.timeSlot.name),
+                _buildInfoRow('创建时间', _formatDateTime(advice.timestamp)),
+                _buildInfoRow('建议类型', advice.adviceType),
+              ],
             ),
           ],
         ),

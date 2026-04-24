@@ -30,6 +30,7 @@ import '../widgets/weather_alert_widget.dart';
 import '../widgets/weather_animation_widget.dart';
 import '../widgets/weather_chart.dart';
 import 'hourly_screen.dart';
+import 'lunar_calendar_screen.dart';
 
 class TodayScreen extends StatefulWidget {
   const TodayScreen({super.key});
@@ -569,13 +570,15 @@ class _TodayScreenState extends State<TodayScreen>
                           child: Column(
                             children: [
                               _buildTopWeatherSection(weatherProvider),
-                              AppColors.cardSpacingWidget,
+                              const SizedBox(height: 24),
                               // 24小时天气
                               _buildHourlyWeather(weatherProvider),
-                              AppColors.cardSpacingWidget,
-                              // 空气质量卡片
-                              AirQualityCard(weather: data.currentWeather),
-                              AppColors.cardSpacingWidget,
+                              const SizedBox(height: 24),
+                              // 空气质量
+                              _buildSectionTitle('空气质量', Icons.air_rounded),
+                              const SizedBox(height: 8),
+                              AirQualityCard(weather: data.currentWeather, showTitle: false),
+                              const SizedBox(height: 24),
                               // 生活指数
                               Selector<WeatherProvider, SunMoonIndexData?>(
                                 selector: (_, provider) => provider.sunMoonIndexData,
@@ -583,14 +586,16 @@ class _TodayScreenState extends State<TodayScreen>
                                   if (sunMoonIndexData != null && sunMoonIndexData.index != null && sunMoonIndexData.index!.isNotEmpty) {
                                     return Column(
                                       children: [
-                                        LifeIndexWidget.custom(sunMoonIndexData: sunMoonIndexData),
-                                        AppColors.cardSpacingWidget,
+                                        _buildSectionTitle('生活指数', Icons.grid_view_rounded),
+                                        const SizedBox(height: 8),
+                                        LifeIndexWidget.custom(sunMoonIndexData: sunMoonIndexData, showTitle: false),
                                       ],
                                     );
                                   }
                                   return const SizedBox.shrink();
                                 },
                               ),
+                              const SizedBox(height: 24),
                               // 日出日落
                               Selector<WeatherProvider, SunMoonIndexData?>(
                                 selector: (_, provider) => provider.sunMoonIndexData,
@@ -598,30 +603,44 @@ class _TodayScreenState extends State<TodayScreen>
                                   if (sunMoonIndexData != null && sunMoonIndexData.sunAndMoon != null) {
                                     return Column(
                                       children: [
-                                        SunMoonWidget.custom(sunMoonIndexData: sunMoonIndexData),
-                                        AppColors.cardSpacingWidget,
+                                        _buildSectionTitle('日出日落', Icons.wb_twilight_rounded),
+                                        const SizedBox(height: 8),
+                                        SunMoonWidget.custom(sunMoonIndexData: sunMoonIndexData, showTitle: false),
                                       ],
                                     );
                                   }
-                                  // 回退到使用15天预报数据
                                   return Column(
                                     children: [
-                                      const SunMoonWidget(),
-                                      AppColors.cardSpacingWidget,
+                                      _buildSectionTitle('日出日落', Icons.wb_twilight_rounded),
+                                      const SizedBox(height: 8),
+                                      const SunMoonWidget(showTitle: false),
                                     ],
                                   );
                                 },
                               ),
+                              const SizedBox(height: 24),
+                              // 温度趋势
+                              _buildSectionTitle('温度趋势', Icons.show_chart_rounded),
+                              const SizedBox(height: 8),
                               _buildTemperatureChart(weatherProvider),
-                              AppColors.cardSpacingWidget,
-                              // 农历信息
-                              _buildLunarInfo(),
-                              AppColors.cardSpacingWidget,
-                              // 宜忌信息
-                              _buildYiJiInfo(),
-                              AppColors.cardSpacingWidget,
-                              // 即将到来的节气
-                              _buildUpcomingSolarTerms(),
+                              const SizedBox(height: 24),
+                              // 黄历信息（农历+宜忌+节气合并）
+                              _buildSectionTitle('黄历信息', Icons.calendar_month_rounded, trailing: InkWell(
+                                borderRadius: BorderRadius.circular(16),
+                                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LunarCalendarScreen())),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(4),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text('查看黄历', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                                      Icon(Icons.chevron_right, color: AppColors.textSecondary, size: 16),
+                                    ],
+                                  ),
+                                ),
+                              )),
+                              const SizedBox(height: 8),
+                              _buildLunarCombinedCard(),
                               const SizedBox(height: 80), // Space for bottom buttons
                             ],
                           ),
@@ -664,7 +683,7 @@ class _TodayScreenState extends State<TodayScreen>
       ),
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 16.0),
+          padding: const EdgeInsets.fromLTRB(AppConstants.headerHorizontalPadding, 8.0, AppConstants.headerHorizontalPadding, 16.0),
           child: Column(
             children: [
               // 状态指示器行（精简：左状态 右操作）
@@ -707,27 +726,26 @@ class _TodayScreenState extends State<TodayScreen>
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        IconButton(
-                          onPressed: () => _showAISummaryDialog(context, weatherProvider),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          icon: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        InkWell(
+                          onTap: () => _showAISummaryDialog(context, weatherProvider),
+                          borderRadius: BorderRadius.circular(14),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: AppColors.textPrimary.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: Colors.white.withOpacity(0.4), width: 1),
+                              border: Border.all(color: AppColors.textPrimary.withOpacity(0.4), width: 1),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.auto_awesome, color: Colors.white, size: 11),
+                                Icon(Icons.auto_awesome, color: AppColors.textPrimary, size: 11),
                                 const SizedBox(width: 3),
                                 Text(
                                   'AI解读',
                                   style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
+                                    color: AppColors.textPrimary,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -763,17 +781,17 @@ class _TodayScreenState extends State<TodayScreen>
                         Formatters.formatNumber(current?.temperature),
                         style: TextStyle(
                           color: context.read<ThemeProvider>().getColor('headerTextPrimary'),
-                          fontSize: 56,
-                          fontWeight: FontWeight.bold,
-                          height: 1.0,
+                          fontSize: 48,
+                          fontWeight: FontWeight.w300,
+                          height: 1.1,
                         ),
                       ),
                       Text(
                         '℃',
                         style: TextStyle(
                           color: context.read<ThemeProvider>().getColor('headerTextPrimary'),
-                          fontSize: 36,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 32,
+                          fontWeight: FontWeight.w300,
                         ),
                       ),
                     ],
@@ -864,12 +882,11 @@ class _TodayScreenState extends State<TodayScreen>
 
   /// 获取缓存年龄的友好文字描述
   /// 构建简化的详细信息（头部区域）
-  Widget _buildSimplifiedDetails(dynamic weather) {
-    if (weather?.current?.current == null) {
+  Widget _buildSimplifiedDetails(WeatherModel? weather) {
+    final current = weather?.current?.current;
+    if (current == null) {
       return const SizedBox.shrink();
     }
-
-    final current = weather.current.current;
 
     String formatNumber(dynamic value) {
       if (value == null) return '--';
@@ -889,7 +906,7 @@ class _TodayScreenState extends State<TodayScreen>
           child: _buildSimpleInfoChip(
             Icons.air,
             '风力',
-            '${current.winddir ?? '--'} ${current.windpower ?? ''}',
+            '${current.winddir ?? '--'} ${formatNumber(current.windpower)}',
           ),
         ),
         const SizedBox(width: 8),
@@ -974,33 +991,9 @@ class _TodayScreenState extends State<TodayScreen>
         shape: AppColors.cardShape,
         child: Padding(
           padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.show_chart,
-                    color: AppColors.accentBlue,
-                    size: AppConstants.sectionTitleIconSize,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '7日温度趋势',
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: AppConstants.sectionTitleFontSize,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                height: 220,
-                child: WeatherChart(dailyForecast: weatherProvider.dailyForecast),
-              ),
-            ],
+          child: SizedBox(
+            height: 220,
+            child: WeatherChart(dailyForecast: weatherProvider.dailyForecast),
           ),
         ),
       ),
@@ -1169,60 +1162,40 @@ class _TodayScreenState extends State<TodayScreen>
     }
   }
 
-  /// 构建农历信息卡片
-  Widget _buildLunarInfo() {
+  /// 构建通用Section标题
+  Widget _buildSectionTitle(String title, IconData icon, {Widget? trailing}) {
+    return Padding(
+      padding: EdgeInsets.only(left: AppConstants.screenHorizontalPadding + 12),
+      child: Row(
+        children: [
+          Icon(icon, color: AppColors.accentBlue, size: 20),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: AppConstants.sectionTitleFontSize,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          if (trailing != null) ...[
+            const Spacer(),
+            Padding(
+              padding: const EdgeInsets.only(right: AppConstants.screenHorizontalPadding),
+              child: trailing,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLunarCombinedCard() {
     try {
       final lunarService = LunarService.getInstance();
       final lunarInfo = lunarService.getLunarInfo(DateTime.now());
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppConstants.screenHorizontalPadding),
-        child: Card(
-          elevation: AppColors.cardElevation,
-          shadowColor: AppColors.cardShadowColor,
-          color: AppColors.materialCardColor,
-          surfaceTintColor: Colors.transparent,
-          shape: AppColors.cardShape,
-          child: LunarInfoWidget(lunarInfo: lunarInfo),
-        ),
-      );
-    } catch (e) {
-      Logger.log('❌ 获取农历信息失败: $e');
-      return const SizedBox.shrink();
-    }
-  }
-
-  /// 构建宜忌信息卡片
-  Widget _buildYiJiInfo() {
-    try {
-      final lunarService = LunarService.getInstance();
-      final lunarInfo = lunarService.getLunarInfo(DateTime.now());
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppConstants.screenHorizontalPadding),
-        child: Card(
-          elevation: AppColors.cardElevation,
-          shadowColor: AppColors.cardShadowColor,
-          color: AppColors.materialCardColor,
-          surfaceTintColor: Colors.transparent,
-          shape: AppColors.cardShape,
-          child: YiJiWidget(lunarInfo: lunarInfo),
-        ),
-      );
-    } catch (e) {
-      Logger.log('❌ 获取宜忌信息失败: $e');
-      return const SizedBox.shrink();
-    }
-  }
-
-  /// 构建即将到来的节气
-  Widget _buildUpcomingSolarTerms() {
-    try {
-      final lunarService = LunarService.getInstance();
       final upcomingTerms = lunarService.getUpcomingSolarTerms(days: 60);
 
-      if (upcomingTerms.isEmpty) {
-        return const SizedBox.shrink();
-      }
-
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: AppConstants.screenHorizontalPadding),
         child: Card(
@@ -1231,11 +1204,22 @@ class _TodayScreenState extends State<TodayScreen>
           color: AppColors.materialCardColor,
           surfaceTintColor: Colors.transparent,
           shape: AppColors.cardShape,
-          child: SolarTermListWidget(solarTerms: upcomingTerms, title: '即将到来的节气'),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              LunarInfoWidget(lunarInfo: lunarInfo, showTitle: false),
+              const SizedBox(height: 1),
+              YiJiWidget(lunarInfo: lunarInfo, showTitle: false),
+              if (upcomingTerms.isNotEmpty) ...[
+                const SizedBox(height: 1),
+                SolarTermListWidget(solarTerms: upcomingTerms, title: '即将到来的节气', showTitle: false),
+              ],
+            ],
+          ),
         ),
       );
     } catch (e) {
-      Logger.log('❌ 获取节气信息失败: $e');
+      Logger.log('❌ 获取黄历信息失败: $e');
       return const SizedBox.shrink();
     }
   }

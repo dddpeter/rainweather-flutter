@@ -11,7 +11,6 @@ import '../services/location_change_notifier.dart';
 import '../utils/city_name_matcher.dart';
 import '../utils/error_handler.dart';
 import '../utils/weather_icon_helper.dart';
-import '../widgets/city_card_skeleton.dart';
 import '../widgets/error_dialog.dart';
 import 'city_weather_page.dart';
 import 'weather_alerts_screen.dart';
@@ -389,7 +388,7 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
                                   key: ValueKey(
                                     'padding_${city.id}_${city.name}_${index}',
                                   ),
-                                  padding: const EdgeInsets.only(bottom: 12),
+                                  padding: const EdgeInsets.only(bottom: 6),
                                   child: Container(
                                     decoration: themeProvider.isLightTheme
                                         ? BoxDecoration(

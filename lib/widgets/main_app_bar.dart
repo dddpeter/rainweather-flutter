@@ -34,7 +34,7 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
         final displayCity = _getDisplayCity(location);
 
         return AppBar(
-          elevation: 4,
+          elevation: 0,
           backgroundColor: Colors.transparent,
           flexibleSpace: Container(
             decoration: BoxDecoration(
@@ -193,6 +193,12 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
         size: 24,
       ),
       tooltip: '更多功能',
+      color: themeProvider.isLightTheme
+          ? Colors.white
+          : const Color(0xFF2C3E50),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
       onSelected: (value) => _handleMenuItemSelection(context, value),
       itemBuilder: (context) => [
         // 第1层：核心高频功能
@@ -210,7 +216,7 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
           value: 'share',
           child: Row(
             children: [
-              Icon(Icons.share, color: Color(0xFF2E7D32), size: 24),
+              Icon(Icons.share, color: Colors.amber, size: 24),
               SizedBox(width: 12),
               Text('分享天气'),
             ],

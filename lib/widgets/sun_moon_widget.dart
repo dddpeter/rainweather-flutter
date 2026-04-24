@@ -9,43 +9,41 @@ import '../constants/app_constants.dart';
 class SunMoonWidget extends StatelessWidget {
   final SunMoonIndexData? sunMoonIndexData;
   final List<dynamic>? forecast15d;
+  final bool showTitle;
 
-  const SunMoonWidget({super.key})
+  const SunMoonWidget({super.key, this.showTitle = true})
       : sunMoonIndexData = null,
         forecast15d = null;
 
-  /// 自定义构造函数，用于直接传入数据
   const SunMoonWidget.custom({
     super.key,
     required this.sunMoonIndexData,
     this.forecast15d,
+    this.showTitle = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    // 如果传入了自定义数据，直接使用
     if (sunMoonIndexData != null) {
       if (sunMoonIndexData!.sunAndMoon != null) {
-        return _SunMoonCard(sunAndMoon: sunMoonIndexData!.sunAndMoon!);
+        return _SunMoonCard(sunAndMoon: sunMoonIndexData!.sunAndMoon!, showTitle: showTitle);
       } else if (forecast15d != null && forecast15d!.isNotEmpty) {
-        return _SunriseSunsetCard(forecast15d: forecast15d!);
+        return _SunriseSunsetCard(forecast15d: forecast15d!, showTitle: showTitle);
       } else {
         return const SizedBox.shrink();
       }
     }
 
-    // 使用 Selector 优化：只在 sunMoonIndexData 变化时重建
     return Selector<WeatherProvider, SunMoonIndexData?>(
       selector: (_, provider) => provider.sunMoonIndexData,
       builder: (context, sunMoonData, child) {
         final forecast15dData = forecast15d ??
             context.read<WeatherProvider>().currentWeather?.forecast15d ?? [];
 
-        // 优先使用API数据，如果没有则使用15天预报数据
         if (sunMoonData?.sunAndMoon != null) {
-          return _SunMoonCard(sunAndMoon: sunMoonData!.sunAndMoon!);
+          return _SunMoonCard(sunAndMoon: sunMoonData!.sunAndMoon!, showTitle: showTitle);
         } else if (forecast15dData.isNotEmpty) {
-          return _SunriseSunsetCard(forecast15d: forecast15dData);
+          return _SunriseSunsetCard(forecast15d: forecast15dData, showTitle: showTitle);
         } else {
           return const SizedBox.shrink();
         }
@@ -56,8 +54,9 @@ class SunMoonWidget extends StatelessWidget {
 
 class _SunMoonCard extends StatelessWidget {
   final SunAndMoon sunAndMoon;
+  final bool showTitle;
 
-  const _SunMoonCard({required this.sunAndMoon});
+  const _SunMoonCard({required this.sunAndMoon, this.showTitle = true});
 
   @override
   Widget build(BuildContext context) {
@@ -84,13 +83,13 @@ class _SunMoonCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 标题
-                  _buildSectionTitle(
-                    icon: Icons.wb_sunny_outlined,
-                    title: '日出日落',
-                    color: AppColors.sunrise,
-                  ),
-                  const SizedBox(height: 12),
+                  if (showTitle)
+                    _buildSectionTitle(
+                      icon: Icons.wb_sunny_outlined,
+                      title: '日出日落',
+                      color: AppColors.sunrise,
+                    ),
+                  if (showTitle) const SizedBox(height: 12),
 
                   // 田字型布局（带中心月相emoji和月龄）
                   SizedBox(
@@ -365,8 +364,9 @@ class _GridItem extends StatelessWidget {
 
 class _SunriseSunsetCard extends StatelessWidget {
   final List<dynamic> forecast15d;
+  final bool showTitle;
 
-  const _SunriseSunsetCard({required this.forecast15d});
+  const _SunriseSunsetCard({required this.forecast15d, this.showTitle = true});
 
   @override
   Widget build(BuildContext context) {
@@ -411,26 +411,26 @@ class _SunriseSunsetCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 标题
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.wb_sunny_outlined,
-                        size: 20,
-                        color: AppColors.warning,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '日出日落',
-                        style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                  if (showTitle)
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.wb_sunny_outlined,
+                          size: 20,
+                          color: AppColors.warning,
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
+                        const SizedBox(width: 8),
+                        Text(
+                          '日出日落',
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  if (showTitle) const SizedBox(height: 12),
 
                   // 日出日落信息
                   Row(

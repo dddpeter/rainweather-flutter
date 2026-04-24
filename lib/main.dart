@@ -251,82 +251,87 @@ class _RainWeatherAppState extends State<RainWeatherApp>
   }
 
   ThemeData _buildLightTheme(ThemeProvider themeProvider) {
+    final colors = themeProvider.lightColors;
+    final primary = colors['primary']!;
+    final background = colors['background']!;
+    final surface = colors['surface']!;
+    final textPrimary = colors['textPrimary']!;
+    final accent = colors['accent']!;
+
     return ThemeData(
-      primarySwatch: MaterialColor(0xFF012d78, {
-        50: const Color(0xFFE3F2FD),
-        100: const Color(0xFFBBDEFB),
-        200: const Color(0xFF90CAF9),
-        300: const Color(0xFF64B5F6),
-        400: const Color(0xFF42A5F5),
-        500: const Color(0xFF012d78),
-        600: const Color(0xFF1E88E5),
-        700: const Color(0xFF1976D2),
-        800: const Color(0xFF1565C0),
-        900: const Color(0xFF0D47A1),
-      }),
+      primarySwatch: _createPrimarySwatch(primary),
       brightness: Brightness.light,
-      // 固定浅蓝背景，只随亮暗模式切换
-      scaffoldBackgroundColor: const Color.fromARGB(255, 192, 216, 236),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Color.fromARGB(255, 192, 216, 236),
-        foregroundColor: Color(0xFF001A4D), // 深蓝色文字
+      scaffoldBackgroundColor: background,
+      appBarTheme: AppBarTheme(
+        backgroundColor: background,
+        foregroundColor: textPrimary,
         elevation: 0,
         systemOverlayStyle: SystemUiOverlayStyle.dark,
       ),
       textTheme: AppTextStyles.textTheme,
-      colorScheme: const ColorScheme.light(
-        primary: Color(0xFF012d78), // 深蓝色主色
-        secondary: Color(0xFF8edafc), // 亮蓝色
-        surface: Color(0xFFFFFFFF),
-        background: Color.fromARGB(255, 192, 216, 236),
-        onPrimary: Color(0xFFFFFFFF),
-        onSecondary: Color(0xFF001A4D),
-        onSurface: Color(0xFF001A4D), // 深蓝色文字
-        onBackground: Color(0xFF001A4D), // 深蓝色文字
+      colorScheme: ColorScheme.light(
+        primary: primary,
+        secondary: accent,
+        surface: surface,
+        background: background,
+        onPrimary: const Color(0xFFFFFFFF),
+        onSecondary: textPrimary,
+        onSurface: textPrimary,
+        onBackground: textPrimary,
       ),
       extensions: <ThemeExtension<dynamic>>[
-        AppThemeExtension.light(), // 添加自定义主题扩展
+        AppThemeExtension.light(),
       ],
     );
   }
 
   ThemeData _buildDarkTheme(ThemeProvider themeProvider) {
+    final colors = themeProvider.darkColors;
+    final primary = colors['primary']!;
+    final background = colors['background']!;
+    final surface = colors['surface']!;
+    final accent = colors['accent'] ?? colors['primary']!;
+
     return ThemeData(
-      primarySwatch: MaterialColor(0xFF4A90E2, {
-        50: const Color(0xFFE3F2FD),
-        100: const Color(0xFFBBDEFB),
-        200: const Color(0xFF90CAF9),
-        300: const Color(0xFF64B5F6),
-        400: const Color(0xFF42A5F5),
-        500: const Color(0xFF4A90E2),
-        600: const Color(0xFF1E88E5),
-        700: const Color(0xFF1976D2),
-        800: const Color(0xFF1565C0),
-        900: const Color(0xFF0D47A1),
-      }),
+      primarySwatch: _createPrimarySwatch(primary),
       brightness: Brightness.dark,
-      scaffoldBackgroundColor: const Color(0xFF0A1B3D), // 基于#012d78的深背景
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFF0A1B3D),
-        foregroundColor: Color(0xFFFFFFFF),
+      scaffoldBackgroundColor: background,
+      appBarTheme: AppBarTheme(
+        backgroundColor: background,
+        foregroundColor: const Color(0xFFFFFFFF),
         elevation: 0,
         systemOverlayStyle: SystemUiOverlayStyle.light,
       ),
       textTheme: AppTextStyles.textTheme,
-      colorScheme: const ColorScheme.dark(
-        primary: Color(0xFF4A90E2), // 基于#012d78的亮蓝色
-        secondary: Color(0xFF8edafc), // 指定的亮蓝色
-        surface: Color(0xFF1A2F5D), // 基于#012d78的稍亮表面
-        background: Color(0xFF0A1B3D),
-        onPrimary: Color(0xFFFFFFFF),
-        onSecondary: Color(0xFF001A4D),
-        onSurface: Color(0xFFFFFFFF),
-        onBackground: Color(0xFFFFFFFF),
+      colorScheme: ColorScheme.dark(
+        primary: primary,
+        secondary: accent,
+        surface: surface,
+        background: background,
+        onPrimary: const Color(0xFFFFFFFF),
+        onSecondary: const Color(0xFF001A4D),
+        onSurface: const Color(0xFFFFFFFF),
+        onBackground: const Color(0xFFFFFFFF),
       ),
       extensions: <ThemeExtension<dynamic>>[
-        AppThemeExtension.dark(), // 添加自定义主题扩展
+        AppThemeExtension.dark(),
       ],
     );
+  }
+
+  MaterialColor _createPrimarySwatch(Color primary) {
+    return MaterialColor(primary.value, {
+      50: primary.withOpacity(0.1),
+      100: primary.withOpacity(0.2),
+      200: primary.withOpacity(0.3),
+      300: primary.withOpacity(0.4),
+      400: primary.withOpacity(0.5),
+      500: primary,
+      600: primary.withOpacity(0.7),
+      700: primary.withOpacity(0.8),
+      800: primary.withOpacity(0.9),
+      900: primary,
+    });
   }
 }
 

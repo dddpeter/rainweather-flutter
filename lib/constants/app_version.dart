@@ -8,7 +8,7 @@ class AppVersion {
 
   /// 应用版本号（显示用）
   /// 格式: "主版本号.次版本号.修订号"
-  static const String version = '1.17.0';
+  static const String version = '1.18.0';
 
   /// 应用构建号
   static const int buildNumber = 1;
@@ -54,6 +54,14 @@ class AppVersion {
   /// 获取版本更新日志
   static String _getChangelog() {
     return '''
+v1.18.0 (2026-04-24)
+• UI 优化：统一今日/城市天气页面头部布局，动画+温度居中对齐
+• UI 优化：今日天气状态行精简，状态指示器改为纯图标
+• UI 优化：天气信息chip高度优化，信息更紧凑
+• 修复：暗色模式背景色随主题方案正确切换
+• 修复：城市天气预警按钮移至AppBar，头部更简洁
+• 优化：删除未使用代码，减少编译警告
+
 v1.17.0 (2026-04-24)
 • UI 优化：城市名移至AppBar标题栏，滚动时始终可见
 • UI 优化：统一今日/城市天气页面卡片顺序

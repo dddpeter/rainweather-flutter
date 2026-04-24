@@ -1110,11 +1110,12 @@ class AppDrawer extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '• UI优化：城市名移至AppBar标题栏，滚动时始终可见\n'
-                      '• UI优化：统一今日/城市天气页面卡片顺序\n'
-                      '• UI优化：今日天气头部区域精简，移除城市行\n'
-                      '• 修复：AnimatedTheme嵌套导致的动画无效问题\n'
-                      '• 优化：主题切换动画平滑过渡',
+                      '• UI优化：统一今日/城市天气页面头部布局\n'
+                      '• UI优化：今日天气状态行精简，状态指示器改为纯图标\n'
+                      '• UI优化：信息chip高度优化，布局更紧凑\n'
+                      '• 修复：暗色模式背景色随主题方案正确切换\n'
+                      '• 修复：城市天气预警按钮移至AppBar\n'
+                      '• 优化：删除未使用代码，减少编译警告',
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,

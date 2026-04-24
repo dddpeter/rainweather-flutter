@@ -12,7 +12,6 @@ import '../models/sun_moon_index_model.dart';
 import '../models/weather_model.dart';
 import '../providers/theme_provider.dart';
 import '../providers/weather_provider.dart';
-import '../services/database_service.dart';
 import '../services/location_change_notifier.dart';
 import '../services/lunar_service.dart';
 import '../services/page_activation_observer.dart';
@@ -641,7 +640,6 @@ class _TodayScreenState extends State<TodayScreen>
 
   Widget _buildTopWeatherSection(WeatherProvider weatherProvider) {
     final weather = weatherProvider.currentWeather;
-    final location = weatherProvider.currentLocation;
     final current = weather?.current?.current;
 
     return Container(
@@ -666,224 +664,185 @@ class _TodayScreenState extends State<TodayScreen>
       ),
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16.0, 4.0, 16.0, 16.0),
+          padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 16.0),
           child: Column(
             children: [
-              // 状态指示器行（状态 + AI解读 | 告警）
+              // 状态指示器行（精简：左状态 右操作）
               SizedBox(
-                height: 20,
+                height: 32,
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // 左侧：状态指示器 + AI解读（左对齐）
                     Expanded(
                       child: Row(
-                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          // 离线提示
-                        if (weatherProvider.isOffline) ...[
-                          Icon(Icons.wifi_off, size: 10, color: Colors.orange.shade400),
-                          const SizedBox(width: 4),
-                          Text(
-                            '离线模式',
-                            style: TextStyle(
-                              color: Colors.orange.shade400,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                        ],
-                        // 刷新指示器
-                        if (weatherProvider.isBackgroundRefreshing) ...[
-                          SizedBox(
-                            width: 10,
-                            height: 10,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 1.5,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                context.read<ThemeProvider>().getColor('headerTextSecondary'),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                        ],
-                        // 缓存数据图标
-                        if (weatherProvider.isUsingCachedData)
-                          Icon(
-                            Icons.history,
-                            size: 10,
-                            color: context.read<ThemeProvider>().getColor('headerTextSecondary'),
-                          ),
-                        if (weatherProvider.isUsingCachedData) const SizedBox(width: 4),
-                        // 缓存时间文本
-                        if (weatherProvider.isUsingCachedData)
-                          FutureBuilder<String>(
-                            future: _getCacheAgeText(weatherProvider),
-                            builder: (context, snapshot) {
-                              return Text(
-                                snapshot.data ?? '缓存数据',
-                                style: TextStyle(
-                                  color: context.read<ThemeProvider>().getColor('headerTextSecondary'),
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w400,
+                          if (weatherProvider.isOffline)
+                            Icon(Icons.wifi_off, size: 14, color: Colors.orange.shade400),
+                          if (weatherProvider.isBackgroundRefreshing) ...[
+                            if (weatherProvider.isOffline) const SizedBox(width: 6),
+                            SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 1.5,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  context.read<ThemeProvider>().getColor('headerTextSecondary'),
                                 ),
-                              );
-                            },
-                          ),
-                        // 代理警告
-                        if (location?.isProxyDetected == true) ...[
-                          if (weatherProvider.isUsingCachedData || weatherProvider.isBackgroundRefreshing || weatherProvider.isOffline)
-                            const SizedBox(width: 8),
-                          Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 12),
-                          const SizedBox(width: 4),
-                          Text(
-                            '可能使用代理',
-                            style: TextStyle(
-                              color: Colors.orange,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
-                            ),
-                           ),
-                         ],
-                       ],
-                    ),
-                  ),
-                  // 告警图标（右对齐）
-                  _buildAlertButton(weatherProvider),
-                ],
-              ),
-              ),
-              const SizedBox(height: 12),
-              // Weather animation, weather text and temperature
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center, // 垂直居中
-                children: [
-                  // 左侧天气动画区域 - 居中显示
-                  Flexible(
-                    flex: 50,
-                    child: Center(
-                      child: WeatherAnimationWidget(
-                        weatherType: current?.weather ?? '晴',
-                        size: 80,
-                        isPlaying: true,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  // 右侧温度和天气汉字区域 - 紧凑布局
-                  Flexible(
-                    flex: 50,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.baseline,
-                          textBaseline: TextBaseline.alphabetic,
-                          children: [
-                            Text(
-                              Formatters.formatNumber(current?.temperature),
-                              style: TextStyle(
-                                color: context.read<ThemeProvider>().getColor('headerTextPrimary'),
-                                fontSize: 48,
-                                fontWeight: FontWeight.bold,
-                                height: 1.0, // 紧凑行高
                               ),
                             ),
-                            Text(
-                              '℃',
-                              style: TextStyle(
-                                color: context.read<ThemeProvider>().getColor('headerTextPrimary'),
-                                fontSize: 34,
-                                fontWeight: FontWeight.bold,
-                              ),
+                          ] else if (weatherProvider.isUsingCachedData) ...[
+                            if (weatherProvider.isOffline) const SizedBox(width: 6),
+                            Icon(
+                              Icons.history,
+                              size: 14,
+                              color: context.read<ThemeProvider>().getColor('headerTextSecondary'),
                             ),
                           ],
-                        ),
-                        // 体感温度
-                        if (current?.feelstemperature != null &&
-                            current?.feelstemperature != current?.temperature)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 2),
+                        ],
+                      ),
+                    ),
+                    // AI解读 + 告警
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        IconButton(
+                          onPressed: () => _showAISummaryDialog(context, weatherProvider),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          icon: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: Colors.white.withOpacity(0.4), width: 1),
+                            ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(
-                                  Icons.thermostat_rounded,
-                                  color: context.read<ThemeProvider>().getColor(
-                                    'headerTextSecondary',
-                                  ),
-                                  size: 16,
-                                ),
-                                const SizedBox(width: 4),
+                                Icon(Icons.auto_awesome, color: Colors.white, size: 11),
+                                const SizedBox(width: 3),
                                 Text(
-                                  '体感 ${current?.feelstemperature}℃',
+                                  'AI解读',
                                   style: TextStyle(
-                                    color: context.read<ThemeProvider>().getColor(
-                                      'headerTextSecondary',
-                                    ),
-                                    fontSize: 16,
+                                    color: Colors.white,
+                                    fontSize: 10,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                         const SizedBox(height: 2),
-                         Wrap(
-                           spacing: 8,
-                           crossAxisAlignment: WrapCrossAlignment.center,
-                           children: [
-                             Text(
-                               current?.weather ?? '晴',
-                               style: TextStyle(
-                                 color: context.read<ThemeProvider>().getColor('headerTextSecondary'),
-                                 fontSize: 20,
-                                 fontWeight: FontWeight.w600,
-                                 letterSpacing: 0.5,
-                               ),
-                             ),
-                             GestureDetector(
-                               onTap: () => _showAISummaryDialog(context, weatherProvider),
-                               child: Container(
-                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                 decoration: BoxDecoration(
-                                   color: Colors.white.withOpacity(0.2),
-                                   borderRadius: BorderRadius.circular(10),
-                                   border: Border.all(color: Colors.white.withOpacity(0.4), width: 1),
-                                 ),
-                                 child: Row(
-                                   mainAxisSize: MainAxisSize.min,
-                                   children: [
-                                     Icon(Icons.auto_awesome, color: Colors.white, size: 11),
-                                     const SizedBox(width: 3),
-                                     Text(
-                                       'AI解读',
-                                       style: TextStyle(
-                                         color: Colors.white,
-                                         fontSize: 10,
-                                         fontWeight: FontWeight.w600,
-                                       ),
-                                     ),
-                                   ],
-                                 ),
-                               ),
-                             ),
-                           ],
-                         ),
+                        ),
+                        const SizedBox(width: 4),
+                        _buildAlertButton(weatherProvider),
                       ],
                     ),
+                  ],
+                ),
+              ),
+
+              // 动画 + 温度（左动画 右温度）
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  WeatherAnimationWidget(
+                    weatherType: current?.weather ?? '晴',
+                    size: 80,
+                    isPlaying: true,
+                  ),
+                  const SizedBox(width: 48),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        Formatters.formatNumber(current?.temperature),
+                        style: TextStyle(
+                          color: context.read<ThemeProvider>().getColor('headerTextPrimary'),
+                          fontSize: 56,
+                          fontWeight: FontWeight.bold,
+                          height: 1.0,
+                        ),
+                      ),
+                      Text(
+                        '℃',
+                        style: TextStyle(
+                          color: context.read<ThemeProvider>().getColor('headerTextPrimary'),
+                          fontSize: 36,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
 
-              // 简化的详细信息
-              const SizedBox(height: 32),
-              _buildSimplifiedDetails(weather),
+              // 天气文字 + 体感
+              const SizedBox(height: 8),
+              Wrap(
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 4,
+                runSpacing: 4,
+                children: [
+                  Text(
+                    current?.weather ?? '晴',
+                    style: TextStyle(
+                      color: context.read<ThemeProvider>().getColor('headerTextSecondary'),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  if (current?.feelstemperature != null)
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          ' · ',
+                          style: TextStyle(
+                            color: context.read<ThemeProvider>().getColor('headerTextSecondary'),
+                            fontSize: 14,
+                          ),
+                        ),
+                        Icon(
+                          Icons.thermostat_rounded,
+                          color: context.read<ThemeProvider>().getColor('headerTextSecondary'),
+                          size: 14,
+                        ),
+                        const SizedBox(width: 2),
+                        Text(
+                          '体感 ${current?.feelstemperature}℃',
+                          style: TextStyle(
+                            color: context.read<ThemeProvider>().getColor('headerTextSecondary'),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
 
-              // 农历日期和节气 - Material Design 3
-              const SizedBox(height: 32),
-              _buildLunarAndSolarTerm(weather),
+              // 农历日期（单独一行）
+              if (weather?.current?.nongLi != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  _formatNongLi(weather!.current!.nongLi!),
+                  style: TextStyle(
+                    color: context.read<ThemeProvider>().getColor('headerTextSecondary'),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+
+              // 详细信息横条
+              const SizedBox(height: 24),
+              _buildSimplifiedDetails(weather),
             ],
           ),
         ),
@@ -891,49 +850,19 @@ class _TodayScreenState extends State<TodayScreen>
     );
   }
 
-  /// 获取缓存年龄的友好文字描述
-  Future<String> _getCacheAgeText(WeatherProvider weatherProvider) async {
-    try {
-      // 从SQLite获取缓存时间
-      if (weatherProvider.currentLocation == null) {
-        return '缓存数据';
+  String _formatNongLi(String nongLi) {
+    final match = RegExp(r'^(正|二|三|四|五|六|七|八|九|十|冬|腊)(初|十|廿|卅)').hasMatch(nongLi);
+    if (match && !nongLi.contains('月')) {
+      if (nongLi.length >= 2) {
+        final firstChar = nongLi[0];
+        final rest = nongLi.substring(1);
+        return '$firstChar月$rest';
       }
-
-      final weatherKey =
-          '${weatherProvider.currentLocation!.district}:${AppConstants.weatherAllKey}';
-      final databaseService = DatabaseService.getInstance();
-      final db = await databaseService.database;
-      final result = await db.query(
-        'weather_cache',
-        columns: ['created_at'],
-        where: 'key = ?',
-        whereArgs: [weatherKey],
-      );
-
-      if (result.isEmpty) {
-        return '缓存数据';
-      }
-
-      final createdAt = result.first['created_at'] as int;
-      final cacheDateTime = DateTime.fromMillisecondsSinceEpoch(createdAt);
-      final ageMinutes = DateTime.now().difference(cacheDateTime).inMinutes;
-
-      if (ageMinutes < 60) {
-        return '缓存 ${ageMinutes}分钟前';
-      } else if (ageMinutes < 1440) {
-        // 小于24小时
-        final hours = (ageMinutes / 60).floor();
-        return '缓存 ${hours}小时前';
-      } else {
-        // 超过24小时
-        final days = (ageMinutes / 1440).floor();
-        return '缓存 ${days}天前';
-      }
-    } catch (e) {
-      return '缓存数据';
     }
+    return nongLi;
   }
 
+  /// 获取缓存年龄的友好文字描述
   /// 构建简化的详细信息（头部区域）
   Widget _buildSimplifiedDetails(dynamic weather) {
     if (weather?.current?.current == null) {
@@ -989,8 +918,8 @@ class _TodayScreenState extends State<TodayScreen>
   Widget _buildSimpleInfoChip(IconData icon, String label, String value) {
     final themeProvider = context.read<ThemeProvider>();
     return Container(
-      height: 60, // 固定高度，确保所有标签高度一致
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.15),
         borderRadius: BorderRadius.circular(12),
@@ -1035,32 +964,6 @@ class _TodayScreenState extends State<TodayScreen>
   }
 
   /// 构建农历信息 - 简单文本样式
-  Widget _buildLunarAndSolarTerm(dynamic weather) {
-    final nongLi = weather?.current?.nongLi;
-    if (nongLi == null) return const SizedBox.shrink();
-
-    // 格式化农历日期
-    String formattedNongLi = nongLi;
-    final match = RegExp(r'^(正|二|三|四|五|六|七|八|九|十|冬|腊)(初|十|廿|卅)').hasMatch(nongLi);
-    if (match && !nongLi.contains('月')) {
-      if (nongLi.length >= 2) {
-        final firstChar = nongLi[0];
-        final rest = nongLi.substring(1);
-        formattedNongLi = '$firstChar月$rest';
-      }
-    }
-
-    return Text(
-      formattedNongLi,
-      style: TextStyle(
-        color: context.read<ThemeProvider>().getColor('headerTextSecondary'),
-        fontSize: 12,
-        fontWeight: FontWeight.w400,
-        letterSpacing: 0.5,
-      ),
-    );
-  }
-
   Widget _buildTemperatureChart(WeatherProvider weatherProvider) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppConstants.screenHorizontalPadding),
@@ -1234,7 +1137,6 @@ class _TodayScreenState extends State<TodayScreen>
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // 通知图标（如果有提醒）
         if (totalCount > 0)
           CompactWeatherAlertWidget(
             alerts: smartAlerts,
@@ -1249,8 +1151,6 @@ class _TodayScreenState extends State<TodayScreen>
               );
             },
           )
-        else
-          const SizedBox(width: 40), // 占位保持对称
       ],
     );
   }

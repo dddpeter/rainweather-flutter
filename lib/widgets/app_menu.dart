@@ -496,12 +496,12 @@ class AppMenu extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          '• 性能优化：滚动流畅度提升 40-60%\n'
-                          '• 内存优化：内存占用降低 30-40%\n'
-                          '• 代码质量：统一日志系统，优化架构\n'
-                          '• Bug 修复：修复无限刷新循环问题\n'
-                          '• 国际城市：支持海外城市天气查询\n'
-                          '• 请求去重：防止重复 API 调用',
+                          '• UI优化：统一今日/城市天气页面头部布局\n'
+                          '• UI优化：今日天气状态行精简，状态指示器改为纯图标\n'
+                          '• UI优化：信息chip高度优化，布局更紧凑\n'
+                          '• 修复：暗色模式背景色随主题方案正确切换\n'
+                          '• 修复：城市天气预警按钮移至AppBar\n'
+                          '• 优化：删除未使用代码，减少编译警告',
                           style: TextStyle(
                             color: AppColors.textSecondary,
                             fontSize: 12,

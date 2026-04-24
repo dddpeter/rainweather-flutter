@@ -96,11 +96,6 @@ class BaseCard extends StatelessWidget {
 
   Widget _buildMaterialCard(
       BuildContext context, EdgeInsets margin, Widget child) {
-    final borderSide = BorderSide(
-      color: AppColors.cardBorder,
-      width: 1,
-    );
-
     return Container(
       margin: margin,
       width: width,
@@ -111,7 +106,6 @@ class BaseCard extends StatelessWidget {
         color: backgroundColor ?? AppColors.materialCardColor,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(borderRadius ?? 8),
-          side: borderSide,
         ),
         child: onTap != null
             ? InkWell(

@@ -460,6 +460,8 @@ class CompactWeatherAlertWidget extends StatelessWidget {
 
     return IconButton(
       onPressed: onTap,
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(),
       icon: Stack(
         children: [
           Icon(

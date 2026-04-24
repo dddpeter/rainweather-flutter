@@ -223,6 +223,7 @@ LocationService → WeatherProvider → WeatherService → API
 - Card spacing: 12px vertical
 - Screen padding: 12px horizontal
 - Card elevation: 2-4
+- **卡片无边框（Border）** — 不要为卡片添加边框，所有卡片使用纯背景色或渐变
 - Inner small cards: 4px radius, 0.15/0.25 opacity backgrounds
 
 ### Color Constraints

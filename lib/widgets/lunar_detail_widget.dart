@@ -159,7 +159,7 @@ class LunarDetailWidget extends StatelessWidget {
                       type,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 10, // 减小字体
+                        fontSize: 11, // 减小字体
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -369,7 +369,7 @@ class CompactHeader extends StatelessWidget {
                       label,
                       style: TextStyle(
                         color: AppColors.textPrimary,
-                        fontSize: 13, // 减小字体
+                        fontSize: 12, // 减小字体
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -377,7 +377,7 @@ class CompactHeader extends StatelessWidget {
                       value,
                       style: TextStyle(
                         color: AppColors.textPrimary,
-                        fontSize: 13, // 减小字体
+                        fontSize: 12, // 减小字体
                         fontWeight: FontWeight.bold,
                       ),
                       // 允许折行显示完整文字
@@ -391,7 +391,7 @@ class CompactHeader extends StatelessWidget {
                       description,
                       style: TextStyle(
                         color: AppColors.textSecondary,
-                        fontSize: 10, // 减小字体
+                        fontSize: 11, // 减小字体
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -419,7 +419,7 @@ class CompactHeader extends StatelessWidget {
             label,
             style: TextStyle(
               color: color, // 使用传入的主题颜色
-              fontSize: 10, // 减小字体
+              fontSize: 11, // 减小字体
               fontWeight: FontWeight.bold,
               letterSpacing: 0.5,
             ),
@@ -463,7 +463,7 @@ class CompactHeader extends StatelessWidget {
             label,
             style: TextStyle(
               color: luckColor, // 使用主题颜色
-              fontSize: 10, // 减小字体
+              fontSize: 11, // 减小字体
               fontWeight: FontWeight.bold,
               letterSpacing: 0.5,
             ),
@@ -549,7 +549,7 @@ class MergedCard extends StatelessWidget {
                   '宜忌',
                   style: TextStyle(
                     color: AppColors.textPrimary,
-                    fontSize: 15, // 减小字体
+                    fontSize: 14, // 减小字体
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -613,7 +613,7 @@ class MergedCard extends StatelessWidget {
                   '吉神方位',
                   style: TextStyle(
                     color: AppColors.textPrimary,
-                    fontSize: 15, // 减小字体
+                    fontSize: 14, // 减小字体
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -781,7 +781,7 @@ class _PengZuCardState extends State<PengZuCard> {
                       '彭祖百忌',
                       style: TextStyle(
                         color: AppColors.textPrimary,
-                        fontSize: 15, // 减小字体
+                        fontSize: 14, // 减小字体
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -799,7 +799,7 @@ class _PengZuCardState extends State<PengZuCard> {
                     widget.lunarInfo.pengZuBaiji,
                     style: TextStyle(
                       color: AppColors.textPrimary,
-                      fontSize: 13, // 减小字体
+                      fontSize: 12, // 减小字体
                       height: 1.4, // 减小行高
                     ),
                   ),
@@ -867,7 +867,7 @@ class _PengZuCardState extends State<PengZuCard> {
                                     'AI',
                                     style: TextStyle(
                                       color: textColor, // 使用高对比度颜色
-                                      fontSize: 9, // 减小字体
+                                      fontSize: 11, // 减小字体
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -1019,7 +1019,7 @@ class YiJiTwoColumnLayout extends StatelessWidget {
                               '宜',
                               style: TextStyle(
                                 color: AppColors.accentGreen, // 使用主题颜色
-                                fontSize: 13, // 减小字体
+                                fontSize: 12, // 减小字体
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -1058,7 +1058,7 @@ class YiJiTwoColumnLayout extends StatelessWidget {
                               '忌',
                               style: TextStyle(
                                 color: AppColors.error, // 使用主题颜色
-                                fontSize: 13, // 减小字体
+                                fontSize: 12, // 减小字体
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -1096,7 +1096,7 @@ class YiJiTwoColumnLayout extends StatelessWidget {
                         textAlign: TextAlign.left, // 左对齐
                         style: TextStyle(
                           color: AppColors.textPrimary,
-                          fontSize: 13, // 减小字体
+                          fontSize: 12, // 减小字体
                           fontWeight: FontWeight.bold,
                           height: 1.4, // 减小行高
                         ),
@@ -1125,7 +1125,7 @@ class YiJiTwoColumnLayout extends StatelessWidget {
                         textAlign: TextAlign.left, // 左对齐
                         style: TextStyle(
                           color: AppColors.textPrimary,
-                          fontSize: 13, // 减小字体
+                          fontSize: 12, // 减小字体
                           fontWeight: FontWeight.bold,
                           height: 1.4, // 减小行高
                         ),

@@ -198,7 +198,7 @@ class WeatherPosterWidget extends StatelessWidget {
                                 provinceName,
                                 style: TextStyle(
                                   color: Colors.white.withOpacity(0.6),
-                                  fontSize: 13,
+                                  fontSize: 12,
                                 ),
                               ),
                             ),
@@ -221,7 +221,7 @@ class WeatherPosterWidget extends StatelessWidget {
                           weekDay,
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.6),
-                            fontSize: 13,
+                            fontSize: 12,
                           ),
                         ),
                       ],
@@ -350,7 +350,7 @@ class WeatherPosterWidget extends StatelessWidget {
                                       : '--℃',
                                   style: const TextStyle(
                                     color: Colors.white,
-                                    fontSize: 13,
+                                    fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                     shadows: [
                                       Shadow(
@@ -380,7 +380,7 @@ class WeatherPosterWidget extends StatelessWidget {
                                       : '--℃',
                                   style: const TextStyle(
                                     color: Color(0xFFFFB74D), // 明亮橙色
-                                    fontSize: 13,
+                                    fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                     shadows: [
                                       Shadow(
@@ -590,7 +590,7 @@ class WeatherPosterWidget extends StatelessWidget {
                         '智雨天气 · 精准预报 贴心提醒',
                         style: TextStyle(
                           color: Colors.white.withOpacity(0.9),
-                          fontSize: 10,
+                          fontSize: 11,
                         ),
                       ),
                     ],
@@ -676,7 +676,7 @@ class WeatherPosterWidget extends StatelessWidget {
                       value,
                       style: const TextStyle(
                         color: Color(0xFF0D47A1), // 更深的蓝色
-                        fontSize: 15,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -689,7 +689,7 @@ class WeatherPosterWidget extends StatelessWidget {
                       description,
                       style: const TextStyle(
                         color: Color(0xFF616161), // 深灰色
-                        fontSize: 10,
+                        fontSize: 11,
                         fontWeight: FontWeight.w500,
                       ),
                     ),

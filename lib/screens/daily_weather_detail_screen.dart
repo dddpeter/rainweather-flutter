@@ -297,7 +297,7 @@ class DailyWeatherDetailScreen extends StatelessWidget {
               _formatLunarDate(lunarInfo.lunarMonth, lunarInfo.lunarDay),
               style: TextStyle(
                 color: themeProvider.getColor('headerTextSecondary'),
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: FontWeight.w500,
                 letterSpacing: 0.5,
               ),
@@ -471,7 +471,7 @@ class DailyWeatherDetailScreen extends StatelessWidget {
               weather,
               style: TextStyle(
                 color: AppColors.textPrimary,
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
             ),

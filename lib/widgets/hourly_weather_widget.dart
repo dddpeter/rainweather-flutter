@@ -142,7 +142,7 @@ class HourlyWeatherWidget extends StatelessWidget {
               weatherDesc,
               style: TextStyle(
                 color: AppColors.textSecondary, // 使用主题色
-                fontSize: 10, // 小字体
+                fontSize: 11, // 小字体
                 fontWeight: FontWeight.normal,
               ),
               maxLines: 1,

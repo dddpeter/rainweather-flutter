@@ -207,7 +207,7 @@ ${widget.lunarInfo.solarTerm != null ? '节气：${widget.lunarInfo.solarTerm}' 
                                   'AI',
                                   style: TextStyle(
                                     color: aiLabelColor,
-                                    fontSize: 10,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),

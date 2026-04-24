@@ -267,7 +267,7 @@ class HourlyChart extends StatelessWidget {
                     '${temp.toInt()}',
                     style: TextStyle(
                       color: AppColors.temperatureChart,
-                      fontSize: 10,
+                      fontSize: 11,
                       fontWeight: FontWeight.w700,
                       shadows: [
                         Shadow(

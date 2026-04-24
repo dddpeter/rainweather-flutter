@@ -272,7 +272,7 @@ class WeatherDetailsWidget extends StatelessWidget {
                     item.label,
                     style: TextStyle(
                       color: textColor, // 使用配对的文字颜色
-                      fontSize: 13,
+                      fontSize: 12,
                       fontWeight: FontWeight.w500,
                       letterSpacing: 0.2,
                     ),

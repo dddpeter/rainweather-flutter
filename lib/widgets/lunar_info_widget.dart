@@ -183,7 +183,7 @@ class LunarInfoWidget extends StatelessWidget {
                         label,
                         style: TextStyle(
                           color: textColor, // 使用配对的文字颜色
-                          fontSize: 13,
+                          fontSize: 12,
                           fontWeight: FontWeight.w500,
                           letterSpacing: 0.2,
                         ),
@@ -459,7 +459,7 @@ class YiJiWidget extends StatelessWidget {
                 displayText,
                 style: TextStyle(
                   color: AppColors.textPrimary.withOpacity(0.85),
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: FontWeight.w500,
                   height: 1.4,
                 ),
@@ -518,7 +518,7 @@ class YiJiWidget extends StatelessWidget {
             '黄道吉日',
             style: TextStyle(
               color: const Color(0xFFFFB300),
-              fontSize: 15,
+              fontSize: 14,
               fontWeight: FontWeight.bold,
               letterSpacing: 0.5,
             ),
@@ -534,7 +534,7 @@ class YiJiWidget extends StatelessWidget {
             '诸事宜',
             style: TextStyle(
               color: AppColors.textPrimary.withOpacity(0.8),
-              fontSize: 13,
+              fontSize: 12,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -675,7 +675,7 @@ class SolarTermListWidget extends StatelessWidget {
                           term.name,
                           style: TextStyle(
                             color: textColor, // 使用配对的文字颜色
-                            fontSize: 13,
+                            fontSize: 12,
                             fontWeight: FontWeight.w500,
                             letterSpacing: 0.2,
                           ),
@@ -695,7 +695,7 @@ class SolarTermListWidget extends StatelessWidget {
                               '今天',
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 10,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -707,7 +707,7 @@ class SolarTermListWidget extends StatelessWidget {
                       term.description,
                       style: TextStyle(
                         color: textColor, // 使用配对的文字颜色
-                        fontSize: 13,
+                        fontSize: 12,
                         height: 1.3,
                         fontWeight: FontWeight.w500,
                       ),
@@ -724,7 +724,7 @@ class SolarTermListWidget extends StatelessWidget {
                     '${term.date.month}/${term.date.day}',
                     style: TextStyle(
                       color: textColor, // 使用配对的文字颜色
-                      fontSize: 13,
+                      fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

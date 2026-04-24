@@ -283,7 +283,7 @@ class _FloatingActionIslandState extends State<FloatingActionIsland>
                         color: themeProvider.isLightTheme
                             ? AppColors.textPrimary
                             : Colors.white,
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight: FontWeight.w500,
                       ),
                     ),

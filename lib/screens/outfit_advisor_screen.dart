@@ -268,7 +268,7 @@ class _OutfitAdvisorScreenState extends State<OutfitAdvisorScreen> {
                                         'AI',
                                         style: TextStyle(
                                           color: const Color(0xFFFFB300),
-                                          fontSize: 10,
+                                          fontSize: 11,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),

@@ -277,7 +277,7 @@ class LifeIndexWidget extends StatelessWidget {
                         _truncateIndexName(lifeIndex.indexTypeCh ?? ''),
                         style: TextStyle(
                           color: textColor, // 使用配对的文字颜色
-                          fontSize: 13,
+                          fontSize: 12,
                           fontWeight: FontWeight.w500,
                           letterSpacing: 0.2,
                         ),
@@ -452,7 +452,7 @@ class LifeIndexWidget extends StatelessWidget {
                   lifeIndex.indexContent!,
                   style: TextStyle(
                     color: AppColors.textPrimary,
-                    fontSize: 15,
+                    fontSize: 14,
                     height: 1.5,
                   ),
                 ),

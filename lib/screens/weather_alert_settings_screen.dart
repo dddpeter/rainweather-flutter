@@ -827,7 +827,7 @@ class _WeatherAlertSettingsScreenState
           title,
           style: TextStyle(
             color: AppColors.textPrimary,
-            fontSize: 13,
+            fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -877,7 +877,7 @@ class _WeatherAlertSettingsScreenState
                             '$startTime',
                             style: TextStyle(
                               color: AppColors.textPrimary,
-                              fontSize: 13,
+                              fontSize: 12,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -947,7 +947,7 @@ class _WeatherAlertSettingsScreenState
                             '$endTime',
                             style: TextStyle(
                               color: AppColors.textPrimary,
-                              fontSize: 13,
+                              fontSize: 12,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -1094,7 +1094,7 @@ class _WeatherAlertSettingsScreenState
           '工作日设置',
           style: TextStyle(
             color: AppColors.textPrimary,
-            fontSize: 13,
+            fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
         ),

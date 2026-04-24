@@ -340,7 +340,7 @@ class Forecast15dChart extends StatelessWidget {
                     '${highTemp.toInt()}',
                     style: TextStyle(
                       color: AppColors.highTemp,
-                      fontSize: 10,
+                      fontSize: 11,
                       fontWeight: FontWeight.w700,
                       shadows: [
                         // 白色描边效果（四个方向）
@@ -407,7 +407,7 @@ class Forecast15dChart extends StatelessWidget {
                     '${lowTemp.toInt()}',
                     style: TextStyle(
                       color: AppColors.lowTemp,
-                      fontSize: 10,
+                      fontSize: 11,
                       fontWeight: FontWeight.w700,
                       shadows: [
                         // 白色描边效果（四个方向）

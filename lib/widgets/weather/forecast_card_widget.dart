@@ -103,7 +103,7 @@ class ForecastCardWidget extends StatelessWidget {
               day.sunrise_sunset!,
               style: TextStyle(
                 color: AppColors.textSecondary,
-                fontSize: 10,
+                fontSize: 11,
               ),
             ),
           ],
@@ -230,7 +230,7 @@ class _WeatherPeriodWidget extends StatelessWidget {
           weather,
           style: TextStyle(
             color: AppColors.textPrimary,
-            fontSize: 13,
+            fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -239,7 +239,7 @@ class _WeatherPeriodWidget extends StatelessWidget {
             '$windDir$windPower',
             style: TextStyle(
               color: AppColors.textSecondary,
-              fontSize: 10,
+              fontSize: 11,
             ),
           ),
       ],

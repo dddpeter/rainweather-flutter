@@ -114,7 +114,7 @@ class _WeatherAlertWidgetState extends State<WeatherAlertWidget> {
                               '更多',
                               style: TextStyle(
                                 color: AppColors.textSecondary,
-                                fontSize: 13,
+                                fontSize: 12,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -244,7 +244,7 @@ class _WeatherAlertWidgetState extends State<WeatherAlertWidget> {
               '必提醒',
               style: TextStyle(
                 color: Colors.red,
-                fontSize: 10,
+                fontSize: 11,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -310,7 +310,7 @@ class _WeatherAlertWidgetState extends State<WeatherAlertWidget> {
                   '必提醒',
                   style: TextStyle(
                     color: Colors.red,
-                    fontSize: 10,
+                    fontSize: 11,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -324,7 +324,7 @@ class _WeatherAlertWidgetState extends State<WeatherAlertWidget> {
           alert.content,
           style: TextStyle(
             color: AppColors.textPrimary,
-            fontSize: 13,
+            fontSize: 12,
             height: 1.4,
           ),
         ),
@@ -364,7 +364,7 @@ class _WeatherAlertWidgetState extends State<WeatherAlertWidget> {
                   '场景提醒: ${alert.scenario}',
                   style: TextStyle(
                     color: Colors.orange,
-                    fontSize: 10,
+                    fontSize: 11,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -482,7 +482,7 @@ class CompactWeatherAlertWidget extends StatelessWidget {
                   '$totalCount',
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 10,
+                    fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),
                   textAlign: TextAlign.center,
@@ -965,7 +965,7 @@ class WeatherAlertDetailScreen extends StatelessWidget {
                                 'AI',
                                 style: TextStyle(
                                   color: aiTextColor,
-                                  fontSize: 10,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),

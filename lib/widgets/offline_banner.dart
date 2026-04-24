@@ -55,7 +55,7 @@ class OfflineBanner extends StatelessWidget {
                 '重试',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
               ),

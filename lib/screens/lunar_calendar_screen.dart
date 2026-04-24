@@ -489,7 +489,7 @@ class _LunarCalendarScreenState extends State<LunarCalendarScreen> {
                               text,
                               style: TextStyle(
                                 color: AppColors.warning,
-                                fontSize: 9,
+                                fontSize: 11,
                                 fontWeight: FontWeight.bold,
                               ),
                               maxLines: 1,
@@ -510,7 +510,7 @@ class _LunarCalendarScreenState extends State<LunarCalendarScreen> {
                         lunarInfo.solarTerm!,
                         style: TextStyle(
                           color: AppColors.error,
-                          fontSize: 9,
+                          fontSize: 11,
                           fontWeight: FontWeight.bold,
                         ),
                         maxLines: 1,
@@ -527,7 +527,7 @@ class _LunarCalendarScreenState extends State<LunarCalendarScreen> {
                             : lunarInfo.festivals.first,
                         style: TextStyle(
                           color: AppColors.error,
-                          fontSize: 9,
+                          fontSize: 11,
                           fontWeight: FontWeight.bold,
                         ),
                         maxLines: 1,
@@ -542,7 +542,7 @@ class _LunarCalendarScreenState extends State<LunarCalendarScreen> {
                         _getLunarDayDisplay(lunarInfo),
                         style: TextStyle(
                           color: AppColors.textSecondary,
-                          fontSize: 9,
+                          fontSize: 11,
                           fontWeight: FontWeight.w500,
                         ),
                         maxLines: 1,
@@ -558,7 +558,7 @@ class _LunarCalendarScreenState extends State<LunarCalendarScreen> {
                       _getLunarDayDisplay(lunarInfo),
                       style: TextStyle(
                         color: AppColors.textTertiary,
-                        fontSize: 9,
+                        fontSize: 11,
                         fontWeight: FontWeight.w500,
                       ),
                       maxLines: 1,
@@ -932,7 +932,7 @@ class _LunarCalendarScreenState extends State<LunarCalendarScreen> {
                                       item['date'] as String,
                                       style: TextStyle(
                                         color: AppColors.textPrimary,
-                                        fontSize: 13,
+                                        fontSize: 12,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),

@@ -194,7 +194,7 @@ class _CityWeatherPageState extends State<CityWeatherPage>
                     'AI解读',
                     style: TextStyle(
                       color: themeProvider.isLightTheme ? AppColors.primaryBlue : AppColors.accentBlue,
-                      fontSize: 10,
+                      fontSize: 11,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -316,11 +316,11 @@ class _CityWeatherPageState extends State<CityWeatherPage>
             ? AppColors.textSecondary
             : Colors.white.withOpacity(0.7),
         labelStyle: const TextStyle(
-          fontSize: 13,
+          fontSize: 12,
           fontWeight: FontWeight.w600,
         ),
         unselectedLabelStyle: const TextStyle(
-          fontSize: 13,
+          fontSize: 12,
           fontWeight: FontWeight.w500,
         ),
         tabs: const [
@@ -875,7 +875,7 @@ class _CityWeatherPageState extends State<CityWeatherPage>
                             'AI解读',
                             style: TextStyle(
                               color: AppColors.accentBlue,
-                              fontSize: 10,
+                              fontSize: 11,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -1084,7 +1084,7 @@ class _CityWeatherPageState extends State<CityWeatherPage>
       formattedNongLi,
       style: TextStyle(
         color: context.read<ThemeProvider>().getColor('headerTextSecondary'),
-        fontSize: 13,
+        fontSize: 12,
         fontWeight: FontWeight.w400,
         letterSpacing: 0.5,
       ),

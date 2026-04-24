@@ -603,7 +603,7 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
                                                                                       1,
                                                                                     )
                                                                                   : Colors.white,
-                                                                              fontSize: 10,
+                                                                              fontSize: 11,
                                                                               fontWeight: FontWeight.bold,
                                                                             ),
                                                                           ),
@@ -878,7 +878,7 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
                     weatherDesc,
                     style: TextStyle(
                       color: AppColors.textPrimary,
-                      fontSize: 13,
+                      fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -903,7 +903,7 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
                                 '${current.winddir ?? ''}${current.windpower}',
                                 style: TextStyle(
                                   color: AppColors.textPrimary,
-                                  fontSize: 10,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.w500,
                                 ),
                                 overflow: TextOverflow.ellipsis,
@@ -927,7 +927,7 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
                               '${current.humidity}%',
                               style: TextStyle(
                                 color: AppColors.textPrimary,
-                                fontSize: 10,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -993,7 +993,7 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
                           color: themeProvider.isLightTheme
                               ? Colors.white
                               : WeatherIconHelper.getAirQualityColor(aqi),
-                          fontSize: 8,
+                          fontSize: 11,
                           fontWeight: FontWeight.w700,
                           shadows: themeProvider.isLightTheme
                               ? [
@@ -1034,7 +1034,7 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
                           color: themeProvider.isLightTheme
                               ? Colors.white
                               : WeatherIconHelper.getAirQualityColor(aqi),
-                          fontSize: 10,
+                          fontSize: 11,
                           fontWeight: FontWeight.w700,
                           shadows: themeProvider.isLightTheme
                               ? [
@@ -1103,7 +1103,7 @@ class _MainCitiesScreenState extends State<MainCitiesScreen>
                           color: themeProvider.isLightTheme
                               ? Colors.white
                               : AppColors.primaryBlue,
-                          fontSize: 8,
+                          fontSize: 11,
                           fontWeight: FontWeight.w700,
                           shadows: themeProvider.isLightTheme
                               ? [
@@ -1427,7 +1427,7 @@ class _AddCityDialogState extends State<_AddCityDialog> {
           label,
           style: TextStyle(
             color: isSelected ? Colors.white : AppColors.textSecondary,
-            fontSize: 13,
+            fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -1482,12 +1482,12 @@ class _AddCityDialogState extends State<_AddCityDialog> {
             ),
             TextField(
               controller: searchController,
-              style: TextStyle(color: AppColors.textPrimary, fontSize: 15),
+              style: TextStyle(color: AppColors.textPrimary, fontSize: 14),
               decoration: InputDecoration(
                 hintText: '搜索城市名称（如：北京、东京、London）',
                 hintStyle: TextStyle(
                   color: AppColors.textSecondary,
-                  fontSize: 15,
+                  fontSize: 14,
                 ),
                 prefixIcon: Icon(
                   Icons.search_rounded,
@@ -1589,7 +1589,7 @@ class _AddCityDialogState extends State<_AddCityDialog> {
                                 fontWeight: isMainCity
                                     ? FontWeight.w600
                                     : FontWeight.w500,
-                                fontSize: 15,
+                                fontSize: 14,
                               ),
                             ),
                             const SizedBox(width: 8),

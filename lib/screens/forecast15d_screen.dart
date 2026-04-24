@@ -433,7 +433,7 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
                           day.sunrise_sunset!,
                           style: TextStyle(
                             color: AppColors.textSecondary,
-                            fontSize: 10,
+                            fontSize: 11,
                           ),
                         ),
                       ],
@@ -551,7 +551,7 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
           weather,
           style: TextStyle(
             color: AppColors.textPrimary,
-            fontSize: 13,
+            fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -559,7 +559,7 @@ class _Forecast15dScreenState extends State<Forecast15dScreen>
         if (windDir.isNotEmpty || windPower.isNotEmpty)
           Text(
             '$windDir$windPower',
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 10),
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
           ),
       ],
     );

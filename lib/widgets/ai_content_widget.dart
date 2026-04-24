@@ -207,7 +207,7 @@ class _AIContentWidgetState extends State<AIContentWidget> {
                             'AI',
                             style: TextStyle(
                               color: textColor, // 使用高对比度颜色
-                              fontSize: 10,
+                              fontSize: 11,
                               fontWeight: FontWeight.bold,
                             ),
                           ),

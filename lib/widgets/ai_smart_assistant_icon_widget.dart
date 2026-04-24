@@ -234,7 +234,7 @@ class _AISmartAssistantIconWidgetState extends State<AISmartAssistantIconWidget>
                   levelName,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 10,
+                    fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

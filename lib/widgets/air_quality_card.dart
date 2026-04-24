@@ -184,7 +184,7 @@ class AirQualityCard extends StatelessWidget {
       text,
       style: TextStyle(
         color: AppColors.textSecondary,
-        fontSize: 10,
+        fontSize: 11,
         fontWeight: FontWeight.w500,
       ),
     );
@@ -211,7 +211,7 @@ class AirQualityCard extends StatelessWidget {
         text,
         style: TextStyle(
           color: tagColor,
-          fontSize: 10,
+          fontSize: 11,
           fontWeight: FontWeight.w700,
           height: 1.0,
         ),

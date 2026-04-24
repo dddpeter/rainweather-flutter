@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/weather_provider.dart';
@@ -461,7 +463,7 @@ abstract class CityWeatherScreenBase<T extends StatefulWidget> extends State<T> 
                     color: context.read<ThemeProvider>().getColor(
                       'headerTextSecondary',
                     ),
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: FontWeight.w400,
                     letterSpacing: 0.5,
                   ),
@@ -547,17 +549,10 @@ abstract class CityWeatherScreenBase<T extends StatefulWidget> extends State<T> 
 
             // 如果正在生成中，等待一下再检查
             if (weatherProvider.isGeneratingSummary) {
-              Logger.log('⏳ AI摘要正在生成中，等待完成...');
-              // 等待最多5秒
-              for (int i = 0; i < 50; i++) {
-                await Future.delayed(const Duration(milliseconds: 100));
-                if (weatherProvider.weatherSummary != null &&
-                    weatherProvider.weatherSummary!.isNotEmpty) {
-                  return weatherProvider.weatherSummary!;
-                }
-                if (!weatherProvider.isGeneratingSummary) {
-                  break; // 生成完成，跳出循环
-                }
+              Logger.log('AI摘要正在生成中，等待完成...');
+              final summary = await _waitForAISummary(weatherProvider);
+              if (summary != null && summary.isNotEmpty) {
+                return summary;
               }
             }
 
@@ -637,6 +632,32 @@ abstract class CityWeatherScreenBase<T extends StatefulWidget> extends State<T> 
         ),
       ),
     );
+  }
+
+  Future<String?> _waitForAISummary(WeatherProvider provider) async {
+    final completer = Completer<String?>();
+    VoidCallback? listener;
+
+    listener = () {
+      if (!provider.isGeneratingSummary) {
+        provider.removeListener(listener!);
+        if (!completer.isCompleted) {
+          final summary = provider.weatherSummary;
+          completer.complete((summary != null && summary.isNotEmpty) ? summary : null);
+        }
+      }
+    };
+
+    provider.addListener(listener);
+
+    Timer(const Duration(seconds: 5), () {
+      if (!completer.isCompleted) {
+        provider.removeListener(listener!);
+        completer.complete(null);
+      }
+    });
+
+    return completer.future;
   }
 
   /// 构建天气提醒卡片
@@ -1044,7 +1065,7 @@ abstract class CityWeatherScreenBase<T extends StatefulWidget> extends State<T> 
                         day.sunrise_sunset!,
                         style: TextStyle(
                           color: AppColors.textSecondary,
-                          fontSize: 10,
+                          fontSize: 11,
                         ),
                       ),
                     ],
@@ -1163,7 +1184,7 @@ abstract class CityWeatherScreenBase<T extends StatefulWidget> extends State<T> 
           weather,
           style: TextStyle(
             color: AppColors.textPrimary,
-            fontSize: 13,
+            fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -1171,7 +1192,7 @@ abstract class CityWeatherScreenBase<T extends StatefulWidget> extends State<T> 
         if (windDir.isNotEmpty || windPower.isNotEmpty)
           Text(
             '$windDir$windPower',
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 10),
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
           ),
       ],
     );
@@ -1194,129 +1215,48 @@ abstract class CityWeatherScreenBase<T extends StatefulWidget> extends State<T> 
     }
   }
 
-  /// 判断是否为今天
-  bool _isToday(String forecastTime) {
-    if (forecastTime.isEmpty) return false;
+  DateTime? _parseForecastDate(String forecastTime) {
+    if (forecastTime.isEmpty) return null;
 
     try {
       final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
+      final datePart = forecastTime.split(' ')[0];
 
-      // 尝试解析预报时间
-      DateTime forecastDate;
-      if (forecastTime.contains('-')) {
-        // 格式：2024-10-06 或 10-06
-        final parts = forecastTime.split(' ')[0].split('-');
-        if (parts.length == 3) {
-          // 完整日期格式
-          forecastDate = DateTime(
-            int.parse(parts[0]),
-            int.parse(parts[1]),
-            int.parse(parts[2]),
-          );
-        } else if (parts.length == 2) {
-          // 月-日格式
-          forecastDate = DateTime(
-            now.year,
-            int.parse(parts[0]),
-            int.parse(parts[1]),
-          );
-        } else {
-          return false;
-        }
-      } else if (forecastTime.contains('/')) {
-        // 格式：2024/10/06 或 10/06
-        final parts = forecastTime.split(' ')[0].split('/');
-        if (parts.length == 3) {
-          // 完整日期格式
-          forecastDate = DateTime(
-            int.parse(parts[0]),
-            int.parse(parts[1]),
-            int.parse(parts[2]),
-          );
-        } else if (parts.length == 2) {
-          // 月/日格式
-          forecastDate = DateTime(
-            now.year,
-            int.parse(parts[0]),
-            int.parse(parts[1]),
-          );
-        } else {
-          return false;
-        }
+      List<String> parts;
+      if (datePart.contains('-')) {
+        parts = datePart.split('-');
+      } else if (datePart.contains('/')) {
+        parts = datePart.split('/');
       } else {
-        return false;
+        return null;
       }
 
-      return forecastDate.year == today.year &&
-          forecastDate.month == today.month &&
-          forecastDate.day == today.day;
+      if (parts.length == 3) {
+        return DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
+      } else if (parts.length == 2) {
+        return DateTime(now.year, int.parse(parts[0]), int.parse(parts[1]));
+      }
+      return null;
     } catch (e) {
-      return false;
+      return null;
     }
   }
 
-  /// 判断是否为明天
-  bool _isTomorrow(String forecastTime) {
-    if (forecastTime.isEmpty) return false;
+  bool _isDaysFromNow(String forecastTime, int daysOffset) {
+    final forecastDate = _parseForecastDate(forecastTime);
+    if (forecastDate == null) return false;
 
-    try {
-      final now = DateTime.now();
-      final tomorrow = DateTime(now.year, now.month, now.day + 1);
+    final now = DateTime.now();
+    final targetDate = DateTime(now.year, now.month, now.day).add(Duration(days: daysOffset));
 
-      // 尝试解析预报时间
-      DateTime forecastDate;
-      if (forecastTime.contains('-')) {
-        // 格式：2024-10-06 或 10-06
-        final parts = forecastTime.split(' ')[0].split('-');
-        if (parts.length == 3) {
-          // 完整日期格式
-          forecastDate = DateTime(
-            int.parse(parts[0]),
-            int.parse(parts[1]),
-            int.parse(parts[2]),
-          );
-        } else if (parts.length == 2) {
-          // 月-日格式
-          forecastDate = DateTime(
-            now.year,
-            int.parse(parts[0]),
-            int.parse(parts[1]),
-          );
-        } else {
-          return false;
-        }
-      } else if (forecastTime.contains('/')) {
-        // 格式：2024/10/06 或 10/06
-        final parts = forecastTime.split(' ')[0].split('/');
-        if (parts.length == 3) {
-          // 完整日期格式
-          forecastDate = DateTime(
-            int.parse(parts[0]),
-            int.parse(parts[1]),
-            int.parse(parts[2]),
-          );
-        } else if (parts.length == 2) {
-          // 月/日格式
-          forecastDate = DateTime(
-            now.year,
-            int.parse(parts[0]),
-            int.parse(parts[1]),
-          );
-        } else {
-          return false;
-        }
-      } else {
-        return false;
-      }
-
-      return forecastDate.year == tomorrow.year &&
-          forecastDate.month == tomorrow.month &&
-          forecastDate.day == tomorrow.day;
-    } catch (e) {
-      return false;
-    }
+    return forecastDate.year == targetDate.year &&
+        forecastDate.month == targetDate.month &&
+        forecastDate.day == targetDate.day;
   }
+
+  bool _isToday(String forecastTime) => _isDaysFromNow(forecastTime, 0);
+
+  bool _isTomorrow(String forecastTime) => _isDaysFromNow(forecastTime, 1);
 
   /// 格式化数值，去掉小数位
   String _formatNumber(dynamic value) {
@@ -1398,7 +1338,7 @@ abstract class CityWeatherScreenBase<T extends StatefulWidget> extends State<T> 
                     '$alertCount',
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 9,
+                      fontSize: 11,
                       fontWeight: FontWeight.bold,
                     ),
                     textAlign: TextAlign.center,
@@ -1528,7 +1468,7 @@ abstract class CityWeatherScreenBase<T extends StatefulWidget> extends State<T> 
                 label,
                 style: TextStyle(
                   color: themeProvider.getColor('headerTextSecondary'),
-                  fontSize: 10,
+                  fontSize: 11,
                   fontWeight: FontWeight.w600,
                 ),
               ),

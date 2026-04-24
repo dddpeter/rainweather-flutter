@@ -255,7 +255,7 @@ class _WeatherAlertsScreenState extends State<WeatherAlertsScreen> {
                     '发布时间：${alert.publishTime}',
                     style: TextStyle(
                       color: AppColors.textSecondary,
-                      fontSize: 13,
+                      fontSize: 12,
                     ),
                   ),
                 ],

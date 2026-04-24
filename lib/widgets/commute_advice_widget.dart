@@ -248,7 +248,7 @@ class _CommuteAdviceWidgetState extends State<CommuteAdviceWidget> {
                                       'AI',
                                       style: TextStyle(
                                         color: AIColorScheme.aiGoldMedium,
-                                        fontSize: 10,
+                                        fontSize: 11,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),

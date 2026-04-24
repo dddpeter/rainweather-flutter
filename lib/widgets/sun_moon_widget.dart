@@ -147,7 +147,7 @@ class _SunMoonCard extends StatelessWidget {
                                   moon?.moonage ?? '月相',
                                   style: TextStyle(
                                     color: AppColors.moon,
-                                    fontSize: 10,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -342,7 +342,7 @@ class _GridItem extends StatelessWidget {
                 label,
                 style: TextStyle(
                   color: AppColors.textSecondary,
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -353,7 +353,7 @@ class _GridItem extends StatelessWidget {
             time,
             style: TextStyle(
               color: color,
-              fontSize: 15,
+              fontSize: 14,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -483,7 +483,7 @@ class _SunriseSunsetCard extends StatelessWidget {
                           '白昼时长 ${hours}小时${minutes}分钟',
                           style: TextStyle(
                             color: AppColors.warning,
-                            fontSize: 13,
+                            fontSize: 12,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -534,7 +534,7 @@ class _SunriseSunsetItem extends StatelessWidget {
               label,
               style: TextStyle(
                 color: AppColors.textSecondary,
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
             ),

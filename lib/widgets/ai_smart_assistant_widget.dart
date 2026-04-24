@@ -222,7 +222,7 @@ class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
                                   'AI',
                                   style: TextStyle(
                                     color: textColor, // 使用高对比度颜色
-                                    fontSize: 10,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -401,7 +401,7 @@ class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
                 '${advices.length}条',
                 style: TextStyle(
                   color: textColor, // 使用高对比度文字颜色
-                  fontSize: 10,
+                  fontSize: 11,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -561,7 +561,7 @@ class _AISmartAssistantWidgetState extends State<AISmartAssistantWidget> {
                                       'AI',
                                       style: TextStyle(
                                         color: aiColor,
-                                        fontSize: 10,
+                                        fontSize: 11,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),

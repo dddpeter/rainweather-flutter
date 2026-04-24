@@ -61,7 +61,7 @@ class InfoChipWidget extends StatelessWidget {
                 label,
                 style: TextStyle(
                   color: textColor ?? themeProvider.getColor('headerTextSecondary'),
-                  fontSize: 10,
+                  fontSize: 11,
                   fontWeight: FontWeight.w600,
                 ),
               ),

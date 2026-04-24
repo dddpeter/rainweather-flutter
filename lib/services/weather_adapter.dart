@@ -1,4 +1,5 @@
 import '../constants/app_constants.dart';
+import '../constants/weather_index_thresholds.dart';
 import '../models/open_meteo_models.dart';
 import '../models/sun_moon_index_model.dart';
 import '../models/weather_model.dart';
@@ -360,22 +361,22 @@ class WeatherAdapter {
     String level;
     String content;
 
-    if (temp >= 35) {
+    if (temp >= WeatherIndexThresholds.clothingHot) {
       level = '炎热';
       content = '天气炎热，建议穿着短衣、短裙、薄短裤等夏季服装';
-    } else if (temp >= 28) {
+    } else if (temp >= WeatherIndexThresholds.clothingWarm) {
       level = '热';
       content = '天气较热，建议穿着短衫、短裙、短裤等夏季服装';
-    } else if (temp >= 21) {
+    } else if (temp >= WeatherIndexThresholds.clothingComfortable) {
       level = '舒适';
       content = '温度适中，建议穿着薄型T恤、衬衫等春秋过渡装';
-    } else if (temp >= 14) {
+    } else if (temp >= WeatherIndexThresholds.clothingCool) {
       level = '较舒适';
       content = '天气较凉，建议穿着长袖衬衫、薄外套等春秋装';
-    } else if (temp >= 7) {
+    } else if (temp >= WeatherIndexThresholds.clothingCold) {
       level = '较冷';
       content = '天气较冷，建议穿着毛衣、厚外套等冬季服装';
-    } else if (temp >= -5) {
+    } else if (temp >= WeatherIndexThresholds.clothingFreezing) {
       level = '冷';
       content = '天气寒冷，建议穿着棉衣、羽绒服等冬季服装';
     } else {
@@ -392,18 +393,18 @@ class WeatherAdapter {
     String content;
 
     // 根据温度和天气状况判断感冒风险
-    final isRainy = weatherCode >= 51 && weatherCode <= 67;
-    final isSnowy = weatherCode >= 71 && weatherCode <= 86;
-    final isWindy = windSpeed != null && windSpeed > 30;
+    final isRainy = weatherCode >= WeatherIndexThresholds.wmoRainStart && weatherCode <= WeatherIndexThresholds.wmoRainEnd;
+    final isSnowy = weatherCode >= WeatherIndexThresholds.wmoSnowStart && weatherCode <= WeatherIndexThresholds.wmoSnowEnd;
+    final isWindy = windSpeed != null && windSpeed > WeatherIndexThresholds.windStrong;
 
     int riskScore = 0;
 
     // 温度影响
-    if (temp < 5) {
+    if (temp < WeatherIndexThresholds.coldHighRisk) {
       riskScore += 3;
-    } else if (temp < 15)
+    } else if (temp < WeatherIndexThresholds.coldMediumRisk)
       riskScore += 2;
-    else if (temp < 25)
+    else if (temp < WeatherIndexThresholds.coldLowRisk)
       riskScore += 1;
 
     // 天气影响
@@ -461,13 +462,13 @@ class WeatherAdapter {
     String level;
     String content;
 
-    final isRainy = weatherCode >= 51 && weatherCode <= 82;
-    final isSnowy = weatherCode >= 71 && weatherCode <= 86;
+    final isRainy = weatherCode >= WeatherIndexThresholds.wmoRainStart && weatherCode <= WeatherIndexThresholds.wmoPrecipEnd;
+    final isSnowy = weatherCode >= WeatherIndexThresholds.wmoSnowStart && weatherCode <= WeatherIndexThresholds.wmoSnowEnd;
 
     if (isRainy || isSnowy) {
       level = '不宜';
       content = '有雨雪天气，不宜洗车';
-    } else if (weatherCode >= 45 && weatherCode <= 48) {
+    } else if (weatherCode >= WeatherIndexThresholds.wmoFogStart && weatherCode <= WeatherIndexThresholds.wmoFogEnd) {
       // 雾
       level = '较不宜';
       content = '有雾天气，较不宜洗车';
@@ -488,20 +489,20 @@ class WeatherAdapter {
     String level;
     String content;
 
-    final isRainy = weatherCode >= 51 && weatherCode <= 82;
-    final isSnowy = weatherCode >= 71 && weatherCode <= 86;
-    final isStormy = weatherCode >= 95;
-    final isWindy = windSpeed != null && windSpeed > 40;
+    final isRainy = weatherCode >= WeatherIndexThresholds.wmoRainStart && weatherCode <= WeatherIndexThresholds.wmoPrecipEnd;
+    final isSnowy = weatherCode >= WeatherIndexThresholds.wmoSnowStart && weatherCode <= WeatherIndexThresholds.wmoSnowEnd;
+    final isStormy = weatherCode >= WeatherIndexThresholds.wmoStormStart;
+    final isWindy = windSpeed != null && windSpeed > WeatherIndexThresholds.windVeryStrong;
 
     // 综合判断运动适宜度
     int suitabilityScore = 10;
 
     // 温度影响
-    if (temp < -10 || temp > 38) {
+    if (temp < WeatherIndexThresholds.exerciseExtremeCold || temp > WeatherIndexThresholds.exerciseExtremeHot) {
       suitabilityScore -= 5;
-    } else if (temp < 0 || temp > 35)
+    } else if (temp < WeatherIndexThresholds.exerciseVeryCold || temp > WeatherIndexThresholds.exerciseVeryHot)
       suitabilityScore -= 3;
-    else if (temp < 10 || temp > 30)
+    else if (temp < WeatherIndexThresholds.exerciseCool || temp > WeatherIndexThresholds.exerciseWarm)
       suitabilityScore -= 1;
 
     // 天气影响
@@ -535,32 +536,47 @@ class WeatherAdapter {
     String level;
     String content;
 
-    // 根据温度和湿度判断
-    final isDry = humidity != null && humidity < 40;
-    final isHumid = humidity != null && humidity > 70;
-
-    if (temp >= 30) {
-      if (isHumid) {
-        level = '防脱水';
-        content = '高温高湿，建议使用控油护肤品，注意防晒';
-      } else {
-        level = '防晒';
-        content = '高温干燥，建议使用保湿护肤品，加强防晒';
-      }
-    } else if (temp >= 20) {
-      if (isDry) {
+    if (humidity == null) {
+      if (temp >= WeatherIndexThresholds.makeupHot) {
+        level = '注意防晒';
+        content = '高温天气，建议做好防晒措施，适当补充水分';
+      } else if (temp >= WeatherIndexThresholds.makeupWarm) {
+        level = '适宜';
+        content = '温度适宜，常规护肤即可';
+      } else if (temp >= WeatherIndexThresholds.makeupCool) {
         level = '保湿';
-        content = '天气干燥，建议使用保湿护肤品';
+        content = '天气较凉，建议使用滋润型护肤品';
       } else {
-        level = '滋润';
-        content = '天气适宜，常规护肤即可';
+        level = '加强保湿';
+        content = '天气寒冷，建议使用滋润保湿护肤品';
       }
-    } else if (temp >= 10) {
-      level = '滋润';
-      content = '天气较凉，建议使用滋润型护肤品';
     } else {
-      level = '保湿';
-      content = '天气寒冷干燥，建议使用滋润保湿护肤品';
+      final isDry = humidity < WeatherIndexThresholds.humidityDry;
+      final isHumid = humidity > WeatherIndexThresholds.humidityHumid;
+
+      if (temp >= WeatherIndexThresholds.makeupHot) {
+        if (isHumid) {
+          level = '防脱水';
+          content = '高温高湿，建议使用控油护肤品，注意防晒';
+        } else {
+          level = '防晒';
+          content = '高温干燥，建议使用保湿护肤品，加强防晒';
+        }
+      } else if (temp >= WeatherIndexThresholds.makeupWarm) {
+        if (isDry) {
+          level = '保湿';
+          content = '天气干燥，建议使用保湿护肤品';
+        } else {
+          level = '滋润';
+          content = '天气适宜，常规护肤即可';
+        }
+      } else if (temp >= WeatherIndexThresholds.makeupCool) {
+        level = '滋润';
+        content = '天气较凉，建议使用滋润型护肤品';
+      } else {
+        level = '保湿';
+        content = '天气寒冷干燥，建议使用滋润保湿护肤品';
+      }
     }
 
     return LifeIndex(indexTypeCh: '化妆指数', indexLevel: level, indexContent: content);

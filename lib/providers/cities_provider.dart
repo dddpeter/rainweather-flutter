@@ -143,18 +143,12 @@ class CitiesProvider extends ChangeNotifier {
       _mainCities.removeWhere((c) => c.id == cityId);
       _mainCitiesWeather.remove(cityId);
 
-      // 重新计算剩余城市的sortOrder
-      final updatedCities = <CityModel>[];
-      for (int i = 0; i < _mainCities.length; i++) {
-        final updatedCity = _mainCities[i].copyWith(sortOrder: i);
-        updatedCities.add(updatedCity);
-      }
-      _mainCities = updatedCities;
+      _mainCities = _recalculateSortOrders(_mainCities);
 
       await _saveCitiesToDatabase();
       notifyListeners();
 
-      Logger.d('移除城市成功: ${city.name}，重新排序 ${updatedCities.length} 个城市', tag: 'CitiesProvider');
+      Logger.d('移除城市成功: ${city.name}，重新排序 ${_mainCities.length} 个城市', tag: 'CitiesProvider');
       return true;
     } catch (e) {
       Logger.e('移除城市失败: $cityId', tag: 'CitiesProvider', error: e);
@@ -165,24 +159,19 @@ class CitiesProvider extends ChangeNotifier {
   /// 更新城市排序
   Future<bool> updateCitiesSortOrder(List<CityModel> newOrder) async {
     try {
-      // 根据新顺序更新sortOrder
-      final updatedCities = <CityModel>[];
-      for (int i = 0; i < newOrder.length; i++) {
-        final city = newOrder[i];
-        // 更新sortOrder为当前索引
-        final updatedCity = city.copyWith(sortOrder: i);
-        updatedCities.add(updatedCity);
-      }
-      
-      _mainCities = updatedCities;
+      _mainCities = _recalculateSortOrders(newOrder);
       await _saveCitiesToDatabase();
       notifyListeners();
-      Logger.d('更新城市排序成功，新顺序: ${updatedCities.map((c) => "${c.name}(order:${c.sortOrder})").join(", ")}', tag: 'CitiesProvider');
+      Logger.d('更新城市排序成功，新顺序: ${_mainCities.map((c) => "${c.name}(order:${c.sortOrder})").join(", ")}', tag: 'CitiesProvider');
       return true;
     } catch (e) {
       Logger.e('更新城市排序失败', tag: 'CitiesProvider', error: e);
       return false;
     }
+  }
+
+  List<CityModel> _recalculateSortOrders(List<CityModel> cities) {
+    return List.generate(cities.length, (i) => cities[i].copyWith(sortOrder: i));
   }
 
   /// 刷新所有城市天气数据

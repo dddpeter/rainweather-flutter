@@ -1,0 +1,426 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-04-24T19:30:00Z",
+  "title": "Design System: RainWeather",
+  "extensions": {
+    "colorMeta": {
+      "primary-blue-dark": {
+        "role": "primary",
+        "displayName": "Deep Navy",
+        "canonical": "oklch(35% 0.15 260)",
+        "tonalRamp": [
+          "oklch(15% 0.15 260)",
+          "oklch(20% 0.15 260)",
+          "oklch(25% 0.15 260)",
+          "oklch(30% 0.15 260)",
+          "oklch(35% 0.15 260)",
+          "oklch(45% 0.15 260)",
+          "oklch(55% 0.15 260)",
+          "oklch(65% 0.15 260)"
+        ]
+      },
+      "primary-blue-light": {
+        "role": "primary",
+        "displayName": "Medium Blue",
+        "canonical": "oklch(60% 0.18 260)",
+        "tonalRamp": [
+          "oklch(30% 0.18 260)",
+          "oklch(40% 0.18 260)",
+          "oklch(50% 0.18 260)",
+          "oklch(60% 0.18 260)",
+          "oklch(70% 0.18 260)",
+          "oklch(80% 0.18 260)",
+          "oklch(88% 0.18 260)",
+          "oklch(95% 0.18 260)"
+        ]
+      },
+      "accent-blue": {
+        "role": "accent",
+        "displayName": "Sky Blue",
+        "canonical": "oklch(82% 0.12 240)",
+        "tonalRamp": [
+          "oklch(40% 0.12 240)",
+          "oklch(50% 0.12 240)",
+          "oklch(60% 0.12 240)",
+          "oklch(70% 0.12 240)",
+          "oklch(82% 0.12 240)",
+          "oklch(88% 0.12 240)",
+          "oklch(93% 0.12 240)",
+          "oklch(97% 0.12 240)"
+        ]
+      },
+      "ai-gold-dark": {
+        "role": "tertiary",
+        "displayName": "AI Gold",
+        "canonical": "oklch(75% 0.18 85)",
+        "tonalRamp": [
+          "oklch(35% 0.18 85)",
+          "oklch(45% 0.18 85)",
+          "oklch(55% 0.18 85)",
+          "oklch(65% 0.18 85)",
+          "oklch(75% 0.18 85)",
+          "oklch(82% 0.18 85)",
+          "oklch(88% 0.18 85)",
+          "oklch(94% 0.18 85)"
+        ]
+      },
+      "neutral-bg-dark": {
+        "role": "neutral",
+        "displayName": "Deep Navy Background",
+        "canonical": "oklch(20% 0.08 260)",
+        "tonalRamp": [
+          "oklch(10% 0.08 260)",
+          "oklch(15% 0.08 260)",
+          "oklch(20% 0.08 260)",
+          "oklch(28% 0.08 260)",
+          "oklch(38% 0.08 260)",
+          "oklch(50% 0.08 260)",
+          "oklch(65% 0.08 260)",
+          "oklch(80% 0.08 260)"
+        ]
+      },
+      "neutral-bg-light": {
+        "role": "neutral",
+        "displayName": "Light Blue Background",
+        "canonical": "oklch(85% 0.06 240)",
+        "tonalRamp": [
+          "oklch(40% 0.06 240)",
+          "oklch(55% 0.06 240)",
+          "oklch(68% 0.06 240)",
+          "oklch(78% 0.06 240)",
+          "oklch(85% 0.06 240)",
+          "oklch(91% 0.06 240)",
+          "oklch(96% 0.06 240)",
+          "oklch(99% 0.06 240)"
+        ]
+      },
+      "semantic-success": {
+        "role": "semantic",
+        "displayName": "Success Green",
+        "canonical": "oklch(65% 0.18 140)",
+        "tonalRamp": [
+          "oklch(25% 0.18 140)",
+          "oklch(35% 0.18 140)",
+          "oklch(45% 0.18 140)",
+          "oklch(55% 0.18 140)",
+          "oklch(65% 0.18 140)",
+          "oklch(74% 0.18 140)",
+          "oklch(83% 0.18 140)",
+          "oklch(92% 0.18 140)"
+        ]
+      },
+      "semantic-warning": {
+        "role": "semantic",
+        "displayName": "Warning Orange",
+        "canonical": "oklch(75% 0.18 75)",
+        "tonalRamp": [
+          "oklch(30% 0.18 75)",
+          "oklch(42% 0.18 75)",
+          "oklch(54% 0.18 75)",
+          "oklch(65% 0.18 75)",
+          "oklch(75% 0.18 75)",
+          "oklch(83% 0.18 75)",
+          "oklch(90% 0.18 75)",
+          "oklch(96% 0.18 75)"
+        ]
+      },
+      "semantic-error": {
+        "role": "semantic",
+        "displayName": "Error Red",
+        "canonical": "oklch(55% 0.22 25)",
+        "tonalRamp": [
+          "oklch(25% 0.22 25)",
+          "oklch(35% 0.22 25)",
+          "oklch(45% 0.22 25)",
+          "oklch(55% 0.22 25)",
+          "oklch(64% 0.22 25)",
+          "oklch(73% 0.22 25)",
+          "oklch(82% 0.22 25)",
+          "oklch(91% 0.22 25)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display Large",
+        "purpose": "Page titles and major section headers. Used sparingly — typically once per screen."
+      },
+      "headline-large": {
+        "displayName": "Headline Large",
+        "purpose": "Major block titles like '15-Day Forecast' or 'Air Quality'. Creates clear section divisions."
+      },
+      "headline-medium": {
+        "displayName": "Headline Medium",
+        "purpose": "Card titles and prominent data points. The workhorse heading size."
+      },
+      "body-medium": {
+        "displayName": "Body Medium",
+        "purpose": "Standard body text. The most common size for labels, descriptions, and secondary information."
+      },
+      "temperature-display": {
+        "displayName": "Temperature Display",
+        "purpose": "Oversized temperature numbers on main screens. Light weight prevents visual heaviness despite large size."
+      }
+    },
+    "shadows": [
+      {
+        "name": "card-shadow",
+        "value": "0 4px 10px rgba(0, 0, 0, 0.3)",
+        "purpose": "Standard elevation for Material cards in dark mode. Light mode uses 0.15 opacity."
+      },
+      {
+        "name": "dialog-shadow-layer-1",
+        "value": "0 8px 20px rgba(0, 0, 0, 0.3)",
+        "purpose": "First layer of dialog shadow. Creates initial depth separation."
+      },
+      {
+        "name": "dialog-shadow-layer-2",
+        "value": "0 16px 40px rgba(0, 0, 0, 0.1)",
+        "purpose": "Second layer of dialog shadow. Adds soft diffusion for realistic depth."
+      },
+      {
+        "name": "floating-island-shadow",
+        "value": "0 8px 16px rgba(0, 0, 0, 0.25), 0 4px 8px rgba(0, 0, 0, 0.15)",
+        "purpose": "Multi-layer shadow for floating action elements. Creates pronounced lift."
+      },
+      {
+        "name": "chart-point-shadow",
+        "value": "0 0 0.5px rgba(0, 0, 0, 0.1)",
+        "purpose": "Micro-shadow for chart data points. Extremely subtle separation from grid lines."
+      },
+      {
+        "name": "ai-card-glow",
+        "value": "0 4px 20px rgba(255, 179, 0, 0.15)",
+        "purpose": "Amber glow shadow for AI feature cards. Creates distinctive visual signature."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-standard",
+        "value": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Default easing for state transitions and animations."
+      },
+      {
+        "name": "ease-decelerate",
+        "value": "cubic-bezier(0, 0, 0.2, 1)",
+        "purpose": "Entering animations where content slides in and settles."
+      },
+      {
+        "name": "ease-accelerate",
+        "value": "cubic-bezier(0.4, 0, 1, 1)",
+        "purpose": "Exiting animations where content accelerates away."
+      },
+      {
+        "name": "duration-fast",
+        "value": "150ms",
+        "purpose": "Quick micro-interactions like button press feedback."
+      },
+      {
+        "name": "duration-normal",
+        "value": "300ms",
+        "purpose": "Standard animation duration for page transitions and card expansions."
+      },
+      {
+        "name": "duration-slow",
+        "value": "500ms",
+        "purpose": "Complex animations like weather condition transitions."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "mobile",
+        "value": "0px - 599px",
+        "purpose": "Phone portrait. Single column layout, 12px horizontal padding."
+      },
+      {
+        "name": "tablet",
+        "value": "600px - 1023px",
+        "purpose": "Tablet portrait. Two column grid, 24px horizontal padding."
+      },
+      {
+        "name": "desktop",
+        "value": "1024px - 1439px",
+        "purpose": "Desktop and tablet landscape. Three column grid, 32px horizontal padding."
+      },
+      {
+        "name": "large-desktop",
+        "value": "1440px+",
+        "purpose": "Large desktop displays. Four column grid, 48px horizontal padding, max-width constraint."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Main call-to-action button using deep blue background. Used for primary actions like search, confirm, submit.",
+      "html": "<button class=\"ds-btn-primary\">Search City</button>",
+      "css": ".ds-btn-primary { background: #012d78; color: #FFFFFF; padding: 12px 24px; border-radius: 8px; border: none; font-family: 'NotoSansSC', sans-serif; font-size: 16px; font-weight: 500; cursor: pointer; transition: background 0.2s cubic-bezier(0.4, 0, 0.2, 1); } .ds-btn-primary:hover { background: #001A4D; } .ds-btn-primary:active { background: #000F2E; transform: scale(0.98); }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Outlined button for secondary actions. Transparent background with blue border.",
+      "html": "<button class=\"ds-btn-secondary\">Cancel</button>",
+      "css": ".ds-btn-secondary { background: transparent; color: #4A90E2; padding: 12px 24px; border-radius: 8px; border: 1px solid #4A90E2; font-family: 'NotoSansSC', sans-serif; font-size: 16px; font-weight: 500; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); } .ds-btn-secondary:hover { background: rgba(74, 144, 226, 0.1); } .ds-btn-secondary:active { background: rgba(74, 144, 226, 0.2); transform: scale(0.98); }"
+    },
+    {
+      "name": "Standard Card",
+      "kind": "card",
+      "refersTo": "card-standard",
+      "description": "Default content container with semi-transparent background and border. Used for weather details, forecasts, and information blocks.",
+      "html": "<div class=\"ds-card-standard\"><h3>Air Quality</h3><p>AQI: 45 - Excellent</p></div>",
+      "css": ".ds-card-standard { background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.21); border-radius: 8px; padding: 16px; margin: 8px; backdrop-filter: blur(10px); } .ds-card-standard h3 { color: #FFFFFF; font-size: 18px; font-weight: 600; margin: 0 0 8px 0; font-family: 'NotoSansSC', sans-serif; } .ds-card-standard p { color: #E8F4FD; font-size: 14px; margin: 0; font-family: 'NotoSansSC', sans-serif; }"
+    },
+    {
+      "name": "Compact Card",
+      "kind": "card",
+      "refersTo": "card-compact",
+      "description": "Reduced padding card for space-constrained scenarios. Same styling as standard but with 12px padding.",
+      "html": "<div class=\"ds-card-compact\"><span>Humidity: 65%</span></div>",
+      "css": ".ds-card-compact { background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.21); border-radius: 8px; padding: 12px; margin: 8px; } .ds-card-compact span { color: #E8F4FD; font-size: 14px; font-family: 'NotoSansSC', sans-serif; }"
+    },
+    {
+      "name": "AI Gradient Card",
+      "kind": "card",
+      "refersTo": "card-ai-gradient",
+      "description": "Special card for AI-generated content with amber gradient background and glow effect. Instantly identifies algorithmic insights.",
+      "html": "<div class=\"ds-card-ai\"><div class=\"ds-ai-badge\">AI</div><p>Today will be warm with occasional clouds. Perfect for outdoor activities.</p></div>",
+      "css": ".ds-card-ai { background: linear-gradient(135deg, #FFB300 0%, #FFC947 50%, #FFE082 100%); border: 1px solid rgba(255, 179, 0, 0.3); border-radius: 8px; padding: 16px; margin: 8px; position: relative; box-shadow: 0 4px 20px rgba(255, 179, 0, 0.15); } .ds-ai-badge { position: absolute; top: 8px; left: 8px; background: rgba(255, 179, 0, 0.9); color: #3E2723; font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 4px; font-family: 'NotoSansSC', sans-serif; } .ds-card-ai p { color: #3E2723; font-size: 14px; margin: 20px 0 0 0; line-height: 1.5; font-family: 'NotoSansSC', sans-serif; }"
+    },
+    {
+      "name": "Weather Condition Chip",
+      "kind": "chip",
+      "refersTo": "chip-tag",
+      "description": "Small pill-shaped chip displaying weather conditions or categories. Uses semantic colors for instant recognition.",
+      "html": "<span class=\"ds-chip\">☀️ Sunny</span>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; gap: 4px; background: #FFB74D; color: #FFFFFF; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; font-family: 'NotoSansSC', sans-serif; white-space: nowrap; }"
+    },
+    {
+      "name": "Temperature Display",
+      "kind": "custom",
+      "refersTo": "temperature-display",
+      "description": "Large temperature number for main weather display. Light weight prevents visual heaviness at 48px size.",
+      "html": "<div class=\"ds-temp-display\">24°</div>",
+      "css": ".ds-temp-display { font-size: 48px; font-weight: 300; line-height: 1.1; letter-spacing: -1px; color: #FFFFFF; font-family: 'NotoSansSC', sans-serif; }"
+    },
+    {
+      "name": "Bottom Navigation Item",
+      "kind": "nav",
+      "refersTo": "nav-bottom-item",
+      "description": "Navigation item in bottom bar. Shows icon and label with active/inactive states.",
+      "html": "<div class=\"ds-nav-item ds-nav-active\"><svg width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z\"/></svg><span>Today</span></div>",
+      "css": ".ds-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 16px; color: #B8D9F5; cursor: pointer; transition: color 0.2s cubic-bezier(0.4, 0, 0.2, 1); font-family: 'NotoSansSC', sans-serif; } .ds-nav-item span { font-size: 12px; font-weight: 500; } .ds-nav-active { color: #8edafc; } .ds-nav-item:hover { color: #E8F4FD; }"
+    },
+    {
+      "name": "AQI Level Indicator",
+      "kind": "custom",
+      "refersTo": "aqi-indicator",
+      "description": "Color-coded air quality indicator following national standards. Green (excellent) to purple (severe).",
+      "html": "<div class=\"ds-aqi-excellent\"><span class=\"ds-aqi-value\">45</span><span class=\"ds-aqi-label\">Excellent</span></div>",
+      "css": ".ds-aqi-excellent { background: #4CAF50; padding: 8px 12px; border-radius: 8px; display: inline-flex; align-items: baseline; gap: 8px; } .ds-aqi-value { font-size: 24px; font-weight: 600; color: #FFFFFF; font-family: 'NotoSansSC', sans-serif; } .ds-aqi-label { font-size: 14px; font-weight: 500; color: #FFFFFF; font-family: 'NotoSansSC', sans-serif; }"
+    },
+    {
+      "name": "Life Index Grid Item",
+      "kind": "custom",
+      "refersTo": "life-index-item",
+      "description": "Grid item showing life activity indices (UV, car wash, dressing, etc.) with alternating semantic colors.",
+      "html": "<div class=\"ds-life-index\"><div class=\"ds-life-icon\">🚗</div><div class=\"ds-life-label\">Car Wash</div><div class=\"ds-life-value\">Suitable</div></div>",
+      "css": ".ds-life-index { background: #FFB74D; padding: 12px; border-radius: 8px; text-align: center; } .ds-life-icon { font-size: 32px; margin-bottom: 8px; } .ds-life-label { font-size: 12px; font-weight: 500; color: #FFFFFF; margin-bottom: 4px; font-family: 'NotoSansSC', sans-serif; } .ds-life-value { font-size: 14px; font-weight: 500; color: #FFFFFF; font-family: 'NotoSansSC', sans-serif; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Intelligent Weather Companion",
+    "overview": "RainWeather is a sophisticated weather application that balances data density with visual clarity. The design philosophy centers on functional elegance — every visual element serves a purpose in communicating weather information quickly and accurately. The system embraces Material Design 3 principles while maintaining a distinct identity through its deep blue color palette and glassmorphic card treatments.\n\nThe interface prioritizes progressive disclosure: essential weather data appears immediately, while detailed insights unfold through interaction. This approach prevents cognitive overload while ensuring power users can access comprehensive meteorological data.\n\nThe aesthetic is calm but authoritative. Deep blues evoke trust and stability (appropriate for weather data), while amber accents highlight AI-generated insights and important alerts. The dark mode dominates the experience, reflecting the reality that users often check weather in low-light conditions (morning/evening).",
+    "keyCharacteristics": [
+      "Data-first layout with clear visual hierarchy",
+      "Glassmorphic cards with subtle borders for depth without heavy shadows",
+      "Amber accent color reserved exclusively for AI features and critical alerts",
+      "Responsive grid system adapting from mobile to desktop seamlessly",
+      "Noto Sans SC font family for optimal Chinese character rendering",
+      "Fixed semantic colors for weather phenomena (sunny=gold, rain=blue, etc.)"
+    ],
+    "rules": [
+      {
+        "name": "The Semantic Color Rule",
+        "body": "Weather phenomenon colors never change: sunny is always gold (#FFD54F), rain is always blue (#64B5F6), snow is always pale blue (#E1F5FE). Users build muscle memory for these associations — breaking them causes confusion.",
+        "section": "colors"
+      },
+      {
+        "name": "The AI Amber Rule",
+        "body": "Amber/gold colors (#FFB300 range) are reserved exclusively for AI-generated content. If it's not AI-generated, don't use amber. This creates instant visual distinction between algorithmic insights and raw data.",
+        "section": "colors"
+      },
+      {
+        "name": "The Contrast Hierarchy Rule",
+        "body": "Text tertiary (#B8D9F5 dark / #6B7280 light) must maintain 4.5:1 contrast against its background. Never place tertiary text on colored card backgrounds without verification. When in doubt, elevate to text secondary.",
+        "section": "colors"
+      },
+      {
+        "name": "The Fixed Header Rule",
+        "body": "The weather header card (#0A1B3D) remains constant regardless of theme mode. This provides a stable visual anchor as users switch between light and dark themes.",
+        "section": "colors"
+      },
+      {
+        "name": "The Weight Progression Rule",
+        "body": "Font weights follow a strict progression: 300 (display numbers only), 400 (body text), 500 (interactive labels), 600 (headings), 700 (major headings). Never skip weights — this creates visual rhythm.",
+        "section": "typography"
+      },
+      {
+        "name": "The Line Height Rule",
+        "body": "Body text uses 1.5 line-height for comfortable reading. Headings compress to 1.2-1.3 for tighter visual grouping. Display numbers tighten further to 1.1. Never use single line-height (1.0) except for isolated numbers.",
+        "section": "typography"
+      },
+      {
+        "name": "The Letter Spacing Rule",
+        "body": "Large text (>24px) uses negative letter-spacing (-0.5px to -0.1px) to prevent loose, gappy appearance. Small text (<14px) uses positive letter-spacing (0.2px to 0.3px) to improve character separation. Body text at 14-16px uses minimal spacing (0.1px).",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat-by-Default Rule",
+        "body": "Surfaces are flat at rest. Shadows appear only for: (1) Material Design Cards with explicit elevation, (2) Floating elements (FAB, action islands), (3) Modal dialogs. Standard content cards use borders, not shadows.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Shadow Intensity Rule",
+        "body": "Shadow opacity doubles in dark mode (30% vs 15%) because dark backgrounds absorb shadow visibility. A shadow that looks correct in light mode will disappear in dark mode without this adjustment.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Border-First Rule",
+        "body": "When defining card boundaries, prefer 1px borders over shadows. Borders are more reliable across different background colors and provide clearer visual separation in dense layouts.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do use the fixed weather header card color (#0A1B3D) for today's weather and city weather page headers, regardless of theme mode",
+      "Do reserve amber/gold colors (#FFB300 range) exclusively for AI-generated content",
+      "Do maintain semantic weather colors constant across themes: sunny=#FFD54F, cloudy=#BDBDBD, rainy=#64B5F6, snowy=#E1F5FE, foggy=#9E9E9E",
+      "Do use 8px border radius as the standard for cards and containers",
+      "Do apply 12px vertical spacing between cards (Material Design 3 minimum)",
+      "Do use Noto Sans SC (思源黑体) for all text",
+      "Do verify that text tertiary maintains 4.5:1 contrast ratio against its background",
+      "Do use border-based depth (1px solid border) as the primary method for defining card boundaries",
+      "Do adapt shadow opacity to theme mode: 30% in dark mode, 15% in light mode",
+      "Do use the responsive breakpoint system: mobile (<600px), tablet (600-1023px), desktop (1024-1439px), large desktop (≥1440px)"
+    ],
+    "donts": [
+      "Don't use blue colors inside small cards on dark backgrounds — poor contrast against #0A1B3D",
+      "Don't place text tertiary on colored card backgrounds without verifying contrast",
+      "Don't nest cards inside cards — creates visual confusion and excessive depth",
+      "Don't use pure black (#000000) or pure white (#FFFFFF) as background colors",
+      "Don't change semantic weather colors based on theme",
+      "Don't use shadows as the primary method for card definition — prefer 1px borders",
+      "Don't use font sizes outside the established scale (11, 12, 14, 16, 18, 20, 24, 28, 32, 48px)",
+      "Don't apply amber colors to non-AI features",
+      "Don't use border-radius larger than 16px except for special cases",
+      "Don't ignore the screen horizontal padding (8px)",
+      "Don't use bounce or elastic easing for animations — use natural cubic-bezier curves",
+      "Don't place critical information below the fold on mobile devices",
+      "Don't use gray text on colored backgrounds without testing contrast",
+      "Don't mix theme-adaptive colors with fixed colors arbitrarily"
+    ]
+  }
+}

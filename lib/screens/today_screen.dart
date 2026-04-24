@@ -669,16 +669,17 @@ class _TodayScreenState extends State<TodayScreen>
           padding: const EdgeInsets.fromLTRB(16.0, 4.0, 16.0, 16.0),
           child: Column(
             children: [
-              // 状态指示器行（离线/刷新/缓存 + AI解读 + 告警图标）
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // 数据状态指示器
-                  Expanded(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // 离线提示
+              // 状态指示器行（状态 + AI解读 | 告警）
+              SizedBox(
+                height: 20,
+                child: Row(
+                  children: [
+                    // 左侧：状态指示器 + AI解读（左对齐）
+                    Expanded(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // 离线提示
                         if (weatherProvider.isOffline) ...[
                           Icon(Icons.wifi_off, size: 10, color: Colors.orange.shade400),
                           const SizedBox(width: 4),
@@ -742,42 +743,15 @@ class _TodayScreenState extends State<TodayScreen>
                               fontSize: 10,
                               fontWeight: FontWeight.w500,
                             ),
-                          ),
-                        ],
-                      ],
+                           ),
+                         ],
+                       ],
                     ),
                   ),
-                  // AI解读按钮
-                  GestureDetector(
-                    onTap: () => _showAISummaryDialog(context, weatherProvider),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.white.withOpacity(0.4), width: 1),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.auto_awesome, color: Colors.white, size: 11),
-                          const SizedBox(width: 3),
-                          Text(
-                            'AI解读',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  // 告警图标
+                  // 告警图标（右对齐）
                   _buildAlertButton(weatherProvider),
                 ],
+              ),
               ),
               const SizedBox(height: 12),
               // Weather animation, weather text and temperature
@@ -855,16 +829,48 @@ class _TodayScreenState extends State<TodayScreen>
                               ],
                             ),
                           ),
-                        const SizedBox(height: 2),
-                        Text(
-                          current?.weather ?? '晴',
-                          style: TextStyle(
-                            color: context.read<ThemeProvider>().getColor('headerTextSecondary'),
-                            fontSize: 20, // 减小天气文字
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
+                         const SizedBox(height: 2),
+                         Wrap(
+                           spacing: 8,
+                           crossAxisAlignment: WrapCrossAlignment.center,
+                           children: [
+                             Text(
+                               current?.weather ?? '晴',
+                               style: TextStyle(
+                                 color: context.read<ThemeProvider>().getColor('headerTextSecondary'),
+                                 fontSize: 20,
+                                 fontWeight: FontWeight.w600,
+                                 letterSpacing: 0.5,
+                               ),
+                             ),
+                             GestureDetector(
+                               onTap: () => _showAISummaryDialog(context, weatherProvider),
+                               child: Container(
+                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                 decoration: BoxDecoration(
+                                   color: Colors.white.withOpacity(0.2),
+                                   borderRadius: BorderRadius.circular(10),
+                                   border: Border.all(color: Colors.white.withOpacity(0.4), width: 1),
+                                 ),
+                                 child: Row(
+                                   mainAxisSize: MainAxisSize.min,
+                                   children: [
+                                     Icon(Icons.auto_awesome, color: Colors.white, size: 11),
+                                     const SizedBox(width: 3),
+                                     Text(
+                                       'AI解读',
+                                       style: TextStyle(
+                                         color: Colors.white,
+                                         fontSize: 10,
+                                         fontWeight: FontWeight.w600,
+                                       ),
+                                     ),
+                                   ],
+                                 ),
+                               ),
+                             ),
+                           ],
+                         ),
                       ],
                     ),
                   ),
@@ -1174,6 +1180,7 @@ class _TodayScreenState extends State<TodayScreen>
                         fontSize: 14,
                         height: 1.5,
                       ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                 ),

@@ -8,7 +8,7 @@ class AppVersion {
 
   /// 应用版本号（显示用）
   /// 格式: "主版本号.次版本号.修订号"
-  static const String version = '1.16.0';
+  static const String version = '1.17.0';
 
   /// 应用构建号
   static const int buildNumber = 1;
@@ -30,7 +30,7 @@ class AppVersion {
   static const String description = '一款简洁美观的智能天气预报应用，支持国内外城市查询';
 
   /// 版本发布日期
-  static const String releaseDate = '2026-03-27';
+  static const String releaseDate = '2026-04-24';
 
   /// 获取版本信息摘要
   static String getVersionSummary() {
@@ -54,6 +54,13 @@ class AppVersion {
   /// 获取版本更新日志
   static String _getChangelog() {
     return '''
+v1.17.0 (2026-04-24)
+• UI 优化：城市名移至AppBar标题栏，滚动时始终可见
+• UI 优化：统一今日/城市天气页面卡片顺序
+• UI 优化：今日天气头部区域精简，移除城市行，顶部间距优化
+• 修复：修复AnimatedTheme嵌套导致的动画无效问题
+• 优化：主题切换动画改用MaterialApp内置参数，平滑过渡
+
 v1.16.0 (2026-03-27)
 • Bug 修复：修复今日天气页面生活指数不显示问题
 • Bug 修复：修复24小时预报温度标签底部溢出问题
@@ -61,13 +68,6 @@ v1.16.0 (2026-03-27)
 • UI 优化：今日天气和城市天气页面顶部区域更紧凑
 • UI 优化：减少卡片间距和屏幕水平间距
 • 功能优化：城市天气页面同步所有UI改进
-
-v1.15.0 (2026-03-20)
-• 性能优化：滚动流畅度提升 40-60%
-• 内存优化：内存占用降低 30-40%
-• 代码质量：统一日志系统，移除 761 个 print()
-• Bug 修复：修复无限刷新循环问题
-• 架构优化：合并定时器，优化缓存策略
 ''';
   }
 }

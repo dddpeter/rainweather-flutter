@@ -328,7 +328,7 @@ class AppDrawer extends StatelessWidget {
                   reason,
                   style: TextStyle(
                     color: AppColors.textPrimary,
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: FontWeight.w700,
                     height: 1.3,
                   ),
@@ -358,7 +358,7 @@ class AppDrawer extends StatelessWidget {
             ),
             child: const Text(
               '应用',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
             ),
           ),
         ],
@@ -427,7 +427,7 @@ class AppDrawer extends StatelessWidget {
             title,
             style: TextStyle(
               color: AppColors.textPrimary,
-              fontSize: 13,
+              fontSize: 12,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.8,
             ),
@@ -483,7 +483,7 @@ class AppDrawer extends StatelessWidget {
             '测试功能',
             style: TextStyle(
               color: AppColors.textPrimary,
-              fontSize: 15,
+              fontSize: 14,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -665,7 +665,7 @@ class AppDrawer extends StatelessWidget {
                         title,
                         style: TextStyle(
                           color: AppColors.textPrimary,
-                          fontSize: 15,
+                          fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -1110,12 +1110,11 @@ class AppDrawer extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '• Open-Meteo免费国际天气API集成\n'
-                      '• 新增60+国际城市预设坐标\n'
-                      '• 添加城市弹窗：国内/国际城市筛选标签\n'
-                      '• 修复国外城市日期时间显示问题\n'
-                      '• 移除主要城市卡片"更新"标签\n'
-                      '• Nominatim API User-Agent优化',
+                      '• UI优化：城市名移至AppBar标题栏，滚动时始终可见\n'
+                      '• UI优化：统一今日/城市天气页面卡片顺序\n'
+                      '• UI优化：今日天气头部区域精简，移除城市行\n'
+                      '• 修复：AnimatedTheme嵌套导致的动画无效问题\n'
+                      '• 优化：主题切换动画平滑过渡',
                       style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,

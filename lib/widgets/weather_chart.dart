@@ -49,8 +49,8 @@ class WeatherChart extends StatelessWidget {
           return Padding(
             padding: const EdgeInsets.only(
               left: 8.0,
-              right: 8.0, // 增加右侧padding，确保最后一组数据完整显示
-              top: 8.0,
+              right: 8.0,
+              top: 16.0,
               bottom: 0,
             ),
 
@@ -107,7 +107,7 @@ class WeatherChart extends StatelessWidget {
                           leftTitles: AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
-                              interval: 5,
+                              interval: _getAutoYInterval(),
                               reservedSize: ChartStyles.leftTitlesReservedSize,
                               getTitlesWidget: (value, meta) {
                                 return Text(
@@ -361,6 +361,13 @@ class WeatherChart extends StatelessWidget {
         .replaceAll('°', '')
         .replaceAll(' ', '');
     return double.tryParse(cleanStr) ?? 0.0;
+  }
+
+  double _getAutoYInterval() {
+    final range = _getMaxTemperature() - _getMinTemperature();
+    if (range <= 5) return 2;
+    if (range <= 10) return 5;
+    return 10;
   }
 
   double _getMinTemperature() {

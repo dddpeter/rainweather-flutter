@@ -28,7 +28,6 @@ import '../widgets/lunar_info_widget.dart';
 import '../widgets/sun_moon_widget.dart';
 import '../widgets/weather_alert_widget.dart';
 import '../widgets/weather_animation_widget.dart';
-import '../widgets/weather_chart.dart';
 import 'hourly_screen.dart';
 import 'lunar_calendar_screen.dart';
 
@@ -574,7 +573,6 @@ class _TodayScreenState extends State<TodayScreen>
                               // 24小时天气
                               _buildHourlyWeather(weatherProvider),
                               const SizedBox(height: 24),
-                              // 空气质量
                               _buildSectionTitle('空气质量', Icons.air_rounded),
                               const SizedBox(height: 8),
                               AirQualityCard(weather: data.currentWeather, showTitle: false),
@@ -618,11 +616,6 @@ class _TodayScreenState extends State<TodayScreen>
                                   );
                                 },
                               ),
-                              const SizedBox(height: 24),
-                              // 温度趋势
-                              _buildSectionTitle('温度趋势', Icons.show_chart_rounded),
-                              const SizedBox(height: 8),
-                              _buildTemperatureChart(weatherProvider),
                               const SizedBox(height: 24),
                               // 黄历信息（农历+宜忌+节气合并）
                               _buildSectionTitle('黄历信息', Icons.calendar_month_rounded, trailing: InkWell(
@@ -730,7 +723,7 @@ class _TodayScreenState extends State<TodayScreen>
                           onTap: () => _showAISummaryDialog(context, weatherProvider),
                           borderRadius: BorderRadius.circular(14),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                             decoration: BoxDecoration(
                               color: AppColors.textPrimary.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(14),
@@ -739,13 +732,13 @@ class _TodayScreenState extends State<TodayScreen>
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.auto_awesome, color: AppColors.textPrimary, size: 11),
-                                const SizedBox(width: 3),
+                                Icon(Icons.auto_awesome, color: AppColors.textPrimary, size: 10),
+                                const SizedBox(width: 2),
                                 Text(
                                   'AI解读',
                                   style: TextStyle(
                                     color: AppColors.textPrimary,
-                                    fontSize: 11,
+                                    fontSize: 10,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -981,25 +974,6 @@ class _TodayScreenState extends State<TodayScreen>
   }
 
   /// 构建农历信息 - 简单文本样式
-  Widget _buildTemperatureChart(WeatherProvider weatherProvider) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppConstants.screenHorizontalPadding),
-      child: Card(
-        elevation: AppColors.cardElevation,
-        shadowColor: AppColors.cardShadowColor,
-        color: AppColors.materialCardColor,
-        shape: AppColors.cardShape,
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: SizedBox(
-            height: 220,
-            child: WeatherChart(dailyForecast: weatherProvider.dailyForecast),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildHourlyWeather(WeatherProvider weatherProvider) {
     final weatherService = WeatherService.getInstance();
     return Container(

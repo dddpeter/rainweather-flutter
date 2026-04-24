@@ -571,11 +571,11 @@ class _TodayScreenState extends State<TodayScreen>
                             children: [
                               _buildTopWeatherSection(weatherProvider),
                               AppColors.cardSpacingWidget,
-                              // 空气质量卡片
-                              AirQualityCard(weather: data.currentWeather),
-                              AppColors.cardSpacingWidget,
                               // 24小时天气
                               _buildHourlyWeather(weatherProvider),
+                              AppColors.cardSpacingWidget,
+                              // 空气质量卡片
+                              AirQualityCard(weather: data.currentWeather),
                               AppColors.cardSpacingWidget,
                               // 生活指数
                               Selector<WeatherProvider, SunMoonIndexData?>(
@@ -613,7 +613,6 @@ class _TodayScreenState extends State<TodayScreen>
                                   );
                                 },
                               ),
-                              AppColors.cardSpacingWidget,
                               _buildTemperatureChart(weatherProvider),
                               AppColors.cardSpacingWidget,
                               // 农历信息
@@ -667,180 +666,120 @@ class _TodayScreenState extends State<TodayScreen>
       ),
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 16.0),
+          padding: const EdgeInsets.fromLTRB(16.0, 4.0, 16.0, 16.0),
           child: Column(
             children: [
-              // City name and menu
+              // 状态指示器行（离线/刷新/缓存 + AI解读 + 告警图标）
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // 占位空间，保持居中
-                  const SizedBox(width: 40),
+                  // 数据状态指示器
                   Expanded(
-                    child: Center(
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.location_on_rounded,
-                                color: context.read<ThemeProvider>().getColor('headerTextPrimary'),
-                                size: 20,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                _getDisplayCity(location),
-                                style: TextStyle(
-                                  color: context.read<ThemeProvider>().getColor(
-                                    'headerTextPrimary',
-                                  ),
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              GestureDetector(
-                                onTap: () => _showAISummaryDialog(context, weatherProvider),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                      color: Colors.white.withOpacity(0.4),
-                                      width: 1,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(Icons.auto_awesome, color: Colors.white, size: 11),
-                                      const SizedBox(width: 3),
-                                      Text(
-                                        'AI解读',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // 离线提示
+                        if (weatherProvider.isOffline) ...[
+                          Icon(Icons.wifi_off, size: 10, color: Colors.orange.shade400),
+                          const SizedBox(width: 4),
+                          Text(
+                            '离线模式',
+                            style: TextStyle(
+                              color: Colors.orange.shade400,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
-                          // 数据状态指示器
-                          if (weatherProvider.isUsingCachedData ||
-                              weatherProvider.isBackgroundRefreshing ||
-                              weatherProvider.isOffline)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 4),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  // 离线提示
-                                  if (weatherProvider.isOffline) ...[
-                                    Icon(Icons.wifi_off, size: 10, color: Colors.orange.shade400),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      '离线模式',
-                                      style: TextStyle(
-                                        color: Colors.orange.shade400,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                  ],
-                                  // 刷新指示器
-                                  if (weatherProvider.isBackgroundRefreshing) ...[
-                                    SizedBox(
-                                      width: 10,
-                                      height: 10,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 1.5,
-                                        valueColor: AlwaysStoppedAnimation<Color>(
-                                          context.read<ThemeProvider>().getColor(
-                                            'headerTextSecondary',
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 6),
-                                  ],
-                                  // 缓存数据图标
-                                  if (weatherProvider.isUsingCachedData)
-                                    Icon(
-                                      Icons.history,
-                                      size: 10,
-                                      color: context.read<ThemeProvider>().getColor(
-                                        'headerTextSecondary',
-                                      ),
-                                    ),
-                                  const SizedBox(width: 4),
-                                  // 缓存时间文本
-                                  FutureBuilder<String>(
-                                    future: _getCacheAgeText(weatherProvider),
-                                    builder: (context, snapshot) {
-                                      String text;
-                                      if (snapshot.hasData) {
-                                        text = snapshot.data!;
-                                      } else {
-                                        text = '缓存数据';
-                                      }
-
-                                      return Text(
-                                        text,
-                                        style: TextStyle(
-                                          color: context.read<ThemeProvider>().getColor(
-                                            'headerTextSecondary',
-                                          ),
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w400,
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ],
+                          const SizedBox(width: 8),
+                        ],
+                        // 刷新指示器
+                        if (weatherProvider.isBackgroundRefreshing) ...[
+                          SizedBox(
+                            width: 10,
+                            height: 10,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 1.5,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                context.read<ThemeProvider>().getColor('headerTextSecondary'),
                               ),
                             ),
-                          if (location?.isProxyDetected == true) ...[
-                            const SizedBox(height: 4),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: Colors.orange.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.orange.withOpacity(0.5), width: 1),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 12),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '可能使用代理',
-                                    style: TextStyle(
-                                      color: Colors.orange,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                          ),
+                          const SizedBox(width: 6),
+                        ],
+                        // 缓存数据图标
+                        if (weatherProvider.isUsingCachedData)
+                          Icon(
+                            Icons.history,
+                            size: 10,
+                            color: context.read<ThemeProvider>().getColor('headerTextSecondary'),
+                          ),
+                        if (weatherProvider.isUsingCachedData) const SizedBox(width: 4),
+                        // 缓存时间文本
+                        if (weatherProvider.isUsingCachedData)
+                          FutureBuilder<String>(
+                            future: _getCacheAgeText(weatherProvider),
+                            builder: (context, snapshot) {
+                              return Text(
+                                snapshot.data ?? '缓存数据',
+                                style: TextStyle(
+                                  color: context.read<ThemeProvider>().getColor('headerTextSecondary'),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              );
+                            },
+                          ),
+                        // 代理警告
+                        if (location?.isProxyDetected == true) ...[
+                          if (weatherProvider.isUsingCachedData || weatherProvider.isBackgroundRefreshing || weatherProvider.isOffline)
+                            const SizedBox(width: 8),
+                          Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 12),
+                          const SizedBox(width: 4),
+                          Text(
+                            '可能使用代理',
+                            style: TextStyle(
+                              color: Colors.orange,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
                             ),
-                          ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  // AI解读按钮
+                  GestureDetector(
+                    onTap: () => _showAISummaryDialog(context, weatherProvider),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.white.withOpacity(0.4), width: 1),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.auto_awesome, color: Colors.white, size: 11),
+                          const SizedBox(width: 3),
+                          Text(
+                            'AI解读',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ],
                       ),
                     ),
                   ),
-                  // 告警图标或右侧占位
+                  const SizedBox(width: 8),
+                  // 告警图标
                   _buildAlertButton(weatherProvider),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               // Weather animation, weather text and temperature
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -1065,7 +1004,7 @@ class _TodayScreenState extends State<TodayScreen>
                 label,
                 style: TextStyle(
                   color: themeProvider.getColor('headerTextSecondary'),
-                  fontSize: 10,
+                  fontSize: 11,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -1109,7 +1048,7 @@ class _TodayScreenState extends State<TodayScreen>
       formattedNongLi,
       style: TextStyle(
         color: context.read<ThemeProvider>().getColor('headerTextSecondary'),
-        fontSize: 13,
+        fontSize: 12,
         fontWeight: FontWeight.w400,
         letterSpacing: 0.5,
       ),

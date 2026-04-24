@@ -27,59 +27,103 @@ class MainAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = context.watch<ThemeProvider>();
+    return Consumer<WeatherProvider>(
+      builder: (context, weatherProvider, _) {
+        final themeProvider = context.watch<ThemeProvider>();
+        final location = weatherProvider.currentLocation;
+        final displayCity = _getDisplayCity(location);
 
-    return AppBar(
-      elevation: 4, // 添加阴影
-      backgroundColor: Colors.transparent,
-      flexibleSpace: Container(
-        decoration: BoxDecoration(
-          // 半透明背景 - 基于主题色，已包含透明度
-          color: AppColors.appBarBackground,
-          // 模糊效果
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 20,
-              offset: const Offset(0, 2),
+        return AppBar(
+          elevation: 4,
+          backgroundColor: Colors.transparent,
+          flexibleSpace: Container(
+            decoration: BoxDecoration(
+              color: AppColors.appBarBackground,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 20,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(0.5),
-        child: Container(
-          height: 0.5,
-          color: themeProvider.getColor('border').withOpacity(0.2),
-        ),
-      ),
-      toolbarHeight: 56,
-      titleSpacing: 0,
-      leading: Builder(
-        builder: (context) => IconButton(
-          icon: Icon(
-            Icons.menu_rounded,
-            color: themeProvider.isLightTheme
-                ? AppColors.primaryBlue
-                : AppColors.accentBlue, // 暗色模式使用更亮的强调色
-            size: 28,
           ),
-          onPressed: () {
-            Scaffold.of(context).openDrawer();
-          },
-          tooltip: '菜单',
-        ),
-      ),
-      actions: [
-        // 刷新按钮
-        _buildRefreshButton(context, themeProvider),
-        // 主题切换按钮
-        _buildThemeToggleButton(context, themeProvider),
-        // 今日天气页面专属功能菜单
-        if (currentIndex == 0) _buildTodayFeaturesMenu(context, themeProvider),
-        const SizedBox(width: 8),
-      ],
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(0.5),
+            child: Container(
+              height: 0.5,
+              color: themeProvider.getColor('border').withOpacity(0.2),
+            ),
+          ),
+          toolbarHeight: 56,
+          titleSpacing: 0,
+          leading: Builder(
+            builder: (context) => IconButton(
+              icon: Icon(
+                Icons.menu_rounded,
+                color: themeProvider.isLightTheme
+                    ? AppColors.primaryBlue
+                    : AppColors.accentBlue,
+                size: 28,
+              ),
+              onPressed: () {
+                Scaffold.of(context).openDrawer();
+              },
+              tooltip: '菜单',
+            ),
+          ),
+          title: currentIndex == 0
+              ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.location_on_rounded,
+                      color: themeProvider.isLightTheme
+                          ? AppColors.primaryBlue
+                          : AppColors.accentBlue,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        displayCity,
+                        style: TextStyle(
+                          color: themeProvider.isLightTheme
+                              ? AppColors.primaryBlue
+                              : AppColors.accentBlue,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                )
+              : null,
+          actions: [
+            // 刷新按钮
+            _buildRefreshButton(context, themeProvider),
+            // 主题切换按钮
+            _buildThemeToggleButton(context, themeProvider),
+            // 今日天气页面专属功能菜单
+            if (currentIndex == 0) _buildTodayFeaturesMenu(context, themeProvider),
+            const SizedBox(width: 8),
+          ],
+        );
+      },
     );
+  }
+
+  String _getDisplayCity(dynamic location) {
+    if (location == null) return '未知';
+    if (location.district.isNotEmpty && location.district != '未知') {
+      return location.district;
+    } else if (location.city.isNotEmpty && location.city != '未知') {
+      return location.city;
+    } else if (location.province.isNotEmpty && location.province != '未知') {
+      return location.province;
+    }
+    return '未知';
   }
 
   /// 构建刷新按钮

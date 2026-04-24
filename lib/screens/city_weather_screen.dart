@@ -13,6 +13,7 @@ import '../widgets/sun_moon_widget.dart';
 import '../widgets/life_index_widget.dart';
 import '../widgets/weather_animation_widget.dart';
 import '../widgets/weather_details_widget.dart';
+import '../widgets/air_quality_card.dart';
 import '../utils/formatters.dart';
 import 'hourly_screen.dart';
 
@@ -185,6 +186,9 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
                             // 24小时天气
                             _buildHourlyWeather(weatherProvider),
                             AppColors.cardSpacingWidget,
+                            // 空气质量卡片
+                            AirQualityCard(weather: weatherProvider.currentWeather),
+                            AppColors.cardSpacingWidget,
                             // 详细信息卡片
                             WeatherDetailsWidget(
                               weather: weatherProvider.currentWeather,
@@ -193,9 +197,7 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
                             // 生活指数
                             LifeIndexWidget(weatherProvider: weatherProvider),
                             AppColors.cardSpacingWidget,
-                            // 天气提示卡片
-                            _buildWeatherTipsCard(weatherProvider),
-                            AppColors.cardSpacingWidget,
+                            // 日出日落
                             const SunMoonWidget(),
                             AppColors.cardSpacingWidget,
                             _buildTemperatureChart(weatherProvider),
@@ -254,7 +256,7 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // 温度行（包含城市名称）
+                        // 温度行
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.baseline,
                           textBaseline: TextBaseline.alphabetic,
@@ -278,21 +280,6 @@ class _CityWeatherScreenState extends State<CityWeatherScreen> {
                                 ),
                                 fontSize: 32,
                                 fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            // 城市名称
-                            Expanded(
-                              child: Text(
-                                widget.cityName,
-                                style: TextStyle(
-                                  color: context.read<ThemeProvider>().getColor(
-                                    'headerTextSecondary',
-                                  ),
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],

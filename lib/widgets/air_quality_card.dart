@@ -40,9 +40,9 @@ class AirQualityCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // 标题行（可选）
-              if (showTitle)
-                Row(
-                  children: [
+              Row(
+                children: [
+                  if (showTitle) ...[
                     Icon(
                       Icons.air,
                       color: color,
@@ -57,9 +57,9 @@ class AirQualityCard extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const Spacer(),
-                    // AQI数值（缩小尺寸，与后面文字高度一致）
-                    Container(
+                  ],
+                  const Spacer(),
+                  Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
                       vertical: 2,
